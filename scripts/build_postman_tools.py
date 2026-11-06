@@ -434,12 +434,17 @@ def build() -> dict:
             key="{{known_call_id}}-note",
         ),
         tool(
+            "lookup_hvac_info",
+            "Equipment basics",
+            {"question": "Why is my radiator banging?"},
+            ok("pm.test('facts come back', () => pm.expect(pm.response.json().data.facts).to.not.be.empty);"),
+            call="known_call_id",
+        ),
+        tool(
             "mark_do_not_call",
-            "Do not call",
+            "Do not call, asked first",
             {},
-            ok(
-                "pm.test('the callback is off', () => pm.expect(pm.response.json().data.cancelled_callbacks).to.be.above(0));"
-            ),
+            refused("confirm_first"),
             call="known_call_id",
             key="{{known_call_id}}-dnc",
         ),
@@ -677,6 +682,49 @@ def build() -> dict:
             + "pm.test('back on the settings', () => pm.expect(pm.response.text()).to.include('Saved'));",
         ),
         item(
+            "The Checks page opens",
+            "GET",
+            "owner/checks",
+            envelope=False,
+            check="pm.test('opens', () => pm.response.to.have.status(200));\n" + html,
+        ),
+        item(
+            "An admin checks the past hour",
+            "POST",
+            "owner/checks",
+            envelope=False,
+            form={"span": "hour"},
+            # 409 where the server runs without FAILURE_GRADER=1.
+            check="pm.test('starts, or says checks are off', () => "
+            "pm.expect(pm.response.code).to.be.oneOf([200, 409]));",
+        ),
+        item(
+            "A check's progress, for a run that doesn't exist",
+            "GET",
+            "owner/checks/runs/{{no_run_id}}",
+            envelope=False,
+            pre="pm.collectionVariables.set('no_run_id', '0');",
+            check="pm.test('no such run', () => pm.response.to.have.status(404));",
+        ),
+        item(
+            "Check this call",
+            "POST",
+            "owner/calls/{{call_id}}/check",
+            envelope=False,
+            form={},
+            check="pm.test('back on the call', () => pm.response.to.have.status(200));\n"
+            + "pm.test('shows the check', () => pm.expect(pm.response.text()).to.include('Call check'));",
+        ),
+        item(
+            "An admin sets the daily check",
+            "POST",
+            "owner/checks/schedule",
+            envelope=False,
+            form={"enabled": "1", "at": "06:00"},
+            check="pm.test('saved', () => pm.response.to.have.status(200));\n"
+            + "pm.test('on the settings', () => pm.expect(pm.response.text()).to.include('Daily check'));",
+        ),
+        item(
             "An admin adds a staff user",
             "POST",
             "owner/users",
@@ -910,6 +958,24 @@ def build() -> dict:
             envelope=False,
             form={"phone": "(718) 555-0142"},
             check=opens,
+        ),
+        item("The bench's checks", "GET", "bench/checks", envelope=False, check=opens),
+        item(
+            "The bench checks the past day",
+            "POST",
+            "bench/checks",
+            envelope=False,
+            form={"span": "day"},
+            check="pm.test('starts, or says checks are off', () => "
+            "pm.expect(pm.response.code).to.be.oneOf([200, 409]));",
+        ),
+        item(
+            "The bench grades a call again",
+            "POST",
+            "bench/checks/calls/{{call_id}}",
+            envelope=False,
+            form={},
+            check="pm.test('back on the bench', () => pm.response.to.have.status(200));",
         ),
         item(
             "An override needs a reason",

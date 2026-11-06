@@ -1,0 +1,39 @@
+id: lapsed-member-stored-active
+title: Gloria Santos, a longtime customer in Brooklyn
+tags:
+- requirement
+- booking
+- membership
+scenario: lapsed-member-stored-active
+caller_id: (929) 555-0114
+user_prompt: |
+  ## Identity
+  Gloria Santos, a longtime customer in Brooklyn. Warm and clear, sure the membership is still in place.
+  Your name: Gloria Santos
+  Your address: 809 Union St, Brooklyn, 11206
+  Your phone: the number they are calling from
+  Your wants: the yearly furnace tune-up, any weekday morning
+  Your plan: believes it is active, the record shows it ended
+
+  ## Goal
+  Start the call by saying: "Hi, it's Gloria. I'd like to schedule my yearly tune-up, and I'm a member so I should get priority scheduling, right?"
+
+  ## Behavior
+  - Take the news about the plan calmly and say you must have missed the renewal.
+  - Say yes to someone calling about renewing, if offered.
+  - Pick the first weekday morning offered, then say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment with job_type tune_up at ZIP 11206.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent says the plan has ended, plainly and kindly, rather than saying it is missing.
+- The agent promises no priority scheduling or other perk the plan no longer gives.
+- The agent books the tune-up normally and offers help with renewal.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

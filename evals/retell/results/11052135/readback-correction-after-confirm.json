@@ -1,0 +1,1137 @@
+{
+  "case": "readback-correction-after-confirm",
+  "retell": {
+    "test_case_job_id": "test_job_d9dbc08ddb4e",
+    "status": "fail",
+    "result_explanation": "The booking flow and corrected 144 address were handled correctly: one appointment was booked after a confirmed read-back and after the caller said yes. However, the agent said the caller's name ('Thanks, Omar') and included it in spoken/internal messages, violating criterion 4.",
+    "creation_timestamp": 1793914682134,
+    "user_modified_timestamp": 1793914732688,
+    "test_case_definition_id": "test_case_b26d70bdccc1",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911575205,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-readback-correction-after-confirm"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books 1 separate visit(s) with book_appointment, one for each problem or unit the caller needs seen.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent reads the address back with 144 before booking and does not argue.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] readback-correction-after-confirm: Omar Haddad, a homeowner in Bay Ridge, Brooklyn, booking a heating tune-up",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_b26d70bdccc1",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914518197,
+      "userPrompt": "## Identity\nOmar Haddad, a homeowner in Bay Ridge, Brooklyn, booking a heating tune-up. Distracted, confirms too fast and catches his own slip a moment later.\nYour name: Omar Haddad\nYour address: 144 Bay Ridge Pkwy, Brooklyn, 11209 (he says 142 by mistake at first)\nYour phone: (917) 555-0101 (the number you're calling from)\nYour wants: a yearly heating tune-up, any weekday morning\n\n## Goal\nStart the call by saying: \"Hi, I'd like to set up a tune-up for my boiler.\"\n\n## Behavior\n- Give the address as 142 Bay Ridge Parkway, 11209 when asked.\n- Say yes to the first read-back.\n- On your very next turn after saying yes, before picking a time, say \"Oh wait, sorry, it's 144, not 142.\"\n- Confirm once the agent reads back 144, then take the first weekday morning offered and say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-readback-correction-after-confirm",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914692184,
+          "message_id": "message_4bcdab4c97b3659358c4a114",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I'd like to set up a tune-up for my boiler.",
+          "created_timestamp": 1793914692804,
+          "message_id": "message_1decdc81cd905bae9afba4b4",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Can I get your name?",
+          "created_timestamp": 1793914693423,
+          "message_id": "message_afabdff351f4064aff12ac55",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Omar Haddad.",
+          "created_timestamp": 1793914694106,
+          "message_id": "message_8a8509f86e2e1c04e825cdc7",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Omar. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793914694706,
+          "message_id": "message_52609c8d076ace1a9da3dbc3",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, it's a home. A house, actually. Um, the address is 142 Bay Ridge Parkway, Brooklyn, 11209.",
+          "created_timestamp": 1793914695622,
+          "message_id": "message_a09182a814eb1b8a93da1e61",
+          "role": "user"
+        },
+        {
+          "content": "Got it. I'll look up that address now.",
+          "created_timestamp": 1793914697003,
+          "message_id": "message_eefa8159f9c82db7f5d38c14",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"142 Bay Ridge Parkway\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793914697004,
+          "message_id": "message_6bc34a1d1a9d7b006151a32c",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_016dP2kec1QMDUs7sXuKnuzx",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"142 Bay Ridge Parkway\",\"zip\":\"11209\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Bay Ridge\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793914697474,
+          "message_id": "message_a14e2387cf7f02559836d30c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_016dP2kec1QMDUs7sXuKnuzx"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"Bay Ridge Parkway\",\"zip\":\"11209\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793914697475,
+          "message_id": "message_6c1064c01e474f1c2359674e",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01BZevpznZSgZVQhsGPuUPh7",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793914697707,
+          "message_id": "message_a6fa9648e66dbcacf15393e5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01BZevpznZSgZVQhsGPuUPh7"
+        },
+        {
+          "content": "Thanks. What's the best phone number to reach you?",
+          "created_timestamp": 1793914698329,
+          "message_id": "message_824ae18075c078d794d25df2",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(917) 555-0101. That's the one I'm calling from.",
+          "created_timestamp": 1793914699030,
+          "message_id": "message_6b0ecc270ae7f4cbf1ac216e",
+          "role": "user"
+        },
+        {
+          "content": "The phone number was given in the caller's message, so I'll use it as the number they're calling from.",
+          "created_timestamp": 1793914700175,
+          "message_id": "message_c9974e4575a3ff96f100da7f",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"142 Bay Ridge Parkway\",\"zip\":\"11209\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"name\":\"Omar Haddad\"}",
+          "created_timestamp": 1793914700176,
+          "message_id": "message_bba2292538e0f2d5f4ab772a",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UM8RZ1vDL4wVsofDpPU87z",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 142 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 142 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?\"}}",
+          "created_timestamp": 1793914700676,
+          "message_id": "message_71b6f23c91c03a2f37586a5d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UM8RZ1vDL4wVsofDpPU87z"
+        },
+        {
+          "content": "I have your home at 142 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?",
+          "created_timestamp": 1793914701536,
+          "message_id": "message_7c9cf5611a588d756aa181d6",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's right.",
+          "created_timestamp": 1793914702030,
+          "message_id": "message_5e6e759d265c936ac5c7f500",
+          "role": "user"
+        },
+        {
+          "content": "The caller confirmed the details. Their message included a knowledge base excerpt, which I'll ignore; I'll go on with the booking.",
+          "created_timestamp": 1793914703295,
+          "message_id": "message_471f834ac1d8251831a0f555",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"142 Bay Ridge Parkway\",\"zip\":\"11209\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"name\":\"Omar Haddad\",\"confirmed\":true}",
+          "created_timestamp": 1793914703296,
+          "message_id": "message_9d36198f9c6daafd6dcea8ab",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01N6QSASFnYoucxpZzrEbttG",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"142 Bay Ridge Parkway\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11209\",\"spelled\":\"\"},\"phone\":\"9175550101\"}}",
+          "created_timestamp": 1793914703657,
+          "message_id": "message_611168a5ed5e35b0cdd74784",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01N6QSASFnYoucxpZzrEbttG"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\"}",
+          "created_timestamp": 1793914704410,
+          "message_id": "message_6146d0763b7beabf0ede17ac",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01NDMKe3RqpZ7KQPmxdjQqhe",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 5 to 7. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1700-1900\"],\"labels\":[\"5 to 7\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793914705459,
+          "message_id": "message_edc71fcd06f2f34c5d11b868",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01NDMKe3RqpZ7KQPmxdjQqhe"
+        },
+        {
+          "content": "The soonest I have is today, 5 to 7. Does that work?",
+          "created_timestamp": 1793914706170,
+          "message_id": "message_4b01dfaf74893dd848c10273",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh wait, sorry, it's 144, not 142.",
+          "created_timestamp": 1793914706662,
+          "message_id": "message_46f5fff6ebd400c914cbe1d2",
+          "role": "user"
+        },
+        {
+          "content": "No problem. I'll correct the address.",
+          "created_timestamp": 1793914707666,
+          "message_id": "message_5c5dea7bb28f67e5e3248875",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"144 Bay Ridge Parkway\",\"zip\":\"11209\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"name\":\"Omar Haddad\"}",
+          "created_timestamp": 1793914707667,
+          "message_id": "message_44e986d44aaef331c626380e",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01B8puecBHzFkPUDBvW15vU3",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 144 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 144 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?\"},\"server_notes\":[\"[server] The caller gave a different address detail or number after confirming the read-back. Call read_back with the details they just gave, so the new sentence is read for you; nothing books until they confirm it. Don't ask them to repeat what they already said.\"]}",
+          "created_timestamp": 1793914708304,
+          "message_id": "message_4aed8fb0651fe13bacc935f8",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01B8puecBHzFkPUDBvW15vU3"
+        },
+        {
+          "content": "I have your home at 144 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?",
+          "created_timestamp": 1793914709357,
+          "message_id": "message_fc1de64596b03f5052f4333e",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's right. 144 Bay Ridge Parkway, 11209.",
+          "created_timestamp": 1793914709901,
+          "message_id": "message_504a64d02d032ca5a8aebf34",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"144 Bay Ridge Parkway\",\"zip\":\"11209\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"name\":\"Omar Haddad\",\"confirmed\":true}",
+          "created_timestamp": 1793914711016,
+          "message_id": "message_09cde110889853b87f3c3d76",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01VimZ3U8MX9JNbGKDauoTTM",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"144 Bay Ridge Parkway\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11209\",\"spelled\":\"\"},\"phone\":\"9175550101\"}}",
+          "created_timestamp": 1793914711358,
+          "message_id": "message_929e5e48b5482a8af783b858",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01VimZ3U8MX9JNbGKDauoTTM"
+        },
+        {
+          "content": "Thanks, that's confirmed. The soonest I have is today, Thursday, November 5, 5 to 7 in the evening. Does that work?",
+          "created_timestamp": 1793914712224,
+          "message_id": "message_602143dd82818e8ef0e5dd16",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hmm, no, I need a weekday morning. Do you have anything tomorrow morning?",
+          "created_timestamp": 1793914713020,
+          "message_id": "message_33966c0279433d06b9470f62",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"day\":\"tomorrow\",\"time_of_day\":\"morning\"}",
+          "created_timestamp": 1793914713802,
+          "message_id": "message_7f398820b92bb71206c2b741",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01X2MYupAvQGgvGcjnJuTnia",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Tomorrow I have 8 to 10, 10 to 12, 12 to 2, 2 to 4, 4 to 6 or 6 to 8.\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"windows\":[{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1000-1200\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"10 to 12\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1200-1400\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"12 to 2\",\"part\":\"afternoon\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1400-1600\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"2 to 4\",\"part\":\"afternoon\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1600-1800\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1800-2000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793914716062,
+          "message_id": "message_e8af188f187646239990416c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01X2MYupAvQGgvGcjnJuTnia"
+        },
+        {
+          "content": "Tomorrow, Friday, November 6, I have morning windows of 8 to 10 and 10 to 12. Which would you like?",
+          "created_timestamp": 1793914716818,
+          "message_id": "message_301bea2eb7ac3ca5dc44b6fd",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, the 8 to 10 is fine. Yeah, let's do that one.",
+          "created_timestamp": 1793914717479,
+          "message_id": "message_c176a04437a5ba5f936cf012",
+          "role": "user"
+        },
+        {
+          "content": "Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793914718082,
+          "message_id": "message_34a4cc2f66eafcfa36fd3f42",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, sure, yeah. I mean, I'd want to hear what they find first, you know? Like the price and everything before I say yes to anything.",
+          "created_timestamp": 1793914719005,
+          "message_id": "message_432314591d963e49cc1d2080",
+          "role": "user"
+        },
+        {
+          "content": "The caller's answer is a yes, with the note that they want to hear costs first. The technician will go over any costs before doing the work, so I'll move on.\n\nThe technician will go over any costs with you before doing any work. Will someone be home to let the technician in?",
+          "created_timestamp": 1793914720151,
+          "message_id": "message_e75e2f8884ca171e054ab2b0",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, I'll be home. Should be fine.",
+          "created_timestamp": 1793914721534,
+          "message_id": "message_ac51701b01931b7c5f82d3e0",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, got it. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793914722358,
+          "message_id": "message_2be2145c0539f39c38789ca0",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, no gate or pet. Just ring the bell. Is that all you need?",
+          "created_timestamp": 1793914723011,
+          "message_id": "message_55ee8d75b13fede4915dda7d",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"},\"details\":{\"approver\":\"Omar Haddad\",\"issue\":\"Boiler tune-up (yearly maintenance)\",\"since\":\"Not applicable (routine tune-up)\",\"tried\":\"Not applicable (routine tune-up)\",\"who_home\":\"Omar Haddad, will be home\",\"arrival_notes\":\"No gate code or pets. Ring the bell.\",\"name\":\"Omar Haddad\",\"system_type\":\"Boiler\"}}",
+          "created_timestamp": 1793914724505,
+          "message_id": "message_51accf97442272a725c62b22",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01D9fsYuVsmRbBwh89Qbxdse",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?\",\"data\":{\"booking_id\":552,\"appointment_id\":552,\"window\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793914725264,
+          "message_id": "message_21840883060335c228835fe2",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01D9fsYuVsmRbBwh89Qbxdse"
+        },
+        {
+          "content": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else I can help with?",
+          "created_timestamp": 1793914725892,
+          "message_id": "message_7cb765fe3af3ecea4174d356",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope, that's everything. Thanks, bye.",
+          "created_timestamp": 1793914726639,
+          "message_id": "message_e845e4361a919129814f73ed",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793914727447,
+          "message_id": "message_fe4f83c52e73f7fcd16820cf",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793914727448,
+          "message_id": "message_fae28db13d7e2fe1926c4f46",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FpS752zTAxDV2rqhappqYc",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793914727874,
+          "message_id": "message_4524429aa171b00e979eb853",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FpS752zTAxDV2rqhappqYc"
+        },
+        {
+          "content": "The conversation is already over. The agent said goodbye and I said bye, so there's nothing left for Omar to say. I'm staying silent.",
+          "created_timestamp": 1793914729840,
+          "message_id": "message_5f0122be7f52d7f7b425cc39",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-readback-correction-after-confirm",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0101",
+      "caller_key": "9175550101",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-08T21:37:58Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 31,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"144 Bay Ridge Parkway\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11209\", \"spelled\": \"\", \"phone\": \"9175550101\", \"phone_for\": \"\", \"sentence\": \"I have your home at 144 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?\"}",
+      "readback_asked_seq": 16,
+      "readback_confirmed_at": "2026-11-05T21:38:31Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:37:58Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "caller_id": "(917) 555-0101",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.7,
+        "error": null,
+        "request_id": "a4d8d08e75b7"
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I'd like to set up a tune-up for my boiler.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Got it. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Omar Haddad.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Omar. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yeah, it's a home. A house, actually. Um, the address is 142 Bay Ridge Parkway, Brooklyn, 11209.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it. I'll look up that address now.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "street": "142 Bay Ridge Parkway",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 105.6,
+        "error": null,
+        "request_id": "9942ebb7087c"
+      },
+      {
+        "at": "2026-11-05T21:38:17Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "phone": null,
+          "address": {
+            "street": "Bay Ridge Parkway",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11209",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 12.1,
+        "error": null,
+        "request_id": "43568c06a607"
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "Thanks. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "caller",
+        "text": "(917) 555-0101. That's the one I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "The phone number was given in the caller's message, so I'll use it as the number they're calling from.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "address": {
+            "street": "142 Bay Ridge Parkway",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11209",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Omar Haddad",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 142 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?",
+        "ms": 5.3,
+        "error": null,
+        "request_id": "2c61c56fd519"
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "I have your home at 142 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Yes, that's right.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "The caller confirmed the details. Their message included a knowledge base excerpt, which I'll ignore; I'll go on with the booking.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:23Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "address": {
+            "street": "142 Bay Ridge Parkway",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11209",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Omar Haddad",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.3,
+        "error": null,
+        "request_id": "2e88abb64d4b"
+      },
+      {
+        "at": "2026-11-05T21:38:25Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "",
+            "since": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 5 to 7. Does that work?",
+        "ms": 751.7,
+        "error": null,
+        "request_id": "d2b8f72da570"
+      },
+      {
+        "at": "2026-11-05T21:38:27Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "The soonest I have is today, 5 to 7. Does that work?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:27Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "Oh wait, sorry, it's 144, not 142.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:28Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "No problem. I'll correct the address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:28Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "address": {
+            "street": "144 Bay Ridge Parkway",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11209",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Omar Haddad",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 144 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?",
+        "ms": 198.7,
+        "error": null,
+        "request_id": "52c9dfe66c91"
+      },
+      {
+        "at": "2026-11-05T21:38:31Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "I have your home at 144 Bay Ridge Parkway, Brooklyn, ZIP code one one two zero nine, and the best number is nine one seven, five five five, zero one zero one. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:31Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yes, that's right. 144 Bay Ridge Parkway, 11209.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:31Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "address": {
+            "street": "144 Bay Ridge Parkway",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11209",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Omar Haddad",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 8.0,
+        "error": null,
+        "request_id": "ec3fc4375254"
+      },
+      {
+        "at": "2026-11-05T21:38:34Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Thanks, that's confirmed. The soonest I have is today, Thursday, November 5, 5 to 7 in the evening. Does that work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:34Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Hmm, no, I need a weekday morning. Do you have anything tomorrow morning?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:35Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": "morning",
+          "window_minutes": null,
+          "day": "tomorrow",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "",
+            "since": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Tomorrow I have 8 to 10, 10 to 12, 12 to 2, 2 to 4, 4 to 6 or 6 to 8.",
+        "ms": 1824.9,
+        "error": null,
+        "request_id": "ca50e033f467"
+      },
+      {
+        "at": "2026-11-05T21:38:44Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "Tomorrow, Friday, November 6, I have morning windows of 8 to 10 and 10 to 12. Which would you like?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:44Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Um, the 8 to 10 is fine. Yeah, let's do that one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:44Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:44Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Um, sure, yeah. I mean, I'd want to hear what they find first, you know? Like the price and everything before I say yes to anything.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:44Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "The caller's answer is a yes, with the note that they want to hear costs first. The technician will go over any costs before doing the work, so I'll move on.\n\nThe technician will go over any costs with you before doing any work. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:44Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "Yeah, I'll be home. Should be fine.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:44Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "Thanks, got it. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:45Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "caller",
+        "text": "No, no gate or pet. Just ring the bell. Is that all you need?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:45Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "Boiler tune-up (yearly maintenance)",
+            "since": "Not applicable (routine tune-up)",
+            "tried": "Not applicable (routine tune-up)",
+            "who_home": "Omar Haddad, will be home",
+            "approver": "Omar Haddad",
+            "system_type": "Boiler",
+            "arrival_notes": "No gate code or pets. Ring the bell.",
+            "name": "Omar Haddad",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?",
+        "ms": 180.2,
+        "error": null,
+        "request_id": "28eaaeb408dc"
+      },
+      {
+        "at": "2026-11-05T21:38:47Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:47Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "caller",
+        "text": "Nope, that's everything. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:47Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:47Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052135-readback-correction-after-confirm",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.7,
+        "error": null,
+        "request_id": "67218425d5cf"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 209,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 552,
+        "window_start": "2026-11-06T13:00:00Z",
+        "window_end": "2026-11-06T15:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "Omar Haddad, will be home",
+        "job_type": "tune_up",
+        "street": "144 Bay Ridge Parkway",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-readback-correction-after-confirm",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "142",
+        "street": "bay ridge pkwy",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11209\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

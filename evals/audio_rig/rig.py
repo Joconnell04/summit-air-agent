@@ -21,6 +21,7 @@ Every call is also recorded in stereo with a timed transcript, into a batch fold
 with a copy in the recordings bucket (evals/audio_rig/recording.py and store.py), for listening
 on `make listen`.
 """
+
 import argparse
 import asyncio
 import importlib
@@ -58,7 +59,15 @@ from evals.world import World, resolve_caller, seeded_db
 
 # The parts of a call's cost that are the stack's own; the rest is the rig's.
 STACK_PARTS = ("platform", "platform_transcription", "brain_model")
-ENTRANTS = ("livekit", "retell", "retell_flow", "elevenlabs", "openai_realtime", "gemini_live")
+ENTRANTS = (
+    "livekit",
+    "retell",
+    "retell_flow",
+    "retell_llm",
+    "elevenlabs",
+    "openai_realtime",
+    "gemini_live",
+)
 
 
 def load_entrant(name: str):
@@ -172,8 +181,15 @@ def must_repeat(scenario: Scenario) -> bool:
 
 
 class Rig:
-    def __init__(self, entrant, ctx: RigContext, workdir: Path, caller_model: Model,
-                 grader: Model, verbose: bool = True):
+    def __init__(
+        self,
+        entrant,
+        ctx: RigContext,
+        workdir: Path,
+        caller_model: Model,
+        grader: Model,
+        verbose: bool = True,
+    ):
         self.entrant = entrant
         self.ctx = ctx
         self.workdir = workdir
@@ -190,8 +206,9 @@ class Rig:
         if self.verbose:
             print(f"  {call_id[-8:]} {text}", flush=True)
 
-    async def call(self, scenario: Scenario, sample: int = 1,
-                   recorder: CallRecorder | None = None) -> ScenarioResult:
+    async def call(
+        self, scenario: Scenario, sample: int = 1, recorder: CallRecorder | None = None
+    ) -> ScenarioResult:
         call_id = f"rig-{scenario.id}-{sample}-{uuid.uuid4().hex[:8]}"
         began = time.perf_counter()
         transcript: list[Turn] = []
@@ -219,10 +236,12 @@ class Rig:
             greeting = await speech.hear(heard_turn.pcm, heard_turn.rate)
             self.log(call_id, f"agent: {greeting}")
             if recorder:
-                recorder.line("agent", greeting or " ".join(heard_turn.said),
-                              heard_turn.first_sound)
-            transcript.append(Turn(role="agent", text=greeting,
-                                   said=" ".join(heard_turn.said) or None))
+                recorder.line(
+                    "agent", greeting or " ".join(heard_turn.said), heard_turn.first_sound
+                )
+            transcript.append(
+                Turn(role="agent", text=greeting, said=" ".join(heard_turn.said) or None)
+            )
             trace = await asyncio.to_thread(server.trace, call_id)
             tools_so_far = tool_count(trace)
             _, agent_lines = turn_agent_timings(trace, 0)
@@ -233,8 +252,9 @@ class Rig:
                 if listener.is_hung_up:
                     reason = "agent_end"
                     break
-                pcm = self.vad.trim(await speech.say(said, self.entrant.in_rate),
-                                    self.entrant.in_rate)
+                pcm = self.vad.trim(
+                    await speech.say(said, self.entrant.in_rate), self.entrant.in_rate
+                )
                 transcript.append(Turn(role="caller", text=said))
                 self.log(call_id, f"caller: {said}")
                 spoken = not sender.stopped
@@ -252,34 +272,49 @@ class Rig:
                 lookup = tool_count(trace) > tools_so_far
                 tools_so_far = tool_count(trace)
                 stages, agent_lines = turn_agent_timings(trace, agent_lines)
-                logged = {k: float(v) for k, v in {**newest_caller_timings(trace), **stages}.items()
-                          if isinstance(v, (int, float))}
+                logged = {
+                    k: float(v)
+                    for k, v in {**newest_caller_timings(trace), **stages}.items()
+                    if isinstance(v, (int, float))
+                }
                 if heard_turn.first_sound is None:
                     silent += 1
                 else:
-                    timings.append(TurnTiming(
-                        kind="lookup" if lookup else "plain",
-                        reply_delay_ms=reply_delay_ms(end, heard_turn.first_sound),
-                        # The rig times the sound; the model's first token is the voice
-                        # program's, when it logs one.
-                        model_first_token_ms=stages.get("llm_first_token_ms") or 0,
-                        platform_reply_ms=stages.get("reply_ms"),
-                        caller_speech_ms=(end - start) * 1000,
-                        agent_speech_ms=len(heard_turn.pcm) / 2 / heard_turn.rate * 1000,
-                        over_caller_ms=(None if heard_turn.over_caller is None
-                                        else max(0.0, (end - heard_turn.over_caller) * 1000)),
-                        platform_stages=logged,
-                    ))
-                delay = (f"{reply_delay_ms(end, heard_turn.first_sound):.0f} ms"
-                         if heard_turn.first_sound is not None else "silent")
+                    timings.append(
+                        TurnTiming(
+                            kind="lookup" if lookup else "plain",
+                            reply_delay_ms=reply_delay_ms(end, heard_turn.first_sound),
+                            # The rig times the sound; the model's first token is the voice
+                            # program's, when it logs one.
+                            model_first_token_ms=stages.get("llm_first_token_ms") or 0,
+                            platform_reply_ms=stages.get("reply_ms"),
+                            caller_speech_ms=(end - start) * 1000,
+                            agent_speech_ms=len(heard_turn.pcm) / 2 / heard_turn.rate * 1000,
+                            over_caller_ms=(
+                                None
+                                if heard_turn.over_caller is None
+                                else max(0.0, (end - heard_turn.over_caller) * 1000)
+                            ),
+                            platform_stages=logged,
+                        )
+                    )
+                delay = (
+                    f"{reply_delay_ms(end, heard_turn.first_sound):.0f} ms"
+                    if heard_turn.first_sound is not None
+                    else "silent"
+                )
                 self.log(call_id, f"agent ({delay}{', lookup' if lookup else ''}): {heard}")
                 if recorder and heard_turn.first_sound is not None:
-                    recorder.line("agent", heard or " ".join(heard_turn.said),
-                                  heard_turn.first_sound,
-                                  reply_delay_ms(end, heard_turn.first_sound))
+                    recorder.line(
+                        "agent",
+                        heard or " ".join(heard_turn.said),
+                        heard_turn.first_sound,
+                        reply_delay_ms(end, heard_turn.first_sound),
+                    )
                 if heard or heard_turn.said:
-                    transcript.append(Turn(role="agent", text=heard,
-                                           said=" ".join(heard_turn.said) or None))
+                    transcript.append(
+                        Turn(role="agent", text=heard, said=" ".join(heard_turn.said) or None)
+                    )
                 if heard_turn.hung_up:
                     reason = "agent_end"
                     break
@@ -314,9 +349,21 @@ class Rig:
         await speech.aclose()
         usage.add(Usage(cost_usd=sum(v for k, v in parts.items() if k != "caller_model")))
         result = await asyncio.to_thread(
-            score, scenario, sample, call_id, server, transcript, timings, usage, error, began,
-            safety=self.safety, grader=self.grader, final=self.entrant.final_record,
-            agent_cost=sum(v for k, v in parts.items() if k in STACK_PARTS), silent_turns=silent,
+            score,
+            scenario,
+            sample,
+            call_id,
+            server,
+            transcript,
+            timings,
+            usage,
+            error,
+            began,
+            safety=self.safety,
+            grader=self.grader,
+            final=self.entrant.final_record,
+            agent_cost=sum(v for k, v in parts.items() if k in STACK_PARTS),
+            silent_turns=silent,
         )
         parts["grader"] = max(0.0, result.cost_usd - sum(parts.values()))
         result.cost_parts = {k: round(v, 6) for k, v in parts.items()}
@@ -326,20 +373,27 @@ class Rig:
 
 def plan(chosen: list[Scenario], repeats: int, samples: int = 1) -> list[tuple[Scenario, int]]:
     """`repeats` runs of each must-pass scenario, `samples` of every other one."""
-    return [(s, n) for s in chosen
-            for n in range(1, (repeats if must_repeat(s) else samples) + 1)]
+    return [(s, n) for s in chosen for n in range(1, (repeats if must_repeat(s) else samples) + 1)]
 
 
-async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost: float | None,
-                      env: dict, workdir: Path, samples: int = 1,
-                      batch: Batch | None = None) -> tuple[list[ScenarioResult], object]:
+async def run_entrant(
+    name: str,
+    chosen: list[Scenario],
+    repeats: int,
+    max_cost: float | None,
+    env: dict,
+    workdir: Path,
+    samples: int = 1,
+    batch: Batch | None = None,
+) -> tuple[list[ScenarioResult], object]:
     config = load_config()
     worlds = Worlds()
     with Serving(build_app(worlds)) as router:
         ctx = RigContext(worlds, router.url, config, env)
         entrant = load_entrant(name).entrant(ctx)
-        rig = Rig(entrant, ctx, workdir, for_profile("offline.caller"),
-                  for_profile("offline.grader"))
+        rig = Rig(
+            entrant, ctx, workdir, for_profile("offline.caller"), for_profile("offline.grader")
+        )
         done: list[ScenarioResult] = []
         await entrant.start()
         try:
@@ -357,8 +411,11 @@ async def run_entrant(name: str, chosen: list[Scenario], repeats: int, max_cost:
                 spent = sum(r.cost_usd for r in done)
                 delays = ", ".join(f"{t.reply_delay_ms:.0f}" for t in result.turn_timings)
                 why = result.error or "; ".join(result.check_failures)
-                print(f"{result.key}: {result.outcome} ${result.cost_usd:.3f} "
-                      f"(run ${spent:.2f}) delays ms [{delays}] {why}", flush=True)
+                print(
+                    f"{result.key}: {result.outcome} ${result.cost_usd:.3f} "
+                    f"(run ${spent:.2f}) delays ms [{delays}] {why}",
+                    flush=True,
+                )
                 if max_cost is not None and spent > max_cost:
                     print(f"stopping: cost ${spent:.2f} passed the cap ${max_cost:.2f}", flush=True)
                     break
@@ -388,15 +445,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-upload", action="store_true")
     parser.add_argument("--results-dir", default=str(RESULTS_DIR))
     parser.add_argument("--tags", default="", help="scenario tags, comma separated")
-    parser.add_argument("--no-record", action="store_true",
-                        help="skip the stereo recordings (evals/audio_rig/recording.py)")
-    parser.add_argument("--no-store", action="store_true",
-                        help="keep recordings local, without the copy in the bucket")
+    parser.add_argument(
+        "--no-record",
+        action="store_true",
+        help="skip the stereo recordings (evals/audio_rig/recording.py)",
+    )
+    parser.add_argument(
+        "--no-store",
+        action="store_true",
+        help="keep recordings local, without the copy in the bucket",
+    )
     parser.add_argument("--record-dir", default=str(SIM_DIR))
-    parser.add_argument("--batch", default="",
-                        help="add the calls to this existing batch, numbering on from its last")
-    parser.add_argument("--results-in-batch", action="store_true",
-                        help="write the results file into the batch folder, not evals/results")
+    parser.add_argument(
+        "--batch",
+        default="",
+        help="add the calls to this existing batch, numbering on from its last",
+    )
+    parser.add_argument(
+        "--results-in-batch",
+        action="store_true",
+        help="write the results file into the batch folder, not evals/results",
+    )
     args = parser.parse_args(argv)
 
     chosen, _ = suites.select(load_all(), args.suite, suites.parse_tags(args.tags))
@@ -421,15 +490,24 @@ def main(argv: list[str] | None = None) -> int:
     results_dir = batch.folder if (batch and args.results_in_batch) else Path(args.results_dir)
     with tempfile.TemporaryDirectory(prefix="summit-rig-") as tmp:
         done, entrant = asyncio.run(
-            run_entrant(args.stack, chosen, args.repeats, args.max_cost, dict(os.environ),
-                        Path(tmp), args.samples, batch)
+            run_entrant(
+                args.stack,
+                chosen,
+                args.repeats,
+                args.max_cost,
+                dict(os.environ),
+                Path(tmp),
+                args.samples,
+                batch,
+            )
         )
     if not done:
         print("no scenario finished", file=sys.stderr)
         return 1
     suite = args.suite if not (args.only or args.tags) else "custom"
-    run = build_run(suite, suites.parse_tags(args.tags), entrant.name, entrant.profile, done,
-                    transport="audio")
+    run = build_run(
+        suite, suites.parse_tags(args.tags), entrant.name, entrant.profile, done, transport="audio"
+    )
     if getattr(entrant, "model", None):
         run.model = entrant.model
     path = results.save(run, results_dir)

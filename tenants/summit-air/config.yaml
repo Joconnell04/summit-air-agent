@@ -50,6 +50,9 @@ auth:
 # from its ZIP. Research: docs/explorations/015-address-lookup.md.
 address_lookup:
   geosearch_url: https://geosearch.planninglabs.nyc/v2/search
+  # Residential units by tax lot (NYC Open Data MapPLUTO, unitsres), so a building of apartments
+  # asks for the unit (Jackson's call call_2fb4e053ba8b76b57c348845990: 199 East 4th Street has 9).
+  units_url: https://data.cityofnewyork.us/resource/64uk-42ks.json
   census_suffix: ", NY"
   boroughs:
     brooklyn: Brooklyn
@@ -60,6 +63,12 @@ address_lookup:
     manhattan: Manhattan
     bronx: Bronx
     the bronx: Bronx
+  # Booking-first when the city's records don't have the address and the caller doesn't know the
+  # ZIP: the visit is booked on the borough's ZIP below, marked unverified, and the office confirms
+  # the address before dispatch (Jackson; socket-arm call call_1bcb4106a02dff87609d8e7fd8b ended in
+  # a callback). ASSUMED placeholders, one central ZIP a borough; never spoken to the caller.
+  unverified_zips: {Manhattan: "10001", Brooklyn: "11201", Queens: "11101", Bronx: "10451",
+                    Staten Island: "10301"}
   zip_boroughs: {"100": Manhattan, "101": Manhattan, "102": Manhattan, "103": Staten Island,
                  "104": Bronx, "112": Brooklyn, "110": Queens, "111": Queens, "113": Queens,
                  "114": Queens, "116": Queens}
@@ -120,7 +129,10 @@ zones:
     county: Kings
     seeded: false
     zips: ["11203", "11207", "11208", "11212", "11213", "11215", "11217", "11219", "11220", "11224",
-      "11225", "11226", "11232", "11233", "11236", "11239"]
+      "11225", "11226", "11232", "11233", "11236", "11239",
+      # A USPS ZIP that isn't a census ZIP area, so MODZCTA has none: the Williamsburg waterfront,
+      # where GeoSearch puts 620 Bedford Ave (Retell eval suite round 1 found it out of area).
+      "11249"]
   - id: 10
     name: Queens, rest of borough
     county: Queens
@@ -151,10 +163,12 @@ job_types:
 # Capacity is held in 30-minute blocks from opening to closing, and an arrival window is any run of
 # blocks (Jackson after Retell call call_9826ff9f0dfa8bc835a3601368b: "4 hours is too large a gap to
 # be a window", and "the atomic unit becomes 30 minutes"). A window's id is its local start and end,
-# "0730-0930". `window_minutes` is the length offered when the caller names none.
+# "0730-0930". `window_minutes` is the length offered when the caller names none: 30 minutes
+# (Jackson, gas test call call_0246b91f77e01a4b18583e6ca8b: "by default, it should give a 30 minute
+# way, not a 2 hour window"). A caller can still ask for a longer one.
 scheduling:
   block_minutes: 30
-  window_minutes: 120
+  window_minutes: 30
 
 # The 2-hour windows the schedule shows and the seeded world books, and the on-call night window.
 # Any other run of blocks can be booked too.
@@ -207,6 +221,8 @@ tag_types:
   - {id: 801, name: Callback resolved, code: CB-RES, color: "#2e7d32", active: true}
   - {id: 802, name: Callback open, code: CB-OPEN, color: "#ef6c00", active: true}
   - {id: 803, name: No contact, code: CB-NONE, color: "#757575", active: true}
+  - {id: 804, name: Urgent, code: URGENT, color: "#c62828", active: true}
+  - {id: 805, name: Routine, code: ROUTINE, color: "#546e7a", active: true}
 
 # Names for the system_type values on installed equipment. A type left out is shown as its id with
 # underscores replaced by spaces.

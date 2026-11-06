@@ -31,6 +31,7 @@ from livekit.plugins import anthropic as lk_anthropic
 
 from app.main import create_app
 from app.settings import Settings
+from app.tenant import voice_lines
 from prompts import assemble
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
@@ -185,9 +186,8 @@ async def run(args) -> list[dict]:
 
 
 def _voice() -> dict:
-    import yaml
 
-    return yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())["voice"]
+    return voice_lines(TENANT_DIR)
 
 
 def report(rows: list[dict], label: str) -> str:

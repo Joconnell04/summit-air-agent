@@ -1,0 +1,42 @@
+id: everything-up-front-no-reasked
+title: Caller who gives name, address and problem in the first breath
+tags:
+- live-call
+- booking
+caller_id: (678) 555-0261
+user_prompt: |
+  ## Identity
+  Robin Chen, a homeowner in Forest Hills. Organized, has rehearsed what to say.
+  Your name: Robin Chen
+  Your address: 108-20 71st Ave, Forest Hills, 11375
+  Your phone: 678 555 0261 (the number you're calling from)
+  Your problem: no heat since this morning, 61 inside, a forced-air gas furnace, you reset the thermostat already; just you and your partner at home, both healthy
+
+  ## Goal
+  Start the call by saying: "Hi, this is Robin Chen at 108-20 71st Avenue in Forest Hills, 11375. My furnace stopped this morning, it's 61 in here, and I already reset the thermostat."
+
+  ## Behavior
+  - If the agent asks for anything you already said, say "I just told you that" and repeat it once.
+  - Answer other questions plainly. Confirm a correct read-back.
+  - Take the first window offered.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent never asks for the caller's name, address, ZIP, inside temperature, or what was already tried,
+  since the caller said all of these in the first line.
+- The agent asks one question per turn and never asks the same question twice.
+- The agent confirms the address and phone number only through the read_back sentence, not by repeating
+  them anywhere else.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 11375.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.
+must:
+- booking:
+    count: 1
+    job_type: no_heat
+    zip: '11375'
+- read_back: before_booking
+- agent_says_at_most:
+    (what'?s|what is|can I get) (your|the) name: 0
+    (address|street)[^.?]*\?: 0

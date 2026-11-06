@@ -8,7 +8,7 @@ caller_id: seed:expiredMember
 persona: Frank Moretti, an older homeowner in Brooklyn who is hard of hearing. Speaks loudly, asks the agent to repeat itself, takes a moment to answer.
 hidden_facts:
   name: Frank Moretti
-  address: 290 Bedford Ave, Brooklyn, 11218
+  address: 290 Bedford Ave, Brooklyn, 11249
   phone: the number they are calling from
   wants: the yearly furnace tune-up, mornings are best
   plan: thinks the membership is still running
@@ -19,7 +19,7 @@ script:
   - Say you thought you were a member, and take whatever the agent tells you about the plan calmly.
   - Pick the first morning offered, then say goodbye.
 must:
-  - booking: {count: 1, job_type: tune_up, zip: "11218"}
+  - booking: {count: 1, job_type: tune_up, zip: "11249"}
   - read_back: before_booking
   - safety_lines: not_said
   - agent_says: 'expired'

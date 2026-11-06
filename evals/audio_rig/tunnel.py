@@ -1,6 +1,7 @@
 """A temporary public URL for a local port, for a platform that must call back into the rig
 (ElevenLabs' custom LLM). It runs `ngrok http <port>` for the length of a run and reads the
 public address from ngrok's local API."""
+
 import subprocess
 import time
 from typing import Self
@@ -28,7 +29,8 @@ class Tunnel:
     def __enter__(self) -> Self:
         self.process = subprocess.Popen(
             ["ngrok", "http", str(self.port), "--log", "stdout"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         deadline = time.monotonic() + 20
         while time.monotonic() < deadline and not self.url:
@@ -36,8 +38,9 @@ class Tunnel:
                 raise RuntimeError("ngrok exited; is another ngrok session already running?")
             for api_port in self.api_ports:
                 try:
-                    found = public_url(httpx.get(API.format(port=api_port), timeout=1).json(),
-                                       self.port)
+                    found = public_url(
+                        httpx.get(API.format(port=api_port), timeout=1).json(), self.port
+                    )
                 except (httpx.HTTPError, ValueError):
                     continue
                 if found:

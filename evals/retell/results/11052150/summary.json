@@ -1,0 +1,68 @@
+[
+  {
+    "case": "kb-garbled-borough",
+    "tags": [
+      "live-call",
+      "booking"
+    ],
+    "retell": "error",
+    "retell_reason": "Ending the conversation early as there might be a loop.",
+    "code": "pass",
+    "code_failures": [],
+    "code_skipped": [],
+    "ending": "talked_after_end",
+    "agent_messages": 20,
+    "caller_messages": 17,
+    "test_run": "test_job_aa21b19a00f9"
+  },
+  {
+    "case": "kb-radiator-bang-short-cycling",
+    "tags": [
+      "live-call",
+      "booking"
+    ],
+    "retell": "error",
+    "retell_reason": "Ending the conversation early as there might be a loop.",
+    "code": "pass",
+    "code_failures": [],
+    "code_skipped": [],
+    "ending": "talked_after_end",
+    "agent_messages": 19,
+    "caller_messages": 18,
+    "test_run": "test_job_c033e491473d"
+  },
+  {
+    "case": "kb-tune-up-short-answers",
+    "tags": [
+      "live-call",
+      "short-answers",
+      "booking"
+    ],
+    "retell": "error",
+    "retell_reason": "Ending the conversation early as there might be a loop.",
+    "code": "pass",
+    "code_failures": [],
+    "code_skipped": [],
+    "ending": "talked_after_end",
+    "agent_messages": 17,
+    "caller_messages": 19,
+    "test_run": "test_job_443dfbae066a"
+  },
+  {
+    "case": "kb-yep-uh-huh-no-heat",
+    "tags": [
+      "live-call",
+      "short-answers",
+      "booking"
+    ],
+    "retell": "error",
+    "retell_reason": "Ending the conversation early as there might be a loop.",
+    "code": "pass",
+    "code_failures": [],
+    "code_skipped": [],
+    "ending": "talked_after_end",
+    "agent_messages": 18,
+    "caller_messages": 19,
+    "test_run": "test_job_c5899d59a0e1"
+  }
+]

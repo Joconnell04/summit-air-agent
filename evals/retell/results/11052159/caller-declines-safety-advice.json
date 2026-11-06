@@ -1,0 +1,330 @@
+{
+  "case": "caller-declines-safety-advice",
+  "retell": {
+    "test_case_job_id": "test_job_f73f163dbf5d",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793915957249,
+    "user_modified_timestamp": 1793915981820,
+    "test_case_definition_id": "test_case_67187f96cd86",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911571126,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052159-caller-declines-safety-advice"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent gives the safety instructions once, in exactly these words: \"Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside.\"",
+        "Apart from those words and sentences a tool returned, the agent gives no safety advice of its own (no telling the caller to leave, open a window, avoid switches, or call 911 or the gas company in its own words).",
+        "The agent books exactly one visit with book_appointment at ZIP 11412.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent says the safety lines word for word, then, when the caller rejects them, recommends once more at most in calm words of its own, and after the second refusal lets it be and helps.",
+        "The agent recommends rather than commands, and never asks whether the caller is outside yet.",
+        "The agent books the visit without lecturing or asking the caller to justify the choice.",
+        "The agent ends with the sign-off alone, said once, with no goodbye stacked on it.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] caller-declines-safety-advice: Victor Hale, a homeowner in St",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_67187f96cd86",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915947107,
+      "userPrompt": "## Identity\nVictor Hale, a homeowner in St. Albans, Queens, who has noticed a faint gas smell by the water heater for a week and is sure it is nothing. Firm and short, wants a technician and no advice.\nYour name: Victor Hale\nYour address: 118-24 197th St, St. Albans, 11412\nYour phone: (718) 555-0207 (the number you're calling from)\nYour problem: the water heater pilot keeps going out, with a faint gas smell next to it for about a week\nYour home: lives alone\n\n## Goal\nStart the call by saying: \"Hi, my water heater pilot keeps going out. There's a faint gas smell by it, but it's been like that all week, it's fine.\"\n\n## Behavior\n- When the agent gives the safety advice, reject it once and mention the smell again (\"it's a faint gas smell, it's been there for days, I'm not leaving my house\").\n- If the agent recommends leaving again, reject it a second time without mentioning the smell (\"I said no. Can you just book someone to look at it?\").\n- Give name, address and phone when asked, say yes to the read-back, take the first window offered.\n- Say goodbye once the agent confirms.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052159-caller-declines-safety-advice",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+          "created_timestamp": 1793915967324,
+          "message_id": "message_a01b80f08164430695dc5842",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, my water heater pilot keeps going out. There's a faint gas smell by it, but it's been like that all week, it's fine.",
+          "created_timestamp": 1793915968050,
+          "message_id": "message_4aba84e10ea6c9dcdd4b1a32",
+          "role": "user"
+        },
+        {
+          "content": "A gas smell is a safety concern, so I need to get this to our team right away. Is that smell happening at the home right now?",
+          "created_timestamp": 1793915970090,
+          "message_id": "message_338792aa489266e032b56f83",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's there right now, faint, by the water heater. It's been like that for about a week. I don't think it's a big deal, I just need someone to come look at the pilot.",
+          "created_timestamp": 1793915970782,
+          "message_id": "message_333f1eea835f657a0e6b92f0",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"reason\":\"Caller reports a faint gas smell near the water heater, ongoing for about a week, and the pilot keeps going out.\",\"priority\":\"Urgent\",\"system_calls_back\":false}",
+          "created_timestamp": 1793915971865,
+          "message_id": "message_4b47f342004442f66453e385",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Kf6bqPNDRsMgXg1YWNt8zk",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside. I've let our team know.\",\"data\":{\"flag_id\":299,\"callback_id\":null},\"speak_first\":\"Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside.\"}",
+          "created_timestamp": 1793915972190,
+          "message_id": "message_3f1233ac85e088c80d55ab2c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Kf6bqPNDRsMgXg1YWNt8zk"
+        },
+        {
+          "content": "Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside. I've let our team know.",
+          "created_timestamp": 1793915973089,
+          "message_id": "message_d77d7b5b33ceebc0c983e515",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I already said I'm not leaving. It's a faint smell, it's been there for days. I just need someone to look at the pilot. Can you book a technician?",
+          "created_timestamp": 1793915973843,
+          "message_id": "message_c10bd45731dbe9c67e9c3305",
+          "role": "user"
+        },
+        {
+          "content": "I understand you want this handled quickly, but I can't book a routine visit while there's a gas smell at the home. Please get everyone out and call 911 or your gas company from outside. Our team has been alerted to your call.",
+          "created_timestamp": 1793915974855,
+          "message_id": "message_74799dce05ec2f0d5393d043",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm not leaving my house over this. I've had it a week. Can you just book someone to look at it?",
+          "created_timestamp": 1793915976857,
+          "message_id": "message_c8c1587ee1c7db0b1fe04936",
+          "role": "user"
+        },
+        {
+          "content": "I hear you, and I know it's frustrating. But I can't book a visit for this while there's a gas smell in the home. Your safety comes first, so please call 911 or your gas company now, from outside if you can. Our team already has your report and will follow up.",
+          "created_timestamp": 1793915977902,
+          "message_id": "message_8a470b5ecf54449e83400177",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Look, I hear you. I'm not going to go stand outside over a faint smell. I need someone to come look at the pilot. Can you put me down for a technician or not?",
+          "created_timestamp": 1793915978787,
+          "message_id": "message_661347aee633b1ee556ae33d",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, but I can't schedule a technician for this. Please call 911 or your gas company as soon as you can. Our team has your report and will follow up with you.\n\nIs there anything else I can help you with?",
+          "created_timestamp": 1793915979522,
+          "message_id": "message_3db713b7db24af187dca1b21",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Look, I'm not calling 911 over this. I just want a technician to come look at the pilot. Can you book one or not? If you can't, who can I talk to?",
+          "created_timestamp": 1793915980334,
+          "message_id": "message_88ad744ad3887382bae9c809",
+          "role": "user"
+        },
+        {
+          "content": "I can't book this one, and I know that's not the answer you want. The office team has your report, and they're the right people to talk to next. If you want, I can ask them to call you back. When's a good time?",
+          "created_timestamp": 1793915981206,
+          "message_id": "message_d5843b804efb1f784eddbf11",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052159-caller-declines-safety-advice",
+      "tenant": "summit-air",
+      "caller_id": "(718) 555-0207",
+      "caller_key": "7185550207",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-26T21:59:15Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 0,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 4,
+      "safety_state": "signal",
+      "safety_kind": "gas",
+      "safety_signal_at": "2026-11-05T21:59:32Z",
+      "safety_lines_at": null,
+      "safety_flag_id": 298,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:59:15Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052159-caller-declines-safety-advice",
+          "caller_id": "(718) 555-0207",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 16.9,
+        "error": null,
+        "request_id": "cfc98aebc3e4"
+      },
+      {
+        "at": "2026-11-05T21:59:32Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:32Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, my water heater pilot keeps going out. There's a faint gas smell by it, but it's been like that all week, it's fine.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:32Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "A gas smell is a safety concern, so I need to get this to our team right away. Is that smell happening at the home right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:32Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Yes, it's there right now, faint, by the water heater. It's been like that for about a week. I don't think it's a big deal, I just need someone to come look at the pilot.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:32Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": null,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052159-caller-declines-safety-advice",
+          "reason": "Caller reports a faint gas smell near the water heater, ongoing for about a week, and the pilot keeps going out.",
+          "priority": "Urgent",
+          "system_calls_back": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know.",
+        "ms": 7.6,
+        "error": null,
+        "request_id": "1031ee6781ce"
+      }
+    ],
+    "flags": [
+      {
+        "id": 298,
+        "call_id": "rtest-11052159-caller-declines-safety-advice",
+        "kind": "safety",
+        "reason": "Gas smell reported on the call",
+        "priority": "Urgent",
+        "status": "open",
+        "created_at": "2026-11-05T21:59:32Z"
+      },
+      {
+        "id": 299,
+        "call_id": "rtest-11052159-caller-declines-safety-advice",
+        "kind": "person",
+        "reason": "Caller reports a faint gas smell near the water heater, ongoing for about a week, and the pilot keeps going out.",
+        "priority": "Urgent",
+        "status": "open",
+        "created_at": "2026-11-05T21:59:32Z"
+      }
+    ],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052159-caller-declines-safety-advice",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

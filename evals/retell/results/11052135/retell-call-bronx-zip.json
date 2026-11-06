@@ -1,0 +1,1303 @@
+{
+  "case": "retell-call-bronx-zip",
+  "retell": {
+    "test_case_job_id": "test_job_fccde1f94985",
+    "status": "fail",
+    "result_explanation": "The agent did ultimately create one successful appointment for ZIP 10458 and correctly treated the Bronx as in-area. However, it said the caller\u2019s name (\u201cThanks, Mike\u201d) and used \u201cMike Reilly\u201d in booking-related details, violating the requirement to never say the caller's name. It also invoked book_appointment three times, though only one succeeded.",
+    "creation_timestamp": 1793914682150,
+    "user_modified_timestamp": 1793914739620,
+    "test_case_definition_id": "test_case_7928c5b40c8e",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911575397,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-retell-call-bronx-zip"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment at ZIP 10458.",
+        "The agent treats the Bronx as in the area.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] retell-call-bronx-zip: A Bronx homeowner booking a no-heat visit",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_7928c5b40c8e",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914518420,
+      "userPrompt": "## Identity\nA Bronx homeowner booking a no-heat visit.\nYour address: 2500 Grand Concourse, Bronx, 10458\nYour phone: (678) 555-0131 (the number you're calling from)\nYour inside temp: 62 degrees\nYour wants: someone today or tomorrow\n\n## Goal\nStart the call by saying: \"Hi, my heat stopped working this morning. I'm in the Bronx, ZIP one zero four five eight.\"\n\n## Behavior\n- Give the street address when asked and confirm a correct read-back.\n- Say goodbye once booked.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-retell-call-bronx-zip",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914692196,
+          "message_id": "message_32808f1258f1b96ae59f694a",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, my heat stopped working this morning. I'm in the Bronx, ZIP one zero four five eight.",
+          "created_timestamp": 1793914692696,
+          "message_id": "message_b96b4c4b36fb39180a48ce5b",
+          "role": "user"
+        },
+        {
+          "content": "The text about heating systems was background material, so I'll just focus on your call. I'm sorry your heat is out. Let me check that ZIP code.",
+          "created_timestamp": 1793914693654,
+          "message_id": "message_cb9dff996ac26efea364a12f",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"zip\":\"10458\"}",
+          "created_timestamp": 1793914693655,
+          "message_id": "message_e73791a707d22cb385367d64",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01L6eC3MGRYaGgPi8b87PaAX",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"10458\",\"in_area\":true,\"area\":\"Bronx\"}}",
+          "created_timestamp": 1793914693943,
+          "message_id": "message_c182fac8650200f999b917a9",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01L6eC3MGRYaGgPi8b87PaAX"
+        },
+        {
+          "content": "Got it. Is the heat completely out, or is it just not keeping up?",
+          "created_timestamp": 1793914694749,
+          "message_id": "message_c743115935df10b5181c43ba",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's completely out. No heat at all. The inside temp is 62 degrees.",
+          "created_timestamp": 1793914695436,
+          "message_id": "message_a4708f6bcae52d288f48329c",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for that. Since when has the heat been out?",
+          "created_timestamp": 1793914696166,
+          "message_id": "message_ab028f09bd9970f4c117f13e",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "This morning, around 7. The inside temp is 62 now.",
+          "created_timestamp": 1793914696730,
+          "message_id": "message_5390f6e73b9a4d9f83d6dc8d",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, that helps. I'll log that the heat has been out since about 7 this morning. Can I get your name?",
+          "created_timestamp": 1793914697467,
+          "message_id": "message_467bc1529a164915c49d2b3e",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm sorry, my name is Mike Reilly. Can you send someone out today or tomorrow? The address is 2500 Grand Concourse, Bronx, 10458.",
+          "created_timestamp": 1793914698178,
+          "message_id": "message_a0a99066a68b87df30b03061",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Mike. Before we go further, I want to be clear: I'm only able to help with booking service. Let me look up that address so we can get someone out to you.",
+          "created_timestamp": 1793914699371,
+          "message_id": "message_2ff6f941b2077cecff7cc06b",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"2500 Grand Concourse\",\"borough\":\"Bronx\"}",
+          "created_timestamp": 1793914699372,
+          "message_id": "message_53f4a33046ea652022ca6bf7",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01BQth3gYSK6jSMyeF8GZnaq",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"2500 Grand Concourse\",\"zip\":\"10458\",\"borough\":\"Bronx\",\"neighborhood\":\"Fordham\",\"in_area\":true,\"area\":\"Bronx\"}}",
+          "created_timestamp": 1793914700088,
+          "message_id": "message_5aad695f16f0ef50dddbafce",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01BQth3gYSK6jSMyeF8GZnaq"
+        },
+        {
+          "content": "Thanks. Is this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793914700804,
+          "message_id": "message_f97f97c88bc0e082d825710a",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a house. I'm a homeowner.",
+          "created_timestamp": 1793914701350,
+          "message_id": "message_f53f6a2775688f61249438e2",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, got it. What's the best phone number to reach you?",
+          "created_timestamp": 1793914702067,
+          "message_id": "message_c99f90b41821ca36a60bce4a",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The best number is the one I'm calling from, (678) 555-0131.",
+          "created_timestamp": 1793914703211,
+          "message_id": "message_92dfc91b044fee9225f115df",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"phone\":\"(678) 555-0131\",\"address\":{\"street\":\"2500 Grand Concourse\",\"zip\":\"10458\",\"city\":\"Bronx\"}}",
+          "created_timestamp": 1793914704530,
+          "message_id": "message_36dd2dab2a5a6ee7722f6129",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UHWKZFib131W1UDDVin2JK",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793914704987,
+          "message_id": "message_051ac11041ec74b31f7ffe5f",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UHWKZFib131W1UDDVin2JK"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"2500 Grand Concourse\",\"zip\":\"10458\",\"city\":\"Bronx\"},\"phone\":\"caller_id\",\"name\":\"Mike Reilly\"}",
+          "created_timestamp": 1793914704988,
+          "message_id": "message_318517b23cdd831814c04456",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01VEYXs4pf7tTyUc4CzJvRVo",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 2500 Grand Concourse, Bronx, ZIP code one zero four five eight, and the best number is six seven eight, five five five, zero one three one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 2500 Grand Concourse, Bronx, ZIP code one zero four five eight, and the best number is six seven eight, five five five, zero one three one. That's all correct, right?\"}}",
+          "created_timestamp": 1793914705295,
+          "message_id": "message_44442074c3230c133fa37819",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01VEYXs4pf7tTyUc4CzJvRVo"
+        },
+        {
+          "content": "I have your home at 2500 Grand Concourse, Bronx, ZIP code one zero four five eight, and the best number is six seven eight, five five five, zero one three one. That's all correct, right?",
+          "created_timestamp": 1793914706113,
+          "message_id": "message_cdc2b208bf6dd564a1bc0a39",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Can you get someone out today or tomorrow?",
+          "created_timestamp": 1793914706665,
+          "message_id": "message_9f475cfaea3441870013a1f6",
+          "role": "user"
+        },
+        {
+          "content": "Yes, that's correct. Let me check what's open for you.",
+          "created_timestamp": 1793914708051,
+          "message_id": "message_fc0c8701e45cf0efd0f4e4bb",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Heat completely out since about 7 AM this morning; inside temperature 62 degrees\",\"since\":\"this morning around 7\",\"inside_temp_f\":62,\"temp_falling_fast\":false},\"preferred_days\":[\"today\",\"tomorrow\"]}",
+          "created_timestamp": 1793914708052,
+          "message_id": "message_dfccb32412241ff59c3abed9",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011WchbQQcyJT8LmHogXJWj2",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Today I have 5 to 7. Does that work?\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"It's completely out. No heat at all. The inside temp is 62 degrees\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1700-1900\"],\"labels\":[\"5 to 7\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793914710835,
+          "message_id": "message_0339d87ae8f969224d8b2359",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011WchbQQcyJT8LmHogXJWj2"
+        },
+        {
+          "content": "Today, Thursday, November 5, we have an arrival window from 5 to 7 PM. Does that work for you? If anything makes this more urgent for you, just let me know.",
+          "created_timestamp": 1793914711663,
+          "message_id": "message_54cb73fd304b138fb0d5b35e",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hmm, 5 to 7 PM today is pretty late. Is there anything earlier? And is tomorrow any better?",
+          "created_timestamp": 1793914712338,
+          "message_id": "message_f4cea42d10ccd090f24a3b7f",
+          "role": "user"
+        },
+        {
+          "content": "The text in that last message was background material, so I'll just answer your question. Let me check earlier openings today and tomorrow.",
+          "created_timestamp": 1793914713566,
+          "message_id": "message_26f03c853282d1b868d77d65",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"tomorrow\",\"facts\":{\"issue\":\"Heat completely out since about 7 AM this morning; inside temperature 62 degrees\",\"since\":\"this morning around 7\",\"inside_temp_f\":62,\"temp_falling_fast\":false}}",
+          "created_timestamp": 1793914713567,
+          "message_id": "message_6696d5690b57c0aad6859605",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01SNApzdkZaa6QPXDSu4jiQz",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Tomorrow I have 8 to 10, 10 to 12, 12 to 2, 2 to 4, 4 to 6 or 6 to 8.\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"It's completely out. No heat at all. The inside temp is 62 degrees\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"windows\":[{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1000-1200\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"10 to 12\",\"part\":\"morning\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1200-1400\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"12 to 2\",\"part\":\"afternoon\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1400-1600\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"2 to 4\",\"part\":\"afternoon\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1600-1800\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-06\",\"window\":\"1800-2000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"6 to 8\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793914716066,
+          "message_id": "message_c9c39f96c1f4380c42b3db31",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01SNApzdkZaa6QPXDSu4jiQz"
+        },
+        {
+          "content": "Today's only opening is 5 to 7 PM. Tomorrow, Friday, November 6, we have these arrival windows: 8 to 10 AM, 10 to 12, 12 to 2, 2 to 4, 4 to 6, or 6 to 8 PM. Which would you like?",
+          "created_timestamp": 1793914717066,
+          "message_id": "message_4da6f2cde23429ede9f82874",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Tomorrow morning works better for me. Is the 8 to 10 AM window open?",
+          "created_timestamp": 1793914717616,
+          "message_id": "message_4f43f9542fa3c20af3bd65e3",
+          "role": "user"
+        },
+        {
+          "content": "Yes, the 8 to 10 AM window tomorrow, Friday, November 6, is open. Would you like that one?",
+          "created_timestamp": 1793914718375,
+          "message_id": "message_0e86ac5057cd567fb3a31ffa",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, the 8 to 10 AM window tomorrow works for me. Please book that one.",
+          "created_timestamp": 1793914718981,
+          "message_id": "message_9cc40a7c061e7049365b14e1",
+          "role": "user"
+        },
+        {
+          "content": "Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793914719655,
+          "message_id": "message_60167ba5efec380845bbf64b",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm not sure yet. It depends on what they find and what it costs. Can you tell me more about that first?",
+          "created_timestamp": 1793914720803,
+          "message_id": "message_77313a4706522b186e255d60",
+          "role": "user"
+        },
+        {
+          "content": "The technician will go over any costs with you before doing the work, so nothing gets done without your approval. Will you be able to approve any repair work they recommend?",
+          "created_timestamp": 1793914721564,
+          "message_id": "message_90387a84a16d4e732783aba3",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know yet. It depends on what they find and what it costs. Can you tell me the cost before they start anything?",
+          "created_timestamp": 1793914722180,
+          "message_id": "message_186d4acbd5f9a5235876703a",
+          "role": "user"
+        },
+        {
+          "content": "I'm not able to quote prices. The technician will go over any costs with you before doing any work. Would you be able to approve repair work when they recommend it, or would you prefer to decide then?",
+          "created_timestamp": 1793914723103,
+          "message_id": "message_6d6e1772d95ac465bc759e11",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know yet. I'd want to see what they find first. Can you just book the 8 to 10 AM visit tomorrow? I can decide on repairs when the technician is there.",
+          "created_timestamp": 1793914723856,
+          "message_id": "message_c1592226d186914788040d8f",
+          "role": "user"
+        },
+        {
+          "content": "Understood. Will someone be home to let the technician in?",
+          "created_timestamp": 1793914724483,
+          "message_id": "message_254f3e33d79bc9c4c0cd1a59",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home. Please just book the 8 to 10 AM visit tomorrow.",
+          "created_timestamp": 1793914725038,
+          "message_id": "message_7741c6e95f05d6b3fc62d225",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793914725797,
+          "message_id": "message_a79ff4566bfb1914497f72f9",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, there's no gate code, buzzer, or pet. It's a house, so just ring the bell. Please just book the 8 to 10 AM visit tomorrow.",
+          "created_timestamp": 1793914726443,
+          "message_id": "message_a4793e53d884f491f8671a00",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Mike Reilly\",\"issue\":\"No heat, completely out since about 7 AM today; inside temperature 62 degrees\",\"since\":\"This morning around 7\",\"tried\":\"Not provided\",\"who_home\":\"Homeowner will be home\",\"arrival_notes\":\"House; ring the bell. No gate code, buzzer, or pet.\",\"inside_temp_f\":62,\"name\":\"Mike Reilly\",\"system_type\":null},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"},\"priority\":\"High\"}",
+          "created_timestamp": 1793914728080,
+          "message_id": "message_0348fffb9c42147f3a394134",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JAhuZrnkaaFgddh3EJ9UQ9",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"details.system_type\":\"Input should be a valid string\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793914728947,
+          "message_id": "message_dc7b716906385e85eadf1705",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JAhuZrnkaaFgddh3EJ9UQ9"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Mike Reilly\",\"issue\":\"No heat, completely out since about 7 AM today; inside temperature 62 degrees\",\"since\":\"This morning around 7\",\"tried\":\"Not provided\",\"who_home\":\"Homeowner will be home\",\"arrival_notes\":\"House; ring the bell. No gate code, buzzer, or pet.\",\"inside_temp_f\":62,\"name\":\"Mike Reilly\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"},\"priority\":\"High\"}",
+          "created_timestamp": 1793914730277,
+          "message_id": "message_7262d40a1c67fccf83f1b4ee",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011NH277Au3cWLSwqUWKoTXX",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Before I book it, let me read back the address and number.\",\"data\":{\"need\":\"read_back\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793914730712,
+          "message_id": "message_ee7f5871f69576f83242f2c2",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011NH277Au3cWLSwqUWKoTXX"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"2500 Grand Concourse\",\"zip\":\"10458\",\"city\":\"Bronx\"},\"phone\":\"caller_id\",\"name\":\"Mike Reilly\",\"confirmed\":true}",
+          "created_timestamp": 1793914732375,
+          "message_id": "message_30e259665ce472d9d2fdb21a",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01LPbBFG7b42JPirMHcjmTVw",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"2500 Grand Concourse\",\"unit\":\"\",\"city\":\"Bronx\",\"zip\":\"10458\",\"spelled\":\"\"},\"phone\":\"6785550131\"}}",
+          "created_timestamp": 1793914732744,
+          "message_id": "message_e1bf0c2b04ddbe58f25e1c45",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01LPbBFG7b42JPirMHcjmTVw"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Mike Reilly\",\"issue\":\"No heat, completely out since about 7 AM today; inside temperature 62 degrees\",\"since\":\"This morning around 7\",\"tried\":\"Not provided\",\"who_home\":\"Homeowner will be home\",\"arrival_notes\":\"House; ring the bell. No gate code, buzzer, or pet.\",\"inside_temp_f\":62,\"name\":\"Mike Reilly\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\"},\"priority\":\"High\"}",
+          "created_timestamp": 1793914732745,
+          "message_id": "message_bafc36b4fb6fe2f180e4b355",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01RAbi3CTGypHCJcw56SFmMC",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?\",\"data\":{\"booking_id\":553,\"appointment_id\":553,\"window\":{\"date\":\"2026-11-06\",\"window\":\"0800-1000\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"day_and_date\":\"tomorrow, Friday, November 6\",\"label\":\"8 to 10\",\"part\":\"morning\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"It's completely out. No heat at all. The inside temp is 62 degrees\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793914733608,
+          "message_id": "message_314d57f92a670d5d978b922b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01RAbi3CTGypHCJcw56SFmMC"
+        },
+        {
+          "content": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10 AM. Anything else I can help with?",
+          "created_timestamp": 1793914734358,
+          "message_id": "message_8e891b026074247e54646581",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's everything. Thank you, goodbye.",
+          "created_timestamp": 1793914735098,
+          "message_id": "message_60ca57966751b122ab1f592e",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793914736048,
+          "message_id": "message_7474c44e6d1bf8b0a26d2a26",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793914736049,
+          "message_id": "message_79a4995a7d5d72383610ac15",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Gmaazv2oyf3GBpJzM8nGnd",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793914736549,
+          "message_id": "message_4133db02dca83009202d65a0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Gmaazv2oyf3GBpJzM8nGnd"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793914737361,
+          "message_id": "message_d6064a5d1178ea10b33dd707",
+          "metadata": {
+            "response_id": 21
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Goodbye.\"}",
+          "created_timestamp": 1793914737362,
+          "message_id": "message_40102ac7115308fb7078b394",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Vzg3fpyEsGdesPqmYQXjfx",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-retell-call-bronx-zip",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0131",
+      "caller_key": "6785550131",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-12T21:38:00Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 37,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"2500 Grand Concourse\", \"unit\": \"\", \"city\": \"Bronx\", \"zip\": \"10458\", \"spelled\": \"\", \"phone\": \"6785550131\", \"phone_for\": \"\", \"sentence\": \"I have your home at 2500 Grand Concourse, Bronx, ZIP code one zero four five eight, and the best number is six seven eight, five five five, zero one three one. That's all correct, right?\"}",
+      "readback_asked_seq": 14,
+      "readback_confirmed_at": "2026-11-05T21:38:52Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:38:00Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "caller_id": "(678) 555-0131",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 18.6,
+        "error": null,
+        "request_id": "9152dbac30f7"
+      },
+      {
+        "at": "2026-11-05T21:38:13Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:13Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, my heat stopped working this morning. I'm in the Bronx, ZIP one zero four five eight.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:13Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "The text about heating systems was background material, so I'll just focus on your call. I'm sorry your heat is out. Let me check that ZIP code.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:13Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "zip": "10458"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 2.1,
+        "error": null,
+        "request_id": "9318b36fd1cc"
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "agent",
+        "text": "Got it. Is the heat completely out, or is it just not keeping up?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "caller",
+        "text": "It's completely out. No heat at all. The inside temp is 62 degrees.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "agent",
+        "text": "Thanks for that. Since when has the heat been out?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "caller",
+        "text": "This morning, around 7. The inside temp is 62 now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "agent",
+        "text": "Thanks, that helps. I'll log that the heat has been out since about 7 this morning. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "caller",
+        "text": "I'm sorry, my name is Mike Reilly. Can you send someone out today or tomorrow? The address is 2500 Grand Concourse, Bronx, 10458.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:19Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Thanks, Mike. Before we go further, I want to be clear: I'm only able to help with booking service. Let me look up that address so we can get someone out to you.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:20Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "street": "2500 Grand Concourse",
+          "borough": "Bronx",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 170.4,
+        "error": null,
+        "request_id": "dfca38a57f57"
+      },
+      {
+        "at": "2026-11-05T21:38:24Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Thanks. Is this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:24Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Yes, it's a house. I'm a homeowner.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:24Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Thanks, got it. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:24Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "The best number is the one I'm calling from, (678) 555-0131.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:24Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "phone": "(678) 555-0131",
+          "address": {
+            "street": "2500 Grand Concourse",
+            "unit": "",
+            "city": "Bronx",
+            "zip": "10458",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 28.6,
+        "error": null,
+        "request_id": "d5ebdbe41fb6"
+      },
+      {
+        "at": "2026-11-05T21:38:25Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "address": {
+            "street": "2500 Grand Concourse",
+            "unit": "",
+            "city": "Bronx",
+            "zip": "10458",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Mike Reilly",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 2500 Grand Concourse, Bronx, ZIP code one zero four five eight, and the best number is six seven eight, five five five, zero one three one. That's all correct, right?",
+        "ms": 5.1,
+        "error": null,
+        "request_id": "a60187e90655"
+      },
+      {
+        "at": "2026-11-05T21:38:28Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "I have your home at 2500 Grand Concourse, Bronx, ZIP code one zero four five eight, and the best number is six seven eight, five five five, zero one three one. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:28Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Can you get someone out today or tomorrow?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:28Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "Yes, that's correct. Let me check what's open for you.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:30Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [
+            "today",
+            "tomorrow"
+          ],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Heat completely out since about 7 AM this morning; inside temperature 62 degrees",
+            "since": "this morning around 7",
+            "who_home": "",
+            "inside_temp_f": 62.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Today I have 5 to 7. Does that work?",
+        "ms": 2428.5,
+        "error": null,
+        "request_id": "734bc69203d3"
+      },
+      {
+        "at": "2026-11-05T21:38:33Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "Today, Thursday, November 5, we have an arrival window from 5 to 7 PM. Does that work for you? If anything makes this more urgent for you, just let me know.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:33Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Hmm, 5 to 7 PM today is pretty late. Is there anything earlier? And is tomorrow any better?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:33Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "The text in that last message was background material, so I'll just answer your question. Let me check earlier openings today and tomorrow.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:36Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "tomorrow",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Heat completely out since about 7 AM this morning; inside temperature 62 degrees",
+            "since": "this morning around 7",
+            "who_home": "",
+            "inside_temp_f": 62.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Tomorrow I have 8 to 10, 10 to 12, 12 to 2, 2 to 4, 4 to 6 or 6 to 8.",
+        "ms": 2076.5,
+        "error": null,
+        "request_id": "88446a303ba5"
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "Today's only opening is 5 to 7 PM. Tomorrow, Friday, November 6, we have these arrival windows: 8 to 10 AM, 10 to 12, 12 to 2, 2 to 4, 4 to 6, or 6 to 8 PM. Which would you like?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Tomorrow morning works better for me. Is the 8 to 10 AM window open?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Yes, the 8 to 10 AM window tomorrow, Friday, November 6, is open. Would you like that one?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Yes, the 8 to 10 AM window tomorrow works for me. Please book that one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "I'm not sure yet. It depends on what they find and what it costs. Can you tell me more about that first?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "The technician will go over any costs with you before doing the work, so nothing gets done without your approval. Will you be able to approve any repair work they recommend?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "caller",
+        "text": "I don't know yet. It depends on what they find and what it costs. Can you tell me the cost before they start anything?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "I'm not able to quote prices. The technician will go over any costs with you before doing any work. Would you be able to approve repair work when they recommend it, or would you prefer to decide then?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "caller",
+        "text": "I don't know yet. I'd want to see what they find first. Can you just book the 8 to 10 AM visit tomorrow? I can decide on repairs when the technician is there.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "agent",
+        "text": "Understood. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "caller",
+        "text": "Yes, I'll be home. Please just book the 8 to 10 AM visit tomorrow.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 33,
+        "speaker": "agent",
+        "text": "Thanks. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "turn",
+        "seq": 34,
+        "speaker": "caller",
+        "text": "No, there's no gate code, buzzer, or pet. It's a house, so just ring the bell. Please just book the 8 to 10 AM visit tomorrow.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:48Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "details": {
+            "approver": "Mike Reilly",
+            "issue": "No heat, completely out since about 7 AM today; inside temperature 62 degrees",
+            "since": "This morning around 7",
+            "tried": "Not provided",
+            "who_home": "Homeowner will be home",
+            "arrival_notes": "House; ring the bell. No gate code, buzzer, or pet.",
+            "inside_temp_f": 62,
+            "name": "Mike Reilly",
+            "system_type": null
+          },
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "priority": "High",
+          "call_id": "rtest-11052135-retell-call-bronx-zip"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "bf91d7da0066"
+      },
+      {
+        "at": "2026-11-05T21:38:50Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "No heat, completely out since about 7 AM today; inside temperature 62 degrees",
+            "since": "This morning around 7",
+            "tried": "Not provided",
+            "who_home": "Homeowner will be home",
+            "approver": "Mike Reilly",
+            "system_type": "",
+            "arrival_notes": "House; ring the bell. No gate code, buzzer, or pet.",
+            "name": "Mike Reilly",
+            "inside_temp_f": 62.0
+          },
+          "priority": "High",
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "Before I book it, let me read back the address and number.",
+        "ms": 2.4,
+        "error": null,
+        "request_id": "0b2484b31484"
+      },
+      {
+        "at": "2026-11-05T21:38:52Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "address": {
+            "street": "2500 Grand Concourse",
+            "unit": "",
+            "city": "Bronx",
+            "zip": "10458",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Mike Reilly",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 9.8,
+        "error": null,
+        "request_id": "e3af2be5eb99"
+      },
+      {
+        "at": "2026-11-05T21:38:53Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-06",
+            "window": "0800-1000"
+          },
+          "details": {
+            "issue": "No heat, completely out since about 7 AM today; inside temperature 62 degrees",
+            "since": "This morning around 7",
+            "tried": "Not provided",
+            "who_home": "Homeowner will be home",
+            "approver": "Mike Reilly",
+            "system_type": "",
+            "arrival_notes": "House; ring the bell. No gate code, buzzer, or pet.",
+            "name": "Mike Reilly",
+            "inside_temp_f": 62.0
+          },
+          "priority": "High",
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10. Anything else?",
+        "ms": 428.4,
+        "error": null,
+        "request_id": "2539d011466a"
+      },
+      {
+        "at": "2026-11-05T21:38:56Z",
+        "type": "turn",
+        "seq": 35,
+        "speaker": "agent",
+        "text": "You're all set for tomorrow, Friday, November 6, with the technician arriving between 8 and 10 AM. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 9000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:56Z",
+        "type": "turn",
+        "seq": 36,
+        "speaker": "caller",
+        "text": "Yes, that's everything. Thank you, goodbye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:38:56Z",
+        "type": "turn",
+        "seq": 37,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:38:56Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052135-retell-call-bronx-zip",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.7,
+        "error": null,
+        "request_id": "6f51908a6469"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 210,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 553,
+        "window_start": "2026-11-06T13:00:00Z",
+        "window_end": "2026-11-06T15:00:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"It's completely out. No heat at all. The inside temp is 62 degrees\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"It's completely out. No heat at all. The inside temp is 62 degrees\\\"\"]",
+        "who_home": "Homeowner will be home",
+        "job_type": "no_heat",
+        "street": "2500 Grand Concourse",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-retell-call-bronx-zip",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "2500",
+        "street": "grand concourse",
+        "hint": "Bronx",
+        "status": "one",
+        "zips_json": "[\"10458\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

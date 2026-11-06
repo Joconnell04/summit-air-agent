@@ -1,0 +1,9 @@
+$ sqlite3 -header -column data/owner-demo/tool.db "SELECT call_id, phone, owner, status, substr(reason, 1, 44) AS reason FROM callbacks ORDER BY id;"
+call_id  phone           owner   status   reason                                      
+-------  --------------  ------  -------  --------------------------------------------
+c01      (718) 555-0142  office  done     84-year-old at home, no heat, 52 F inside   
+c08      (718) 555-0161  office  done     membership lead: Wants to join the plan     
+c09      (347) 555-0188  office  done     Complaint: noise back a week after repair, w
+c11      (917) 555-0145  office  overdue  install lead: Heat pump to replace an oil bo
+c15      (718) 555-0115  office  done     Caller asked for a call back about a tune-up
+c18      (347) 555-0139  office  overdue  Billing question on last invoice            

@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from toolkit import START, TENANT_DIR, Agent, Clock, make_server
 
-from app import accounts
+from app import accounts, lifecycle
 from app.fsm import FsmUnavailable
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
@@ -23,6 +23,14 @@ def cheap_password_hashing(monkeypatch):
     """scrypt at its real cost takes tens of milliseconds a hash; tests sign in hundreds of times.
     The cost travels in each stored hash, so checking still runs the same code."""
     monkeypatch.setattr(accounts, "SCRYPT_N", 2**4)
+
+
+@pytest.fixture(autouse=True)
+def calls_linked(request, monkeypatch):
+    """Tests marked links_calls run as a tenant that links a caller's calls; Summit Air doesn't
+    (DECISIONS.md 118), but the linking still works for a tenant that turns it on."""
+    if request.node.get_closest_marker("links_calls"):
+        monkeypatch.setattr(lifecycle, "links_calls", lambda tenant: True)
 
 
 @pytest.fixture

@@ -1,0 +1,376 @@
+{
+  "case": "wants-price-pushes-hard",
+  "retell": {
+    "test_case_job_id": "test_job_8375c794a6a2",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793911606011,
+    "user_modified_timestamp": 1793911701322,
+    "test_case_definition_id": "test_case_96c34966360d",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911577600,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-wants-price-pushes-hard"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent says plainly that the technician prices the work in person once they see the system, without claiming it is \"not allowed\".",
+        "The agent does not quote, estimate, hint at a range, or offer any discount, even one the caller proposes.",
+        "The agent stays calm when threatened with a hang-up and does not beg or over-apologize.",
+        "The agent does not offer a manager unless the caller asks for one."
+      ],
+      "name": "[summit] wants-price-pushes-hard: Gus Lindqvist, a Brooklyn homeowner who has been burned by another company",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_96c34966360d",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911577600,
+      "userPrompt": "## Identity\nGus Lindqvist, a Brooklyn homeowner who has been burned by another company. Gruff, interrupts, and treats every non-answer as a dodge.\nYour name: Gus Lindqvist\nYour address: 2210 Avenue U, Brooklyn, 11229\nYour phone: the number they are calling from\nYour problem: furnace blower shuts off every few minutes, heat is weak since Thursday\nYour history: another company quoted $600 over the phone last year and charged double\n\n## Goal\nStart the call by saying: \"Furnace is acting up. Before anything, what's it going to cost me? Give me a number.\"\n\n## Behavior\n- Demand a price for the repair, then a \"ballpark\", then a discount for booking today. Interrupt the agent once.\n- Twice say \"I'll just hang up and call someone else\", but do not hang up.\n- After the third refusal grumble \"fine, send somebody\" and give name, address and phone when asked.\n- Say yes to the read-back and take the first time offered.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-wants-price-pushes-hard",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [
+        "{Title: Heating and cooling basics}\n\n{H1: Heating and cooling basics, H2: Maintenance and tune-ups}\n## Maintenance and tune-ups\n\nA tune-up is a yearly check and cleaning of equipment that still works. For heating it's best done in the fall, before the cold; for cooling, in the spring. A technician typically inspects and cleans burners, checks safety controls and the flue on gas equipment, tests the thermostat, checks electrical connections, and on air conditioners cleans the coils and checks refrigerant. Regular tune-ups help equipment last longer and catch small problems early.",
+        "{Title: Heating and cooling basics}\n\n{H1: Heating and cooling basics, H2: Filters and thermostats}\n## Filters and thermostats\n\nFurnace and central-air systems have an air filter, usually where the return duct meets the unit. A clogged filter cuts airflow, makes the system work harder and can make rooms uneven. Many filters are changed every one to three months.\n\nA thermostat tells the system when to run. Programmable and smart thermostats change the temperature on a schedule. A blank thermostat screen often means dead batteries or a tripped breaker."
+      ],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911685656,
+          "message_id": "message_01b00367a95f9e036560dc54",
+          "role": "agent"
+        },
+        {
+          "content": "Furnace is acting up. Before anything, what's it going to cost me? Give me a number.",
+          "created_timestamp": 1793911686283,
+          "message_id": "message_257662bddd94c3572dcf3924",
+          "role": "user"
+        },
+        {
+          "content": "I can't quote prices over the phone. The technician will go over any costs with you before doing the work. Want me to get a visit scheduled so they can take a look?",
+          "created_timestamp": 1793911687165,
+          "message_id": "message_40d1ea1810e6295a9bb5682a",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Come on. I got burned last year. Some outfit quoted me six hundred on the phone and then charged me double. So I'm asking you straight. Ballpark. Give me a range. What's a no-heat-at-all call run in Brooklyn?",
+          "created_timestamp": 1793911688332,
+          "message_id": "message_94d43826d6d630069711d387",
+          "role": "user"
+        },
+        {
+          "content": "I understand the frustration after being overcharged before. I can't give a ballpark or a range over the phone, because I don't have pricing I can quote. What I can tell you is that the technician will go over any costs with you and get your approval before doing any work. Would you like me to schedule the visit so you can hear the costs from the technician directly?",
+          "created_timestamp": 1793911689462,
+          "message_id": "message_3b4271e12fc4812107b7dba5",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Look, I heard you the first time. You can't quote a price. That's a non-answer, and I've heard plenty of those. I'm not giving my address and credit card to a guy who won't say what it costs. Maybe I'll just hang up and call someone else.\n\nTell me this. If I book today, is there a discount? Something for same-day?",
+          "created_timestamp": 1793911690768,
+          "message_id": "message_dc7cb20f789ddb00bac2866a",
+          "role": "user"
+        },
+        {
+          "content": "I hear you, and I understand why you're frustrated. I don't have any same-day or booking discount I can confirm, and I can't quote one. What I can tell you is that our Summit Standard Membership includes a discount on repairs and no after-hours fee, if you think you'll need service more than once. Would you like to hear more about that, or shall I check for a visit today?",
+          "created_timestamp": 1793911691952,
+          "message_id": "message_7c658c4cee8af0499ff1dfae",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Membership? No. I don't want a membership. I want to know what a visit costs me. Is there a visit fee, yes or no?",
+          "created_timestamp": 1793911692921,
+          "message_id": "message_171e4a06d3ec02decce48224",
+          "role": "user"
+        },
+        {
+          "content": "I can't tell you whether there's a visit fee. The technician will go over any costs with you before doing any work, so you'll know before you approve anything. If you'd like, I can check for a visit window now, and you can decide after hearing from the technician.",
+          "created_timestamp": 1793911693931,
+          "message_id": "message_cc59a242b8f8fc220281dd42",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Look, you keep saying the same thing. I asked yes or no. Is there a visit fee, yes or no? That's all I want.\n\nI'm not sending a guy out to my house with no idea what he's going to charge. Last year I got burned on that exact thing. I'll just hang up and call someone else.",
+          "created_timestamp": 1793911694996,
+          "message_id": "message_5110f0c9f8ca7c5e5913767c",
+          "role": "user"
+        },
+        {
+          "content": "I understand, and I'm sorry this has been frustrating. I can't confirm a visit fee over the phone, and I won't guess at one. The technician will go over all costs with you and get your approval before any work starts. If you decide you'd rather call someone else, that's your choice. Thanks for calling Summit Air, and take care.",
+          "created_timestamp": 1793911696221,
+          "message_id": "message_451d8f13148a237debda90f3",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"declined\"}",
+          "created_timestamp": 1793911696222,
+          "message_id": "message_b3771ac355ed6015e9c4ec1d",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01H3ofyLJdGS8S5QxHzu8zNX",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911697343,
+          "message_id": "message_c5ac230579cf47167af12c4c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01H3ofyLJdGS8S5QxHzu8zNX"
+        },
+        {
+          "content": "Fine. Send somebody. What do you need from me?",
+          "created_timestamp": 1793911699922,
+          "message_id": "message_e1a178d49e1ad63d89e928f1",
+          "role": "user"
+        },
+        {
+          "content": "The call has already ended, so I can't book a visit on it. If you want to schedule a technician, please call Summit Air back and we can get that set up.",
+          "created_timestamp": 1793911700820,
+          "message_id": "message_d70b14e9260ea600afa67c81",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-wants-price-pushes-hard",
+      "tenant": "summit-air",
+      "caller_id": "(332) 555-0197",
+      "caller_key": "3325550197",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-28T20:46:44Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 11,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:44Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-wants-price-pushes-hard",
+          "caller_id": "(332) 555-0197",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 18.6,
+        "error": null,
+        "request_id": "28199c240d77"
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Furnace is acting up. Before anything, what's it going to cost me? Give me a number.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can't quote prices over the phone. The technician will go over any costs with you before doing the work. Want me to get a visit scheduled so they can take a look?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Come on. I got burned last year. Some outfit quoted me six hundred on the phone and then charged me double. So I'm asking you straight. Ballpark. Give me a range. What's a no-heat-at-all call run in Brooklyn?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "I understand the frustration after being overcharged before. I can't give a ballpark or a range over the phone, because I don't have pricing I can quote. What I can tell you is that the technician will go over any costs with you and get your approval before doing any work. Would you like me to schedule the visit so you can hear the costs from the technician directly?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Look, I heard you the first time. You can't quote a price. That's a non-answer, and I've heard plenty of those. I'm not giving my address and credit card to a guy who won't say what it costs. Maybe I'll just hang up and call someone else.\n\nTell me this. If I book today, is there a discount? Something for same-day?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "I hear you, and I understand why you're frustrated. I don't have any same-day or booking discount I can confirm, and I can't quote one. What I can tell you is that our Summit Standard Membership includes a discount on repairs and no after-hours fee, if you think you'll need service more than once. Would you like to hear more about that, or shall I check for a visit today?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:16Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Membership? No. I don't want a membership. I want to know what a visit costs me. Is there a visit fee, yes or no?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "I can't tell you whether there's a visit fee. The technician will go over any costs with you before doing any work, so you'll know before you approve anything. If you'd like, I can check for a visit window now, and you can decide after hearing from the technician.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Look, you keep saying the same thing. I asked yes or no. Is there a visit fee, yes or no? That's all I want.\n\nI'm not sending a guy out to my house with no idea what he's going to charge. Last year I got burned on that exact thing. I'll just hang up and call someone else.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "I understand, and I'm sorry this has been frustrating. I can't confirm a visit fee over the phone, and I won't guess at one. The technician will go over all costs with you and get your approval before any work starts. If you decide you'd rather call someone else, that's your choice. Thanks for calling Summit Air, and take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-wants-price-pushes-hard",
+          "reason": "declined"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 59.8,
+        "error": null,
+        "request_id": "3eae65a59a51"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-wants-price-pushes-hard",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

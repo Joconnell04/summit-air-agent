@@ -209,7 +209,7 @@ def test_slowing_down_for_the_address_applies_to_the_address_alone(agent):
     again = agent.tool("read_back", call, address=address, phone="caller_id")
     parts = again["data"]["parts"]
     assert " ".join(p["text"] for p in parts) == again["say"]
-    assert parts[1] == {"text": "101 Union St, Brooklyn, ZIP code one one two three one,", "speed": 0.85}
+    assert parts[1] == {"text": "one oh one Union St,", "speed": 0.85}
     assert parts[0]["speed"] == parts[2]["speed"] == 1.0
     # Used once: the call's pace is unchanged and the next read-back is whole.
     assert changes(agent, call) == [(3, 0.85, "address", "request")]
@@ -229,6 +229,7 @@ def test_the_address_slows_one_step_below_the_calls_own_pace(agent):
     assert [p["speed"] for p in asked["data"]["parts"]] == [0.85, 0.7, 0.85]
 
 
+@pytest.mark.links_calls
 def test_a_requested_pace_carries_to_a_linked_call_the_same_day(agent, clock):
     first = agent.start()["data"]["call_id"]
     agent.turn(first, "Slow down please.")

@@ -6,14 +6,20 @@ The bucket's keys live in the server's .env and the vault, not on the laptop. Wh
 this process's environment they are read from the server over ssh at run time and kept in memory;
 they are never written to a file or printed.
 """
+
 import subprocess
 from pathlib import Path
 
 PREFIX = "sim/"
 HOST = "summit-air"
 SERVER_ENV = "summit-air/.env"
-NAMES = ("RECORDING_S3_BUCKET", "RECORDING_S3_ENDPOINT", "RECORDING_S3_REGION",
-         "RECORDING_S3_ACCESS_KEY", "RECORDING_S3_SECRET")
+NAMES = (
+    "RECORDING_S3_BUCKET",
+    "RECORDING_S3_ENDPOINT",
+    "RECORDING_S3_REGION",
+    "RECORDING_S3_ACCESS_KEY",
+    "RECORDING_S3_SECRET",
+)
 CONTENT_TYPES = {".flac": "audio/flac", ".wav": "audio/wav", ".json": "application/json"}
 
 
@@ -32,9 +38,21 @@ def bucket_env(env: dict, run=subprocess.run) -> dict[str, str] | None:
     if env.get("RECORDING_S3_BUCKET"):
         return {name: env.get(name, "") for name in NAMES}
     try:
-        done = run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", HOST,
-                    f"grep '^RECORDING_S3_' {SERVER_ENV}"],
-                   capture_output=True, text=True, timeout=30, check=False)
+        done = run(
+            [
+                "ssh",
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                "ConnectTimeout=10",
+                HOST,
+                f"grep '^RECORDING_S3_' {SERVER_ENV}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
     except (OSError, subprocess.TimeoutExpired):
         return None
     if done.returncode != 0:
@@ -64,8 +82,12 @@ class SimStore:
         already written."""
         try:
             self.client.upload_file(
-                str(path), self.name, PREFIX + key,
-                ExtraArgs={"ContentType": CONTENT_TYPES.get(path.suffix, "application/octet-stream")},
+                str(path),
+                self.name,
+                PREFIX + key,
+                ExtraArgs={
+                    "ContentType": CONTENT_TYPES.get(path.suffix, "application/octet-stream")
+                },
             )
             return True
         except Exception as err:  # noqa: BLE001 - boto3 raises several unrelated types

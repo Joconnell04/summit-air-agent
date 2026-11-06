@@ -30,6 +30,7 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `JOBS_INTERVAL_SECONDS` | `60` | Background jobs (`app/jobs.py`); `0` turns them off |
 | `GEOCODER` | empty | `geosearch` turns on the address lookup (`geocode.py`): NYC Planning's GeoSearch, then the Census geocoder, set per tenant in `config.yaml` `address_lookup`. Empty, the agent asks for every ZIP |
 | `SUMMARIES` | empty | `1` writes the technician's summary after each booked call (`app/summary.py`); it needs `ANTHROPIC_API_KEY` too |
+| `FAILURE_GRADER` | empty | `1` turns on the call checks (`app/failure_grader.py`): the daily run and the Check buttons on the owner view and the bench; it needs `ANTHROPIC_API_KEY`, and reads Retell transcripts with `RETELL_API_KEY` (the server's own turns otherwise) |
 | `OWNER_ADMIN_USERNAME`, `OWNER_ADMIN_NAME`, `OWNER_ADMIN_PASSWORD` | empty, which creates no one | The owner view's first admin, created at startup if no user has that username; a password changed since is never reset. `OWNER_TOKEN` and `RULES_EDITORS`, from before accounts, are no longer read and are logged as such |
 | `OWNER_VIEW_URL` | empty | Where the owner view is served, for the call link in alert emails |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | empty, `587` | The mail server for on-call alerts. With no host, alerts are held and shown on the owner view, not sent |
@@ -63,6 +64,8 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `records.py` | The server's own tables: calls, scope, flags, callbacks (named time, owner, outbound rules, overdue), do-not-call |
 | `jobs.py` | Retry of queued bookings and leads, earlier openings for flagged urgent bookings, queuing the callbacks the system places, booked-and-kept, on-call email after hours, cache refresh, the search index, collecting call recordings, overdue callbacks, retention, and the technician summary last |
 | `summary.py` | The technician's summary after a booked call (spec S-16): the call record the model reads, the checks on its lines, and the pinned job note |
+| `failure_grader.py` | The call checks (issue #178): what the grader model reads, the server's rule that a failure needs evidence found in the call, the cache, runs and the daily schedule |
+| `checks_view.py` | The Checks pages on the owner view and the bench, Check this call, and the schedule setting |
 | `transfer.py` | Warm transfer (C-11): whether a person flag goes to a person now and to whom, the summary they hear, and what happens when nobody takes it. Cold handoff: whether a caller's line demands a person, and who it goes to |
 | `recordings.py` | Call audio (story O-6): the file name a call records under, copying finished files from the bucket, deletion with the transcript |
 | `outbound.py` | Calls the system places (journey 12): what the voice layer claims, and settling each one from what happened on it |

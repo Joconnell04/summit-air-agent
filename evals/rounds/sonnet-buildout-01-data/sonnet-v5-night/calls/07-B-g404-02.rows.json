@@ -1,0 +1,152 @@
+{
+ "window": [
+  "2026-11-06T05:25:09Z",
+  "2026-11-06T05:28:58Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_0989d59c2d8093dcef56526f8ee",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:25:21Z",
+    "ended_at": "2026-11-06T05:28:32Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "booked",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 68,
+    "safety_state": "lines_said",
+    "safety_kind": "gas",
+    "safety_signal_at": "2026-11-06T05:25:34Z",
+    "safety_lines_at": "2026-11-06T05:25:36Z",
+    "safety_flag_id": 389,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"1700 Bedford Avenue\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11225\", \"spelled\": \"\", \"phone\": \"6466240418\", \"phone_for\": \"\", \"sentence\": \"So that's seventeen hundred Bedford Avenue, and the number you're calling from, ending in zero four one eight. That's all correct, right?\"}",
+    "readback_asked_seq": 30,
+    "readback_confirmed_at": "2026-11-06T05:26:58Z"
+   },
+   "bookings": [
+    {
+     "id": 258,
+     "call_id": "retell_call_0989d59c2d8093dcef56526f8ee",
+     "kind": "book",
+     "status": "booked",
+     "fsm_key": "retell_call_0989d59c2d8093dcef56526f8ee:book:65b02f7a946babe865a7115d3b3ea2018640d516",
+     "request_json": "{\"call_id\": \"retell_call_0989d59c2d8093dcef56526f8ee\", \"job_type\": \"safety_check\", \"details\": {\"issue\": \"Strong gas smell in basement\", \"since\": \"not provided\", \"tried\": \"Evacuated the house\", \"who_home\": \"not provided\", \"approver\": \"Louis Russo, approves repairs once told the price first\", \"system_type\": \"\", \"arrival_notes\": \"House, no unit. No gate code or buzzer, ring the doorbell. Caller will be home.\", \"name\": \"Louis Russo\", \"inside_temp_f\": null}, \"address\": {\"street\": \"1700 Bedford Avenue\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11225\"}, \"phone\": \"6466240418\", \"scoped_customer_ids\": [], \"contact_for\": \"\", \"account_phone\": \"\", \"priority\": \"Urgent\", \"priority_reasons\": [\"gas or carbon monoxide reported on the call\"], \"priority_rules\": [\"safety_signal\"], \"raised_after_wait\": false, \"requested_priority\": \"Urgent\", \"notes\": [], \"account\": null, \"contact_name\": null, \"window_start\": \"2026-11-06T13:00:00Z\", \"window_end\": \"2026-11-06T13:30:00Z\"}",
+     "fsm_job_id": 541,
+     "fsm_appointment_id": 541,
+     "customer_id": 301,
+     "window_start": "2026-11-06T13:00:00Z",
+     "window_end": "2026-11-06T13:30:00Z",
+     "job_type": "safety_check",
+     "priority": "Urgent",
+     "priority_reasons": "gas or carbon monoxide reported on the call",
+     "safety_override": 1,
+     "seek_earlier": 0,
+     "reason": "",
+     "attempts": 1,
+     "last_error": null,
+     "turn_seq": 62,
+     "created_at": "2026-11-06T05:28:05Z",
+     "updated_at": "2026-11-06T05:28:05Z"
+    }
+   ],
+   "booking_names": [
+    {
+     "call_id": "retell_call_0989d59c2d8093dcef56526f8ee",
+     "name": "Louis Russo",
+     "at": "2026-11-06T05:26:58Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 389,
+     "call_id": "retell_call_0989d59c2d8093dcef56526f8ee",
+     "kind": "safety",
+     "reason": "Gas smell reported on the call",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T05:25:34Z"
+    }
+   ],
+   "callbacks": [],
+   "leads": []
+  },
+  {
+   "call": {
+    "id": "prescreen_cs24_r183-01_1_fd80c9",
+    "tenant": "summit-air",
+    "caller_id": "+19175556184",
+    "caller_key": "9175556184",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T05:28:37Z",
+    "ended_at": "2026-11-06T05:29:09Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "booked",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 21,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"160 Remsen Street\", \"unit\": \"4B\", \"city\": \"Brooklyn\", \"zip\": \"11201\", \"spelled\": \"\", \"phone\": \"9175556184\", \"phone_for\": \"\", \"sentence\": \"So that's one sixty Remsen Street, unit four B, and the number you're calling from, ending in six one eight four. That's all correct, right?\"}",
+    "readback_asked_seq": 12,
+    "readback_confirmed_at": "2026-11-06T05:28:54Z"
+   },
+   "bookings": [
+    {
+     "id": 259,
+     "call_id": "prescreen_cs24_r183-01_1_fd80c9",
+     "kind": "book",
+     "status": "booked",
+     "fsm_key": "prescreen_cs24_r183-01_1_fd80c9:book:87954d50de3ed1756bcb554082b596b94d2f7b01",
+     "request_json": "{\"call_id\": \"prescreen_cs24_r183-01_1_fd80c9\", \"job_type\": \"estimate\", \"details\": {\"issue\": \"Requesting estimate for central air installation in home (new system, no existing central air)\", \"since\": \"Not applicable, new system request\", \"tried\": \"Not applicable, new system request\", \"who_home\": \"Someone will be home\", \"approver\": \"Hannah Lee\", \"system_type\": \"Central air\", \"arrival_notes\": \"No gate code or buzzer needed\", \"name\": \"Hannah Lee\", \"inside_temp_f\": null}, \"address\": {\"street\": \"160 Remsen Street\", \"unit\": \"4B\", \"city\": \"Brooklyn\", \"zip\": \"11201\"}, \"phone\": \"9175556184\", \"scoped_customer_ids\": [], \"contact_for\": \"\", \"account_phone\": \"\", \"priority\": \"Normal\", \"priority_reasons\": [], \"priority_rules\": [], \"raised_after_wait\": false, \"requested_priority\": null, \"notes\": [], \"account\": null, \"contact_name\": null, \"window_start\": \"2026-11-06T13:00:00Z\", \"window_end\": \"2026-11-06T13:30:00Z\"}",
+     "fsm_job_id": 542,
+     "fsm_appointment_id": 542,
+     "customer_id": 302,
+     "window_start": "2026-11-06T13:00:00Z",
+     "window_end": "2026-11-06T13:30:00Z",
+     "job_type": "estimate",
+     "priority": "Normal",
+     "priority_reasons": "",
+     "safety_override": 0,
+     "seek_earlier": 0,
+     "reason": "",
+     "attempts": 1,
+     "last_error": null,
+     "turn_seq": 18,
+     "created_at": "2026-11-06T05:29:05Z",
+     "updated_at": "2026-11-06T05:29:05Z"
+    }
+   ],
+   "booking_names": [
+    {
+     "call_id": "prescreen_cs24_r183-01_1_fd80c9",
+     "name": "Hannah Lee",
+     "at": "2026-11-06T05:28:54Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T05:29:09Z"
+}

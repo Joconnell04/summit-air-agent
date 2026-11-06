@@ -1,0 +1,7 @@
+$ sqlite3 -header -column data/owner-demo/world.db "SELECT c.sid, c.to_number, substr(c.received_on, 12, 5) AS at_utc, t.name AS tag FROM calls c JOIN call_tags ct ON ct.call_id = c.id JOIN (SELECT 801 AS id, 'Callback resolved' AS name) t ON t.id = ct.tag_type_id WHERE c.direction = 'Outbound' ORDER BY c.id;"
+sid         to_number       at_utc  tag              
+----------  --------------  ------  -----------------
+office-c01  (718) 555-0142  12:43   Callback resolved
+office-c08  (718) 555-0161  16:25   Callback resolved
+office-c09  (347) 555-0188  18:30   Callback resolved
+out-1       (718) 555-0115  19:31   Callback resolved

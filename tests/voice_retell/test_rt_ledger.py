@@ -13,10 +13,11 @@ class Posts:
         self.sent: list[tuple[str, str, dict]] = []
         self.fail_after = fail_after
 
-    def __call__(self, call_id, speaker, text, timings):
+    def __call__(self, call_id, speaker, text, timings, replaces_last=False):
         if self.fail_after is not None and len(self.sent) >= self.fail_after:
             return None
         self.sent.append((speaker, text, timings))
+        self.replaced = [*getattr(self, "replaced", []), replaces_last]
         return {"ok": True, "data": {}}
 
 
@@ -45,11 +46,29 @@ def test_each_line_is_posted_once_however_many_events_repeat_it(tmp_path):
     ]
 
 
-def test_a_caller_line_that_grew_is_posted_again_whole(tmp_path):
+def test_a_caller_line_that_grew_is_posted_again_whole_and_replaces_the_part(tmp_path):
     ledger, posts = Ledger(tmp_path / "l.db"), Posts()
     ledger.sync("c1", lines(call(utterance("user", "I think I smell"))), posts)
     ledger.sync("c1", lines(call(utterance("user", "I think I smell gas"))), posts)
     assert [t for _, t, _ in posts.sent] == ["I think I smell", "I think I smell gas"]
+    assert posts.replaced == [False, True]
+
+
+def test_a_rewritten_caller_line_replaces_the_part_sent_first(tmp_path):
+    """Retell call call_feed25cb0e5df1017695f9dc210 logged "One" then "$199." and "East" then
+    "East 4th, apartment 2." as four caller lines."""
+    ledger, posts = Ledger(tmp_path / "l.db"), Posts()
+    asked = utterance("agent", "What's the street address for the visit?")
+    for said in ["One", "$199."]:
+        ledger.sync("c1", lines(call(asked, utterance("user", said))), posts)
+    street = utterance("agent", "Got it, and what street is that on?")
+    for said in ["East", "East 4th, apartment 2."]:
+        ledger.sync("c1", lines(call(asked, utterance("user", "$199."), street,
+                                     utterance("user", said))), posts)
+    caller = [(t, r) for (s, t, _), r in zip(posts.sent, posts.replaced, strict=True)
+              if s == "caller"]
+    assert caller == [("One", False), ("$199.", True), ("East", False),
+                      ("East 4th, apartment 2.", True)]
 
 
 def test_an_agent_line_that_grew_around_a_tool_call_posts_only_the_new_part(tmp_path):

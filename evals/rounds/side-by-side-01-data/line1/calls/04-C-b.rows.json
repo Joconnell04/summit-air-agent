@@ -1,0 +1,77 @@
+{
+ "window": [
+  "2026-11-06T01:31:27Z",
+  "2026-11-06T01:33:15Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_60a297b19f8a2e1121f6470795a",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16466240418",
+    "direction": "inbound",
+    "started_at": "2026-11-06T01:31:39Z",
+    "ended_at": "2026-11-06T01:33:08Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "changed_booking",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 19,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [
+    {
+     "id": 38,
+     "call_id": "retell_call_60a297b19f8a2e1121f6470795a",
+     "kind": "reschedule",
+     "status": "done",
+     "fsm_key": "retell_call_60a297b19f8a2e1121f6470795a:reschedule:2846d3fd5618e9e116792a41fc5757cb316ef722",
+     "request_json": "{\"call_id\": \"retell_call_60a297b19f8a2e1121f6470795a\", \"booking_id\": 548, \"slot\": {\"date\": \"2026-11-06\", \"window\": \"1200-1230\"}, \"reason\": \"Caller requested a later afternoon time\"}",
+     "fsm_job_id": 548,
+     "fsm_appointment_id": null,
+     "customer_id": 301,
+     "window_start": "2026-11-06T17:00:00Z",
+     "window_end": "2026-11-06T17:30:00Z",
+     "job_type": "no_heat",
+     "priority": null,
+     "priority_reasons": "",
+     "safety_override": 0,
+     "seek_earlier": 0,
+     "reason": "Caller requested a later afternoon time",
+     "attempts": 0,
+     "last_error": null,
+     "turn_seq": 9,
+     "created_at": "2026-11-06T01:32:27Z",
+     "updated_at": "2026-11-06T01:32:27Z"
+    }
+   ],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  }
+ ],
+ "do_not_call": [
+  {
+   "phone_key": "6466240418",
+   "phone": "+16466240418",
+   "call_id": "retell_call_0009860347f1f375c280f704723",
+   "added_at": "2026-11-06T01:30:47Z"
+  }
+ ],
+ "dumped_at": "2026-11-06T01:33:26Z"
+}

@@ -1,0 +1,36 @@
+id: arrival-before-ten
+title: Denise Okafor, a nurse in Bay Ridge with a radiator that won't heat
+tags:
+- booking
+scenario: arrival-before-ten
+caller_id: (917) 555-0171
+user_prompt: |
+  ## Identity
+  Denise Okafor, a nurse in Bay Ridge with a radiator that won't heat. Warm, quick, says "honestly" a lot, has to leave for a shift at 10.
+  Your name: Denise Okafor
+  Your address: 7215 Ridge Blvd, Brooklyn, 11209
+  Your phone: (917) 555-0171 (the number you're calling from)
+  Your problem: the living room radiator stays cold since yesterday, 64 F inside
+  Your system: a gas boiler with radiators, about twenty years old; bled the radiator, no change
+  Your who home: two adults, both healthy, nobody at risk
+  Your hours: home tomorrow from 8 to 2
+
+  ## Goal
+  Start the call by saying: "Hi, honestly, my radiator won't heat and I need someone to look at it. Can the tech get here by 9? I leave at 10."
+
+  ## Behavior
+  - If told the technician can't be promised by 9 or before 10, say honestly that's fine, you're off tomorrow and home from 8 to 2, so anything in there works.
+  - Answer yes to a correct read-back.
+  - Take a window that fits 8 to 2. Say goodbye after the agent confirms and asks if there is anything else.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent says the arrival windows plainly and never implies the technician arrives by 9 or before 10.
+- The agent reads "8 to 2" as 8 AM to 2 PM and offers a window inside it.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

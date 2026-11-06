@@ -4,7 +4,7 @@ before a handler runs (docs/architecture.md, checked arguments)."""
 import datetime as dt
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .settings import NOTE_MAX_CHARS
 from .text import join_spelled
@@ -53,6 +53,11 @@ class StartIn(CallRef):
 class TurnIn(Body):
     speaker: Literal["caller", "agent"]
     text: str = Field(max_length=4000)
+    replaces_last: bool = Field(
+        False,
+        description="A caller line the voice layer already sent in part, now whole: it replaces "
+        "the call's last caller line instead of adding one",
+    )
     timings: dict[str, float] = Field(
         default_factory=dict, description="Stage timings in ms, docs/latency.md"
     )
@@ -104,9 +109,30 @@ class OutboundDoneIn(Body):
 # ---- tools -------------------------------------------------------------------------------------
 
 
+class CustomerAddress(Body):
+    """An address to look a customer up by. The ZIP is optional: with none, the server uses the one
+    find_address found for that street on this call, so the model never has to guess one (#175,
+    Sonnet sent 00000 and then apologized to the caller for a placeholder)."""
+
+    street: str = Field(min_length=1, max_length=120)
+    unit: str = Field("", max_length=20)
+    city: str = Field("", max_length=60)
+    zip: str = Field(
+        "",
+        pattern=r"^(\d{5})?$",
+        description="Only a ZIP the caller said or find_address returned; otherwise leave it empty",
+    )
+    spelled: str = Field("", max_length=120)
+
+    @model_validator(mode="after")
+    def join_letters(self):
+        self.street = join_spelled(self.street)
+        return self
+
+
 class FindCustomerIn(CallRef):
     phone: str | None = Field(None, max_length=40)
-    address: Address | None = None
+    address: CustomerAddress | None = None
 
     @model_validator(mode="after")
     def one_of(self):
@@ -151,10 +177,13 @@ class FindAddressIn(CallRef):
 
 class Facts(Body):
     """What the agent has heard that bears on priority. The server sets priority from the caller's
-    own lines; `who_home` and `issue` raise nothing, and `inside_temp_f` counts only when a caller
-    line carries that number (DECISIONS.md 072)."""
+    own lines; `who_home`, `issue` and `since` raise nothing, and `inside_temp_f` counts only when
+    a caller line carries that number (DECISIONS.md 072)."""
 
     issue: str = Field("", max_length=300)
+    # Since when, as the agent heard it: the Retell agent passes it here, and it was refused as an
+    # unknown field (Retell eval suite round 1, 16 cases).
+    since: str = Field("", max_length=120)
     who_home: str = Field("", max_length=300)
     inside_temp_f: float | None = Field(None, ge=0, le=130)
     temp_falling_fast: bool = False
@@ -165,6 +194,11 @@ class FindSlotsIn(CallRef):
     priority: Priority | None = Field(None, description="The agent's view; logged, not used")
     preferred_days: list[str] = Field(default_factory=list, max_length=7)
     time_of_day: Literal["morning", "afternoon", "evening"] | None = None
+    moving_a_visit: bool = Field(
+        False,
+        description="True when finding a new time for a visit the caller already has, before "
+        "reschedule_appointment",
+    )
     window_minutes: int | None = Field(
         None,
         ge=30,
@@ -206,6 +240,18 @@ class ReadBackIn(CallRef):
         '"my daughter Ana". Always set when the caller says the number is someone else\'s; empty '
         "for the caller's own number.",
     )
+    name: str = Field(
+        "",
+        max_length=80,
+        description="The name the visit goes under, when the caller already gave it; the server "
+        "then doesn't ask for it after the read-back",
+    )
+    job_type: str | None = Field(
+        None,
+        max_length=40,
+        description="The job type of the visit, when the caller has said the problem. For no heat "
+        "or no cooling the server may dispatch the soonest technician here and say so",
+    )
     confirmed: bool = False
 
 
@@ -221,12 +267,22 @@ class JobDetails(Body):
     """The intake every booking carries (spec S-13). Address and phone come from the read-back."""
 
     issue: str = Field(min_length=1, max_length=300)
-    since: str = Field(min_length=1, max_length=100)
-    tried: str = Field(min_length=1, max_length=300)
-    who_home: str = Field(min_length=1, max_length=120)
-    approver: str = Field(min_length=1, max_length=120)
+    # Needed for a repair; an estimate visit for a new system needs only the issue (Jackson's call
+    # call_2fb4e053ba8b76b57c348845990). book_appointment checks them by job type.
+    since: str = Field("", max_length=100)
+    tried: str = Field("", max_length=300)
+    who_home: str = Field("", max_length=120)
+    approver: str = Field("", max_length=120)
+    # Who'll let the technician in and any gate code or buzzer come from one answer to one question
+    # (prompts/spine.md); the first goes in who_home, the second in arrival_notes.
     system_type: str = Field("", max_length=120)
     arrival_notes: str = Field("", max_length=300)
+    also_noted: str = Field(
+        "",
+        max_length=300,
+        description="The caller's answer to the catch-all (\"Anything else the technician should "
+        "know, like water leaking or it turning on and off a lot?\"), as they said it",
+    )
     name: str = Field(
         "",
         max_length=80,
@@ -316,8 +372,18 @@ class CallbackTime(Body):
         return self
 
 
+FLAG_REASON_CHARS = 600
+
+
 class FlagIn(CallRef, CallbackTime):
-    reason: str = Field(min_length=3, max_length=300)
+    # A long reason is cut, never refused: Retell call call_f0846787038f654309219adb1e8 lost its
+    # flag to a 300-character limit.
+    reason: str = Field(min_length=3, max_length=20000)
+
+    @field_validator("reason")
+    @classmethod
+    def _cut(cls, value: str) -> str:
+        return value if len(value) <= FLAG_REASON_CHARS else value[: FLAG_REASON_CHARS - 3] + "..."
     priority: Literal["Normal", "High", "Urgent"] = "Normal"
     system_calls_back: bool = Field(
         False,
@@ -345,7 +411,14 @@ class NoteIn(CallRef):
 
 
 class DoNotCallIn(CallRef):
-    pass
+    confirmed: bool = Field(
+        False, description="True once the caller said yes to the confirm question it returned"
+    )
+    undo: bool = Field(False, description="True when the caller wants to be called again after all")
+
+
+class LookupIn(CallRef):
+    question: str = Field(min_length=1, max_length=300)
 
 
 class EndCallIn(CallRef):

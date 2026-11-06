@@ -1,0 +1,920 @@
+{
+  "case": "open-visit-not-mentioned",
+  "retell": {
+    "test_case_job_id": "test_job_3999bae4da8f",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605794,
+    "user_modified_timestamp": 1793911695782,
+    "test_case_definition_id": "test_case_386cf56e4033",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574910,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-open-visit-not-mentioned"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent never mentions the caller's other visit, open job, earlier calls, account notes, or anything a lookup found, since the caller never asked about them.",
+        "The agent books a tune-up visit with book_appointment for the central air.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent does not cancel or reschedule anything."
+      ],
+      "name": "[summit] open-visit-not-mentioned: Known caller with a visit on file books something else",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_386cf56e4033",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911574910,
+      "userPrompt": "## Identity\nMaria Delgado, a homeowner in Brooklyn. Calm and brief. Your no-heat visit today is already sorted and you don't bring it up.\nYour name: Maria Delgado\nYour address: 620 Bedford Ave, Brooklyn, 11235\nYour phone: 718 555 0142 (the number you're calling from)\nYour request: a tune-up for your central air, any weekday next week, nothing is wrong with it\n\n## Goal\nStart the call by saying: \"Hi, I'd like to book a tune-up for my central air for next week.\"\n\n## Behavior\n- Never mention your other visit. If the agent mentions it, say \"yes, that's fine, this is separate\".\n- Answer plainly, confirm a correct read-back, take the first window offered next week.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-open-visit-not-mentioned",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911658627,
+          "message_id": "message_4a0bc98a04ac69da3d5bb657",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I'd like to book a tune-up for my central air for next week.",
+          "created_timestamp": 1793911659133,
+          "message_id": "message_55dcfb6969c1e8a7adf3867b",
+          "role": "user"
+        },
+        {
+          "content": "I can help with that. Can I get your name?",
+          "created_timestamp": 1793911659888,
+          "message_id": "message_c72280e0dc7a7325e9024d03",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Maria Delgado.",
+          "created_timestamp": 1793911660422,
+          "message_id": "message_9f8b81266de7370ab2d66155",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Maria. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793911661162,
+          "message_id": "message_1189243a40298a09fd5431b1",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a home. It's a house in Brooklyn.",
+          "created_timestamp": 1793911661610,
+          "message_id": "message_221f786051cb7ba601308146",
+          "role": "user"
+        },
+        {
+          "content": "Got it. What's the street address, including the house number and street name?",
+          "created_timestamp": 1793911662283,
+          "message_id": "message_2db3122326808cae15a60d90",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "620 Bedford Ave, Brooklyn, 11235.",
+          "created_timestamp": 1793911662747,
+          "message_id": "message_6ef4475944a61efa28a7ec30",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"620 Bedford Ave\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793911663823,
+          "message_id": "message_5b0e7ecffc76d17943a7009c",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Lrm6JM4BCVvwrPdGMmBA58",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help.\",\"data\":{\"zip\":\"11249\"},\"refused\":\"out_of_area\"}",
+          "created_timestamp": 1793911664741,
+          "message_id": "message_b743c33b9007c9ce20b98e5e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Lrm6JM4BCVvwrPdGMmBA58"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"620 Bedford Ave\",\"zip\":\"11235\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793911664742,
+          "message_id": "message_0991b397c5c749838d7c9a34",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01EaRuDHmWASibbtUX5LrxSJ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":1,\"name\":\"Maria Delgado\",\"type\":\"Residential\",\"residential\":true,\"phones\":[{\"number\":\"(718) 555-0142\",\"ending\":\"0142\",\"memo\":\"Owner: Maria Delgado\"}],\"locations\":[{\"location_id\":1,\"street\":\"620 Bedford Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11235\",\"in_service_area\":true}],\"membership\":null,\"open_jobs\":[{\"job_id\":1,\"job_type\":\"no_heat\",\"status\":\"Scheduled\",\"priority\":\"Urgent\",\"summary\":\"No heat since last night. Radiators cold, thermostat reads 58.\",\"location_id\":1,\"street\":\"620 Bedford Ave\",\"appointment_id\":1,\"appointment_status\":\"Scheduled\",\"window\":{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"label\":\"12 to 4\",\"passed\":false}}],\"last_service_date\":null,\"recent_calls\":[{\"at\":\"2026-11-05T13:47:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:31:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:12:00Z\",\"reason\":\"No heat\",\"call_type\":\"Unbooked\"}],\"notes\":[{\"text\":\"Side gate code is 4417. Friendly dog in the yard.\",\"at\":\"2026-01-23T14:00:00Z\",\"by\":\"staff\"}],\"equipment\":[{\"system\":\"boiler\",\"brand\":\"Slant/Fin\",\"install_year\":2001},{\"system\":\"central AC\",\"brand\":\"Lennox\",\"install_year\":2025}]}],\"needs_unit\":false}}",
+          "created_timestamp": 1793911665446,
+          "message_id": "message_e15b2dfa0121cfe1ec695b4b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01EaRuDHmWASibbtUX5LrxSJ"
+        },
+        {
+          "content": "I'm sorry, Maria, but 620 Bedford Ave in Brooklyn is outside our service area, so we're not able to book a visit there. A local heating and cooling company should be able to help you.\n\nIs there anything else I can help you with?",
+          "created_timestamp": 1793911666385,
+          "message_id": "message_17bfbe89edd46f3952787397",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Wait, really? That's strange. I've had Summit Air service in Brooklyn before. Can you double-check that? Is there a zip code or neighborhood issue, maybe? I'm in the 11235 area, near Manhattan Beach.",
+          "created_timestamp": 1793911667302,
+          "message_id": "message_5c900930ead9715bcb8534e3",
+          "role": "user"
+        },
+        {
+          "content": "I understand the confusion. The address you gave came back outside our service area, and that's based on the ZIP the system matched to it. I can check the ZIP 11235 directly to see if it's covered.",
+          "created_timestamp": 1793911668378,
+          "message_id": "message_1eed3ad43e4aee6e9694b789",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"zip\":\"11235\"}",
+          "created_timestamp": 1793911668379,
+          "message_id": "message_131795de174c4633e0d9d9b3",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01TXqXpmtUHWvN2qQhJHfuRt",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11235\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793911669320,
+          "message_id": "message_e80fb8a9d03123c41f9e0a0c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01TXqXpmtUHWvN2qQhJHfuRt"
+        },
+        {
+          "content": "Good news: ZIP 11235 is within our service area. The address lookup had matched your street to a different ZIP, 11249, which is why it came back as outside the area.\n\nLet me check the address again with the correct ZIP.",
+          "created_timestamp": 1793911670604,
+          "message_id": "message_005266afb039534ea7b608ee",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"620 Bedford Ave\",\"borough\":\"Brooklyn\",\"spelled\":\"B, E, D, F, O, R, D\"}",
+          "created_timestamp": 1793911670605,
+          "message_id": "message_dae5283161da26a2a2d335fe",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_014EzkZTRULyGpPtPHyaPLcP",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help.\",\"data\":{\"zip\":\"11249\"},\"refused\":\"out_of_area\"}",
+          "created_timestamp": 1793911671167,
+          "message_id": "message_dfa47a1034ca23bbc0868394",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_014EzkZTRULyGpPtPHyaPLcP"
+        },
+        {
+          "content": "I'm still getting the same result for that street address, so I can't book it through the address lookup. Could you tell me the nearest cross street, or confirm the house number once more? That may help me find the correct match.",
+          "created_timestamp": 1793911672230,
+          "message_id": "message_0510e2ee3aff3c2c525f5ab3",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sure. It's 620 Bedford Avenue, between... I think it's near Hanson Place? No, sorry, I'm not certain of the cross street. It's down by Manhattan Beach, so the closest cross street would be Oriental Boulevard or Shore Parkway. The house number is 620, and the ZIP is 11235.",
+          "created_timestamp": 1793911673805,
+          "message_id": "message_f1c4af718637e6546d00e6bc",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for the cross street details. Since the address lookup keeps returning the 11249 match, I can't confirm 620 Bedford Ave as a bookable address through the system right now.\n\nHere's what I can do: I can take your details and have the office follow up to get this sorted out. Would you like that?",
+          "created_timestamp": 1793911674973,
+          "message_id": "message_7783d2783e5fc6eff6791830",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that works. Please have someone follow up. My number is 718 555 0142. I'd still like the central air tune-up for next week if they can get it scheduled.",
+          "created_timestamp": 1793911675794,
+          "message_id": "message_0c60b2a8521ed06e6fd537d3",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Maria. I'll have the office follow up with you about the tune-up for next week.",
+          "created_timestamp": 1793911677474,
+          "message_id": "message_5da334c8999d79d14ade2f72",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"Customer Maria Delgado wants a central air tune-up next week at 620 Bedford Ave, Brooklyn 11235 (near Manhattan Beach, cross streets Oriental Blvd or Shore Pkwy). Address lookup keeps returning ZIP 11249 as out of area, though 11235 is in service area. Callback number (718) 555-0142.\",\"priority\":\"Normal\",\"system_calls_back\":false}",
+          "created_timestamp": 1793911677475,
+          "message_id": "message_36b2b835f71a31fd874ba1ea",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JhZWUhkZazyGDyVD49Kegv",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"What time should I tell them someone will call by?\",\"data\":{\"errors\":{\"callback_time\":\"no callback time given\"}},\"refused\":\"invalid_callback_time\"}",
+          "created_timestamp": 1793911678501,
+          "message_id": "message_6480997fa2d0a70809db3b8a",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JhZWUhkZazyGDyVD49Kegv"
+        },
+        {
+          "content": "What time would be good for the office to call you back?",
+          "created_timestamp": 1793911679251,
+          "message_id": "message_ee69ec76e49970f54f2e06fd",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Any time after 10 is fine. I'm usually home in the mornings, so if they can call before noon that would be best.",
+          "created_timestamp": 1793911679969,
+          "message_id": "message_39782608e3d83227c037f0e5",
+          "role": "user"
+        },
+        {
+          "content": "Got it, before noon tomorrow works.",
+          "created_timestamp": 1793911681674,
+          "message_id": "message_46fe05a132ffbe10604c3ff8",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"Customer Maria Delgado wants a central air tune-up next week at 620 Bedford Ave, Brooklyn 11235 (near Manhattan Beach, cross streets Oriental Blvd or Shore Pkwy). Address lookup keeps returning ZIP 11249 as out of area, though 11235 is in service area. Callback number (718) 555-0142. Prefers a call after 10 AM, before noon.\",\"priority\":\"Normal\",\"system_calls_back\":false,\"callback_day\":\"tomorrow\",\"callback_after\":\"10 AM\",\"callback_before\":\"12 PM\"}",
+          "created_timestamp": 1793911681675,
+          "message_id": "message_4f2b39ad0e1b3d960aaec56a",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FwfWpFUgghKmfhEuaGARRr",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"reason\":\"String should have at most 300 characters\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793911682237,
+          "message_id": "message_f99a14a987ea6fd8b2d0b7bc",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FwfWpFUgghKmfhEuaGARRr"
+        },
+        {
+          "arguments": "{\"reason\":\"Maria Delgado: central air tune-up next week, 620 Bedford Ave 11235. Address lookup returns 11249 out of area. Callback (718) 555-0142.\",\"priority\":\"Normal\",\"system_calls_back\":false,\"callback_day\":\"tomorrow\",\"callback_after\":\"10 AM\",\"callback_before\":\"12 PM\"}",
+          "created_timestamp": 1793911683561,
+          "message_id": "message_478db77e36c8b777a540cb7d",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HPdLhXNoxxf5m8wwn1ENBn",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know.\",\"data\":{\"flag_id\":218,\"callback_id\":null,\"callback_at\":\"2026-11-06T17:00:00Z\",\"callback_spoken\":\"tomorrow between 10 AM and 12 PM\"}}",
+          "created_timestamp": 1793911683952,
+          "message_id": "message_048480e4a158352e0614b9cf",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HPdLhXNoxxf5m8wwn1ENBn"
+        },
+        {
+          "content": "I've let our team know. They'll call you tomorrow between 10 AM and 12 PM to sort out the address and schedule your tune-up.\n\nIs there anything else I can help you with?",
+          "created_timestamp": 1793911684837,
+          "message_id": "message_7240863ebd78a3ecff00099f",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, that's all I needed. Have a good day.",
+          "created_timestamp": 1793911685362,
+          "message_id": "message_004fa88c605bef88ced8a789",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911686156,
+          "message_id": "message_941f4139b55314ebf727c605",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911686157,
+          "message_id": "message_0c791d4b2805be8efa35d241",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01LGFuAQw57Jv9kc3bByVTiT",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911686606,
+          "message_id": "message_0a9baedbb6ad233be530f280",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01LGFuAQw57Jv9kc3bByVTiT"
+        },
+        {
+          "content": "Thanks, that's all I needed. Have a good day.",
+          "created_timestamp": 1793911687902,
+          "message_id": "message_034393baefb3944906f17498",
+          "role": "user"
+        },
+        {
+          "content": "The call has already ended, so there's nothing more to do on my end. Thanks for calling Summit Air, Maria.",
+          "created_timestamp": 1793911688826,
+          "message_id": "message_1d4d5b6e9086194d51a8ad04",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm sorry, that's all I needed. Thank you, goodbye.",
+          "created_timestamp": 1793911689672,
+          "message_id": "message_373c9e2b75681589ad2cff5c",
+          "role": "user"
+        },
+        {
+          "content": "Thank you, goodbye.",
+          "created_timestamp": 1793911690886,
+          "message_id": "message_94dc256dc194c075ca14ca67",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye, Maria. Take care.",
+          "created_timestamp": 1793911691511,
+          "message_id": "message_9a6e9a35b31d9b99172a22a3",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thank you, goodbye.",
+          "created_timestamp": 1793911692134,
+          "message_id": "message_19eb1b69a29c5c6f5024f991",
+          "role": "user"
+        },
+        {
+          "content": "Thank you, goodbye.",
+          "created_timestamp": 1793911693417,
+          "message_id": "message_ee626dc9f6b4bb3c7699ee6f",
+          "role": "user"
+        },
+        {
+          "content": "Thank you, goodbye.",
+          "created_timestamp": 1793911694609,
+          "message_id": "message_92f3210ba6804610eaa019a4",
+          "role": "user"
+        },
+        {
+          "content": "Thank you, goodbye.",
+          "created_timestamp": 1793911695781,
+          "message_id": "message_ee9a964e3173bcd5a0e440a7",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-open-visit-not-mentioned",
+      "tenant": "summit-air",
+      "caller_id": "(718) 555-0142",
+      "caller_key": "7185550142",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-08-15T20:46:34Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 23,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:35Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-open-visit-not-mentioned",
+          "caller_id": "(718) 555-0142",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 113.6,
+        "error": null,
+        "request_id": "19081a8fa4e9"
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I'd like to book a tune-up for my central air for next week.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can help with that. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Maria Delgado.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Maria. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yes, it's a home. It's a house in Brooklyn.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it. What's the street address, including the house number and street name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "620 Bedford Ave, Brooklyn, 11235.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:44Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-open-visit-not-mentioned",
+          "street": "620 Bedford Ave",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": false,
+        "refused": "out_of_area",
+        "gate": "out_of_area",
+        "say": "Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help.",
+        "ms": 41.5,
+        "error": null,
+        "request_id": "01d6d24d26b0"
+      },
+      {
+        "at": "2026-11-05T20:47:45Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-open-visit-not-mentioned",
+          "phone": null,
+          "address": {
+            "street": "620 Bedford Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11235",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 468.1,
+        "error": null,
+        "request_id": "54d4431f8e34"
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "I'm sorry, Maria, but 620 Bedford Ave in Brooklyn is outside our service area, so we're not able to book a visit there. A local heating and cooling company should be able to help you.\n\nIs there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Wait, really? That's strange. I've had Summit Air service in Brooklyn before. Can you double-check that? Is there a zip code or neighborhood issue, maybe? I'm in the 11235 area, near Manhattan Beach.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "I understand the confusion. The address you gave came back outside our service area, and that's based on the ZIP the system matched to it. I can check the ZIP 11235 directly to see if it's covered.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052046-open-visit-not-mentioned",
+          "zip": "11235"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 120.8,
+        "error": null,
+        "request_id": "72cd77d11f85"
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Good news: ZIP 11235 is within our service area. The address lookup had matched your street to a different ZIP, 11249, which is why it came back as outside the area.\n\nLet me check the address again with the correct ZIP.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-open-visit-not-mentioned",
+          "street": "620 Bedford Ave",
+          "borough": "Brooklyn",
+          "spelled": "B, E, D, F, O, R, D"
+        },
+        "ok": false,
+        "refused": "out_of_area",
+        "gate": "out_of_area",
+        "say": "Unfortunately that's outside the area we cover, so we're not able to send someone. A local heating company should be able to help.",
+        "ms": 137.4,
+        "error": null,
+        "request_id": "2ee10a86dbf1"
+      },
+      {
+        "at": "2026-11-05T20:47:57Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I'm still getting the same result for that street address, so I can't book it through the address lookup. Could you tell me the nearest cross street, or confirm the house number once more? That may help me find the correct match.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:57Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Sure. It's 620 Bedford Avenue, between... I think it's near Hanson Place? No, sorry, I'm not certain of the cross street. It's down by Manhattan Beach, so the closest cross street would be Oriental Boulevard or Shore Parkway. The house number is 620, and the ZIP is 11235.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:57Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "Thanks for the cross street details. Since the address lookup keeps returning the 11249 match, I can't confirm 620 Bedford Ave as a bookable address through the system right now.\n\nHere's what I can do: I can take your details and have the office follow up to get this sorted out. Would you like that?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yes, that works. Please have someone follow up. My number is 718 555 0142. I'd still like the central air tune-up for next week if they can get it scheduled.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "Thanks, Maria. I'll have the office follow up with you about the tune-up for next week.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:58Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": null,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052046-open-visit-not-mentioned",
+          "reason": "Customer Maria Delgado wants a central air tune-up next week at 620 Bedford Ave, Brooklyn 11235 (near Manhattan Beach, cross streets Oriental Blvd or Shore Pkwy). Address lookup keeps returning ZIP 11249 as out of area, though 11235 is in service area. Callback number (718) 555-0142.",
+          "priority": "Normal",
+          "system_calls_back": false
+        },
+        "ok": false,
+        "refused": "invalid_callback_time",
+        "gate": "invalid_callback_time",
+        "say": "What time should I tell them someone will call by?",
+        "ms": 119.9,
+        "error": null,
+        "request_id": "ff7822dd1a9c"
+      },
+      {
+        "at": "2026-11-05T20:48:02Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "What time would be good for the office to call you back?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:02Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Any time after 10 is fine. I'm usually home in the mornings, so if they can call before noon that would be best.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:02Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "Got it, before noon tomorrow works.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:02Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "reason": "Customer Maria Delgado wants a central air tune-up next week at 620 Bedford Ave, Brooklyn 11235 (near Manhattan Beach, cross streets Oriental Blvd or Shore Pkwy). Address lookup keeps returning ZIP 11249 as out of area, though 11235 is in service area. Callback number (718) 555-0142. Prefers a call after 10 AM, before noon.",
+          "priority": "Normal",
+          "system_calls_back": false,
+          "callback_day": "tomorrow",
+          "callback_after": "10 AM",
+          "callback_before": "12 PM",
+          "call_id": "rtest-11052046-open-visit-not-mentioned"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "b60b89a6bd5e"
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": null,
+          "callback_after": "10 AM",
+          "callback_before": "12 PM",
+          "callback_day": "tomorrow",
+          "call_id": "rtest-11052046-open-visit-not-mentioned",
+          "reason": "Maria Delgado: central air tune-up next week, 620 Bedford Ave 11235. Address lookup returns 11249 out of area. Callback (718) 555-0142.",
+          "priority": "Normal",
+          "system_calls_back": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know.",
+        "ms": 12.5,
+        "error": null,
+        "request_id": "014f90b59a52"
+      },
+      {
+        "at": "2026-11-05T20:48:06Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "I've let our team know. They'll call you tomorrow between 10 AM and 12 PM to sort out the address and schedule your tune-up.\n\nIs there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:06Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Thanks, that's all I needed. Have a good day.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:06Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:06Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-open-visit-not-mentioned",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 3.8,
+        "error": null,
+        "request_id": "3bbd95e4d85e"
+      }
+    ],
+    "flags": [
+      {
+        "id": 218,
+        "call_id": "rtest-11052046-open-visit-not-mentioned",
+        "kind": "person",
+        "reason": "Maria Delgado: central air tune-up next week, 620 Bedford Ave 11235. Address lookup returns 11249 out of area. Callback (718) 555-0142.",
+        "priority": "Normal",
+        "status": "open",
+        "created_at": "2026-11-05T20:48:03Z"
+      }
+    ],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [
+      {
+        "zip": "11249",
+        "at": "2026-11-05T20:47:44Z"
+      }
+    ],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-open-visit-not-mentioned",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "620",
+        "street": "bedford ave",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11249\"]",
+        "source": "geosearch"
+      },
+      {
+        "house": "620",
+        "street": "bedford ave",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11249\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

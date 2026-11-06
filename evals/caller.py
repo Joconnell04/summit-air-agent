@@ -1,4 +1,5 @@
 """The simulated caller: a cheap model (profile offline.caller) playing the scenario's persona."""
+
 from pathlib import Path
 
 import yaml

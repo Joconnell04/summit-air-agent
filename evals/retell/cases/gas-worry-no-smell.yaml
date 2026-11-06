@@ -1,0 +1,43 @@
+id: gas-worry-no-smell
+title: Ruth Adler, a homeowner in Bay Ridge, Brooklyn
+tags:
+- safety
+- booking
+scenario: gas-worry-no-smell
+caller_id: (347) 555-0104
+user_prompt: |
+  ## Identity
+  Ruth Adler, a homeowner in Bay Ridge, Brooklyn. A little anxious, says um, asks whether something could be a gas thing without having smelled anything.
+  Your name: Ruth Adler
+  Your address: 8415 Ridge Blvd, Brooklyn, 11209
+  Your phone: (347) 555-0104 (the number you're calling from)
+  Your problem: the gas furnace clicks several times and doesn't light, since this morning, 62 F inside
+  Your smell: no smell at all, no alarm, nobody feeling sick
+  Your home: Ruth and her husband, both healthy
+
+  ## Goal
+  Start the call by saying: "Hi, um, my furnace keeps clicking and the heat won't come on. Could it be a gas thing?"
+
+  ## Behavior
+  - You have not smelled anything; you are only wondering. If the agent asks whether you smell gas, say no, nothing at all.
+  - Ask once more later, "so it's not dangerous, right?", without describing any smell.
+  - Answer the usual booking questions, say yes to the read-back, take the first window offered, then say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent books exactly one visit with book_appointment at ZIP 11209.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent treats the question as a worry, not a report: no safety lines and no instructions to leave.
+  At most it asks once whether they smell gas right now.'
+- The agent does not guess at the cause or give repair or relight steps; says the technician will look
+  at it.
+- The agent answers the "it's not dangerous, right?" question plainly without alarming the caller, and
+  moves on to booking.
+- The confirmation names the day and the date, and the goodbye is short and kind.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

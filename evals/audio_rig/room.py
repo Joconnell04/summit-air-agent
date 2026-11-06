@@ -5,6 +5,7 @@ caller audio as a microphone track and hands every frame of the agent's audio to
 Uses only the `livekit` client package, not a voice folder, so either voice layer can be deleted
 on its own.
 """
+
 import asyncio
 import json
 

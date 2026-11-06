@@ -75,6 +75,7 @@ class Place:
     zip: str
     borough: str
     area: str  # the neighborhood, "Downtown Brooklyn"; empty when the backend gives none
+    bbl: str = ""  # the city's borough-block-lot, from GeoSearch's PAD addendum; empty otherwise
 
     def spoken_street(self) -> str:
         """ "248 Duffield Street", "77-10 34th Avenue": the city's capitals made readable, with
@@ -250,9 +251,21 @@ def geosearch_places(features: list[dict]) -> list[Place]:
                 p["postalcode"],
                 p.get("borough", ""),
                 p.get("neighbourhood", ""),
+                str(((p.get("addendum") or {}).get("pad") or {}).get("bbl", "")),
             )
         )
     return places
+
+
+def pluto_units(http: httpx.Client, url: str, bbl: str) -> int | None:
+    """Residential units in the city's tax lot (MapPLUTO's unitsres): 9 at 199 East 4th Street.
+    None when the lot isn't listed."""
+    r = http.get(url, params={"$select": "unitsres", "$where": f"bbl={int(bbl)}"})
+    r.raise_for_status()
+    rows = r.json()
+    if not rows or rows[0].get("unitsres") in (None, ""):
+        return None
+    return int(float(rows[0]["unitsres"]))
 
 
 def geosearch(http: httpx.Client, url: str, house: str, street: str) -> list[Place]:
@@ -292,9 +305,12 @@ class Geocoder:
     or timeout moves on to the next."""
 
     def __init__(self, backends: list[tuple[str, Backend]], boroughs: dict[str, str] | None = None,
-                 workers: int = 4):
+                 workers: int = 4, units: Callable[[str], int | None] | None = None):
         self.backends = backends
         self.boroughs = boroughs or {}
+        # Residential units by borough-block-lot (pluto_units), when the tenant has a source.
+        self.units = units
+        self.unit_counts: dict[str, int | None] = {}
         self.pool = ThreadPoolExecutor(max_workers=workers, thread_name_prefix="geocode")
         self.answers: OrderedDict[tuple[str, str], Future] = OrderedDict()
         # Reentrant: a lookup that fails at once runs its callback inside _future, under the lock.
@@ -342,6 +358,19 @@ class Geocoder:
         for house, street in addresses_in(text):
             self.prefetch(house, street)
 
+    def units_at(self, place: Place, wait_s: float = REQUEST_TIMEOUT_S) -> int | None:
+        """Residential units in the building, or None when unknown, slow or failed: the unit
+        question then falls to the agent, as before."""
+        if not self.units or not place.bbl:
+            return None
+        if place.bbl not in self.unit_counts:
+            try:
+                count = self.pool.submit(self.units, place.bbl).result(timeout=wait_s)
+            except Exception:  # noqa: BLE001 - a missing count only means the agent asks
+                return None
+            self.unit_counts[place.bbl] = count
+        return self.unit_counts[place.bbl]
+
     def find(self, house: str, street: str, hint: str = "", wait_s: float = FIND_WAIT_S) -> Found:
         """This house on this street, or `unavailable` when nothing answered within wait_s."""
         try:
@@ -360,12 +389,14 @@ def from_settings(name: str, cfg: dict | None) -> Geocoder | None:
         raise ValueError(f"unknown GEOCODER {name!r}; use geosearch or off")
     area = Area.from_config(cfg)
     http = httpx.Client(timeout=REQUEST_TIMEOUT_S, headers={"User-Agent": "summit-air-agent"})
+    pluto = cfg.get("units_url")
     return Geocoder(
         [
             ("geosearch", lambda h, s: geosearch(http, area.geosearch_url, h, s)),
             ("census", lambda h, s: census(http, area, h, s)),
         ],
         area.boroughs,
+        units=(lambda bbl: pluto_units(http, pluto, bbl)) if pluto else None,
     )
 
 

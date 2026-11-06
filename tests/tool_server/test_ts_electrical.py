@@ -103,13 +103,13 @@ def test_sparks_and_gas_on_one_line_get_the_gas_lines_first(agent):
     assert result["data"]["spoken"] is None
 
 
-def test_an_electrical_smell_during_the_gas_confirm_question_is_said_once_it_clears(agent):
+def test_an_electrical_smell_gets_the_electrical_lines_first_and_no_gas_confirm(agent):
+    """The side-by-side: the gas confirm question held the sparks advice back 21 to 38 seconds. A
+    burning smell from the unit is the electrical report, so its advice comes first."""
     call_id = agent.start(call_id="call-1")["data"]["call_id"]
-    asked = agent.turn(call_id, "It smells like burning plastic from the furnace.")
-    assert asked["data"]["safety"]["action"] == "ask_check"
-    agent.say(call_id, asked["say"])
-    cleared = agent.turn(call_id, "No, nothing like eggs.")
-    assert cleared["say"] == ELECTRICAL
+    first = agent.turn(call_id, "It smells like burning plastic from the furnace.")
+    assert first["say"] == ELECTRICAL
+    assert first["data"]["safety"] is None
 
 
 def test_burning_dust_on_the_first_heat_still_gets_only_the_confirm_question(agent):
@@ -269,3 +269,19 @@ def test_the_two_caller_lines_after_the_electrical_lines_say_not_to_ask_about_th
     agent.say(call_id, "And the ZIP?")
     third = agent.turn(call_id, "11222.")
     assert "electrical_answered" not in third["data"]["hints"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Hi, um, my outdoor AC unit just sparked and made a popping sound when it kicked on.",
+        "The unit is sparking.",
+        "I saw sparks come out of the furnace.",
+        "There's a burning smell from the unit.",
+        "There's a burning smell coming from the unit.",
+        "There's smoke from the unit.",
+    ],
+)
+def test_sparks_burning_smells_and_smoke_from_the_unit_fire(line):
+    """Retell eval suite round 1 (ac-sparking-books, furnace-burning-plastic)."""
+    assert safety.electrical_signal(line, SAFETY)

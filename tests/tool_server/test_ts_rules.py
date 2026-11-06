@@ -254,8 +254,8 @@ def test_a_structural_error_is_refused_before_the_check_runs(agent):
     "Hi {first_name}, ask about our free tune-up.",
 ])
 def test_a_number_or_price_in_a_line_is_for_the_check_not_a_word_list(text):
-    clean, errors = rules.validate(TENANT, {"lines": {"greeting_known": text}})
-    assert errors == {} and clean["lines"]["greeting_known"] == text
+    clean, errors = rules.validate(TENANT, {"lines": {"callback_opening": text}})
+    assert errors == {} and clean["lines"]["callback_opening"] == text
 
 
 def test_the_check_never_runs_on_a_call_or_a_rollback(tmp_path, clock, mock):
@@ -444,7 +444,7 @@ def test_a_line_tampered_into_the_table_still_cannot_change_a_locked_line(agent)
     said = agent.tool("read_back", call, address={"street": "101 Union St", "unit": "",
                                                     "city": "Brooklyn", "zip": "11231"},
                       phone="caller_id")
-    assert said["ok"] and "your home at" in said["say"]
+    assert said["ok"] and said["data"]["sentence"].startswith("So that's one oh one Union St")
 
 
 def test_a_placed_callback_opens_with_the_live_wording(agent):

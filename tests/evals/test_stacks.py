@@ -46,10 +46,16 @@ def test_the_voice_lanes_assemble_module_supplies_the_prompt_and_tools(monkeypat
     from evals import stacks
 
     fake = types.ModuleType("prompts.assemble")
-    fake.instructions = lambda start, now=None: f"Real prompt for {start['tenant']['name']} at {now}"
+    fake.instructions = lambda start, now=None: (
+        f"Real prompt for {start['tenant']['name']} at {now}"
+    )
     fake.tool_specs = lambda job_types: [
-        {"name": "find_slots", "description": "d", "parameters": {"type": "object",
-         "properties": {"job_type": {"enum": job_types}}}, "write": False}
+        {
+            "name": "find_slots",
+            "description": "d",
+            "parameters": {"type": "object", "properties": {"job_type": {"enum": job_types}}},
+            "write": False,
+        }
     ]
     monkeypatch.setitem(sys.modules, "prompts.assemble", fake)
     assert stacks.system_prompt({"tenant": {"name": "Summit Air"}}, now="9am") == (
@@ -57,7 +63,11 @@ def test_the_voice_lanes_assemble_module_supplies_the_prompt_and_tools(monkeypat
     )
     (spec,) = stacks.assembled_tool_specs("summit-air")
     assert spec["input_schema"]["properties"]["job_type"]["enum"] == [
-        "no_heat", "no_cooling", "tune_up", "safety_check", "estimate"
+        "no_heat",
+        "no_cooling",
+        "tune_up",
+        "safety_check",
+        "estimate",
     ]
     assert "write" not in spec
 
@@ -130,13 +140,16 @@ class StubServer:
         return {"ok": True, "say": "", "data": {"hints": []}}
 
     def tool(self, name, call_id, args, key=None):
-        return {"ok": False, "say": "Please get outside first.", "data": {},
-                "refused": "gate_safety"}
+        return {
+            "ok": False,
+            "say": "Please get outside first.",
+            "data": {},
+            "refused": "gate_safety",
+        }
 
 
 def test_a_safety_gate_refusal_is_spoken_and_the_model_gets_no_reply_step():
-    model = ScriptedModel([use("find_slots", "One moment.", job_type="no_heat"),
-                           say("never said")])
+    model = ScriptedModel([use("find_slots", "One moment.", job_type="no_heat"), say("never said")])
     server = StubServer()
     agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
     agent.start()
@@ -168,18 +181,24 @@ class ReadBackServer(StubServer):
     def tool(self, name, call_id, args, key=None):
         if name == "check_service_area":
             return {"ok": True, "say": "", "data": {"in_area": True}, "refused": None}
-        return {"ok": True, "say": "I have your home at 1 Main St, is that right?",
-                "data": {"confirmed": False}, "refused": None}
+        return {
+            "ok": True,
+            "say": "I have your home at 1 Main St, is that right?",
+            "data": {"confirmed": False},
+            "refused": None,
+        }
 
 
 def test_the_read_back_is_heard_alone_with_the_lead_in_dropped():
     """Eval round 3: the harness records what a caller of the worker would hear."""
-    model = ScriptedModel([
-        use("check_service_area", "", zip="11231"),
-        say("You're in our area."),
-        use("read_back", "Let me read that back.", phone="caller_id"),
-        say("never said"),
-    ])
+    model = ScriptedModel(
+        [
+            use("check_service_area", "", zip="11231"),
+            say("You're in our area."),
+            use("read_back", "Let me read that back.", phone="caller_id"),
+            say("never said"),
+        ]
+    )
     server = ReadBackServer()
     agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
     agent.start()
@@ -190,15 +209,21 @@ def test_the_read_back_is_heard_alone_with_the_lead_in_dropped():
     # The dropped lead-in is gone from the model's own history too.
     assert not any(
         b.get("text") == "Let me read that back."
-        for m in agent.messages if isinstance(m["content"], list) for b in m["content"]
+        for m in agent.messages
+        if isinstance(m["content"], list)
+        for b in m["content"]
     )
 
 
 def test_the_harness_drops_a_restated_zip_and_a_read_back_announcement():
-    model = ScriptedModel([
-        say("Got it, 1 Main St, Brooklyn, 11231. I'll read back the details soon. Is it a house?"),
-        say("Let me read that back."),
-    ])
+    model = ScriptedModel(
+        [
+            say(
+                "Got it, 1 Main St, Brooklyn, 11231. I'll read back the details soon. Is it a house?"
+            ),
+            say("Let me read that back."),
+        ]
+    )
     server = StubServer()
     agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
     agent.start()
@@ -213,10 +238,12 @@ def test_the_harness_drops_a_restated_zip_and_a_read_back_announcement():
 
 def test_the_harness_asks_again_after_a_promise_with_no_tool_call():
     """Live call 1 (issue #149): "Got it. I'll look up the visit now." and no tool call."""
-    model = ScriptedModel([
-        say("Got it. I'll look up the visit now."),
-        use("find_customer", "", phone="+16784774024"),
-    ])
+    model = ScriptedModel(
+        [
+            say("Got it. I'll look up the visit now."),
+            use("find_customer", "", phone="+16784774024"),
+        ]
+    )
     agent = InProcessAgent(StubServer(), model, "c1", "(212) 555-0999")
     agent.start()
     turn = agent.hear("I need to cancel the tune up.")
@@ -250,11 +277,17 @@ class PacedServer(StubServer):
         return result
 
     def tool(self, name, call_id, args, key=None):
-        parts = [{"text": "Your home at", "speed": 0.85},
-                 {"text": "101 Union St, 11231,", "speed": 0.7},
-                 {"text": "is that right?", "speed": 0.85}]
-        return {"ok": True, "say": "Your home at 101 Union St, 11231, is that right?",
-                "data": {"parts": parts}, "refused": None}
+        parts = [
+            {"text": "Your home at", "speed": 0.85},
+            {"text": "101 Union St, 11231,", "speed": 0.7},
+            {"text": "is that right?", "speed": 0.85},
+        ]
+        return {
+            "ok": True,
+            "say": "Your home at 101 Union St, 11231, is that right?",
+            "data": {"parts": parts},
+            "refused": None,
+        }
 
 
 def test_every_agent_line_carries_the_servers_speed_and_a_slower_read_back_is_spoken_in_parts():
@@ -267,8 +300,12 @@ def test_every_agent_line_carries_the_servers_speed_and_a_slower_read_back_is_sp
     # The model's "Okay." in the read-back reply is dropped (eval round 3): the caller hears the
     # server's sentence alone.
     assert turn.text == "Your home at 101 Union St, 11231, is that right?"
-    assert server.lines[1:] == ["Sure, I'll slow down.", "Your home at",
-                                "101 Union St, 11231,", "is that right?"]
+    assert server.lines[1:] == [
+        "Sure, I'll slow down.",
+        "Your home at",
+        "101 Union St, 11231,",
+        "is that right?",
+    ]
     assert server.speeds == [1.0, 0.85, 0.85, 0.7, 0.85]
     # The parts were spoken from code: the model had no step after read_back.
     assert len(model.calls) == 2
@@ -278,18 +315,28 @@ class MoveServer(StubServer):
     """Moves the visit and returns the server's confirmation."""
 
     def tool(self, name, call_id, args, key=None):
-        return {"ok": True, "say": "Done, I've moved it to Friday, between 12 and 4. Anything else?",
-                "data": {"booking_id": 7}, "refused": None}
+        return {
+            "ok": True,
+            "say": "Done, I've moved it to Friday, between 12 and 4. Anything else?",
+            "data": {"booking_id": 7},
+            "refused": None,
+        }
 
 
 def test_a_move_is_spoken_once_from_the_server_and_the_model_gets_no_reply_step():
     """A scripted test call after #135: after the server's confirmation the model narrated "the
     reschedule ran without a confirmation message" and confirmed the time again."""
-    model = ScriptedModel([
-        use("reschedule_appointment", booking_id=7, slot={"date": "2026-11-06", "window": "afternoon"},
-            reason="can't be home"),
-        say("The reschedule ran without a confirmation message."),
-    ])
+    model = ScriptedModel(
+        [
+            use(
+                "reschedule_appointment",
+                booking_id=7,
+                slot={"date": "2026-11-06", "window": "afternoon"},
+                reason="can't be home",
+            ),
+            say("The reschedule ran without a confirmation message."),
+        ]
+    )
     server = MoveServer()
     agent = InProcessAgent(server, model, "c1", "(212) 555-0999")
     agent.start()

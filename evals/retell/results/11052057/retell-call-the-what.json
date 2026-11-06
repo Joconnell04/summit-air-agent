@@ -1,0 +1,1220 @@
+{
+  "case": "retell-call-the-what",
+  "retell": {
+    "test_case_job_id": "test_job_3357982fba75",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793912366818,
+    "user_modified_timestamp": 1793912426418,
+    "test_case_definition_id": "test_case_08b3f72b0725",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911576135,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052057-retell-call-the-what"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment at ZIP 11201.",
+        "After \"The what?\", says the last question again, shorter and in simpler words, with no \"No problem\"."
+      ],
+      "name": "[summit] retell-call-the-what: A caller on the Retell number who doesn't catch questions the first time",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_08b3f72b0725",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793912274230,
+      "userPrompt": "## Identity\nA caller on the Retell number who doesn't catch questions the first time. Says \"The what?\" to the first question with a word they don't follow.\nYour address: 248 Duffield Street, Brooklyn, 11201\nYour phone: (678) 555-0204 (the number you're calling from)\nYour wants: a furnace tune-up, any afternoon\n\n## Goal\nStart the call by saying: \"Hi, I'd like to get my furnace tuned up.\"\n\n## Behavior\n- To the agent's first question, say only \"The what?\"\n- After that, answer plainly; confirm a correct read-back.\n- Say goodbye once booked.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052057-retell-call-the-what",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793912376847,
+          "message_id": "message_59f2a27bf77ea8105fc482b4",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I'd like to get my furnace tuned up.",
+          "created_timestamp": 1793912377488,
+          "message_id": "message_55e2b8433595e87a2419a89d",
+          "role": "user"
+        },
+        {
+          "content": "Sure, I can help set up a tune-up. Can I get your name?",
+          "created_timestamp": 1793912378106,
+          "message_id": "message_c3f0c50ac1d8b0100084c2aa",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The what?",
+          "created_timestamp": 1793912378795,
+          "message_id": "message_92dd045b6681df5a113d5539",
+          "role": "user"
+        },
+        {
+          "content": "A tune-up is the yearly maintenance visit for equipment that's working. The technician cleans and checks the furnace, its burners, safety controls, and thermostat to help it run well and catch small problems early.\n\nCan I get your name?",
+          "created_timestamp": 1793912379660,
+          "message_id": "message_fd3836fea4260ee1cae47ae4",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay. My name is Dana Reyes.",
+          "created_timestamp": 1793912380298,
+          "message_id": "message_2b9693bc4fb0d92514e824a0",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Dana. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793912380883,
+          "message_id": "message_d6b073c666c6fbf1a0dd7e6a",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's my home. It's an apartment.",
+          "created_timestamp": 1793912381442,
+          "message_id": "message_a43e2ee393f3d9af640b4442",
+          "role": "user"
+        },
+        {
+          "content": "Got it. What's the address of the apartment, including the street, unit, and ZIP code if you have it?",
+          "created_timestamp": 1793912382388,
+          "message_id": "message_6fd009213536a7f6b752d083",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "248 Duffield Street, Brooklyn, 11201.",
+          "created_timestamp": 1793912382981,
+          "message_id": "message_cc5c8bbac155f2218da2a128",
+          "role": "user"
+        },
+        {
+          "content": "I'll look up that address.",
+          "created_timestamp": 1793912384180,
+          "message_id": "message_8c00003b431f9c875d45f6fa",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"248 Duffield Street\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793912384181,
+          "message_id": "message_02410042d1931173f60e92ea",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01GixwcyCJtDRSrqAMdcfQ18",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"248 Duffield Street\",\"zip\":\"11201\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Downtown Brooklyn\",\"in_area\":true,\"area\":\"Brooklyn North\"}}",
+          "created_timestamp": 1793912384954,
+          "message_id": "message_6ced9d519091133cdab03bae",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01GixwcyCJtDRSrqAMdcfQ18"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"248 Duffield Street\",\"zip\":\"11201\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793912384955,
+          "message_id": "message_cba137516c57ccbabfebdc08",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013DcsUH4pgEc9Y1mVnidRzA",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793912385275,
+          "message_id": "message_02d4255afb9e759196eee0e7",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_013DcsUH4pgEc9Y1mVnidRzA"
+        },
+        {
+          "content": "Thanks. Is there a unit or apartment number for that address?",
+          "created_timestamp": 1793912385990,
+          "message_id": "message_daea33ae5bf9340461def300",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, there's no unit number. It's just the building.",
+          "created_timestamp": 1793912386581,
+          "message_id": "message_24cf9fae417c986803854234",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Roughly how warm is it inside the apartment right now?",
+          "created_timestamp": 1793912387325,
+          "message_id": "message_8ebd8f6f5f3de0c5508efe11",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know. Maybe around 68? I'm not really sure. It's not very warm though.",
+          "created_timestamp": 1793912387909,
+          "message_id": "message_d5db6d07802c7d3c8761f60c",
+          "role": "user"
+        },
+        {
+          "content": "Got it, I'll note that for the technician. What's the best phone number to reach you?",
+          "created_timestamp": 1793912388677,
+          "message_id": "message_f5b47e8fa451419fc4c60c76",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(678) 555-0204. That's the number I'm calling from.",
+          "created_timestamp": 1793912389346,
+          "message_id": "message_095d7d84cd22db06665554a1",
+          "role": "user"
+        },
+        {
+          "content": "The number you're calling from is (678) 555-0204. Let me confirm the details.",
+          "created_timestamp": 1793912390555,
+          "message_id": "message_6ec4ceae73bc1534bb928230",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"248 Duffield Street\",\"zip\":\"11201\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793912390556,
+          "message_id": "message_036ba58c77679474d241977a",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JAqPt6guDyV7EUtxeM1pqM",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero four. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero four. That's all correct, right?\"}}",
+          "created_timestamp": 1793912391149,
+          "message_id": "message_549e3d6e7de59d9bbe456c6e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JAqPt6guDyV7EUtxeM1pqM"
+        },
+        {
+          "content": "I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero four. That's all correct, right?",
+          "created_timestamp": 1793912392176,
+          "message_id": "message_153668e391f601d67c7a43bc",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Thanks.",
+          "created_timestamp": 1793912392935,
+          "message_id": "message_b0508c5213e45bea7cf2c3ee",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"248 Duffield Street\",\"zip\":\"11201\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"confirmed\":true}",
+          "created_timestamp": 1793912394222,
+          "message_id": "message_c6e56b09586bfdf9ab3cec05",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01P4tCxqsRmbf4FXSh4cqGAW",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"248 Duffield Street\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11201\",\"spelled\":\"\"},\"phone\":\"6785550204\"}}",
+          "created_timestamp": 1793912394565,
+          "message_id": "message_e20a1e151941ccad8916df08",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01P4tCxqsRmbf4FXSh4cqGAW"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"facts\":{\"issue\":\"Furnace tune-up requested\",\"inside_temp_f\":68}}",
+          "created_timestamp": 1793912394566,
+          "message_id": "message_173b8be62a0c34256cd2462b",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_014wu73vQTNsbhnkBohrJxoj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\"],\"labels\":[\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793912396334,
+          "message_id": "message_30c9ddb8be807b7f49449106",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_014wu73vQTNsbhnkBohrJxoj"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 4 and 6 PM. Does that work?",
+          "created_timestamp": 1793912397163,
+          "message_id": "message_169ff86064ce3ed0f1737bbd",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that works. Thanks.",
+          "created_timestamp": 1793912397700,
+          "message_id": "message_9d095cf1209ed664b5ea9e64",
+          "role": "user"
+        },
+        {
+          "content": "Great, that's booked as your window. Before I book, I need a few details. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793912398565,
+          "message_id": "message_ed9660a430b32a7e9f718e70",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Not sure yet. I'd want to know the cost first.",
+          "created_timestamp": 1793912400046,
+          "message_id": "message_b9434178c376bcfaedd41c02",
+          "role": "user"
+        },
+        {
+          "content": "Understood. The technician will go over any costs with you before doing the work. So, will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793912400971,
+          "message_id": "message_3e000066af8a9e022a65f9ab",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know yet. I'd want to know the cost first.",
+          "created_timestamp": 1793912402207,
+          "message_id": "message_abc46c44afc0ed457782f331",
+          "role": "user"
+        },
+        {
+          "content": "Understood. The technician will go over any costs with you before doing any work. Will someone be home to let the technician in?",
+          "created_timestamp": 1793912403187,
+          "message_id": "message_d13a74582c40962f7274797a",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home.",
+          "created_timestamp": 1793912403994,
+          "message_id": "message_0fa77b9141d82c81556ca73b",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, I've noted that you'll be home. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793912404911,
+          "message_id": "message_4d526267bc733e24dbd45592",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, no gate or pets. Just ring the buzzer. I'm not sure what the buzzer is called in the building, but I'll be home.",
+          "created_timestamp": 1793912405584,
+          "message_id": "message_3358beef1f0ff4c1f4ac03c7",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, I'll note that the technician should ring the buzzer. Now I'll book your tune-up.",
+          "created_timestamp": 1793912407332,
+          "message_id": "message_d49998d820277f2ec03b691d",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Not yet decided; caller wants cost first\",\"issue\":\"Furnace tune-up\",\"since\":\"Not provided\",\"tried\":\"None\",\"who_home\":\"Caller will be home\",\"arrival_notes\":\"No gate code or pets. Ring the buzzer.\",\"inside_temp_f\":68,\"system_type\":\"Furnace\",\"name\":\"Dana Reyes\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"}}",
+          "created_timestamp": 1793912407333,
+          "message_id": "message_1df327a7a5104a6b615d5ff4",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Gj242AKWeHqSqrTDvo3B27",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"That window just filled up.\",\"data\":{\"alternatives\":[{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}]},\"refused\":\"slot_taken\"}",
+          "created_timestamp": 1793912408833,
+          "message_id": "message_fcccffcd443f929f83e5edbd",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Gj242AKWeHqSqrTDvo3B27"
+        },
+        {
+          "content": "Sorry, that window just filled up. The next options today are 4:30 to 6:30 PM or 5 to 7 PM. Which would you like?",
+          "created_timestamp": 1793912409758,
+          "message_id": "message_4b931c2bcd5375297f0d704b",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hmm, 4:30 to 6:30 or 5 to 7? Which one is earlier? I'd take the earlier one, if that's 4:30.",
+          "created_timestamp": 1793912410491,
+          "message_id": "message_085f886ddf7f7a47c5f53503",
+          "role": "user"
+        },
+        {
+          "content": "The 4:30 to 6:30 PM window is the earlier one. Shall I book that?",
+          "created_timestamp": 1793912411311,
+          "message_id": "message_9b1dabd146dc854c8fc041e7",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, 4:30 to 6:30 works. Please book that one.",
+          "created_timestamp": 1793912411835,
+          "message_id": "message_d71898e2fb0c2c70d24383f4",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Not yet decided; caller wants cost first\",\"issue\":\"Furnace tune-up\",\"since\":\"Not provided\",\"tried\":\"None\",\"who_home\":\"Caller will be home\",\"arrival_notes\":\"No gate code or pets. Ring the buzzer.\",\"inside_temp_f\":68,\"system_type\":\"Furnace\",\"name\":\"Dana Reyes\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\"}}",
+          "created_timestamp": 1793912413135,
+          "message_id": "message_ee8dc62e1718099482b4a2a9",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01QyVAq4QKvFRyiASwZkBUub",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?\",\"data\":{\"booking_id\":550,\"appointment_id\":550,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793912413793,
+          "message_id": "message_b528a80110381b164fddd8ce",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01QyVAq4QKvFRyiASwZkBUub"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30 PM. Is there anything else I can help you with?",
+          "created_timestamp": 1793912414533,
+          "message_id": "message_45d3fbd5f968c3bf19a85fd6",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nope, that's all. Thanks, bye.",
+          "created_timestamp": 1793912415549,
+          "message_id": "message_0d749a891470f3fd3ea6c2ab",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793912416375,
+          "message_id": "message_6396ad4934fd4ea0eed1f390",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793912416376,
+          "message_id": "message_f7f16af753b023ba4239cbb4",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01ARrgVPup2zZpS5HXGoqF1R",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793912417020,
+          "message_id": "message_e12a62263144e86f133158d2",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01ARrgVPup2zZpS5HXGoqF1R"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793912418232,
+          "message_id": "message_ccfa9626e5104d50d18b720f",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye!",
+          "created_timestamp": 1793912418886,
+          "message_id": "message_8614fce539224f759f07061b",
+          "metadata": {
+            "response_id": 21
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The conversation is already over. The appointment is booked and we said goodbye, so I'm done talking.",
+          "created_timestamp": 1793912419732,
+          "message_id": "message_335b35077abc980044d63acb",
+          "role": "user"
+        },
+        {
+          "content": "Understood. Your tune-up is booked for today, and the call has ended. Take care.",
+          "created_timestamp": 1793912420626,
+          "message_id": "message_87a442933b5fba801f569b7d",
+          "metadata": {
+            "response_id": 22
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The conversation is already over. I'm done talking.",
+          "created_timestamp": 1793912421262,
+          "message_id": "message_d7e9c60574c1dcc1947bcf9b",
+          "role": "user"
+        },
+        {
+          "content": "The conversation is over. Bye.",
+          "created_timestamp": 1793912422590,
+          "message_id": "message_cb349c220fdacb468c9f2c6a",
+          "role": "user"
+        },
+        {
+          "content": "The conversation is over. Bye.",
+          "created_timestamp": 1793912423798,
+          "message_id": "message_da6bcb2c6135860fa72731e7",
+          "role": "user"
+        },
+        {
+          "content": "Bye, thanks.",
+          "created_timestamp": 1793912426418,
+          "message_id": "message_785889eb632062a69e34b573",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052057-retell-call-the-what",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0204",
+      "caller_key": "6785550204",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-28T20:59:24Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 38,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"248 Duffield Street\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11201\", \"spelled\": \"\", \"phone\": \"6785550204\", \"phone_for\": \"\", \"sentence\": \"I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero four. That's all correct, right?\"}",
+      "readback_asked_seq": 18,
+      "readback_confirmed_at": "2026-11-05T20:59:54Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:59:24Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "caller_id": "(678) 555-0204",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 30.6,
+        "error": null,
+        "request_id": "ccc8f5d44c07"
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I'd like to get my furnace tuned up.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sure, I can help set up a tune-up. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "The what?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "A tune-up is the yearly maintenance visit for equipment that's working. The technician cleans and checks the furnace, its burners, safety controls, and thermostat to help it run well and catch small problems early.\n\nCan I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Okay. My name is Dana Reyes.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Dana. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Yes, it's my home. It's an apartment.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Got it. What's the address of the apartment, including the street, unit, and ZIP code if you have it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "248 Duffield Street, Brooklyn, 11201.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "I'll look up that address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "street": "248 Duffield Street",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.8,
+        "error": null,
+        "request_id": "3079d488e2f7"
+      },
+      {
+        "at": "2026-11-05T20:59:45Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "phone": null,
+          "address": {
+            "street": "248 Duffield Street",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11201",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 23.9,
+        "error": null,
+        "request_id": "6b128b71cd0a"
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Thanks. Is there a unit or apartment number for that address?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "No, there's no unit number. It's just the building.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Got it. Roughly how warm is it inside the apartment right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "I don't know. Maybe around 68? I'm not really sure. It's not very warm though.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Got it, I'll note that for the technician. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "(678) 555-0204. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:51Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "The number you're calling from is (678) 555-0204. Let me confirm the details.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:51Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "address": {
+            "street": "248 Duffield Street",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11201",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero four. That's all correct, right?",
+        "ms": 5.9,
+        "error": null,
+        "request_id": "3217e8e39964"
+      },
+      {
+        "at": "2026-11-05T20:59:54Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero four. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:54Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Thanks.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:54Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "address": {
+            "street": "248 Duffield Street",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11201",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.6,
+        "error": null,
+        "request_id": "6a6bdb45a3c9"
+      },
+      {
+        "at": "2026-11-05T20:59:56Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Furnace tune-up requested",
+            "who_home": "",
+            "inside_temp_f": 68.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 4 to 6. Does that work?",
+        "ms": 1475.9,
+        "error": null,
+        "request_id": "3205e239fa00"
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 4 and 6 PM. Does that work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Yes, that works. Thanks.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Great, that's booked as your window. Before I book, I need a few details. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Not sure yet. I'd want to know the cost first.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "Understood. The technician will go over any costs with you before doing the work. So, will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "I don't know yet. I'd want to know the cost first.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "Understood. The technician will go over any costs with you before doing any work. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "caller",
+        "text": "Yes, I'll be home.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "Thanks, I've noted that you'll be home. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "caller",
+        "text": "No, no gate or pets. Just ring the buzzer. I'm not sure what the buzzer is called in the building, but I'll be home.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "agent",
+        "text": "Thanks, I'll note that the technician should ring the buzzer. Now I'll book your tune-up.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:08Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "Furnace tune-up",
+            "since": "Not provided",
+            "tried": "None",
+            "who_home": "Caller will be home",
+            "approver": "Not yet decided; caller wants cost first",
+            "system_type": "Furnace",
+            "arrival_notes": "No gate code or pets. Ring the buzzer.",
+            "name": "Dana Reyes",
+            "inside_temp_f": 68.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "slot_taken",
+        "gate": "slot_taken",
+        "say": "That window just filled up.",
+        "ms": 894.2,
+        "error": null,
+        "request_id": "2a173ec55fb5"
+      },
+      {
+        "at": "2026-11-05T21:00:13Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "agent",
+        "text": "Sorry, that window just filled up. The next options today are 4:30 to 6:30 PM or 5 to 7 PM. Which would you like?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:13Z",
+        "type": "turn",
+        "seq": 33,
+        "speaker": "caller",
+        "text": "Hmm, 4:30 to 6:30 or 5 to 7? Which one is earlier? I'd take the earlier one, if that's 4:30.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:13Z",
+        "type": "turn",
+        "seq": 34,
+        "speaker": "agent",
+        "text": "The 4:30 to 6:30 PM window is the earlier one. Shall I book that?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:13Z",
+        "type": "turn",
+        "seq": 35,
+        "speaker": "caller",
+        "text": "Yes, 4:30 to 6:30 works. Please book that one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:13Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1630-1830"
+          },
+          "details": {
+            "issue": "Furnace tune-up",
+            "since": "Not provided",
+            "tried": "None",
+            "who_home": "Caller will be home",
+            "approver": "Not yet decided; caller wants cost first",
+            "system_type": "Furnace",
+            "arrival_notes": "No gate code or pets. Ring the buzzer.",
+            "name": "Dana Reyes",
+            "inside_temp_f": 68.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+        "ms": 196.1,
+        "error": null,
+        "request_id": "e172617e5383"
+      },
+      {
+        "at": "2026-11-05T21:00:16Z",
+        "type": "turn",
+        "seq": 36,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30 PM. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:16Z",
+        "type": "turn",
+        "seq": 37,
+        "speaker": "caller",
+        "text": "Nope, that's all. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:16Z",
+        "type": "turn",
+        "seq": 38,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:16Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-the-what",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 8.5,
+        "error": null,
+        "request_id": "671151c5c702"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 189,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 550,
+        "window_start": "2026-11-05T21:30:00Z",
+        "window_end": "2026-11-05T23:30:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "Caller will be home",
+        "job_type": "tune_up",
+        "street": "248 Duffield Street",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052057-retell-call-the-what",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "248",
+        "street": "duffield st",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11201\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

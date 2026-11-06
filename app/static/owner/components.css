@@ -798,3 +798,30 @@ div.note {
 .spec-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); }
 .spec-type { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: var(--s-2) var(--s-4); align-items: baseline; }
 code { font-family: var(--mono); font-size: 12px; }
+
+/* Call checks (app/checks_view.py): the range form, the estimate, a run's progress, flagged calls. */
+.check-range { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); }
+.check-range .label { font-weight: var(--semibold); color: var(--ink); }
+.check-range .custom-range { display: none; align-items: center; gap: var(--s-2); }
+.check-range:has(#span-custom:checked) .custom-range { display: inline-flex; }
+.check-range .check-force { display: inline-flex; align-items: center; gap: var(--s-2); color: var(--muted); }
+.check-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--high-line); border-radius: var(--r-md); background: var(--high-wash); }
+.check-confirm p { margin: 0; flex: 1 1 100%; color: var(--high-ink); }
+.check-progress { display: flex; align-items: center; gap: var(--s-3); margin-top: var(--s-3); }
+.check-progress .bar { position: relative; flex: 1; max-width: 320px; height: 8px; overflow: hidden;
+  border-radius: var(--r-full); background: var(--neutral-wash); }
+.check-progress .bar span { position: absolute; inset: 0 auto 0 0; min-width: 8%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--info) 0 40%, var(--info-line) 50%, var(--info) 60% 100%);
+  background-size: 300% 100%; animation: check-sweep 1.6s linear infinite; transition: width var(--base) var(--ease); }
+@keyframes check-sweep { from { background-position: 100% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .check-progress .bar span { animation: none; } }
+.check-list > li { display: grid; grid-template-columns: 1fr auto; column-gap: var(--s-3); row-gap: var(--s-1); }
+.check-list .why { grid-column: 1 / -1; margin: 0; }
+.evidence { grid-column: 1 / -1; margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-1); }
+.evidence li { padding-left: var(--s-3); border-left: 2px solid var(--line-strong); color: var(--muted); font-size: var(--text-sm); }
+.time-field, .actions .time-field { width: auto; }
+details.raw summary { cursor: pointer; color: var(--muted); font-size: var(--text-sm); }
+.check-body { display: grid; gap: var(--s-3); justify-items: start; }
+.check-body p { margin: 0; }
+.check-body .check-progress { margin-top: 0; width: 100%; }

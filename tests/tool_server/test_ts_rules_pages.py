@@ -134,7 +134,7 @@ def test_every_line_is_said_on_exactly_one_row():
     said = [r.line for r in rows if r.line] + [v for r in rows for v in r.variants]
     lines = [r.detail for r in rulebook.rulebook(TENANT) if r.kind == "wording"]
     assert sorted(said) == sorted(lines), "every line is said on exactly one row"
-    assert sum("I have your home at" in r.line for r in rows) == 1, "the read-back shows once"
+    assert sum(r.line.startswith("So that's [address]") for r in rows) == 1, "the read-back shows once"
     assert all(rows for _key, _name, rows in fixed.responses(TENANT)), "a topic with no rows"
 
 

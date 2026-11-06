@@ -3,6 +3,7 @@
 #   summit-retell@eval-mock    the eval instance's mock ServiceTitan
 #   summit-retell@eval-tools   the eval instance's tool server
 #   summit-retell@eval-bridge  the bridge the Retell chat agent calls during eval runs
+#   summit-retell@eval-llm     Retell's custom-LLM socket on the eval tool server (voice/retell_llm)
 # systemd rather than the user crontab because deploy/summit-air/deploy.sh replaces that crontab.
 [Unit]
 Description=Summit Air Retell lane: %i

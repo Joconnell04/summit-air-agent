@@ -1,0 +1,25 @@
+{
+  "run": "11052043",
+  "batch": "test_batch_9b778377b4d0",
+  "copy_llm": "llm_1da616f2baeb6e916f63e0236950",
+  "copied": {
+    "agent_version": 2,
+    "llm_version": 2,
+    "at": "2026-11-05T20:43:38+00:00",
+    "prompt_chars": 8536
+  },
+  "cases": {
+    "commercial-bakery": {
+      "test_case": "test_case_3913d47591d9",
+      "call_id": "rtest-11052043-commercial-bakery"
+    },
+    "gas-smell-in-passing": {
+      "test_case": "test_case_d67ad0a08aa6",
+      "call_id": "rtest-11052043-gas-smell-in-passing"
+    },
+    "short-answers-yep-nah-this-one": {
+      "test_case": "test_case_8680d9c6ee45",
+      "call_id": "rtest-11052043-short-answers-yep-nah-this-one"
+    }
+  }
+}

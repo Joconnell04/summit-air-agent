@@ -48,8 +48,14 @@
 {%- endmacro %}
 
 {# One call in a list of calls: the Calls page and search results. #}
+{# The call's one label, Urgent, Routine or No visit (app/labels.py); the reason is its tooltip. #}
+{% macro label_tag(label, reason) -%}
+<span class="tag {{ {'Urgent': 'urgent', 'Routine': 'info'}.get(label, 'outline') }}" title="{{ reason }}">{{ label }}</span>
+{%- endmacro %}
+
 {% macro call_row(c, show_day=false) -%}
 {%- set tags = [] -%}
+{%- if c.label == "Urgent" %}{% set _ = tags.append("urgent") %}{% endif -%}
 {%- if c.open_flags %}{% set _ = tags.append("needs") %}{% endif -%}
 {%- if c.booked %}{% set _ = tags.append("booked") %}{% endif -%}
 {%- if c.outcome.startswith("declined") %}{% set _ = tags.append("away") %}{% endif -%}
@@ -61,7 +67,7 @@
   <td>{{ c.type_label }}</td>
   <td>{{ c.outcome_label }}</td>
   <td class="fit right num muted">{% if c.seconds is not none %}{{ c.seconds // 60 }}:{{ "%02d" | format(c.seconds % 60) }}{% endif %}</td>
-  <td class="fit right"><span class="tags">{% if c.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}{% if c.open_flags %}<span class="tag high">Needs a person</span>{% endif %}</span></td>
+  <td class="fit right"><span class="tags">{{ label_tag(c.label, c.label_reason) }}{% if c.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}{% if c.open_flags %}<span class="tag high">Needs a person</span>{% endif %}</span></td>
   <td class="go">{{ go() }}</td>
 </tr>
 {%- endmacro %}
@@ -187,6 +193,7 @@
   <a href="/bench/settings"{% if tab == "bench-settings" %} aria-current="page"{% endif %}>Settings</a>
   <a href="/bench/evals"{% if tab == "bench-evals" %} aria-current="page"{% endif %}>Evals</a>
   <a href="/bench/rules"{% if tab == "bench-rules" %} aria-current="page"{% endif %}>Rules</a>
+  <a href="/bench/checks"{% if tab == "bench-checks" %} aria-current="page"{% endif %}>Checks</a>
   <a href="/owner">Owner view</a>
 </nav>
 {%- endmacro %}

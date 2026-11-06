@@ -14,6 +14,7 @@ from pathlib import Path
 
 from . import (
     booking,
+    failure_grader,
     outbound,
     owner_settings,
     recordings,
@@ -28,7 +29,7 @@ from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
 from .settings import ALERT_MAX_ATTEMPTS, QUEUE_MAX_ATTEMPTS, STUCK_DIALING_MINUTES
 from .tenant import Tenant
-from .tools import open_windows, send_lead
+from .tools import open_windows, send_lead, warm_capacity
 
 log = logging.getLogger(__name__)
 
@@ -37,8 +38,15 @@ STUCK_SENDING_MINUTES = 5
 UNCLAIMED_MINUTES = 15
 # FSM reads per run for the booked-and-kept check, so a backlog can't hold up the other jobs.
 KEPT_CHECKS_PER_RUN = 50
+# A booking whose job ServiceTitan no longer has is checked again after 5, 10, 20, 40 minutes, then
+# not again: its kept result stays unknown.
+KEPT_MISS_FIRST = timedelta(minutes=5)
+KEPT_MISS_MAX = 5
 # The safety call's flags: emailed after hours whatever the owner's on-call alerts setting says.
 SAFETY_FLAG_KINDS = ("safety", "safety_dropped")
+# Flags that are never emailed, whatever their priority: the failure grader's are for the owner to
+# read on the owner view, not a page to the on-call person (issue #178).
+NEVER_EMAILED_KINDS = (failure_grader.FLAG_KIND,)
 
 
 def retry_queue(
@@ -284,6 +292,25 @@ def confirm_callbacks(
     return counts
 
 
+def _kept_missed(conn: sqlite3.Connection, booking_id: int, now: datetime) -> None:
+    """ServiceTitan has no job for the booking: back off, and after KEPT_MISS_MAX stop asking."""
+    row = conn.execute(
+        "SELECT attempts FROM kept_misses WHERE booking_id = ?", (booking_id,)
+    ).fetchone()
+    attempts = (row["attempts"] if row else 0) + 1
+    later = (
+        "9999-12-31T00:00:00Z" if attempts >= KEPT_MISS_MAX
+        else iso(now + KEPT_MISS_FIRST * 2 ** (attempts - 1))
+    )
+    with tx(conn):
+        conn.execute(
+            "INSERT INTO kept_misses (booking_id, attempts, next_at) VALUES (?, ?, ?) "
+            "ON CONFLICT (booking_id) DO UPDATE SET attempts = excluded.attempts, "
+            "next_at = excluded.next_at",
+            (booking_id, attempts, later),
+        )
+
+
 def check_kept(conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: datetime) -> dict:
     """Booked-and-kept (C-42): once a booking's current appointment has started, record whether the
     job was still on the schedule or had been cancelled. A booking moved later waits for its new
@@ -292,9 +319,10 @@ def check_kept(conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: d
     rows = conn.execute(
         "SELECT b.* FROM bookings b JOIN calls c ON c.id = b.call_id "
         "WHERE c.tenant = ? AND b.kind = 'book' AND b.status = 'booked' AND b.window_start <= ? "
-        "AND NOT EXISTS (SELECT 1 FROM kept k WHERE k.booking_id = b.id) ORDER BY b.window_start "
-        "LIMIT ?",
-        (tenant.slug, iso(now), KEPT_CHECKS_PER_RUN),
+        "AND NOT EXISTS (SELECT 1 FROM kept k WHERE k.booking_id = b.id) "
+        "AND NOT EXISTS (SELECT 1 FROM kept_misses m WHERE m.booking_id = b.id AND m.next_at > ?) "
+        "ORDER BY b.window_start LIMIT ?",
+        (tenant.slug, iso(now), iso(now), KEPT_CHECKS_PER_RUN),
     ).fetchall()
     for row in rows:
         try:
@@ -306,6 +334,7 @@ def check_kept(conn: sqlite3.Connection, tenant: Tenant, fsm: FsmAdapter, now: d
         except FsmUnavailable:
             break
         except FsmRejected:
+            _kept_missed(conn, row["id"], now)
             continue
         kept = job["jobStatus"] != "Canceled"
         with tx(conn):
@@ -344,6 +373,8 @@ def alert_on_call(
     ).fetchall()
     counts = {"sent": 0, "held": 0, "failed": 0}
     for flag in flags:
+        if flag["kind"] in NEVER_EMAILED_KINDS:
+            continue
         if flag["kind"] in cfg["skip_kinds"] or tenant.is_open(parse_iso(flag["created_at"])):
             continue
         if (
@@ -457,6 +488,8 @@ def run_once(services) -> dict:
             report[tenant.slug] = {
                 "queue": retry_queue(conn, tenant, fsm, cache, now),
                 "cache_refreshed": cache.refresh(),
+                # Every job type's capacity stays in memory, so find_slots reads it from there.
+                "cache_warmed": warm_capacity(tenant, fsm, cache, now),
                 "weather": (
                     weather.refresh(conn, tenant, services.weather[tenant.slug], now)
                     if services.weather.get(tenant.slug)
@@ -493,6 +526,12 @@ def run_once(services) -> dict:
         for tenant in services.tenants:
             with tx(conn):
                 report["overdue_callbacks"] += records.mark_overdue(conn, tenant, now)
+        # The daily failure check, when the owner's schedule says it is due. It runs on its own
+        # thread, so a run of many calls never holds up the next run of these jobs.
+        for tenant in services.tenants:
+            report[tenant.slug]["failure_check"] = _guarded(
+                failure_grader.start_daily, services, conn, tenant, now
+            )
         # Last, so a slow model call never holds up the jobs above. One deadline for every
         # tenant, so the run's summary time doesn't grow with the number of tenants.
         deadline = time.monotonic() + summary.RUN_SECONDS

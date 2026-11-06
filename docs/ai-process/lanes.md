@@ -8,13 +8,30 @@ issue backfilled (the issue body says so).
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
-| [#142](https://github.com/Joconnell04/summit-air-agent/issues/142) | Lookup results handed to the model in the same turn, behind a switch | none yet |  |
+| [#171](https://github.com/Joconnell04/summit-air-agent/issues/171) | Lane: server-led booking flow and a short prompt (the big fix) | none yet |  |
+| [#176](https://github.com/Joconnell04/summit-air-agent/issues/176) | Lane: server-led flow behind Retell's custom-LLM socket | none yet |  |
+| [#183](https://github.com/Joconnell04/summit-air-agent/issues/183) | Lane: consolidate Jackson's agent prompt (reorganize, keep what tested well) | none yet |  |
+| [#184](https://github.com/Joconnell04/summit-air-agent/issues/184) | Lane: warm transfer scaffold (hold line placeholder for a human) | none yet |  |
 
 ## Done, newest first
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
+| [#181](https://github.com/Joconnell04/summit-air-agent/issues/181) | Prompt iteration log (retell/PROMPT-LOG.md) | see issue |  |
+| [#178](https://github.com/Joconnell04/summit-air-agent/issues/178) | Lane: Opus failure grader with owner-view and bench controls | see issue |  |
+| [#175](https://github.com/Joconnell04/summit-air-agent/issues/175) | Lane: Sonnet 5.5 build-out to the done bar | see issue |  |
+| [#170](https://github.com/Joconnell04/summit-air-agent/issues/170) | Lane: behavioral prompt for Haiku (fewer never/say lines) | see issue |  |
+| [#169](https://github.com/Joconnell04/summit-air-agent/issues/169) | Lane: four-arm side-by-side on the live line (as-is, Sonnet 5.5, behavioral Haiku, big fix) | see issue |  |
+| [#168](https://github.com/Joconnell04/summit-air-agent/issues/168) | Lane: demo walkthrough videos for the owner demo | see issue |  |
+| [#166](https://github.com/Joconnell04/summit-air-agent/issues/166) | Retell simulation suite for Jackson's agent | see issue |  |
+| [#161](https://github.com/Joconnell04/summit-air-agent/issues/161) | GPT-Live on the live-call slate: gpt-live-1 answering the 646 number | see issue |  |
+| [#154](https://github.com/Joconnell04/summit-air-agent/issues/154) | Retell experiments: single-prompt and custom-LLM on the live-like suite | see issue |  |
+| [#152](https://github.com/Joconnell04/summit-air-agent/issues/152) | Edit the schedule and customers from the owner view and the bench, live into the agent | see issue |  |
+| [#151](https://github.com/Joconnell04/summit-air-agent/issues/151) | A caller like Jackson: realistic audio tests from the live calls | see issue |  |
+| [#150](https://github.com/Joconnell04/summit-air-agent/issues/150) | Wait time and perceived wait on live calls | see issue |  |
+| [#149](https://github.com/Joconnell04/summit-air-agent/issues/149) | Live call 1 fixes: wait time, silence after a tool, cancel and callback flow, voice, open schedule | see issue |  |
 | [#144](https://github.com/Joconnell04/summit-air-agent/issues/144) | The app header fits at phone width on every page | see issue |  |
+| [#142](https://github.com/Joconnell04/summit-air-agent/issues/142) | Lookup results handed to the model in the same turn, behind a switch | see issue |  |
 | [#140](https://github.com/Joconnell04/summit-air-agent/issues/140) | One simple Rules page on the bench, with the assembled system prompt | see issue |  |
 | [#138](https://github.com/Joconnell04/summit-air-agent/issues/138) | Must-pass misses every lane hits: top priority paraphrased, unfound address stalls | see issue |  |
 | [#133](https://github.com/Joconnell04/summit-air-agent/issues/133) | Retell Conversation Flow version of the agent, on the same evals | see issue |  |

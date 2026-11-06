@@ -1,0 +1,45 @@
+dialing +16783366730 from room testcall-1971df07
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hi, my carbon monoxide alarm is going off.
+agent : Got it.
+agent : If a CO alarm is going off, the safest thing is to open a window if one's right there, everyone outside, and call nine one one from there.
+caller: I opened the windows and we're all outside now. The fire department came and said it was a bad battery, it's fine.
+agent : Got it. I'm glad everyone's safe. Since the alarm was a battery issue, would you like us to book a safety check for your system?
+caller: Can someone still come check the furnace?
+agent : Yes. We can get a technician out to check the furnace. Can I get your name?
+caller: Taylor Brooks.
+agent : Thanks, Taylor. And this is for a residential property. Right? Like a home or an apartment?
+caller: Yes.
+agent : Got it. What's the street address?
+caller: 55 Water Street, apartment 12C.
+agent : Is that the one in Manhattan or Brooklyn?
+caller: I'm not sure which borough it's in. It's 55 Water Street, apartment 12C. Is there a number I can reach you at?
+
+Wait, I need to stay in character as Taylor and only say the scripted lines. The next scripted line after the address is about the phone number. The caller is asking
+agent : Right.
+caller: This number.
+agent : Okay,
+agent : I'm sorry. I'm not able to help with that request. Let's keep going with your visit. Is the number you're calling from the best one to reach you at?
+caller: Mhm.
+agent : Great. Since I still need to confirm which borough fifty five Water Street is in, do you know a neighborhood nearby, like Financial District or Dumbo?
+caller: No that's it.
+agent : No problem. Let me try the address once more with the borough. Got it. I found the address in Manhattan. Is the apartment number twelve c?
+caller: Yes.
+agent : Thanks. What's the best phone number to reach you?
+caller: This number.
+agent : So that's fifty five Water Street, unit one two c, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: Mhm.
+agent : The soonest I have is tomorrow, Friday, November sixth, between eight and eight thirty in the morning. Does that work?
+caller: First window works for me.
+agent : Will you be able to approve any repair work the technician recommends?
+caller: Yes.
+agent : Will someone be home to let the technician in?
+caller: Yes.
+agent : Is there a gate code, a buzzer, or any pets the technician should know about?
+caller: No.
+agent : Okay. I've booked it. The technician will arrive tomorrow between eight and eight thirty. Just so you know, the technician can only work on it once it's been checked and found safe. I've also asked our team to look for an earlier opening. Anything else?
+caller: No that's it.
+agent : Thanks so much for calling Summit Air today. Have a great day.
+caller: No that's it.
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 25

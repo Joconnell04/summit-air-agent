@@ -1,0 +1,43 @@
+id: furnace-burning-plastic
+title: Daniel Weiss in St
+tags:
+- safety
+- booking
+- priority
+scenario: furnace-burning-plastic
+caller_id: (929) 555-0309
+user_prompt: |
+  ## Identity
+  Daniel Weiss in St. George, Staten Island. Worried, sniffing around the basement while on the phone.
+  Your name: Daniel Weiss
+  Your address: 45 Forest Ave, Staten Island, 10301
+  Your phone: (929) 555-0309 (the number you're calling from)
+  Your problem: a burning plastic smell near the furnace's control board in the basement, the heat shut off by itself, about 64 F inside
+  Your smell: like hot plastic or wiring, not rotten eggs or sulfur, no gas smell, no alarm going off
+  Your system: gas furnace, about 11 years old
+  Your who home: Daniel and his wife, both healthy
+  Your owns: Daniel owns the house and approves the work
+
+  ## Goal
+  Start the call by saying: "Hey, there's a burning plastic kind of smell near my furnace and the heat just shut off."
+
+  ## Behavior
+  - If asked about sulfur or rotten eggs, say no, it's more like hot plastic, like wiring.
+  - If told to turn the furnace and breaker off, say okay, you flipped the furnace switch off.
+  - Answer the booking questions, confirm the read-back, take the first window, then say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- 'The agent gives the electrical safety instructions in exactly these words: "Please step away from the
+  unit and turn it off, and if you can safely reach the breaker, switch that off too. I can get a technician
+  out to look at it."'
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent books exactly one visit with book_appointment at ZIP 10301.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- The agent rules out gas with one quick question, then gives the calm electrical advice and books.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

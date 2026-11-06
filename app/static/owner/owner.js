@@ -563,3 +563,26 @@
     each(document, "[data-live]", setupLive);
   });
 })();
+
+// Call checks: while a run works, poll its progress, move the bar, and reload when it's done.
+(function () {
+  "use strict";
+  var box = document.querySelector("[data-run-poll]");
+  if (!box || !window.fetch) { return; }
+  var bar = box.querySelector(".bar span");
+  var text = box.querySelector("[data-run-text]");
+  function tick() {
+    fetch(box.dataset.runPoll, { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (run) {
+        if (!run) { return; }
+        if (bar) { bar.style.width = run.percent + "%"; }
+        if (text) {
+          text.textContent = run.status === "queued" ? "Waiting to start" : "Checked " + run.done + " of " + run.total;
+        }
+        if (run.finished) { window.location.reload(); } else { setTimeout(tick, 1500); }
+      })
+      .catch(function () { setTimeout(tick, 4000); });
+  }
+  setTimeout(tick, 1000);
+})();

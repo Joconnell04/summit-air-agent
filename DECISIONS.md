@@ -12,6 +12,118 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 125. Keep accurate speech-to-text and fixed responsiveness on Jackson's agent
+
+Decided: Jackson's agent keeps `stt_mode: accurate` and `enable_dynamic_responsiveness: false`.
+Why: on the Sonnet arm, with the same callers and only the one setting changed (MEASURED, evals/rounds/sonnet-buildout-01.md), `fast` cut Retell's speech-to-text p50 from 678 to 153 ms, but the end-to-end turn didn't get shorter (p50 1460 against 1556 ms). It also answered three times while the caller's line was still open, against none on `accurate`, and heard one more name wrong. Dynamic responsiveness made every turn about 1.1 s slower (end-to-end p50 1295 against 2391 ms), since responsiveness is already at its maximum. The wait Jackson wants shorter is better met by backchannels and hold lines, which already fire on this voice.
+Considered: `fast` for the speech-to-text saving alone (no end-to-end gain, more cut-ins); dynamic responsiveness for fewer cut-ins (none to remove, and slower).
+Would change if: a larger run (about 10 calls a side) on Jackson's own agent shows `fast` shortening the end-to-end turn without cut-ins.
+Discussion: evals/rounds/sonnet-buildout-01.md (STT and turn-taking A/B)
+Issue: #175
+
+## 124. Recommended, pending Jackson's call: build on the server-led arm behind the custom-LLM socket, on Haiku; demo B today
+
+Recommended (not decided; Jackson makes the call): build on arm D, the server-led tool server (PR #173), put it behind the custom-LLM socket (`voice/retell_llm/`) so code speaks the server's sentences as written, and keep Claude Haiku 5.5. For the session in front of Paul today, use arm B (Sonnet 5.5) on the fixed server, with A as the fallback. Drop arm C (the behavioral prompt). Drop the idea of promoting a call to Sonnet when a safety trigger fires.
+Why: four arms on the real line, 34 scored calls (MEASURED, evals/rounds/side-by-side-01.md). No arm made a safety error; the safety words come from the server on all four. Gross errors: A 15, B 8, C 34, D 19. What's left on every arm is the model rewording or adding to words the server owns (its sentences, the open door, names, narration), which the socket removes by construction. D already holds the order in code, is the fastest (1154 ms end-to-end p50) and is close to A's cost ($0.105 against $0.093 a minute). Sonnet halves the gross errors, but costs $0.328 a minute, adds about 0.4 s a reply, still read its tool limits aloud, and was slowest to the safety line on a real gas call.
+Considered: A as is (15 gross errors, the same classes); B as the base (best today, but the price and latency remain and its narration isn't fixed by the model); C (worst on every measure); a staged Sonnet for safety turns (buys tone, not safety).
+Would change if: the socket can't be ready before the session (then A on the fixed server), or the 10-run reliability test on D behind the socket misses the DECISIONS 119 bar.
+Discussion: evals/rounds/side-by-side-01.md
+Issue: #169
+
+## 123. No heat or no cooling at High or Urgent is dispatched at the read-back
+
+Decided: when a no-heat or no-cooling call is High or Urgent on the server's own priority, read_back (given the job type) books the soonest open window itself, with no times offered, no separate read-back and no approval question. Its one sentence names the address, when the technician comes ("within the next hour" when the window opens within 60 minutes, else "by 2:30 PM today") and the number by its last four, and asks "Is that the right address?". A yes, or no answer, confirms; a corrected unit or number cancels the job and books it again with the same sentence. After hours every dispatch goes to the on-call technician: an Urgent person flag goes out first with a callback within twenty minutes, the sentence says so, and the first morning window stays booked as the fallback (Jackson's midnight call, call_b2302955a9c4054184c5d502e97, reached High and heard 8 AM, then a callback). Then only the access question and "Anything else?". A call on the safety route never dispatches. If the read-back came below High and the caller's facts raise it later, find_slots dispatches instead of offering times.
+Why: on an emergency the caller wants someone coming, not a menu of windows, a second read-back and an approver question. The rule is in server code, so the agent can't skip it or offer windows instead.
+Considered: the agent offering the soonest window as usual (three more turns on the worst calls); dispatching from find_slots on every no-heat call (it scores High by default, so every booking would change shape, including callers who want a later day).
+Would change if: callers often want a later time than the soonest on these calls, or the on-call path needs its own confirmation before booking.
+Discussion: coordinator brief in the session for this change
+
+## 122. Every call gets one label: Urgent, Routine or No visit
+
+Decided: each call has exactly one label with a short reason, such as "Urgent: an older person or a baby at home, no heat". Urgent is the server's priority at High or Urgent, a gas, carbon monoxide or sparks hazard, or a dispatch, and it never drops back on the same call. Routine is any other call about a visit (booked, moved, cancelled, asked about, or a callback). No visit is the third label, for calls that were never about one: a business, an address outside the area, a wrong number, a question answered. The label is stored on the call at its end (`call_labels`), shown as a badge on each call row and on the call page with an Urgent filter, and a booked job carries Urgent or Routine to ServiceTitan as a tag type (804, 805).
+Why: the owner scans for what needs attention first. Folding a wrong number into Routine would make Routine mean "anything", and the booking rate already counts only calls that wanted a visit.
+Considered: two labels only (no-visit calls would pad Routine); using the job's priority field alone in the CRM (only calls with a job have one, and High and Urgent read as the same thing to an owner).
+Would change if: owners want the no-visit calls hidden from the list rather than labeled.
+Discussion: coordinator brief in the session for this change
+
+## 121. The demo runs on the socket build: our server speaks the fixed lines, Haiku writes the rest
+
+Decided: Summit Air's agent moves to the server-led flow behind Retell's custom-LLM WebSocket (issue #176). Retell keeps the phone line, listening, turn-taking, backchannels and Brian's voice; our tool server decides each turn, speaks the sentences that must be exact (read-back, slot offer, booking confirmation, safety lines, greeting and goodbye) word for word, and asks Haiku 5.5 to write the adaptive replies. A short hold phrase plays only on genuinely long waits. The single-prompt Retell agent (change set 25, archived with a Retell backup copy) stays as the fallback, one phone-number switch away.
+Why: across the side-by-side and the build-outs, the errors left on every hosted-model arm were the model rewording or adding to words the server owns (names, narration, read-backs, the open-door line). The socket removes that class by construction: every server sentence was word for word on every socket call (MEASURED, evals/rounds/socket-buildout-01.md on joco/socket-buildout-176). Jackson called it and found the pace fine because of the backchannels, with e2e p50 1.41 s and p90 2.35 s on his call (MEASURED, Retell latency), in line with the hosted Haiku agent. Sonnet 5.5 cut errors but narrated its own reasoning aloud, ran slower and cost about 3.5 times as much (MEASURED, evals/rounds/sonnet-buildout-01.md).
+Considered: the hosted single-prompt Haiku agent with a consolidated prompt (fallback); Sonnet 5.5 hosted (slower, costlier, narrates); Retell Conversation Flow (the model still judges step changes, and a flag the model can set is not a gate).
+Would change if: the socket fails the done bar (DECISIONS 119) on something the server can't fix, or its turn latency drifts above the hosted agent's on Jackson's calls.
+Discussion: evals/rounds/side-by-side-01.md, docs/explorations/retell-exact-speech.md
+Issue: #176
+
+## 120. A daily Opus check flags only true failures, and the server keeps a flag only with evidence from the call
+
+Decided: after calls end, Claude Opus 5.5 (profile `offline.grader`, effort medium) reads each call's Retell transcript and the tool server's rows and answers one question: did one of five true failures happen (hung up on, a wrong or missing booking or callback that was promised, safety advice not spoken or a retraction ignored, something false told to the caller, records that contradict what the caller was told)? Style never counts. The server keeps a failure only when every quoted evidence line is found in the call; a kept failure becomes a `grader` flag on Today, never emailed. It runs daily at a time the owner sets (6 AM by default) and on demand from the owner view and the bench, and grades each call once.
+Why: the owner wants rare serious errors caught without reading every call, and a list full of fine calls stops being read. On 62 real calls labeled by hand (MEASURED, evals/rounds/failure-grader-01.md): zero false flags on clear fine calls in 3 runs, 90% to 100% recall on clear failures by run, 61 of 62 calls flagged the same way in all 3 runs, about $0.03 a call.
+Considered: our own scripted checks (they lean oversensitive: 15 to 34 gross errors an arm in the side-by-side round, most style); a cheaper model (not measured; precision was the hard part even on Opus); emailing the on-call person (the owner asked for no texts or emails).
+Would change if: the one unstable call class (a false claim made mid-call) shows up on the owner's list as noise, or a cheaper profile matches these numbers on the same set.
+Discussion: evals/rounds/failure-grader-01.md, docs/ai-process/briefs/failure-grader.md
+Issue: #178
+## 119. V1 is done when three journeys are reliable, not when every call is clean
+
+Decided: V1 is done when three journeys pass about 10 scripted runs each with no safety errors: a routine booking, no heat with an elderly person (the raise reaches the booking), and a gas smell (real and retracted). Everything else that still goes wrong is listed in the debrief as a known issue with its fix. A safety error means the advice for a real hazard isn't spoken, a retraction is ignored, a hazard is booked as routine without a flag, or the agent says something unsafe. An extra caring question or a reworded line is a style issue, not a safety error. Asking how to spell a name is expected only when it's needed, not on every call.
+Why: each round of scripted calls fixed about ten things and surfaced about five new ones (MEASURED across the self-test rounds in evals/rounds/), so "every call clean" kept receding. The session rewards a demo that works on the calls a customer will make, a safe failure when something odd happens, and an honest debrief. Our own checks had also leaned oversensitive on safety, so the bar separates real safety errors from style.
+Considered: zero gross errors across all personas (not reachable with a language model on a phone line before the session); judge score alone (too soft for safety).
+Would change if: Revin's session brief or Paul's calls point at a journey outside these three as the one that matters.
+Discussion: evals/rounds/side-by-side-01.md (on the side-by-side branch, issue #169)
+Issue: #169
+## 118. Summit Air doesn't link a caller's calls
+
+Decided: `repeat_callers.link_calls: false` for Summit Air. A call from a number that called a minute ago starts with nothing from the earlier call: no thread, so no earlier lines in priority or safety, no booking limits or bookings counted across calls, no resumed turns. Bookings still exist in the field service system, so an open visit at the same address is still found there. The linking code stays for a tenant that turns it on, and its tests run as such a tenant.
+Why: five scripted calls from one number as different people (call_feed25cb0e5df1017695f9dc210 to call_f0846787038f654309219adb1e8): a boiler tune-up heard the previous call's sparks line and carried its priority reason, and the next call's booking was refused as over the call's limit. Jackson: state carrying between calls is "gross". DECISIONS.md 115 had already dropped the cut-off greeting and the safety carry-over; this removes the rest.
+Considered: keeping the link and scoping each reader (priority, safety, limits, resume) to the current call, which leaves a link that does nothing and a thread every new reader has to remember to ignore.
+Would change if: real callers drop and call straight back often enough that picking up where the call stopped matters more than the demo's back-to-back calls.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
+## 117. The repo is handed over as Summit Air's deployment repo, not a template
+
+Decided: before the handover, the repo gets a clear front door and stays shaped as what a Revin FDE would leave behind for one customer and for the Revin team: the agent, the rules it can't break, the tests that prove them, and the record of why. It doesn't become a generic template or a "plug in your keys" product.
+Why: the assignment frames the work as an FDE building for one customer "tomorrow" and judges "what you chose to build vs. skip"; a template builds for Revin's platform rather than for Summit Air, costs time right before the demo, and Revin already has its own product. The history (decisions, eval rounds, process) shows judgment, but a reviewer looking at "prompting and architecture ahead of time" should find the prompt, the rules and the architecture first and the history one level down.
+Considered: leaving the repo as is (the history crowds the root); a template or starter in the style of a vendor's public repo (off-target for the brief, and turning one customer into a template is better done with a second real customer).
+Would change if: Revin asks for a reusable starting point, in which case `tenants/` is already the seam.
+Discussion: docs/ai-process/phases.md (Repo front door)
+Issue: none
+
+## 116. No post-trained small model for the voice agent
+
+Decided: the agent stays on a Retell-hosted Claude model. We don't post-train and self-host a small model (a Qwen 8B-class model with a merged adapter on a RunPod GPU).
+Why: we considered it only as a possible latency gain. One RTX 5090 serving an 8B model at about 150 tokens a second would cost about $50 for three days (ASSUMED, from RunPod list prices and memory-bandwidth estimates), and a cached system prompt could bring time to first token under 200 ms (ASSUMED). But the failures on live and scripted calls are instruction-following, not speed: Haiku 5.5's median end-to-end turn latency on Retell is already about 1 s (MEASURED, Retell call latency, call_926427e1d1f2a80cb78dc6a4e04), and an 8B model follows instructions worse than Haiku. It would also need a dataset of good calls we don't have, a custom-LLM bridge to Retell, and a GPU server to run, which is the layering DECISIONS 112 moved away from.
+Considered: serving the adapter separately in vLLM (slower than merging it); a 32B model on two H100s (about $390 for three days, ASSUMED, and still a weaker instruction follower).
+Would change if: there are thousands of real calls to distill from and latency, not behavior, is the limit.
+Discussion: docs/later.md C-85
+Issue: none
+## 115. Each call stands alone: no cut-off greeting, no safety carried over, do-not-call after a yes
+
+Decided: a call from a number that called a minute ago greets like any other call (no "we got cut off"), and nothing about an earlier gas or carbon monoxide scare carries into it: not its safety state, its sign-off, its priority reason, the earlier call's safety lines in the context, or the job summary's priority line. mark_do_not_call returns a confirm question first and marks only after the caller says yes; `undo` takes it back, and "just kidding" is not a request. A flag whose callback couldn't be stored (a do-not-call number) returns no callback time. "End this call", "hang up" and "I'm done" count as goodbyes. find_slots takes `moving_a_visit`, and a move hears no priority line. The live-world reset refuses while a call is live, and clears the do-not-call list.
+Why: Jackson's call call_7255ab47e30637f207e49f5bdeb, 82 seconds after his gas test call: it opened with the earlier call's "make sure you're outside and have called 911", listed gas as a priority reason, wouldn't hang up, announced top priority on a move, refused his own visit after a reset one second into the call, promised a callback at 5:18 PM with none stored, and his number was on the do-not-call list from "don't call me then" said in passing on an earlier call. His words: "i want to get rid of the cut-off thing because likely in the demo he'll call the same number a few times."
+Considered: keeping a dropped call's safety state when its lines weren't said yet; Jackson asked for safety per call, and a drop before the lines already flags a person to call back.
+Would change if: real callers drop mid-safety call and call straight back often enough that the lines should carry over.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
+## 114. Arrival windows are 30 minutes by default
+
+Decided: find_slots offers 30-minute arrival windows unless the caller asks for another length (`window_minutes`, any run of 30-minute blocks as in 108). A time the caller names starts a 30-minute window. Supersedes 108's two-hour default; nothing else in 108 changes.
+Why: Jackson on his gas test call call_0246b91f77e01a4b18583e6ca8b heard "5 to 7": "by default, it should give a 30 minute way, not a 2 hour window."
+Considered: one hour, as a middle ground; Jackson named 30 minutes, and the capacity blocks are already 30 minutes, so it needs no new unit.
+Would change if: technicians can't keep 30-minute promises on real days (late arrivals in the live schedule or from Summit Air's dispatcher), in which case the default widens and the caller can still ask for a tighter one.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
+## 113. Safety lines are advice said once, a caller can take them back, and a safety call hangs up after its sign-off
+
+Decided: the gas and carbon monoxide lines are advice ("the safest thing is to get everyone outside and call 9-1-1..."), asked nothing, and said once per hazard (repeat_limit 0, no shorter variants). They count as said once the agent has spoken after they were handed out. A caller who takes the report back ("never mind", "false alarm", "the gas company said it's fine") clears the safety state at any point unless the same line still reports a smell or only says they've gone outside; the job gets a note and the call books as usual. end_call on a safety call says the sign-off once and hangs up. Lines write "9-1-1".
+Why: Jackson's gas test call call_0246b91f77e01a4b18583e6ca8b: the lines were repeated, the agent asked "are you outside the house now?" and told him to get out, "No, I mean, I don't think it's leaking" didn't clear it, and the call never ended after "I'm done". His words are in docs/ai-process/coauthoring.md (safety r2).
+Considered: keeping one shorter repeat (eval round 3's "offer one more time"), which Jackson heard as the same statement again; clearing only on "there was never a smell", which missed every way he took it back; leaving the call open after the sign-off, as the gas utility advice behind it is about the caller's phone, not ours.
+Would change if: a retraction phrase clears a call that still had a real smell in the evals or live calls, in which case the phrase list narrows.
+Discussion: docs/ai-process/coauthoring.md safety r2
+Issue: #149
+
 ## 112. Summit Air runs on Retell, starting from Jackson's own agent
 
 Decided: the product is a Retell agent, "Summit Air Jackson" (agent_a3e38e6aa3d4e75dfac12aafc8, LLM llm_12eba5f1d4a3b067f0635097de30), which Jackson built and tunes in Retell's dashboard with Retell's builder assistant. Retell runs the phone line, listening, turn-taking and voice; Claude Haiku 5.5 runs on a short prompt; our FastAPI tool server and mock ServiceTitan still own every fact and every rule (lookups, the read-back, booking, safety, priority, identity). Work stops on the LiveKit custom stack and on the other slate entries. Testing moves to Retell's platform: web calls from a laptop and Retell's own test tools, against our tool server.
@@ -30,6 +142,14 @@ Considered: finishing the whole slate first (more evidence, but too slow); picki
 Would change if: neither stack is good enough on its next call, in which case the paused Deepgram entry is the fallback.
 Discussion: evals/rounds/simplicity-slate-01.md
 Issue: none
+
+## 110. Retell's dials, set from measurement: accurate ears, no conversational rewrite, facts in the prompt, our hang-up
+Decided: the Retell agents run `stt_mode` accurate with noise cancellation, `responsiveness` 1.0 without dynamic responsiveness, backchannel on, one reminder after 10 s, the Handbook's conversational personality off, the company facts in the prompt rather than a knowledge base, and our own `end_call` through the bridge rather than Retell's built-in End Call. Every dial is listed in docs/retell-knobs.md with its source.
+Why: replaying Jackson's own replies from live call 3 into Retell (voice/retell/turn_probe.py): fast transcription missed his quiet "sure" 2 of 2 times and answered into his mid-sentence pause; accurate heard 12 of 12 and waited, median 1.70 s (MEASURED). The conversational personality split replies with a pause in 3 of 6, against 0 of 6 without it, at no speed cost (MEASURED). Retell puts knowledge-base text inside the caller's turn, and the model kept answering it aloud ("reference material", three times on one call); with the facts in the prompt, none (MEASURED, call_411b6aa0d8810886254f4d3e558). Retell's End Call hangs up 0.02 to 0.07 s after the goodbye, which Jackson found rushed, and skips the server's gate; ours waits 1.5 s.
+Considered: Retell's Code tool for letter questions (it takes no arguments, and the model narrated the extra step aloud), a stricter knowledge-base threshold (0.75 still leaked), the professional and conversational Handbook presets, sonic-3.6 (questions fell at the end), Expressive mode on Retell's own Max (closest to Jackson's "Max happy" pick, kept on the native copy).
+Would change if: a live call shows accurate transcription too slow on long answers, or Retell lets a knowledge base answer outside the caller's turn.
+Discussion: docs/retell-knobs.md, voice/retell_native/README.md, evals/results/retell-turn-probe/
+Issue: #154
 
 ## 108. Arrival windows are any run of 30-minute blocks, two hours unless the caller asks
 Decided: capacity is held in 30-minute blocks from opening to closing (config.yaml `scheduling`), and an arrival window is any run of them, booked and stored by its start and end ("0730-0930"). find_slots offers the earliest open two-hour window by default; a caller who names a time is offered the window that starts at the half hour on or before it, two hours long and cut short at closing ("7:30" gives 7:30 to 8); `window_minutes` takes any other length in 30-minute steps, and arrival hours narrower than two hours ("before 9") get a window that fits ("8 to 9"). A technician can take a window when free in every block of it, the urgent hold applies in every block (2 on weekdays, 1 on weekends), and the mock answers capacity in blocks and refuses a technician whose live appointments overlap. A window that starts this minute is not offered. The owner view keeps 2-hour columns; a visit shows in every column its window overlaps. The night window is unchanged.

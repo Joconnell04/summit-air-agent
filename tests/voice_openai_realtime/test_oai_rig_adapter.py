@@ -72,7 +72,7 @@ def test_the_session_has_our_prompt_and_tools_and_never_answers_on_its_own(app):
 def test_the_greeting_is_asked_for_word_for_word(app):
     _, sock, _ = opened_line(app)
     response = sock.of_type("response.create")[0]["response"]
-    assert "Thanks for calling Summit Air" in response["instructions"]
+    assert "thanks for calling Summit Air!" in response["instructions"]
     assert response["tool_choice"] == "none"
 
 
@@ -94,7 +94,7 @@ def test_a_gas_smell_asks_for_the_signed_off_lines_exactly_with_no_tools(app):
     asyncio.run(line.handle(event))
     response = sock.sent[-1]["response"]
     assert response["tool_choice"] == "none"
-    assert "call 911" in response["instructions"].lower()
+    assert "call 9-1-1" in response["instructions"].lower()
     assert response["instructions"].startswith("Say exactly")
 
 
@@ -124,7 +124,7 @@ def test_a_finished_reply_posts_the_agent_line_and_hands_the_turn_back(app):
     assert listener.said_lines == ["What's your ZIP code?"] and listener.done_count == 1
 
 
-def test_end_call_on_a_safety_call_is_refused_and_the_lines_are_asked_for(app):
+def test_end_call_on_a_safety_call_is_refused_without_asking_for_the_lines_again(app):
     line, sock, _ = greeted(app)
     asyncio.run(line.handle({"type": "conversation.item.input_audio_transcription.completed",
                              "transcript": "I smell gas."}))
@@ -134,7 +134,8 @@ def test_end_call_on_a_safety_call_is_refused_and_the_lines_are_asked_for(app):
          "arguments": json.dumps({"reason": "resolved"})}], "usage": {}}}
     asyncio.run(line.handle(done))
     assert line.hang_up_after is False
-    assert sock.sent[-1]["response"]["instructions"].startswith("Say exactly")
+    # The lines were asked for when the caller spoke; the refusal doesn't ask for them again.
+    assert not str(sock.sent).count("Say exactly")
 
 
 def test_a_caller_line_during_a_reply_cuts_it_short_and_waits_for_it(app):

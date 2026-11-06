@@ -1,0 +1,683 @@
+log:
+  g303-01:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Priya Williams
+    one_second: false
+    seed: 303
+    unit: unit 4B
+  g303-02:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Elena Brooks
+    one_second: false
+    seed: 303
+    unit: apartment one F
+  g303-03:
+    address: seventeen hundred Bedford Avenue
+    borough: Brooklyn
+    correction: true
+    early: true
+    interrupt: true
+    journey: gas_real
+    name: Luis Goldberg
+    one_second: false
+    seed: 303
+    unit: ''
+  g303-04:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Sam Russo
+    one_second: false
+    seed: 303
+    unit: apartment one F
+  g303-05:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Grace Williams
+    one_second: false
+    seed: 303
+    unit: ''
+  o303-01:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    corrected_unit: true
+    correction: true
+    early: true
+    interrupt: false
+    journey: elderly
+    name: Maria Williams
+    one_second: true
+    seed: 303
+    system_said: a mini-split
+    unit: unit 4B
+    unit_volunteered: true
+    who: my father is eighty-two and he just got out of the hospital
+  o303-02:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: false
+    early: true
+    interrupt: false
+    journey: elderly
+    name: Tomasz Murphy
+    one_second: false
+    seed: 303
+    system_said: a mini-split
+    unit: apartment two
+    unit_volunteered: true
+    who: my father is eighty-two and he just got out of the hospital
+  o303-03:
+    address: thirty-seven twenty-one eighty-second Street
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Devon Santos
+    one_second: true
+    seed: 303
+    system_said: central air
+    unit: the second floor
+    unit_volunteered: true
+    who: my father is eighty-two and he just got out of the hospital
+  o303-04:
+    address: one sixty Remsen Street
+    borough: Brooklyn
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Luis Goldberg
+    one_second: false
+    seed: 303
+    system_said: a gas furnace
+    unit: ''
+    unit_volunteered: false
+    who: my mom's eighty-five and she lives with me
+  o303-05:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Luis Patel
+    one_second: false
+    seed: 303
+    system_said: a boiler
+    unit: ''
+    unit_volunteered: false
+    who: my grandfather is ninety and he's here with me
+  o303-06:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Colleen Johnson
+    one_second: false
+    seed: 303
+    system_said: a mini-split
+    unit: unit 4B
+    unit_volunteered: true
+    who: my grandfather is ninety and he's here with me
+  o303-07:
+    address: two forty-eight Duffield Street
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Devon Kim
+    one_second: false
+    seed: 303
+    system_said: a mini-split
+    unit: ''
+    unit_volunteered: false
+    who: my mom's eighty-five and she lives with me
+  o303-08:
+    address: seventeen hundred Bedford Avenue
+    borough: Brooklyn
+    corrected_unit: true
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Owen Petrova
+    one_second: true
+    seed: 303
+    system_said: a boiler
+    unit: apartment two
+    unit_volunteered: true
+    who: my father is eighty-two and he just got out of the hospital
+  o303-09:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Devon Williams
+    one_second: false
+    seed: 303
+    system_said: central air
+    unit: ''
+    unit_volunteered: false
+    who: my father is eighty-two and he just got out of the hospital
+  o303-10:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    correction: false
+    early: false
+    interrupt: true
+    journey: elderly
+    name: Luis Popescu
+    one_second: true
+    seed: 303
+    system_said: a boiler
+    unit: apartment one F
+    unit_volunteered: false
+    who: my mom's eighty-five and she lives with me
+  r303-01:
+    address: two forty-eight Duffield Street
+    borough: Brooklyn
+    correction: false
+    early: false
+    estimate: true
+    interrupt: false
+    journey: routine
+    name: Hannah Alvarez
+    one_second: false
+    seed: 303
+    system_said: central air
+    unit: ''
+    unit_volunteered: false
+  r303-02:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: true
+    early: true
+    interrupt: true
+    journey: routine
+    name: Priya Brooks
+    one_second: false
+    seed: 303
+    system: boiler
+    unit: ''
+    unit_volunteered: false
+  r303-03:
+    address: one sixty Remsen Street
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: routine
+    name: Elena Popescu
+    one_second: true
+    seed: 303
+    system: boiler
+    unit: ''
+    unit_volunteered: false
+  r303-04:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: routine
+    name: Grace Petrova
+    one_second: true
+    seed: 303
+    system: boiler
+    unit: apartment one F
+    unit_volunteered: false
+  r303-05:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Nadia Williams
+    one_second: false
+    seed: 303
+    system: boiler
+    unit: ''
+    unit_volunteered: false
+  r303-06:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    corrected_unit: true
+    correction: true
+    early: true
+    interrupt: true
+    journey: routine
+    name: Nadia Alvarez
+    one_second: false
+    seed: 303
+    system: boiler
+    unit: unit 4B
+    unit_volunteered: true
+  r303-07:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: false
+    early: true
+    interrupt: false
+    journey: routine
+    name: Owen O'Brien
+    one_second: false
+    seed: 303
+    system: boiler
+    unit: apartment one F
+    unit_volunteered: false
+  r303-08:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Raj Alvarez
+    one_second: false
+    seed: 303
+    system: AC
+    unit: apartment one F
+    unit_volunteered: false
+  r303-09:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Priya Nowak
+    one_second: true
+    seed: 303
+    system: boiler
+    unit: unit 4B
+    unit_volunteered: true
+  r303-10:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Maria Petrova
+    one_second: false
+    seed: 303
+    system: furnace
+    unit: the second floor
+    unit_volunteered: true
+  x303-01:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Hannah Petrova
+    one_second: false
+    seed: 303
+    take_back: hold on, sorry, it's the trash, not gas, I took it out
+    unit: unit 4B
+  x303-02:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: true
+    early: true
+    interrupt: false
+    journey: gas_retracted
+    name: Andre Nowak
+    one_second: false
+    seed: 303
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: ''
+  x303-03:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Rosa Russo
+    one_second: false
+    seed: 303
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: apartment two
+  x303-04:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: true
+    interrupt: false
+    journey: gas_retracted
+    name: Keisha Russo
+    one_second: false
+    seed: 303
+    take_back: hold on, sorry, it's the trash, not gas, I took it out
+    unit: ''
+  x303-05:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: true
+    early: true
+    interrupt: true
+    journey: gas_retracted
+    name: Fatima Shah
+    one_second: false
+    seed: 303
+    take_back: oh, actually no, my roommate was cooking, it's gone now
+    unit: the second floor
+personas:
+  g303-01:
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Priya
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g303-02:
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Elena
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g303-03:
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Luis
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g303-04:
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Sam
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  g303-05:
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Grace
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+    unit_ask: false
+  o303-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 2
+    first: Maria
+    journey: elderly
+    name: Maria Williams
+    raised: eighty|82|hospital
+    unit_ask: false
+  o303-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Tomasz
+    journey: elderly
+    name: Tomasz Murphy
+    raised: eighty|82|hospital
+    unit_ask: false
+  o303-03:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Devon
+    journey: elderly
+    name: Devon Santos
+    raised: eighty|82|hospital
+    unit_ask: false
+  o303-04:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Luis
+    journey: elderly
+    name: Luis Goldberg
+    raised: eighty|85
+    unit_ask: false
+  o303-05:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Luis
+    journey: elderly
+    name: Luis Patel
+    raised: ninety|90
+    unit_ask: false
+  o303-06:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 2
+    first: Colleen
+    journey: elderly
+    name: Colleen Johnson
+    raised: ninety|90
+    unit_ask: false
+  o303-07:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Devon
+    journey: elderly
+    name: Devon Kim
+    raised: eighty|85
+    unit_ask: false
+  o303-08:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 2
+    first: Owen
+    journey: elderly
+    name: Owen Petrova
+    raised: eighty|82|hospital
+    unit_ask: false
+  o303-09:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Devon
+    journey: elderly
+    name: Devon Williams
+    raised: eighty|82|hospital
+    unit_ask: false
+  o303-10:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Luis
+    journey: elderly
+    name: Luis Popescu
+    raised: eighty|85
+    unit_ask: true
+  r303-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Hannah
+    job_type: estimate
+    journey: routine
+    name: Hannah Alvarez
+    unit_ask: false
+  r303-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Priya
+    journey: routine
+    name: Priya Brooks
+    unit_ask: false
+  r303-03:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Elena
+    journey: routine
+    name: Elena Popescu
+    unit_ask: false
+  r303-04:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Grace
+    journey: routine
+    name: Grace Petrova
+    unit_ask: true
+  r303-05:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Nadia
+    journey: routine
+    name: Nadia Williams
+    unit_ask: false
+  r303-06:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 2
+    first: Nadia
+    journey: routine
+    name: Nadia Alvarez
+    unit_ask: false
+  r303-07:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Owen
+    journey: routine
+    name: Owen O'Brien
+    unit_ask: true
+  r303-08:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Raj
+    journey: routine
+    name: Raj Alvarez
+    unit_ask: true
+  r303-09:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Priya
+    journey: routine
+    name: Priya Nowak
+    unit_ask: false
+  r303-10:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Maria
+    journey: routine
+    name: Maria Petrova
+    unit_ask: false
+  x303-01:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Hannah
+    journey: gas_retracted
+    name: null
+    retraction: notgas
+    safety: true
+    unit_ask: false
+  x303-02:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Andre
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x303-03:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Rosa
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+    unit_ask: false
+  x303-04:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Keisha
+    journey: gas_retracted
+    name: null
+    retraction: notgas
+    safety: true
+    unit_ask: false
+  x303-05:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Fatima
+    journey: gas_retracted
+    name: null
+    retraction: actuallyno
+    safety: true
+    unit_ask: false

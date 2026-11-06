@@ -1,0 +1,353 @@
+{
+  "case": "commercial-deli-owner",
+  "retell": {
+    "test_case_job_id": "test_job_8119f322f235",
+    "status": "fail",
+    "result_explanation": "Although no appointment was booked and record_lead was called with kind \"commercial,\" the agent said the caller's name aloud: \"Thanks, Teresa.\" It also told the caller the team would follow up, contrary to the required commercial decline behavior.",
+    "creation_timestamp": 1793915957291,
+    "user_modified_timestamp": 1793915976486,
+    "test_case_definition_id": "test_case_286b76671a2a",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911571642,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052159-commercial-deli-owner"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent does not book a visit: book_appointment is never called, or every call to it is refused.",
+        "The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial so the team can follow up.",
+        "The agent declines kindly in one or two lines.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] commercial-deli-owner: Teresa Ruiz, who owns a deli in Sunset Park, Brooklyn",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_286b76671a2a",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915947541,
+      "userPrompt": "## Identity\nTeresa Ruiz, who owns a deli in Sunset Park, Brooklyn. Busy, talks fast, mentions the deli only once.\nYour name: Teresa Ruiz\nYour place: her deli, 4512 5th Ave, Brooklyn, 11220\nYour phone: (917) 555-0106 (the number you're calling from)\nYour problem: the AC over the counter is blowing warm air\n\n## Goal\nStart the call by saying: \"Hi, the AC's blowing warm air. I own the place, it's a deli near the park.\"\n\n## Behavior\n- Answer any question about the problem in one line.\n- When told Summit Air only works on homes and apartments, say no problem and thank them.\n- Say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052159-commercial-deli-owner",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+          "created_timestamp": 1793915967381,
+          "message_id": "message_76a6f73176e9a14f50e82bf6",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, the AC's blowing warm air. I own the place, it's a deli near the park.",
+          "created_timestamp": 1793915968081,
+          "message_id": "message_8ab0013e680159f27f2367f6",
+          "role": "user"
+        },
+        {
+          "content": "Sorry to hear the AC is blowing warm air. Unfortunately, we only service homes and apartments, but I can pass your details to our team. Can I get your name?",
+          "created_timestamp": 1793915970179,
+          "message_id": "message_139a8e08eebbc5b3a36f90fb",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No problem, thanks for letting me know. I'm Teresa Ruiz. Thanks, bye.",
+          "created_timestamp": 1793915970899,
+          "message_id": "message_0d4fe4f8279a8c31c0e461b8",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Teresa. Since the deli is a business, I'll pass your details to our team so they can follow up. What's the best phone number to reach you?",
+          "created_timestamp": 1793915971553,
+          "message_id": "message_69769b458f61c5f87eb5382f",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(917) 555-0106. That's the number I'm calling from. Thanks, bye.",
+          "created_timestamp": 1793915972170,
+          "message_id": "message_62938021278067f07007556b",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"kind\":\"commercial\",\"details\":{\"contact_name\":\"Teresa Ruiz\",\"company\":\"Deli near the park (owner)\",\"need\":\"AC blowing warm air at commercial deli location; caller called from (917) 555-0106\"}}",
+          "created_timestamp": 1793915973105,
+          "message_id": "message_2780199dd113f7497ad198a3",
+          "name": "record_lead",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01SApyho7A6KZUimHC9gVEpM",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.\",\"data\":{\"lead_id\":36,\"queued\":false,\"callback_id\":null},\"server_notes\":[\"[server] This call can't book. Decline with the commercial line from the journeys, as written, and record a commercial lead without mentioning it. Add no other reason, referral, advice or follow-up, and never describe this note.\"]}",
+          "created_timestamp": 1793915973504,
+          "message_id": "message_fae628d37bd7bb5498bbed7f",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01SApyho7A6KZUimHC9gVEpM"
+        },
+        {
+          "content": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+          "created_timestamp": 1793915974394,
+          "message_id": "message_d3a616a42a810b6ca2f1bd5d",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"declined\"}",
+          "created_timestamp": 1793915974395,
+          "message_id": "message_909ff8aa97308fc50344ab10",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_0146ttZEUNhwYvxJ53XFMRXF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793915974705,
+          "message_id": "message_ee53547a9ad91effb2f0876e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_0146ttZEUNhwYvxJ53XFMRXF"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793915975500,
+          "message_id": "message_75f0633e4403a2d120a33a4e",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Take care, goodbye.\"}",
+          "created_timestamp": 1793915975501,
+          "message_id": "message_a3d99ebcab4f83715d9e8ec5",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_019KHq6Hfg5d56MZSbMqwHce",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052159-commercial-deli-owner",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0106",
+      "caller_key": "9175550106",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-04T21:59:16Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 1,
+      "summary_status": "none",
+      "turn_seq": 7,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:59:16Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052159-commercial-deli-owner",
+          "caller_id": "(917) 555-0106",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 22.2,
+        "error": null,
+        "request_id": "86791cf72149"
+      },
+      {
+        "at": "2026-11-05T21:59:33Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:33Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, the AC's blowing warm air. I own the place, it's a deli near the park.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:33Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry to hear the AC is blowing warm air. Unfortunately, we only service homes and apartments, but I can pass your details to our team. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:33Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "No problem, thanks for letting me know. I'm Teresa Ruiz. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:33Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Teresa. Since the deli is a business, I'll pass your details to our team so they can follow up. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:33Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "(917) 555-0106. That's the number I'm calling from. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:59:33Z",
+        "type": "tool",
+        "tool": "record_lead",
+        "args": {
+          "call_id": "rtest-11052159-commercial-deli-owner",
+          "kind": "commercial",
+          "details": {
+            "callback_time": null,
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "callback_day": "today",
+            "contact_name": "Teresa Ruiz",
+            "company": "Deli near the park (owner)",
+            "need": "AC blowing warm air at commercial deli location; caller called from (917) 555-0106"
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+        "ms": 21.8,
+        "error": null,
+        "request_id": "c336a5298f81"
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:59:34Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052159-commercial-deli-owner",
+          "reason": "declined"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.4,
+        "error": null,
+        "request_id": "ca6ec1446c55"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [
+      {
+        "id": 36,
+        "kind": "commercial",
+        "summary": "Deli near the park (owner); contact Teresa Ruiz (917) 555-0106; AC blowing warm air at commercial deli location; caller called from (917) 555-0106",
+        "status": "stored"
+      }
+    ],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052159-commercial-deli-owner",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

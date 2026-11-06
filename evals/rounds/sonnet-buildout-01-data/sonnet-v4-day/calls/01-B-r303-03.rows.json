@@ -1,0 +1,76 @@
+{
+ "window": [
+  "2026-11-06T04:14:49Z",
+  "2026-11-06T04:18:01Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_7afc102fa5594e8a5a48c5ba572",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-05T17:15:02Z",
+    "ended_at": "2026-11-05T17:17:55Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 0,
+    "linked_call_id": null,
+    "outcome": "booked",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 55,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"160 Remsen Street\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11201\", \"spelled\": \"\", \"phone\": \"6466240418\", \"phone_for\": \"\", \"sentence\": \"So that's one sixty Remsen Street, and the number you're calling from, ending in zero four one eight. That's all correct, right?\"}",
+    "readback_asked_seq": 22,
+    "readback_confirmed_at": "2026-11-05T17:16:19Z"
+   },
+   "bookings": [
+    {
+     "id": 244,
+     "call_id": "retell_call_7afc102fa5594e8a5a48c5ba572",
+     "kind": "book",
+     "status": "booked",
+     "fsm_key": "retell_call_7afc102fa5594e8a5a48c5ba572:book:7463da78574558d408b021d9caf89ef893bc86b1",
+     "request_json": "{\"call_id\": \"retell_call_7afc102fa5594e8a5a48c5ba572\", \"job_type\": \"tune_up\", \"details\": {\"issue\": \"Boiler maintenance tune-up\", \"since\": \"not provided\", \"tried\": \"not provided\", \"who_home\": \"Someone home all day\", \"approver\": \"Elena Popescu (caller)\", \"system_type\": \"boiler\", \"arrival_notes\": \"House, no unit. No gate code or buzzer.\", \"name\": \"Elena Popescu\", \"inside_temp_f\": null}, \"address\": {\"street\": \"160 Remsen Street\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11201\"}, \"phone\": \"6466240418\", \"scoped_customer_ids\": [], \"contact_for\": \"\", \"account_phone\": \"\", \"priority\": \"Normal\", \"priority_reasons\": [], \"priority_rules\": [], \"raised_after_wait\": false, \"requested_priority\": \"Normal\", \"notes\": [], \"account\": null, \"contact_name\": null, \"window_start\": \"2026-11-06T17:30:00Z\", \"window_end\": \"2026-11-06T18:00:00Z\"}",
+     "fsm_job_id": 548,
+     "fsm_appointment_id": 548,
+     "customer_id": 301,
+     "window_start": "2026-11-06T17:30:00Z",
+     "window_end": "2026-11-06T18:00:00Z",
+     "job_type": "tune_up",
+     "priority": "Normal",
+     "priority_reasons": "",
+     "safety_override": 0,
+     "seek_earlier": 0,
+     "reason": "",
+     "attempts": 1,
+     "last_error": null,
+     "turn_seq": 50,
+     "created_at": "2026-11-05T17:17:34Z",
+     "updated_at": "2026-11-05T17:17:34Z"
+    }
+   ],
+   "booking_names": [
+    {
+     "call_id": "retell_call_7afc102fa5594e8a5a48c5ba572",
+     "name": "Elena Popescu",
+     "at": "2026-11-05T17:16:19Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [],
+   "callbacks": [],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T04:18:12Z"
+}

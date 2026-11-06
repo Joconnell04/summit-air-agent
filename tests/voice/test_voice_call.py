@@ -7,11 +7,10 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-import yaml
 from livekit.agents import Agent, StopResponse
 from livekit.agents.llm import ChatMessage
 
-from app.tenant import load_agent
+from app.tenant import load_agent, voice_lines
 from app.trace import as_text, timeline
 from prompts.assemble import FOLLOW_UP_NOTES, SpokenReply, greeting
 from tests.tool_server.toolkit import TENANT_DIR
@@ -267,7 +266,7 @@ def test_the_trace_shows_whether_the_prompt_cache_was_hit(agent, connect):
 
 def test_the_greeting_names_a_single_matched_customer(scenarios, agent):
     started = agent.start(scenarios["repeatCallerOpenJob"]["phone"])["data"]
-    lines = yaml.safe_load((TENANT_DIR / "agent.yaml").read_text())["voice"]
+    lines = voice_lines(TENANT_DIR)
     first = started["customers"][0]["name"].split()[0]
     assert greeting(started, lines) == lines["greeting_known"].format(first_name=first)
     assert greeting(agent.start()["data"], lines) == lines["greeting_unknown"]

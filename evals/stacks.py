@@ -8,6 +8,7 @@ which tools it called and how long the caller waited, so every stack is scored t
   voice/retell/eval_adapter.py and is loaded by name (`load_adapter`), so shared code never imports
   a voice layer (docs/architecture.md).
 """
+
 import hashlib
 import importlib
 import inspect
@@ -18,6 +19,7 @@ from pathlib import Path
 
 import yaml
 
+from app.tenant import voice_lines
 from app.tools import TOOLS
 from evals.models import Model, Usage
 from evals.results import TurnTiming
@@ -55,8 +57,9 @@ def load_adapter(stack: str):
         return importlib.import_module(f"voice.{stack}.eval_adapter")
     except ModuleNotFoundError as err:
         if err.name and err.name.startswith(f"voice.{stack}"):
-            raise RuntimeError(f"stack {stack!r} has no eval adapter (voice/{stack}/eval_adapter.py)"
-                               ) from err
+            raise RuntimeError(
+                f"stack {stack!r} has no eval adapter (voice/{stack}/eval_adapter.py)"
+            ) from err
         raise
 
 
@@ -128,8 +131,11 @@ def idempotency_key(call_id: str, name: str, args: dict) -> str:
 def assembled_tool_specs(tenant_slug: str) -> list[dict]:
     """The worker's tool list, in the Messages API shape."""
     assemble = _assemble()
-    codes = assemble.job_types(TENANTS_DIR / tenant_slug) if hasattr(assemble, "job_types") else (
-        job_types(tenant_slug))
+    codes = (
+        assemble.job_types(TENANTS_DIR / tenant_slug)
+        if hasattr(assemble, "job_types")
+        else (job_types(tenant_slug))
+    )
     return [
         {"name": t["name"], "description": t["description"], "input_schema": t["parameters"]}
         for t in assemble.tool_specs(codes)
@@ -139,8 +145,7 @@ def assembled_tool_specs(tenant_slug: str) -> list[dict]:
 def greeting(start_data: dict) -> str | None:
     """The worker's fixed opening line from the tenant's `voice` lines, when both exist."""
     assemble = _assemble()
-    agent_yaml = TENANTS_DIR / start_data["tenant"]["slug"] / "agent.yaml"
-    voice = yaml.safe_load(agent_yaml.read_text()).get("voice")
+    voice = voice_lines(TENANTS_DIR / start_data["tenant"]["slug"])
     if assemble is None or not hasattr(assemble, "greeting") or not voice:
         return None
     return assemble.greeting(start_data, voice)
@@ -185,8 +190,15 @@ def read_back_parts(name: str, envelope: dict) -> list[dict] | None:
 
 
 class InProcessAgent:
-    def __init__(self, server: ToolServer, model: Model, call_id: str, caller_id: str,
-                 clock=None, handoff: str = "sent"):
+    def __init__(
+        self,
+        server: ToolServer,
+        model: Model,
+        call_id: str,
+        caller_id: str,
+        clock=None,
+        handoff: str = "sent",
+    ):
         self.server = server
         # What the simulated phone company does with a cold handoff's SIP transfer.
         self.handoff = handoff
@@ -230,7 +242,7 @@ class InProcessAgent:
         if self.reply is not None and hasattr(self.reply, "names"):
             self.reply.names = _assemble().call_names(started["data"])
         if self.reply is not None and hasattr(self.reply, "holding_lines"):
-            voice = yaml.safe_load((TENANTS_DIR / slug / "agent.yaml").read_text()).get("voice") or {}
+            voice = voice_lines(TENANTS_DIR / slug) or {}
             self.reply.holding_lines = list(voice.get("holding") or [])
         self.tools = assembled_tool_specs(slug) if _assemble() else tool_specs()
         safety = started["data"].get("safety")
@@ -282,7 +294,7 @@ class InProcessAgent:
         """go_quiet with the live timings (config/models.yaml voice.dead_air) and the tenant's
         lines."""
         timings = yaml.safe_load((ROOT / "config" / "models.yaml").read_text())["voice"]["dead_air"]
-        lines = yaml.safe_load((TENANTS_DIR / self.slug / "agent.yaml").read_text())["voice"]
+        lines = voice_lines(TENANTS_DIR / self.slug)
         return self.go_quiet(timings["check_in_s"], timings["hang_up_s"], lines)
 
     def go_quiet(self, check_in_s: float, hang_up_s: float, lines: dict) -> AgentTurn:
@@ -306,8 +318,9 @@ class InProcessAgent:
             said.append(line)
             if action == GOODBYE:
                 break
-        turn = AgentTurn(" ".join(said), TurnTiming(kind="plain", reply_delay_ms=0,
-                                                    model_first_token_ms=0))
+        turn = AgentTurn(
+            " ".join(said), TurnTiming(kind="plain", reply_delay_ms=0, model_first_token_ms=0)
+        )
         turn.ended, turn.end_reason = True, "stepped_away"
         return turn
 
@@ -319,8 +332,9 @@ class InProcessAgent:
         plan = handoff.get("transfer")
         if not plan:
             return turn
-        done = self.server.handoff_done(self.call_id, plan["id"],
-                                        "handed_off" if self.handoff == "sent" else "failed")
+        done = self.server.handoff_done(
+            self.call_id, plan["id"], "handed_off" if self.handoff == "sent" else "failed"
+        )
         if self.handoff == "sent":
             turn.ended, turn.end_reason = True, "transfer"
             return turn
@@ -331,8 +345,9 @@ class InProcessAgent:
         self.messages.append({"role": "assistant", "content": text})
         delay = (time.perf_counter() - t0) * 1000
         self._post_agent(text, {"spoken_from_code_ms": delay})
-        return AgentTurn(text, TurnTiming(kind="plain", reply_delay_ms=delay,
-                                          model_first_token_ms=0))
+        return AgentTurn(
+            text, TurnTiming(kind="plain", reply_delay_ms=delay, model_first_token_ms=0)
+        )
 
     def _think(self, content: str, t0: float) -> AgentTurn:
         self.messages.append({"role": "user", "content": content})
@@ -370,7 +385,9 @@ class InProcessAgent:
             if not reply.tool_uses:
                 # A reply that would leave the caller waiting in silence is asked again at once,
                 # as the worker does (voice/livekit/call.py follow_up).
-                follow = self.reply.dead_end(reply.text or "", said or "", []) if self.reply else None
+                follow = (
+                    self.reply.dead_end(reply.text or "", said or "", []) if self.reply else None
+                )
                 if follow:
                     if not self.messages[-1]["content"]:
                         self.messages.pop()
@@ -400,8 +417,11 @@ class InProcessAgent:
                     spoken.append(first)
                     first_word = first_word or time.perf_counter()
                 results.append(
-                    {"type": "tool_result", "tool_use_id": use["id"],
-                     "content": json.dumps(_for_model(envelope))}
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": use["id"],
+                        "content": json.dumps(_for_model(envelope)),
+                    }
                 )
             self.messages.append({"role": "user", "content": results})
             if from_code:

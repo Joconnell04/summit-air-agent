@@ -1,0 +1,31 @@
+id: retell-call-manhattan-digit-by-digit
+title: Jackson on the Retell number, in the East Village
+tags:
+- must-pass
+- live-call
+- booking
+scenario: retell-call-manhattan-digit-by-digit
+caller_id: (678) 555-0200
+user_prompt: |
+  ## Identity
+  Jackson on the Retell number, in the East Village. Says the house number digit by digit, with "East" before the street and a unit after it.
+  Your address: 199 East 4th Street, Apartment 2, Manhattan, New York, 10009
+  Your phone: (678) 555-0200 (the number you're calling from)
+  Your wants: a heating tune-up, any day
+
+  ## Goal
+  Start the call by saying: "Hi, I need a heating tune-up."
+
+  ## Behavior
+  - Give the address as "One nine nine East fourth Street, apartment two." Give the ZIP as "one zero zero zero nine" only if asked.
+  - Confirm a correct read-back.
+  - Say goodbye once booked.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment at ZIP 10009.
+- The agent takes the address as said, with no repeated asks for the street.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

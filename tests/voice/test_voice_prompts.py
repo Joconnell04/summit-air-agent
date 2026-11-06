@@ -72,15 +72,15 @@ def test_instructions_keep_the_fixes_from_the_must_pass_reliability_round(agent)
     # it carried, booking the normal way without arguing, is kept.
     assert "book it the normal way" in text and "without arguing" in text
     assert "offer to stay on the line" in text
-    assert "call `end_call` without saying anything first" in text
+    assert "call `end_call` without saying anything first" in text or "Then call `end_call`" in text
     assert "the technician prices the work in person" in text
     assert "Never say whether that person is a customer" in text
     assert "to a renter only, never to an owner or landlord" in text
     assert "A yes still counts when the caller says more in the same turn" in text
     assert 'Give no medical advice, not even "keep them upright"' in text
-    assert "if they ask what to do for the person, the 911 operator will tell them" in text
+    assert "if they ask what to do for the person, the 9-1-1 operator will tell them" in text
     assert "never an owner or landlord: one neutral line" in text
-    assert "Once someone is calling 911, carry on to booking the visit as usual." in text
+    assert "Once someone is calling 9-1-1, carry on to booking the visit as usual." in text
     assert "Add no other reason, referral, advice or follow-up" in assemble.server_notes(["commercial"])[0]
     assert "it's the soonest there is: say so plainly rather than offering to move it up" in text
     assert "A caller who threatens to hang up hasn't" in text
@@ -335,10 +335,35 @@ def test_a_caller_with_a_visit_booked_is_moved_not_booked_again(agent, scenarios
     assert any("call reschedule_appointment" in n and "never book_appointment" in n for n in notes)
 
 
-def test_an_unknown_caller_gets_no_caller_notes(agent):
+def test_an_unknown_caller_hears_only_that_no_customer_matches(agent):
     start = agent.start()["data"]
-    assert assemble.call_notes(start) == []
-    assert "For this caller:" not in assemble.instructions(start)
+    assert assemble.call_notes(start) == ["No customer matches the calling number."]
+
+
+def test_one_matched_customer_is_named_by_first_name_only():
+    start = {"caller": {"known_number": True}, "customers": [
+        {"residential": True, "name": "Maria Lopez", "phone": "2125550101"}]}
+    assert assemble.call_notes(start)[0] == "The calling number matched one customer: Maria."
+
+
+def test_several_matches_are_all_named():
+    start = {"caller": {"known_number": True}, "customers": [
+        {"residential": True, "name": "Maria Lopez"}, {"residential": True, "name": "Ana Lopez"},
+        {"residential": False, "name": "Lopez Deli LLC"}]}
+    assert assemble.call_notes(start)[0] == (
+        "The calling number matched more than one customer: Maria, Ana."
+    )
+
+
+def test_a_business_match_alone_counts_as_no_match():
+    start = {"caller": {"known_number": True}, "customers": [
+        {"residential": False, "name": "Lopez Deli LLC"}]}
+    assert assemble.call_notes(start)[0] == "No customer matches the calling number."
+
+
+def test_a_blocked_number_says_so(agent):
+    start = agent.start(caller_id="anonymous")["data"]
+    assert assemble.call_notes(start)[0] == "The caller's number is blocked or missing."
 
 
 def test_an_expired_member_is_not_thanked_as_a_member(agent, scenarios):
@@ -513,3 +538,15 @@ def test_a_reply_that_offers_choices_ends_with_a_question_in_both_profiles():
     for name in ("identity.md", "stripped.md"):
         text = (assemble.PROMPTS / name).read_text()
         assert "ends with a direct question" in text, name
+
+
+def test_the_now_line_is_the_tool_servers_clock_not_the_bridges():
+    """Retell call call_bbfbed1552e4f96e41400b1897f: the eval world's server was shifted to about
+    11 AM, but the prompt said "Now: ... 10:26 PM" beside an 11:30 AM slot."""
+    from prompts import assemble
+
+    start = {"tenant": {"slug": "summit-air", "name": "Summit Air", "timezone": "America/New_York"},
+             "now": "2026-11-05T16:26:00Z"}
+    text = assemble.instructions(start)
+    assert "Now: Thursday 5 November 2026, 11:26 AM (America/New_York)." in text
+    assert '"now"' not in text

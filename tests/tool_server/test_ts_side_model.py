@@ -168,3 +168,27 @@ def test_no_answer_or_a_no_leaves_the_rules_to_decide(server, value):
     agent.turn(other, "The heat's out.")
     found = agent.tool("find_slots", other, job_type="no_heat", facts={"inside_temp_f": 61})
     assert found["data"]["priority"]["level"] == "High"
+
+
+def test_find_slots_doesnt_wait_on_a_slow_side_model_and_the_booking_does(tmp_path, clock, mock):
+    """find_slots was the slowest tool (MEASURED, 528 ms average on the live world); it no longer
+    waits for the side model's answer, and book_appointment, which does, raises the priority when
+    the answer comes in time for it."""
+    import time
+
+    from toolkit import book, first_open, ready_to_book
+
+    release = threading.Event()
+    slow = side_model.SideModel(lambda q, text: release.wait(5) and 0.95, wait_s=2)
+    agent = Agent(make_server(tmp_path, clock, mock[0], side_model=slow), clock)
+    call = ready_to_book(agent)
+    agent.turn(call, "Our boiler quit, and my wife is on dialysis three days a week.")
+    started = time.perf_counter()
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 61})
+    assert time.perf_counter() - started < 1.0, "find_slots waited on the side model"
+    assert "from the side model" not in " ".join(found["data"]["priority"]["reasons"])
+    release.set()
+    booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat",
+                  inside_temp_f=61)
+    assert booked["ok"], booked
+    assert booked["data"]["priority"]["level"] == "Urgent"

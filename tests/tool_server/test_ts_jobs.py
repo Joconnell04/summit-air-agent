@@ -4,7 +4,16 @@ the system places, booked-and-kept, on-call email after hours, and retention ove
 
 import smtplib
 
-from toolkit import UNKNOWN, Agent, book, count, in_area_address, make_server, ready_to_book
+from toolkit import (
+    UNKNOWN,
+    Agent,
+    book,
+    confirm_do_not_call,
+    count,
+    in_area_address,
+    make_server,
+    ready_to_book,
+)
 
 from app import jobs
 
@@ -499,5 +508,27 @@ def test_a_caller_who_says_dont_call_on_the_callback_stays_cancelled(agent, cloc
     claimed = claim(agent)
     placed = place(agent, claimed)
     agent.turn(placed, "Please don't call me again.")
+    confirm_do_not_call(agent, placed)
     done(agent, claimed["outbound_id"], answered=True)
     assert count(agent, "SELECT status FROM callbacks") == "cancelled"
+
+
+def test_a_job_servicetitan_no_longer_has_is_asked_for_less_and_less_then_not_at_all(agent, clock):
+    """The Retell eval server asked for a job its reset mock no longer had (GET jobs/587) about 30
+    times a minute: the kept check skipped it without recording anything."""
+    call = ready_to_book(agent)
+    assert book(agent, call, TOMORROW_MORNING)["ok"]
+    conn = agent.db()
+    with conn:
+        conn.execute("UPDATE bookings SET fsm_job_id = 999999 WHERE call_id = ?", (call,))
+    conn.close()
+    clock.advance(days=1)
+    asked = []
+    for minutes in (0, 1, 5, 10, 20, 40, 80, 600):
+        if minutes:
+            clock.advance(minutes=minutes)
+        kept_check(agent)
+        asked.append(count(agent, "SELECT attempts FROM kept_misses"))
+    # Missed at once, not again a minute later, then after 5, 10, 20 and 40 minutes, then never.
+    assert asked == [1, 1, 2, 3, 4, 5, 5, 5]
+    assert count(agent, "SELECT COUNT(*) FROM kept") == 0, "kept stays unknown"

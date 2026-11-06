@@ -1,0 +1,32 @@
+{
+  "run": "11052150",
+  "batches": [
+    "test_batch_c1776b5db5b0"
+  ],
+  "copy_llm": "llm_1da616f2baeb6e916f63e0236950",
+  "copied": {
+    "agent_version": 2,
+    "llm_version": 2,
+    "at": "2026-11-05T21:50:02+00:00",
+    "prompt_chars": 9885
+  },
+  "wave": 10,
+  "cases": {
+    "kb-garbled-borough": {
+      "test_case": "test_case_f7488aa43850",
+      "call_id": "rtest-11052150-kb-garbled-borough"
+    },
+    "kb-radiator-bang-short-cycling": {
+      "test_case": "test_case_4a59eace3ea1",
+      "call_id": "rtest-11052150-kb-radiator-bang-short-cycling"
+    },
+    "kb-tune-up-short-answers": {
+      "test_case": "test_case_e32a1ab75eb2",
+      "call_id": "rtest-11052150-kb-tune-up-short-answers"
+    },
+    "kb-yep-uh-huh-no-heat": {
+      "test_case": "test_case_58bcd2aad0b5",
+      "call_id": "rtest-11052150-kb-yep-uh-huh-no-heat"
+    }
+  }
+}

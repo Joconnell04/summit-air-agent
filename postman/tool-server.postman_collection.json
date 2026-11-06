@@ -1629,7 +1629,7 @@
           }
         },
         {
-          "name": "Do not call",
+          "name": "Equipment basics",
           "event": [
             {
               "listen": "test",
@@ -1637,7 +1637,41 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('ok', () => pm.expect(pm.response.json().ok).to.eql(true));",
-                  "pm.test('the callback is off', () => pm.expect(pm.response.json().data.cancelled_callbacks).to.be.above(0));",
+                  "pm.test('facts come back', () => pm.expect(pm.response.json().data.facts).to.not.be.empty);",
+                  "pm.test('HTTP 200 with the envelope', () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  ['ok', 'say', 'data', 'refused'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{base_url}}/tools/lookup_hvac_info",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"call_id\": \"{{known_call_id}}\",\n  \"question\": \"Why is my radiator banging?\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Do not call, asked first",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refused: confirm_first', () => pm.expect(pm.response.json().refused).to.eql('confirm_first'));",
+                  "",
                   "pm.test('HTTP 200 with the envelope', () => {",
                   "  pm.response.to.have.status(200);",
                   "  const b = pm.response.json();",
@@ -2366,6 +2400,139 @@
                 {
                   "key": "s.call_recordings",
                   "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The Checks page opens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/checks"
+          }
+        },
+        {
+          "name": "An admin checks the past hour",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('starts, or says checks are off', () => pm.expect(pm.response.code).to.be.oneOf([200, 409]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/owner/checks",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "span",
+                  "value": "hour"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A check's progress, for a run that doesn't exist",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('no_run_id', '0');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('no such run', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/owner/checks/runs/{{no_run_id}}"
+          }
+        },
+        {
+          "name": "Check this call",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('back on the call', () => pm.response.to.have.status(200));",
+                  "pm.test('shows the check', () => pm.expect(pm.response.text()).to.include('Call check'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/owner/calls/{{call_id}}/check",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            }
+          }
+        },
+        {
+          "name": "An admin sets the daily check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('saved', () => pm.response.to.have.status(200));",
+                  "pm.test('on the settings', () => pm.expect(pm.response.text()).to.include('Daily check'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/owner/checks/schedule",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "enabled",
+                  "value": "1"
+                },
+                {
+                  "key": "at",
+                  "value": "06:00"
                 }
               ]
             }
@@ -3444,6 +3611,77 @@
                   "value": "(718) 555-0142"
                 }
               ]
+            }
+          }
+        },
+        {
+          "name": "The bench's checks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/bench/checks"
+          }
+        },
+        {
+          "name": "The bench checks the past day",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('starts, or says checks are off', () => pm.expect(pm.response.code).to.be.oneOf([200, 409]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/bench/checks",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "span",
+                  "value": "day"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "The bench grades a call again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('back on the bench', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/bench/checks/calls/{{call_id}}",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
             }
           }
         },

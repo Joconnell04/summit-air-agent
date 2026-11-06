@@ -1,0 +1,11 @@
+# Line 2 reruns: B with Retell DNC detection off (e, b) and persona c fixed; then the real-gas persona l on B and D, and i again on B (its caller read the script aloud).
+B agent_871ef6fafe2636244c4bbaca67 eval e reset
+B agent_871ef6fafe2636244c4bbaca67 eval b keep
+B agent_871ef6fafe2636244c4bbaca67 eval c reset
+B agent_871ef6fafe2636244c4bbaca67 eval l reset
+B agent_871ef6fafe2636244c4bbaca67 eval i reset
+D agent_e758054f5009c5106edd882d81 server-led l reset
+# C moved here from line 1 to finish sooner: its eval-world copy, prompt-only arm.
+C agent_eb7032636866b9c563b86bc846 eval c reset
+C agent_eb7032636866b9c563b86bc846 eval l reset
+C agent_eb7032636866b9c563b86bc846 eval i reset

@@ -468,3 +468,14 @@ def test_a_window_is_any_run_of_half_hour_blocks_and_overlaps_take_the_technicia
     assert overlap.status_code == 409 and overlap.json()["data"]["code"] == "no_capacity"
     assert book(api, ids, window="1200-1230", key="after").status_code == 200
     assert book(api, ids, window="1930-2000", key="last").status_code == 200
+
+
+def test_a_job_keeps_the_tag_types_it_was_booked_with(small):
+    """The tool server tags each job with its call's label, Urgent or Routine (DECISIONS.md 122)."""
+    api, ids = small
+    tagged = book(api, ids, tagTypeIds=[804])
+    assert tagged.status_code == 200, tagged.text
+    job = api.get(f"/jpm/jobs/{tagged.json()['id']}").json()
+    assert job["tagTypeIds"] == [804]
+    assert book(api, ids, window="1200-1600", tagTypeIds=[999]).status_code == 422
+    assert book(api, ids, window="1600-2000").json()["tagTypeIds"] == []

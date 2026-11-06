@@ -16,7 +16,7 @@ import json
 import sqlite3
 from collections import Counter
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from .config import TenantConfig, Window, iso
 from .errors import ApiError
@@ -107,6 +107,66 @@ def slots(
     staff = sorted(staff, key=lambda t: (daily.get(t["id"], 0), t["id"]))
     fit = {t["id"] for t in staff if set(skills) <= set(json.loads(t["skills_json"]))}
     return Slots(staff, busy, fit)
+
+
+class Snapshot:
+    """Every shift, live appointment and capacity block over a range, read once, answering `slots`
+    for any block in it the same way. The capacity call asked three queries per 30-minute block
+    over 16 days, about 1,200 a call: 600 ms at p50 on the live world (MEASURED from the mock's
+    request log), the slowest part of find_slots."""
+
+    def __init__(self, conn: sqlite3.Connection, start: datetime, end: datetime):
+        self.shifts = conn.execute(
+            """SELECT t.*, s.shift_type AS shift_type, s.start AS shift_start, s.end AS shift_end
+               FROM technicians t JOIN technician_shifts s ON s.technician_id = t.id
+               WHERE t.active = 1 AND s.end >= ? AND s.start <= ?
+               ORDER BY t.id""",
+            (iso(start), iso(end)),
+        ).fetchall()
+        first_day = (start - timedelta(days=1)).date().isoformat()
+        last_day = (end + timedelta(days=1)).date().isoformat()
+        self.live = conn.execute(
+            """SELECT id, technician_id, window_date, arrival_window_start, arrival_window_end
+               FROM appointments
+               WHERE status <> 'Canceled' AND (window_date BETWEEN ? AND ?
+                     OR (arrival_window_start < ? AND arrival_window_end > ?))""",
+            (first_day, last_day, iso(end), iso(start)),
+        ).fetchall()
+        self.blocks = conn.execute(
+            """SELECT technician_id, start, end FROM non_job_appointments
+               WHERE active = 1 AND remove_from_capacity = 1 AND start < ? AND end > ?""",
+            (iso(end), iso(start)),
+        ).fetchall()
+        # Worked out once for the range, not per block: the day's load, each technician's skills,
+        # and the busy spans as plain tuples.
+        self.daily: dict[str, Counter] = {}
+        for r in self.live:
+            self.daily.setdefault(r["window_date"], Counter())[r["technician_id"]] += 1
+        self.spans = [
+            (r["arrival_window_start"], r["arrival_window_end"], r["technician_id"])
+            for r in self.live
+        ] + [(b["start"], b["end"], b["technician_id"]) for b in self.blocks]
+        self.skills = {t["id"]: set(json.loads(t["skills_json"])) for t in self.shifts}
+
+    def slots(
+        self, cfg: TenantConfig, day: date, window: Window, bu_id: int, skills: list[str]
+    ) -> Slots:
+        """What `slots` answers for this block, from the rows read once."""
+        start, end = cfg.window_bounds(day, window)
+        s, e = iso(start), iso(end)
+        shift_type = "OnCall" if window.after_hours else "Normal"
+        seen, staff = set(), []
+        for t in self.shifts:
+            if (t["business_unit_id"] == bu_id and t["shift_type"] == shift_type
+                    and t["shift_start"] <= s and t["shift_end"] >= e and t["id"] not in seen):
+                seen.add(t["id"])
+                staff.append(t)
+        busy = {tech for a, b, tech in self.spans if a < e and b > s}
+        daily = self.daily.get(day.isoformat(), Counter())
+        staff = sorted(staff, key=lambda t: (daily.get(t["id"], 0), t["id"]))
+        need = set(skills)
+        fit = {t["id"] for t in staff if need <= self.skills[t["id"]]}
+        return Slots(staff, busy, fit)
 
 
 def allocate(

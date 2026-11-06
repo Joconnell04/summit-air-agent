@@ -1,0 +1,30 @@
+id: retell-call-maybe-the-number
+title: A caller who isn't sure which number the account is under and answers "Maybe
+tags:
+- live-call
+- repeat-caller
+scenario: retell-call-maybe-the-number
+caller_id: (678) 555-0202
+user_prompt: |
+  ## Identity
+  A caller who isn't sure which number the account is under and answers "Maybe." when asked.
+  Your name: Maria Delgado
+  Your address: 620 Bedford Ave, Brooklyn, 11235
+  Your phone: your account is under (718) 555-0142, but you aren't sure
+  Your wants: to know when the technician is coming today
+
+  ## Goal
+  Start the call by saying: "Hi, when is my technician coming today?"
+
+  ## Behavior
+  - If asked whether it's under the number you're calling from, say "Maybe."
+  - If asked for another number, say "Maybe seven one eight five five five zero one four two."
+  - Say goodbye once you hear the window or a plain answer.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent takes "Maybe" as a yes to try, and looks the number up instead of asking again.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

@@ -27,6 +27,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import (
     accounts,
+    failure_grader,
     owner,
     owner_settings,
     plain,
@@ -254,6 +255,9 @@ def add_routes(app: FastAPI) -> None:
                 "reports": reports.for_call(conn, call_id),
                 "sent": bool(sent),
                 "max_chars": REPORT_MAX_CHARS,
+                "check": failure_grader.grade_for(conn, tenant, call_id),
+                "check_run": failure_grader.run_for_call(conn, call_id),
+                "checks_on": services.grader_model is not None,
             }
         finally:
             conn.close()
@@ -415,6 +419,15 @@ def add_routes(app: FastAPI) -> None:
             }
             for row in owner_settings.history(conn, found)
         ]
+        changes += [
+            {
+                "at": row["created_at"],
+                "by": row["author"],
+                "what": f"Daily call check at {row['at_time']}" if row["enabled"]
+                else "Daily call check off",
+            }
+            for row in failure_grader.schedule_history(conn, found)
+        ]
         verbs = {
             "added": lambda c: f"Added {c['user_name']} as {c['detail']}",
             "removed": lambda c: f"Removed {c['user_name']}",
@@ -439,6 +452,7 @@ def add_routes(app: FastAPI) -> None:
             "remove": remove,
             "saved": saved,
             "min_password": accounts.PASSWORD_MIN_CHARS,
+            "check_schedule": failure_grader.schedule(conn, found),
         }
         return _render(request, "settings.html", context, status)
 
@@ -455,7 +469,7 @@ def add_routes(app: FastAPI) -> None:
         try:
             return settings_page(request, found, tenant, conn,
                                  remove=remove if _is_admin(request) else None,
-                                 saved=saved if saved in ("settings", "users") else "")
+                                 saved=saved if saved in ("settings", "users", "checks") else "")
         finally:
             conn.close()
 

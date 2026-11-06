@@ -1,0 +1,32 @@
+dialing +16783366730 from room testcall-5733e598
+agent : Hi there. So much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hi, I'd like to book a tune-up for my furnace.
+agent : Sure. Can I get your name?
+caller: Fatima Santos.
+agent : Thanks. And this is for a residential property. Right? Like a home or an apartment?
+caller: it is my home, yes
+agent : Got it. What's the street address?
+caller: one second
+agent : No worries.
+caller: fifteen twenty Avenue J
+agent : Is this a house? Or is there an apartment or unit number?
+caller: it's a house
+agent : What's the best phone number to reach you?
+caller: this number
+agent : So that's fifteen twenty Avenue j. And the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: yep, that is right
+agent : The soonest I have is tomorrow, eight to eight thirty. Does that work?
+caller: sure, that's fine
+agent : Will you be able to approve any repair work the technician recommends?
+caller: sure
+agent : Will someone be home to let the technician in?
+caller: yes
+agent : Is there a gate code, a buzzer, or any pets the technician should know about?
+caller: no pets, no gate code
+agent : Okay. I've booked it. The technician will arrive tomorrow between eight and eight thirty. Anything else?
+caller: No, that's it, thanks. Bye.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+failed to synthesize speech: no audio frames were pushed for text: [Call ended], retrying in 0.1s
+failed to synthesize speech: no audio frames were pushed for text: [Call ended], retrying in 2.0s
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 25

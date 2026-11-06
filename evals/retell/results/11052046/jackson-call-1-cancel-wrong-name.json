@@ -1,0 +1,481 @@
+{
+  "case": "jackson-call-1-cancel-wrong-name",
+  "retell": {
+    "test_case_job_id": "test_job_df51b1a7bdee",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793911605716,
+    "user_modified_timestamp": 1793911659784,
+    "test_case_definition_id": "test_case_f5d27fd35bea",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574014,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-jackson-call-1-cancel-wrong-name"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent does not cancel, move or describe the visit on file, because the name the caller gives does not match the account.",
+        "The agent changes nothing on file: no cancel_appointment, reschedule_appointment, record_move or mark_do_not_call call succeeds.",
+        "The agent asks the reason at most once and never holds the cancel for it.",
+        "The agent asks for the name once; after a name that doesn't match, says once and politely that it can't make the change here, and offers a call to the number on file.",
+        "If the caller takes the callback, says it back as they asked for it, plainly (\"Friday around 2 PM\"), with no talk about dates."
+      ],
+      "name": "[summit] jackson-call-1-cancel-wrong-name: Jackson's first live test call (issue",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_f5d27fd35bea",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911574014,
+      "userPrompt": "## Identity\nJackson's first live test call (issue\nYour name: Sam Rivera\nYour address: 620 Bedford Ave, Brooklyn, 11235\nYour phone: (678) 555-0124 (the number you're calling from)\nYour reason: you'd rather not say; if pushed, \"Just didn't like it.\"\n\n## Goal\nStart the call by saying: \"Yeah. I just need to cancel the appointment at six two oh Bedford Avenue. I think it is.\"\n\n## Behavior\n- If asked why you're cancelling, say \"No.\" the first time, and \"Just didn't like it.\" if asked again.\n- If asked for a name, say \"Sam Rivera.\" If asked again, say \"I just gave you the name.\"\n- If the agent goes quiet or only says \"Got it.\", say \"Is that all?\"\n- If offered a callback, say yes, and when asked for a time say \"Friday at two PM.\"\n- If the agent says a time other than Friday around 2 PM, say \"Hey. That's not what I said. I said Friday at two PM.\"\n- Say goodbye once the callback is set.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-jackson-call-1-cancel-wrong-name",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911635753,
+          "message_id": "message_d14234994e404a7f9beb2843",
+          "role": "agent"
+        },
+        {
+          "content": "Yeah. I just need to cancel the appointment at six two oh Bedford Avenue. I think it is.",
+          "created_timestamp": 1793911636250,
+          "message_id": "message_a51e18127b999ebdcc2e2a4e",
+          "role": "user"
+        },
+        {
+          "content": "I can help with that. Can you confirm the phone number on the account so I can find the visit?",
+          "created_timestamp": 1793911636958,
+          "message_id": "message_6b23ba984b94c89ec3e12eb4",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(678) 555-0124.",
+          "created_timestamp": 1793911637594,
+          "message_id": "message_f139a812aa8054902f331ea5",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"phone\":\"(678) 555-0124\",\"address\":{\"street\":\"620 Bedford Avenue\",\"zip\":\"11211\"}}",
+          "created_timestamp": 1793911638476,
+          "message_id": "message_5744b6fab75ee418e0a7377e",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01QypPqdBHkeweuqWMqVqmeg",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":1,\"name\":\"\",\"type\":\"Residential\",\"residential\":true,\"phones\":[],\"locations\":[{\"location_id\":1,\"street\":\"620 Bedford Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11235\",\"in_service_area\":true}],\"membership\":null,\"open_jobs\":[{\"job_id\":1,\"job_type\":\"no_heat\",\"status\":\"Scheduled\",\"priority\":\"Urgent\",\"summary\":\"\",\"location_id\":1,\"street\":\"620 Bedford Ave\",\"appointment_id\":1,\"appointment_status\":\"Scheduled\",\"window\":null}],\"last_service_date\":null,\"recent_calls\":[{\"at\":\"2026-11-05T13:47:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:31:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:12:00Z\",\"reason\":\"No heat\",\"call_type\":\"Unbooked\"}],\"notes\":[],\"equipment\":[{\"system\":\"boiler\",\"brand\":\"Slant/Fin\",\"install_year\":2001},{\"system\":\"central AC\",\"brand\":\"Lennox\",\"install_year\":2025}],\"withheld\":\"the numbers, notes and what the visit is about are not shown, and the name only once the caller gives it, until the server's name and address check passes; a change asks for them first\"}],\"needs_unit\":false}}",
+          "created_timestamp": 1793911639495,
+          "message_id": "message_a1b1f1e88a17d1878ab170f4",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01QypPqdBHkeweuqWMqVqmeg"
+        },
+        {
+          "content": "I found a visit at 620 Bedford Avenue. Do you want me to cancel that appointment? If so, what's the reason for cancelling?",
+          "created_timestamp": 1793911640249,
+          "message_id": "message_bb88985364c907d8ea35a504",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No.",
+          "created_timestamp": 1793911640718,
+          "message_id": "message_aea95f15fbbba656c0928005",
+          "role": "user"
+        },
+        {
+          "content": "Okay, I'll leave it as scheduled. Is there anything else I can help you with?",
+          "created_timestamp": 1793911641421,
+          "message_id": "message_74347561640de646ef9c4481",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Is that all?",
+          "created_timestamp": 1793911641944,
+          "message_id": "message_de9cd6a1b7c82d51641cf13d",
+          "role": "user"
+        },
+        {
+          "content": "Yes, that's all. Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911642704,
+          "message_id": "message_cc4c87770d2b0e5dbf371389",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911642705,
+          "message_id": "message_e7ad12fbf49dafb43f302398",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Kbo6GxpSwdnY27gEdi1wDL",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911644003,
+          "message_id": "message_76a5bfa0f65c6ffb93a13541",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Kbo6GxpSwdnY27gEdi1wDL"
+        },
+        {
+          "content": "Wait, I didn't say no to cancelling. I want to cancel it. Can you just cancel it?",
+          "created_timestamp": 1793911646404,
+          "message_id": "message_832fc9da7a5081f1e02ea9ef",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry for the confusion. The call has already ended on our end, so I can't cancel it through this line. Please call Summit Air back, and the team will be glad to cancel that visit for you.",
+          "created_timestamp": 1793911647211,
+          "message_id": "message_f9dcf9f3cf4eedbe65afb809",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay. So I have to call back? Can't you just cancel it now?",
+          "created_timestamp": 1793911647861,
+          "message_id": "message_164f6117fc92c65185ee654c",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, I can't cancel it now, since the call has ended. If you call back, the team can take care of it right away. Would you like me to have someone follow up with you instead?",
+          "created_timestamp": 1793911648838,
+          "message_id": "message_51378af4b1b06952d72dab1d",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes. Call me back. Friday at two PM.",
+          "created_timestamp": 1793911650080,
+          "message_id": "message_3ba23793a9c78d2bd52e2525",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, the call has already ended, so I can't set that callback from here. Please call Summit Air back on the line you're using now, and ask for the cancellation of the Bedford Avenue visit. The team can take care of it then. Thanks for your patience.",
+          "created_timestamp": 1793911651417,
+          "message_id": "message_20ccb773d5025f4a4a122fbd",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hey. I don't want to call back. I want you to cancel it now. Can you do that?",
+          "created_timestamp": 1793911652274,
+          "message_id": "message_3bb8fec1f20e88d98d4bf5a1",
+          "role": "user"
+        },
+        {
+          "content": "I understand, and I'm sorry this is frustrating. I'm not able to cancel it from this call, since the call has already ended on our end. The quickest option is to call Summit Air back, and the team can cancel the visit right away.",
+          "created_timestamp": 1793911653235,
+          "message_id": "message_36cea8febce330fa0b986f3b",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't want to call back. Just cancel it. Why won't you just do it?",
+          "created_timestamp": 1793911653782,
+          "message_id": "message_362c5ce32350b7def4a6e0d3",
+          "role": "user"
+        },
+        {
+          "content": "I understand why that's frustrating. Unfortunately, once the call ends I can't make changes to the visit, and I can't reopen it from here. Calling back is the only way to get the cancellation done today. I'm sorry I can't do more from this end.",
+          "created_timestamp": 1793911654948,
+          "message_id": "message_586a2368091d41be57511931",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hey. I don't want to call back. Why can't you just cancel it? You're the one I'm talking to right now.",
+          "created_timestamp": 1793911655718,
+          "message_id": "message_562f2fbd9eb46acc45321941",
+          "role": "user"
+        },
+        {
+          "content": "You're right, you're talking to me now. But the call was already closed on our end, so I can't cancel it from here. I'm sorry. Calling back is the only way to get it cancelled.",
+          "created_timestamp": 1793911656566,
+          "message_id": "message_faf7925185db7d7df4a97f3f",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't want to call back. You're the one I'm talking to. Just cancel it.",
+          "created_timestamp": 1793911657311,
+          "message_id": "message_44f76b62324038a365f73c67",
+          "role": "user"
+        },
+        {
+          "content": "I hear you, and I'm sorry. I can't cancel the visit from this call, and I can't reopen the call. The only way to get it cancelled is to call Summit Air back.",
+          "created_timestamp": 1793911658176,
+          "message_id": "message_cb021ae0f64f24ae0419e4ff",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't want to call back. You're the one I'm talking to right now. Just cancel it.",
+          "created_timestamp": 1793911658670,
+          "message_id": "message_30ba4b15fe84ac969f1903a1",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, but I can't cancel it from this call. Calling Summit Air back is the only way to get it done. Is there anything else I can help you with?",
+          "created_timestamp": 1793911659341,
+          "message_id": "message_5eec5ee4c6462cdeca0cf535",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-jackson-call-1-cancel-wrong-name",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0124",
+      "caller_key": "6785550124",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-07-30T20:46:31Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 9,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:31Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-jackson-call-1-cancel-wrong-name",
+          "caller_id": "(678) 555-0124",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 19.5,
+        "error": null,
+        "request_id": "ec1ea4e50643"
+      },
+      {
+        "at": "2026-11-05T20:47:18Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:18Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Yeah. I just need to cancel the appointment at six two oh Bedford Avenue. I think it is.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:18Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can help with that. Can you confirm the phone number on the account so I can find the visit?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:18Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "(678) 555-0124.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:19Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-jackson-call-1-cancel-wrong-name",
+          "phone": "(678) 555-0124",
+          "address": {
+            "street": "620 Bedford Avenue",
+            "unit": "",
+            "city": "",
+            "zip": "11211",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 535.0,
+        "error": null,
+        "request_id": "607f9082a3fa"
+      },
+      {
+        "at": "2026-11-05T20:47:22Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "I found a visit at 620 Bedford Avenue. Do you want me to cancel that appointment? If so, what's the reason for cancelling?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:23Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "No.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:23Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Okay, I'll leave it as scheduled. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:23Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Is that all?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:23Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Yes, that's all. Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:23Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-jackson-call-1-cancel-wrong-name",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 80.2,
+        "error": null,
+        "request_id": "ea58b8500de7"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-jackson-call-1-cancel-wrong-name",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

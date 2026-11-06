@@ -6,7 +6,7 @@ unset number or a failed transfer leaves the caller with the callback line."""
 from datetime import UTC, datetime
 
 import pytest
-from test_ts_safety import GAS_LINES
+from test_ts_safety import CO_LINES, GAS_LINES
 from toolkit import UNKNOWN, Agent, count
 
 from app import owner_settings
@@ -253,14 +253,17 @@ def test_on_a_gas_call_before_the_lines_are_said_nobody_is_dialed(agent, numbers
 
 def test_a_turn_that_brings_safety_text_is_never_handed_off(agent, numbers):
     """The turn endpoint's guard alone: after the lines the call may be handed off, but a line that
-    raises the gas again gets the shorter variant first, and the next demand is handed off."""
+    raises a new hazard gets its lines first, and the next demand is handed off."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "I smell gas in the kitchen.")
     agent.say(call, GAS_LINES)
-    again = agent.turn(call, "It still smells like gas, put me through to a person right now.")
-    assert again["data"]["safety"]["action"] == "speak_variant"
+    again = agent.turn(
+        call, "Now the carbon monoxide alarm is going off too, put me through to a person right now."
+    )
+    assert again["data"]["safety"]["action"] == "speak_lines"
     assert "handoff" not in again["data"]
     assert handoff(agent, call) is None
+    agent.say(call, CO_LINES)
     after = agent.turn(call, "I said put me through to a person right now.")
     assert after["say"] == HANDOFF_LINE
 

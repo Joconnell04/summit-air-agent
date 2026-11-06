@@ -105,8 +105,33 @@ def _rank(level: str) -> int:
     return LEVELS.index(level) if level in LEVELS else -1
 
 
+def with_assistant_name(agent: dict) -> dict:
+    """The tenant's `assistant_name` put into every line that says {assistant_name}, so renaming
+    the assistant is one edit (Brooke to Brian, when Jackson's agent changed voice)."""
+    name = agent.get("assistant_name")
+    if not name:
+        return agent
+    for section in ("voice", "lines"):
+        lines = agent.get(section) or {}
+        for key, value in lines.items():
+            if isinstance(value, str) and "{assistant_name}" in value:
+                lines[key] = value.replace("{assistant_name}", name)
+    return agent
+
+
+def voice_lines(folder: Path) -> dict:
+    """The tenant's `voice` lines (greetings and the rest the voice layer says itself), with the
+    assistant's name in them."""
+    return with_assistant_name(yaml.safe_load((Path(folder) / "agent.yaml").read_text()))["voice"]
+
+
 def load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str | None]:
     """A tenant's agent.yaml merged over its trade's, and the trade's name (None without one)."""
+    agent, trade = _load_agent(folder, trades_dir)
+    return with_assistant_name(agent), trade
+
+
+def _load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str | None]:
     agent = yaml.safe_load((Path(folder) / "agent.yaml").read_text())
     trade = agent.pop("extends", None)
     if trade is None:
@@ -131,7 +156,8 @@ def missing_safety_wording(safety: dict) -> list[str]:
     for kind, cfg in safety.get("kinds", {}).items():
         if not cfg.get("lines"):
             missing.append(f"kinds.{kind}.lines")
-        if not cfg.get("variants"):
+        # Shorter lines for a smell raised again are needed only when a repeat gets any.
+        if safety.get("repeat_limit", 1) and not cfg.get("variants"):
             missing.append(f"kinds.{kind}.variants")
     for kind, cfg in safety.get("vague", {}).items():
         if kind not in safety.get("kinds", {}):
@@ -204,6 +230,7 @@ class Tenant:
         agent: dict,
         knowledge: dict[str, str],
         trade: str | None = None,
+        lookup_knowledge: dict[str, str] | None = None,
     ):
         self.folder = folder
         self.slug = folder.name
@@ -211,6 +238,27 @@ class Tenant:
         self.raw = company
         self.agent = agent
         self.knowledge = knowledge
+        # Read only by lookup_hvac_info (app/hvac_info.py), never put in the prompt.
+        self.lookup_knowledge = lookup_knowledge or {}
+        # The one open question before booking (prompts/spine.md). Pets only when the tenant asks
+        # about them; Summit Air doesn't (Jackson, call_2fb4e053ba8b76b57c348845990).
+        pets = agent.get("visit_questions", {}).get("pets", False)
+        # One question for getting in, whose usual answer is a plain yes: someone is home and
+        # there's no code (Jackson, call call_549de89ecc2428e409b64072e34 asked two questions;
+        # he picked this wording after).
+        self.arrival_question = (
+            "Will someone be home to let the technician in? If there's a gate code, a buzzer or a "
+            "pet they should know about, just let me know."
+            if pets
+            else "Will someone be home to let the technician in? If there's a gate code or buzzer "
+            "they'll need, just let me know."
+        )
+        # The catch-all asked on a heating, cooling or airflow problem ("Anything else the
+        # technician should know, like water leaking ...?"): words of it the server finds in the
+        # agent's line, so the caller's answer goes on the job (tools._catch_all_answer).
+        self.catch_all_cue: str = agent.get("visit_questions", {}).get("catch_all_cue", "")
+        # Said before a read-back sentence, in turn (tools._connector).
+        self.connectors: list[str] = list(agent.get("connectors") or [])
         self.fsm_tenant_id: int = company["tenant_id"]
         self.name: str = company["company"]["name"]
         self.tz = ZoneInfo(company["company"]["timezone"])
@@ -294,12 +342,21 @@ class Tenant:
         folder = Path(folder)
         company = yaml.safe_load((folder / "config.yaml").read_text())
         agent, trade = load_agent(folder, trades_dir)
+        # Documents only lookup_hvac_info reads stay out of the knowledge every prompt carries.
+        lookup_only = set(agent.get("lookup_knowledge", []))
         knowledge = {
             p.stem: p.read_text()
             for p in sorted((folder / "knowledge").glob("*.md"))
             if p.name != "README.md"
         }
-        return cls(folder, company, agent, knowledge, trade)
+        return cls(
+            folder,
+            company,
+            agent,
+            {k: v for k, v in knowledge.items() if k not in lookup_only},
+            trade,
+            {k: v for k, v in knowledge.items() if k in lookup_only},
+        )
 
     def line(self, key: str, **values) -> str:
         return self.lines[key].format(**values)

@@ -7,6 +7,7 @@ versioned form in Retell's current spec, so they use the paths it documents. Any
 refused before a request is sent, and a test holds the list to this set.
 """
 
+import json as json_module
 import re
 
 import httpx
@@ -30,6 +31,8 @@ ALLOWED = (
     ("PATCH", r"/update-chat-agent/[\w-]+"),
     ("PATCH", r"/update-phone-number/\+\d+"),
     ("GET", r"/v2/get-call/[\w-]+"),
+    # The side-by-side eval (evals/side_by_side.py) finds each scripted call by time window.
+    ("POST", r"/v3/list-calls"),
     ("PATCH", r"/v2/update-live-call/[\w-]+"),
     ("POST", r"/v2/stop-call/[\w-]+"),
     ("POST", r"/create-chat"),
@@ -44,6 +47,10 @@ ALLOWED = (
     ("PATCH", r"/update-conversation-flow/[\w-]+"),
     ("GET", r"/list-voices"),
     ("POST", r"/add-community-voice"),
+    # The native agent's knowledge base (voice/retell_native/push.py), found by its content name.
+    ("GET", r"/list-knowledge-bases"),
+    ("POST", r"/create-knowledge-base"),
+    ("GET", r"/get-knowledge-base/[\w-]+"),
 )
 
 
@@ -67,6 +74,19 @@ class Retell:
         if response.status_code >= 400:
             raise RetellError(f"{method} {path}: {response.status_code} {response.text[:300]}")
         return response.json() if response.content else None
+
+    def create_knowledge_base(self, name: str, texts: list[dict]) -> dict:
+        """The one multipart request (create-knowledge-base takes form data, not JSON)."""
+        path = "/create-knowledge-base"
+        if not allowed("POST", path):
+            raise RetellError(f"POST {path} is not an endpoint this project uses")
+        response = self.client.post(path, headers=self.headers, files={
+            "knowledge_base_name": (None, name),
+            "knowledge_base_texts": (None, json_module.dumps(texts)),
+        })
+        if response.status_code >= 400:
+            raise RetellError(f"POST {path}: {response.status_code} {response.text[:300]}")
+        return response.json()
 
     def list_all(self, method: str, path: str) -> list[dict]:
         """Every item of a paginated list, following pagination_key until has_more is false."""

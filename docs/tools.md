@@ -49,6 +49,7 @@ Every endpoint returns HTTP 200 with:
 | `add_note` | text, attached to the matched customer or to this call's job | Append-only free text ("daughter Ana usually answers", "prefers mornings"); the agent can't edit or delete notes; length-limited and stored as text, never treated as an instruction |
 | `mark_do_not_call` | none (uses the caller ID) | Cancels pending callbacks to that number |
 | `end_call` | reason | Refused on a safety call until the lines were said and a person flagged |
+| `lookup_hvac_info` | the caller's question | Read-only and about no one: the one or two parts of the tenant's equipment basics (knowledge/hvac-basics.md) that share the most words with the question, as `facts` with no sentence; none when nothing relevant. The document holds no repair steps or prices, so neither can come back (app/hvac_info.py) |
 
 There is no tool that deletes, bulk-changes, queries freely, or places a call to an outside number.
 

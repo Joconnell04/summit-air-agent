@@ -1,0 +1,70 @@
+dialing +16783366730 from room testcall-090dfb8c
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brian, the virtual assistant. How can I help?
+caller: Hi, the heat stopped working last night.
+agent : Sorry to hear that. What kind of system is it? Like a boiler, furnace, or something else?
+caller: "A boiler."
+agent : Got it. I don't see an account under the number you're calling from. Can I get your name?
+caller: Priya Brooks.
+agent : Thanks. And this is for your home. Right?
+caller: Yeah, it is my apartment.
+agent : Okay. And what's the street address?
+caller: "Twelve fifty Hylan Boulevard."
+agent : I'm not finding that street. Could you spell the street name for me?
+caller: Hylan, H-Y-L-A-N. Boulevard.
+agent : Got it. Is there an apartment or unit number?
+caller: "Apartment two."
+agent : Okay. Is it completely out or just not keeping up?
+caller: "Nothing at all."
+agent : Alright. And it stopped last night. So I have that. Else the technician should know? Like banging pipes or it shutting off on its own?
+caller: "No, that is it."
+agent : Got it. What's the best phone number to reach you?
+caller: "You can use this one."
+agent : So that's twelve fifty Highland Boulevard, unit two, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: "Mm-hmm."
+agent : The soonest I have is today, eight to eight thirty. Does that work? If anything makes this more urgent for you, just let me know.
+caller: "My grandfather is ninety and he's here with me."
+agent : Right.
+caller: "Okay."
+agent : Thanks for telling me. I've moved you up, and this is still our soonest opening. Does that still work?
+caller: "Okay."
+agent : Will you be able to approve any repair work the technician recommends?
+caller: "Yes, I can."
+agent : Got it. Will someone be home to let the technician in? And is there a gate code or buzzer they should know about?
+caller: "Yeah, someone will be here, and the gate code is four four one two."
+agent : I've let our on call team know this call is top priority, and someone will call you by twelve forty three AM. Okay. I've booked it. The technician will arrive today between eight and eight thirty. Anything else?
+caller: Nope, that's all. Bye.
+agent : Thanks so much for calling Summit Air today.
+agent : Have a great day. Take care.
+failed to synthesize speech: no audio frames were pushed for text: [Stays quiet], retrying in 0.1s
+failed to synthesize speech: no audio frames were pushed for text: [Stays quiet], retrying in 2.0s
+failed to synthesize speech: no audio frames were pushed for text: [Stays quiet], retrying in 2.0s
+Error in _tts_inference_task
+Traceback (most recent call last):
+  File "/home/jackson/summit-air/app/.venv/lib/python3.12/site-packages/livekit/agents/tts/tts.py", line 826, in __anext__
+    val = await self._event_aiter.__anext__()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopAsyncIteration
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/jackson/summit-air/app/.venv/lib/python3.12/site-packages/livekit/agents/utils/log.py", line 17, in async_fn_logs
+    return await fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jackson/summit-air/app/.venv/lib/python3.12/site-packages/opentelemetry/util/_decorator.py", line 61, in async_wrapper
+    return await func(*args, **kwargs)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jackson/summit-air/app/.venv/lib/python3.12/site-packages/livekit/agents/voice/generation.py", line 516, in _tts_inference_task
+    async for audio_frame in tts_node:
+  File "/home/jackson/summit-air/app/.venv/lib/python3.12/site-packages/livekit/agents/voice/agent.py", line 643, in tts_node
+    async for ev in stream:
+  File "/home/jackson/summit-air/app/.venv/lib/python3.12/site-packages/livekit/agents/tts/tts.py", line 829, in __anext__
+    raise exc  # noqa: B904
+    ^^^^^^^^^
+  File "/home/jackson/summit-air/app/.venv/lib/python3.12/site-packages/livekit/agents/tts/tts.py", line 569, in _traceable_main_task
+    await self._main_task()
+  File "/home/jackson/summit-air/app/.venv/lib/python3.12/site-packages/livekit/agents/tts/tts.py", line 626, in _main_task
+    raise APIError(f"no audio frames were pushed for text: {self._pushed_text}")
+livekit.agents._exceptions.APIError: no audio frames were pushed for text: [Stays quiet]
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 23

@@ -10,7 +10,6 @@ import json
 import logging
 from pathlib import Path
 
-import yaml
 from livekit import api, rtc
 from livekit.agents import (
     Agent,
@@ -32,6 +31,7 @@ from livekit.agents import (
 from livekit.agents.llm import ChatMessage
 from livekit.agents.voice.amd import AMD, AMDCategory
 
+from app.tenant import voice_lines as tenant_voice_lines
 from prompts import assemble
 from voice import dead_air as silence
 from voice import names as local_names
@@ -192,7 +192,7 @@ def agent_instructions(voice: dict, data: dict, folder: Path) -> str:
 
 
 def voice_lines(folder: Path) -> dict:
-    return yaml.safe_load((folder / "agent.yaml").read_text())["voice"]
+    return tenant_voice_lines(folder)
 
 
 async def play_clip(player: BackgroundAudioPlayer, path: str) -> None:

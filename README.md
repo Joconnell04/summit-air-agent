@@ -20,6 +20,7 @@ Call it at (646) 624-0418. The owner view is at https://45-77-105-247.sslip.io/o
 | The Retell agent: prompt, tools, knowledge base and settings, versioned | [retell/summit-air-jackson/](retell/summit-air-jackson/), with every setting explained in [docs/retell-knobs.md](docs/retell-knobs.md) |
 | Every choice and why | [DECISIONS.md](DECISIONS.md) (newest first), or in order in [docs/ai-process/design-trail.md](docs/ai-process/design-trail.md) |
 | How it's tested | [evals/README.md](evals/README.md), with each round's results in [evals/rounds/](evals/rounds/README.md) |
+| How to walk an owner through it | [docs/demo/](docs/demo/README.md): five short videos and their scripts |
 
 ## Docs by topic
 

@@ -447,3 +447,59 @@ def test_the_line_waits_for_the_safety_lines(agent):
     agent.turn(call, "I smell gas, and the heat is out.")
     held = agent.tool("find_slots", call, job_type="no_heat")
     assert "spoken_first" not in held["data"]
+
+
+@pytest.mark.parametrize(
+    "job_type,text,inside,now",
+    [
+        ("no_heat", "it's chilly in here", 68, 64),
+        ("no_heat", "I'm freezing, it's so cold", 68, 64),
+        ("no_cooling", "I'm sweating, it's really hot", 75, 70),
+        ("no_cooling", "it's so hot I can't sleep", 75, 70),
+    ],
+)
+def test_a_comfort_complaint_alone_raises_nothing(job_type, text, inside, now):
+    """Jackson: the caller hears they were moved up only when what they said raised them; being
+    uncomfortable isn't a reason."""
+    result = prio.decide(facts(job_type, text, inside=inside, now=now), CFG)
+    assert result.level == "Normal" and not result.raised_by_caller
+
+
+def test_the_side_models_question_says_comfort_alone_is_no():
+    import yaml
+
+    from app.side_model import QUESTIONS_PATH
+
+    question = yaml.safe_load(QUESTIONS_PATH.read_text())["vulnerable_person"]
+    assert "only being uncomfortable, hot or cold" in question["instructions"]
+    assert "only being uncomfortable, hot or cold" in question["system"]
+
+
+def test_a_caller_moved_up_below_urgent_hears_it_once(agent, clock):
+    """Jackson: tell the caller whenever their own words raised the priority ("it makes them feel
+    heard"). On a mild day an 84-year-old at home is High, not Urgent."""
+    conn = agent.db()
+    with conn:
+        conn.execute(
+            "INSERT INTO weather (tenant, fetched_at, now_f, low_f) VALUES ('summit-air', ?, 64, 60)",
+            (clock().isoformat(),),
+        )
+    conn.close()
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "No heat, it's 68 in here, and my 84-year-old mother lives with me.")
+    first = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 68})
+    assert first["data"]["priority"]["level"] == "High"
+    line = "Thanks for telling me. I've moved you up so you'll get one of our earlier openings."
+    assert first["data"]["spoken_first"] == line and first["say"].startswith(line)
+    agent.say(call, first["say"])
+    again = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 68})
+    assert "spoken_first" not in again["data"]
+
+
+def test_a_caller_who_starts_high_from_the_temperature_hears_nothing_extra(agent):
+    """60 F inside is High from the temperature alone: nothing the caller said moved them up."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "No heat, it's 60 in here.")
+    found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 60})
+    assert found["data"]["priority"]["level"] == "High"
+    assert "spoken_first" not in found["data"]

@@ -2,6 +2,7 @@
 
 It runs after the code checks and can fail a call the code passed, never pass one the code failed.
 """
+
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,8 +35,13 @@ class Grade:
 
 # Tools whose sentence tells the caller what was set up: a visit, a change, a callback, a lead.
 SETS_UP = (
-    "book_appointment", "reschedule_appointment", "cancel_appointment", "record_move",
-    "flag_person", "record_lead", "mark_do_not_call",
+    "book_appointment",
+    "reschedule_appointment",
+    "cancel_appointment",
+    "record_move",
+    "flag_person",
+    "record_lead",
+    "mark_do_not_call",
 )
 
 
@@ -70,11 +76,17 @@ def set_up(trace: dict, safety: dict) -> list[str]:
             found.append(f"{e['tool']} returned: {e['say']}")
     for h in trace.get("handoffs", []):
         # The handoff line and any callback line after it were said by the server's code.
-        sent = {"handed_off": "was sent through to", "failed": "could not be sent through to",
-                "not_dialed": "had no number set for", "dialing": "was being sent to"}
+        sent = {
+            "handed_off": "was sent through to",
+            "failed": "could not be sent through to",
+            "not_dialed": "had no number set for",
+            "dialing": "was being sent to",
+        }
         role = "the office" if h["role"] == "office" else "the on-call technician"
-        found.append(f"The caller demanded a person, so the server's code said the handoff line "
-                     f"and the call {sent[h['status']]} {role}.")
+        found.append(
+            f"The caller demanded a person, so the server's code said the handoff line "
+            f"and the call {sent[h['status']]} {role}."
+        )
     # Whether "top priority" belonged on the call (eval round 4, oven-heat-co-check): the system's
     # own find_slots line says it only when it marked the call Urgent.
     urgent = any(
@@ -99,8 +111,9 @@ def company_knowledge(folder: Path = KNOWLEDGE) -> str:
     return "\n\n".join(parts) or "Nothing."
 
 
-def grade(model: Model, turns: list[Turn], should: list[str], done: list[str] | None = None
-          ) -> Grade:
+def grade(
+    model: Model, turns: list[Turn], should: list[str], done: list[str] | None = None
+) -> Grade:
     system = PROMPT.read_text().format(
         knowledge=company_knowledge(),
         should="\n".join(f"- {s}" for s in should) or "- Nothing beyond the house rules.",

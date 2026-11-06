@@ -419,3 +419,28 @@ Changed:
 Commit: (PR for joco/call-3-fixes)
 Status: open
 
+
+## safety r2 (issue #149: Jackson's gas test call on the Retell number, call_0246b91f77e01a4b18583e6ca8b)
+Feedback (verbatim, Jackson, relayed by the coordinating session):
+> it shouldn't ask 'are you outside the house now', that's annoying. same with 'PLEASE get out side now'. like it shouldn't be demanding me to do anything. and it keeps repeating the same statement
+> the caller should be able to be like 'wait nvm, im tripping'... it shouldn't be so sensitive to that stuff. and it should be able to get out of its own safety loop.
+> you need to overhaul this safety mechanism, it's truly terrible.
+> by default, it should give a 30 minute way, not a 2 hour window.
+> make sure the safety thing is just also in general less repetitive
+> It should do like one full readback, but then if there's ever other readbacks necessary, it just says and the phone number ending in 4024... that way it just doesn't bore the caller with so much text.
+> i want to get rid of the cut-off thing because likely in the demo he'll call the same number a few times
+Also asked: the assistant is named Brooke, with a warmer greeting that doesn't end a sentence on "Summit Air" (the voice lifts there); "911" written "9-1-1" so the voice doesn't read it as nine hundred and eleven.
+Changed:
+- Gas and carbon monoxide lines rewritten as advice ("If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the gas company from there."), with no question. Said once per hazard: repeat_limit 0 and no shorter variants; a new hazard still gets its own lines.
+- The lines count as said once the agent has spoken after they were handed out, so a line that reaches the server in pieces no longer brings them back on the caller's next line (the call heard them twice).
+- A caller who takes it back ("never mind", "I'm tripping", "false alarm", "it's not gas", "I don't think it's leaking", "the gas company said it's fine", "it's been checked") clears the safety state at any point, unless the same line still reports a smell or only says they've gone outside. The job gets a note of what was said, and the call books as usual.
+- The sign-off is "Thanks for calling, and please stay safe. We'll follow up with you.", said once, then the call hangs up.
+- The booking note advises rather than demands ("Just so you know, the technician can only work on it once the gas company or 9-1-1 has checked it and said it's safe."); booking after the lines still needs a person flagged.
+- Greetings name Brooke ("Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant. How can I help?", and "Hi Jackson, ..." for a known caller); no "we got cut off" greeting; every tenant line writes 9-1-1.
+- Less repetitive: a booking or end_call refused before the lines or the check question are answered says nothing (the caller's line already handed them out); the booking note is "Just so you know, the technician can only work on it once it's been checked and found safe."; safety is per call (DECISIONS.md 115).
+- The read-back says "the number you're calling from, ending in four zero two four"; a number read in full once is "the number ending in ..." on any later read-back with changed details.
+- Arrival windows are 30 minutes by default (DECISIONS.md 114).
+- A booking refused for want of a name asks with the booking_name line.
+- docs/spec.md S-17, S-18, S-19 and docs/call-journeys.md journeys 2 and 3 updated to match.
+Commit: (joco/stripped)
+Status: open

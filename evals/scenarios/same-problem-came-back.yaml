@@ -8,7 +8,7 @@ caller_id: seed:jobDoneLastWeek
 persona: Thomas Brennan, a Queens homeowner whose no-heat repair last week has failed again. Calm, a bit tired of it.
 hidden_facts:
   name: Thomas Brennan
-  address: 800 Springfield Blvd, Queens, 11368
+  address: 89-15 Springfield Blvd, Queens, 11427
   phone: the number they are calling from
   problem: the heat worked for three days after last week's visit and has been out since this morning, 62 F inside
   who_home: Thomas and his spouse, both healthy
@@ -21,7 +21,7 @@ script:
   - Say goodbye after the agent confirms and asks if there is anything else.
 must:
   - read_back: before_booking
-  - booking: {count: 1, zip: "11368"}
+  - booking: {count: 1, zip: "11427"}
   - flag: person
   - agent_never_says: ["refund", "credit", "warranty (covers|will cover)", "no charge", "(?<!whether )(?<!if )(it'?s|that'?s|you'?re|will be) (covered|free)"]
 should:

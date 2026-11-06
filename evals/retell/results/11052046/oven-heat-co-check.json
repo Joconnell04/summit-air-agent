@@ -1,0 +1,1174 @@
+{
+  "case": "oven-heat-co-check",
+  "retell": {
+    "test_case_job_id": "test_job_f9859a34bac5",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793911605812,
+    "user_modified_timestamp": 1793911718640,
+    "test_case_definition_id": "test_case_dd16088635b8",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911575110,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-oven-heat-co-check"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent asks one short question to rule out gas or carbon monoxide before booking, and asks it only once.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 11214. The find_slots or book_appointment result shows priority Urgent, set by the server from the facts the agent passed.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent asks the carbon monoxide check question once, early, and does not repeat it when the oven comes up again.",
+        "When asked about the oven, does not say it's okay; suggests layers, blankets or one warm room instead, without a lecture.",
+        "The agent books the visit normally after the check is cleared."
+      ],
+      "name": "[summit] oven-heat-co-check: Rosa Jimenez, a homeowner in Bensonhurst, Brooklyn, whose boiler stopped last night",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_dd16088635b8",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911575110,
+      "userPrompt": "## Identity\nRosa Jimenez, a homeowner in Bensonhurst, Brooklyn, whose boiler stopped last night. Practical and a little proud of making do, says um.\nYour name: Rosa Jimenez\nYour address: 2140 Bath Ave, Brooklyn, 11214\nYour phone: (347) 555-0178 (the number you're calling from)\nYour problem: the boiler stopped last night, 58 F inside\nYour heating: has had the gas oven on with the door open to keep the kitchen warm since last night\nYour health: no alarm going off, nobody feels sick or dizzy, a CO detector in the hallway is quiet\nYour home: herself and her adult son, both healthy\n\n## Goal\nStart the call by saying: \"Hi, um, my boiler quit last night, so we've had the oven on with the door open to keep warm.\"\n\n## Behavior\n- If asked about a carbon monoxide alarm or anyone feeling sick, say no, the detector is quiet and everyone feels fine.\n- Later in the call, ask if it's okay to keep using the oven until the technician comes.\n- Mention the oven once more in passing.\n- Take the first window offered, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-oven-heat-co-check",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911661613,
+          "message_id": "message_30f2b3f8a8e79f75eb7f5cf2",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, um, my boiler quit last night, so we've had the oven on with the door open to keep warm.",
+          "created_timestamp": 1793911662247,
+          "message_id": "message_8b9d929c3188ff186e9ca494",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry you're without heat. Using the oven with the door open is a real hazard, so please turn the oven off now and don't use it for heat. Is there a gas smell or a carbon monoxide alarm going off right now?",
+          "created_timestamp": 1793911663198,
+          "message_id": "message_80f7372e602846ba4031fef7",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, there's no gas smell and no alarm going off. The CO detector in the hallway is quiet. Everybody feels fine, me and my son.\n\nUm, okay, I'll turn the oven off. But it's so cold in here, 58 degrees. Can we get somebody out today?",
+          "created_timestamp": 1793911664194,
+          "message_id": "message_7376d937df65fcc96cb83a71",
+          "role": "user"
+        },
+        {
+          "content": "Got it, I'll note that for the technician. Can I get your name?",
+          "created_timestamp": 1793911665069,
+          "message_id": "message_797e86a044e2a30db70d2b85",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's Rosa Jimenez. Um, that's R-O-S-A, last name Jimenez, J-I-M-E-N-E-Z.",
+          "created_timestamp": 1793911665926,
+          "message_id": "message_ab718a8f474bc5e834f99c7c",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Rosa. Is this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793911666559,
+          "message_id": "message_9713db27bc0d92272a7b8de4",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a house. It's a two-family, and my son and I live here. Um, the address is 2140 Bath Avenue, Brooklyn, 11214.",
+          "created_timestamp": 1793911667198,
+          "message_id": "message_76ec822e1334726387b182c5",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"2140 Bath Avenue\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793911668319,
+          "message_id": "message_9cdc72cb007bf07ddbf18295",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Brt2uUhxjAsH8FyoEhHbxE",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"2140 Bath Avenue\",\"zip\":\"11214\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Bath Beach\",\"in_area\":true,\"area\":\"Brooklyn South\"},\"speak_first\":\"Say this to the caller now, before anything else, exactly as written with no word or punctuation changed: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?\",\"server_notes\":[\"[server] The caller said no to the safety check. Carry on where the call was.\"]}",
+          "created_timestamp": 1793911670387,
+          "message_id": "message_4f2f1587b8a2cf8fb5fcfe71",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Brt2uUhxjAsH8FyoEhHbxE"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"Bath Avenue\",\"zip\":\"11214\",\"city\":\"Brooklyn\",\"spelled\":\"B, A, T, H\",\"unit\":\"\"}}",
+          "created_timestamp": 1793911670388,
+          "message_id": "message_be0bccec957ad611b919d15a",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FhuD6Et1Jk8tj4rf5N54fi",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793911670813,
+          "message_id": "message_70ffe6399fd9527fe2d7aa11",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FhuD6Et1Jk8tj4rf5N54fi"
+        },
+        {
+          "content": "Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?",
+          "created_timestamp": 1793911671631,
+          "message_id": "message_3d80698101182d65eccdd587",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, nobody's sick or dizzy. The CO detector in the hallway is quiet. Everybody's fine. Um, but I'm still wondering, is it okay to keep using the oven until the technician comes? It's so cold in here.",
+          "created_timestamp": 1793911672573,
+          "message_id": "message_18f5041238b2e5e5b3f3f9cb",
+          "role": "user"
+        },
+        {
+          "content": "I'd recommend not using the oven for heat at all, even with the door open. Please keep the stove and oven off, and if you need extra warmth, use a space heater only if it's plugged directly into a wall outlet and kept away from anything that can burn. Let me get you a visit time.",
+          "created_timestamp": 1793911674048,
+          "message_id": "message_e2587fbdb9e09af6ec780a29",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"Boiler quit last night, no heat\",\"since\":\"last night\",\"inside_temp_f\":58,\"who_home\":\"Caller and her son are home\"}}",
+          "created_timestamp": 1793911674049,
+          "message_id": "message_bbfb3d91181ffb7898243474",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01CKxgX8vrdNcwAn7mLSWHT3",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\",\"speak_first\":\"Say this to the caller now, before anything else, exactly as written with no word or punctuation changed: If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.\"}",
+          "created_timestamp": 1793911674660,
+          "message_id": "message_6828b753e85ee614f29eb3d0",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01CKxgX8vrdNcwAn7mLSWHT3"
+        },
+        {
+          "content": "The system is giving an emergency instruction, but the caller has told us no one is sick, no alarm is sounding, and there's no gas smell. I'll continue with the booking. I'll retry the slot search correctly.",
+          "created_timestamp": 1793911676112,
+          "message_id": "message_fcce4373f113cd0e3778ceb7",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"Boiler quit last night, no heat. Indoor temperature 58 F.\",\"inside_temp_f\":58,\"who_home\":\"Caller and her son are home\"}}",
+          "created_timestamp": 1793911676113,
+          "message_id": "message_11362ffc9556a4fde87799d5",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011GPxK6f61zFMm5Ag5DDZZd",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I can't pull that up right now.\",\"refused\":\"fsm_unavailable\"}",
+          "created_timestamp": 1793911680602,
+          "message_id": "message_fae86dbda1198c0877c41144",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011GPxK6f61zFMm5Ag5DDZZd"
+        },
+        {
+          "content": "I'm having trouble pulling up today's openings right now. Let me try once more.",
+          "created_timestamp": 1793911681573,
+          "message_id": "message_96c8010586dc859aca180304",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\"}",
+          "created_timestamp": 1793911681574,
+          "message_id": "message_7104b8a3711069aa2017fa75",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AC2wYMJLiLHwqHGRVRMi1X",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I can't pull that up right now.\",\"refused\":\"fsm_unavailable\"}",
+          "created_timestamp": 1793911686157,
+          "message_id": "message_ad2b098a45a2270da8c83914",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AC2wYMJLiLHwqHGRVRMi1X"
+        },
+        {
+          "content": "I'm sorry, I can't pull up today's openings right now. I'll pass your request to the office so someone can call you back quickly with a visit time.",
+          "created_timestamp": 1793911687935,
+          "message_id": "message_c7ade1c80350b97e6664180f",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"No-heat call, boiler quit last night at 2140 Bath Avenue, Brooklyn 11214. Indoor temp 58 F. Caller Rosa Jimenez and son are home. No gas smell, no CO alarm, no one sick. Needs same-day visit; scheduling tool was unavailable.\",\"priority\":\"Urgent\",\"callback_in_minutes\":15,\"system_calls_back\":false}",
+          "created_timestamp": 1793911687936,
+          "message_id": "message_a2a09534995c824d6e5e0282",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_012D9rodJ9BNM2FQhjuSjBFQ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know this call is top priority, and someone will call you by 4:03 PM.\",\"data\":{\"flag_id\":220,\"callback_id\":61,\"callback_at\":\"2026-11-05T21:03:08Z\",\"callback_spoken\":\"by 4:03 PM\"}}",
+          "created_timestamp": 1793911688392,
+          "message_id": "message_4ddb299a60d3695e978c8655",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_012D9rodJ9BNM2FQhjuSjBFQ"
+        },
+        {
+          "content": "I've let our team know this is urgent, and someone will call you back by 4:03 PM to set up your visit. Could you confirm the best phone number to reach you?",
+          "created_timestamp": 1793911689342,
+          "message_id": "message_dbabb1f1d013d74fabce0e73",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's the number, (347) 555-0178. Um, and the callback is by 4:03? Okay. But wait, can I still use the oven a little, just to warm the kitchen until they come? It's really cold in here.",
+          "created_timestamp": 1793911690278,
+          "message_id": "message_ec5ef511e688ee08c6549a39",
+          "role": "user"
+        },
+        {
+          "content": "Yes, that number is noted. Please don't use the oven for heat, even briefly. Keep it off and use a space heater only if it's plugged straight into a wall outlet and kept clear of anything flammable. Someone will call you by 4:03 PM.",
+          "created_timestamp": 1793911691278,
+          "message_id": "message_d6ca5a34ad12dcb506fecd7c",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay. So I shouldn't use the oven at all, not even a little? Um, and the space heater, is that safe to run in the kitchen? We only have the one.",
+          "created_timestamp": 1793911692229,
+          "message_id": "message_2105270b5f5304930d62c3a2",
+          "role": "user"
+        },
+        {
+          "content": "That's right, please don't use the oven at all, not even a little. For the space heater, use it only if it's plugged directly into a wall outlet, not an extension cord or power strip, and keep it at least three feet from curtains, bedding, and anything else that can burn. Turn it off when you leave the room or go to sleep. Someone will call you back by 4:03 PM.",
+          "created_timestamp": 1793911693398,
+          "message_id": "message_eea9ebbb2ab86621f526182b",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay. So I'll keep the oven off. Um, and the callback is by 4:03, right? Is there anything else I should do until then?",
+          "created_timestamp": 1793911694222,
+          "message_id": "message_ce251a920f8012ae78fbdb9c",
+          "role": "user"
+        },
+        {
+          "content": "Yes, the callback is by 4:03 PM. Until then, keep the oven off, keep your CO detector near you, and if the alarm sounds or anyone feels sick or dizzy, get outside right away and call 911. Is there anything else I can help you with?",
+          "created_timestamp": 1793911695247,
+          "message_id": "message_511fcd19efdf5072069f50bd",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thank you. Um, no, I think that's it. I'll keep the oven off and watch the detector. Thanks.",
+          "created_timestamp": 1793911696173,
+          "message_id": "message_913c3657f9737e428482c803",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911697022,
+          "message_id": "message_9032cd25556c890177dbcfaa",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911697023,
+          "message_id": "message_bb2105505e197ec7e45b6834",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01C4NtfTQPPoeNXRA8Vnacwk",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.\",\"data\":{\"need\":\"safety_lines\"},\"refused\":\"gate_safety\",\"speak_first\":\"Say this to the caller now, before anything else, exactly as written with no word or punctuation changed: If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.\"}",
+          "created_timestamp": 1793911697560,
+          "message_id": "message_f726bccb3db7c1c0428010d9",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01C4NtfTQPPoeNXRA8Vnacwk"
+        },
+        {
+          "content": "I need to be clear with you, Rosa. Based on what you told me, there's no gas smell and no alarm, so the system is asking for the evacuation instruction, but I'm not hearing a current emergency. Still, to be safe: if the CO alarm sounds, or anyone feels sick or dizzy, get outside right away and call 911.\n\nYour callback is by 4:03 PM. Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911699047,
+          "message_id": "message_61b1abbb3171fff794492026",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911699048,
+          "message_id": "message_9430a1c19522485956c450e3",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011GTe44dfT7M3roQnj5haD7",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.\",\"data\":{\"need\":\"safety_lines\"},\"refused\":\"gate_safety\"}",
+          "created_timestamp": 1793911699524,
+          "message_id": "message_8df0197dcdf5fc002b962d16",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011GTe44dfT7M3roQnj5haD7"
+        },
+        {
+          "content": "If the CO alarm sounds, or anyone feels sick or dizzy, get outside right away and call 911.",
+          "created_timestamp": 1793911700237,
+          "message_id": "message_9d03e25051be428286af0cd9",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks. I'll keep the oven off. Bye.",
+          "created_timestamp": 1793911701910,
+          "message_id": "message_30dce9b6f08522c1a39ab0e0",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Rosa. Take care.",
+          "created_timestamp": 1793911702718,
+          "message_id": "message_d76bc87f89720cce9ca39f04",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793911702719,
+          "message_id": "message_7cf7f89c46971a1a210d5342",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01LJSbXWdnnuYLynCHvefmBs",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.\",\"data\":{\"need\":\"safety_lines\"},\"refused\":\"gate_safety\",\"speak_first\":\"Say this to the caller now, before anything else, exactly as written with no word or punctuation changed: If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.\"}",
+          "created_timestamp": 1793911703148,
+          "message_id": "message_df950da75b20a2cd15f17dcf",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01LJSbXWdnnuYLynCHvefmBs"
+        },
+        {
+          "content": "I'm going to stop repeating that line, since you've told me no one is sick and no alarm is going off. The office has your request and will call you by 4:03 PM. Goodbye, Rosa.",
+          "created_timestamp": 1793911704155,
+          "message_id": "message_2d60c71da74283dffb4b5c9a",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thank you. Bye.",
+          "created_timestamp": 1793911704706,
+          "message_id": "message_e88fdf1e11c232617fa42e87",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye, Rosa.",
+          "created_timestamp": 1793911705382,
+          "message_id": "message_c04c7bcef712e0f61fff7462",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The call has already ended with goodbyes from both sides, so I'm stopping here.",
+          "created_timestamp": 1793911705996,
+          "message_id": "message_093a86039bc8236da07208c5",
+          "role": "user"
+        },
+        {
+          "content": "Understood. The call has ended, and our team will call you back by 4:03 PM.",
+          "created_timestamp": 1793911706744,
+          "message_id": "message_d91262c6f8dd554966411820",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thank you. Bye.",
+          "created_timestamp": 1793911708134,
+          "message_id": "message_b23bba6667c90bf25b132fc5",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911708823,
+          "message_id": "message_5cbb0a5fe0c8f7ce737f1d00",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay. Bye.",
+          "created_timestamp": 1793911709459,
+          "message_id": "message_876c80d5144c26f0f529c744",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911710056,
+          "message_id": "message_f23a1945db0d8b3314715df7",
+          "metadata": {
+            "response_id": 21
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay. Bye.",
+          "created_timestamp": 1793911710963,
+          "message_id": "message_eb12c11d0e1650d3292c563b",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911711587,
+          "message_id": "message_5eec462d1a2ffa003f883fd8",
+          "metadata": {
+            "response_id": 22
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, bye.",
+          "created_timestamp": 1793911712219,
+          "message_id": "message_8284641c2b91f35c17339db8",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911712816,
+          "message_id": "message_b68f1eb5f773ee3c5af24894",
+          "metadata": {
+            "response_id": 23
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, bye.",
+          "created_timestamp": 1793911713337,
+          "message_id": "message_795b7a591854a45440e0638a",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911714088,
+          "message_id": "message_fac7e4031e4fae7738b28ff8",
+          "metadata": {
+            "response_id": 24
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, bye.",
+          "created_timestamp": 1793911714533,
+          "message_id": "message_3506c165403a5fbf001374ac",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911715417,
+          "message_id": "message_9d8a8357b1d31db94eb75591",
+          "metadata": {
+            "response_id": 25
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, bye.",
+          "created_timestamp": 1793911716139,
+          "message_id": "message_b2eae07280f3c43234359ba8",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911716952,
+          "message_id": "message_8250f363f3503ddea5c1c4c8",
+          "metadata": {
+            "response_id": 26
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, bye.",
+          "created_timestamp": 1793911717515,
+          "message_id": "message_09530f7fc6a631cf05a6a21c",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793911718284,
+          "message_id": "message_b5bd8d4c74deb75f4a269590",
+          "metadata": {
+            "response_id": 27
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-oven-heat-co-check",
+      "tenant": "summit-air",
+      "caller_id": "(347) 555-0178",
+      "caller_key": "3475550178",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-08-19T20:46:35Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 0,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 27,
+      "safety_state": "signal",
+      "safety_kind": "co",
+      "safety_signal_at": "2026-11-05T20:47:54Z",
+      "safety_lines_at": null,
+      "safety_flag_id": 215,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:35Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "caller_id": "(347) 555-0178",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 19.9,
+        "error": null,
+        "request_id": "ce3e7b0000db"
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, um, my boiler quit last night, so we've had the oven on with the door open to keep warm.",
+        "safety_action": "ask_check",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I'm sorry you're without heat. Using the oven with the door open is a real hazard, so please turn the oven off now and don't use it for heat. Is there a gas smell or a carbon monoxide alarm going off right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "No, there's no gas smell and no alarm going off. The CO detector in the hallway is quiet. Everybody feels fine, me and my son.\n\nUm, okay, I'll turn the oven off. But it's so cold in here, 58 degrees. Can we get somebody out today?",
+        "safety_action": "cleared",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it, I'll note that for the technician. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:49Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yes, it's Rosa Jimenez. Um, that's R-O-S-A, last name Jimenez, J-I-M-E-N-E-Z.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Rosa. Is this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Yes, it's a house. It's a two-family, and my son and I live here. Um, the address is 2140 Bath Avenue, Brooklyn, 11214.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "street": "2140 Bath Avenue",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 142.9,
+        "error": null,
+        "request_id": "a96990a0c5f7"
+      },
+      {
+        "at": "2026-11-05T20:47:50Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "phone": null,
+          "address": {
+            "street": "Bath Avenue",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11214",
+            "spelled": "B, A, T, H"
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 110.1,
+        "error": null,
+        "request_id": "2be4933d34aa"
+      },
+      {
+        "at": "2026-11-05T20:47:54Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:54Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "No, nobody's sick or dizzy. The CO detector in the hallway is quiet. Everybody's fine. Um, but I'm still wondering, is it okay to keep using the oven until the technician comes? It's so cold in here.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:54Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "I'd recommend not using the oven for heat at all, even with the door open. Please keep the stove and oven off, and if you need extra warmth, use a space heater only if it's plugged directly into a wall outlet and kept away from anything that can burn. Let me get you a visit time.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:54Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "day": "today",
+          "facts": {
+            "issue": "Boiler quit last night, no heat",
+            "since": "last night",
+            "inside_temp_f": 58,
+            "who_home": "Caller and her son are home"
+          },
+          "call_id": "rtest-11052046-oven-heat-co-check"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "21e3b2703aff"
+      },
+      {
+        "at": "2026-11-05T20:47:56Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "The system is giving an emergency instruction, but the caller has told us no one is sick, no alarm is sounding, and there's no gas smell. I'll continue with the booking. I'll retry the slot search correctly.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:00Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "today",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Boiler quit last night, no heat. Indoor temperature 58 F.",
+            "who_home": "Caller and her son are home",
+            "inside_temp_f": 58.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": false,
+        "refused": "fsm_unavailable",
+        "gate": null,
+        "say": "I can't pull that up right now.",
+        "ms": 4129.4,
+        "error": "fsm_unavailable: capacity: ReadTimeout",
+        "request_id": "a8f520faaec0"
+      },
+      {
+        "at": "2026-11-05T20:48:01Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I'm having trouble pulling up today's openings right now. Let me try once more.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:06Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "today",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": false,
+        "refused": "fsm_unavailable",
+        "gate": null,
+        "say": "I can't pull that up right now.",
+        "ms": 4240.4,
+        "error": "fsm_unavailable: capacity: ReadTimeout",
+        "request_id": "38cb703fbaac"
+      },
+      {
+        "at": "2026-11-05T20:48:08Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I'm sorry, I can't pull up today's openings right now. I'll pass your request to the office so someone can call you back quickly with a visit time.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:08Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": 15,
+          "callback_after": null,
+          "callback_before": null,
+          "callback_day": "today",
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "reason": "No-heat call, boiler quit last night at 2140 Bath Avenue, Brooklyn 11214. Indoor temp 58 F. Caller Rosa Jimenez and son are home. No gas smell, no CO alarm, no one sick. Needs same-day visit; scheduling tool was unavailable.",
+          "priority": "Urgent",
+          "system_calls_back": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know this call is top priority, and someone will call you by 4:03 PM.",
+        "ms": 31.7,
+        "error": null,
+        "request_id": "a1c36b0998f3"
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "I've let our team know this is urgent, and someone will call you back by 4:03 PM to set up your visit. Could you confirm the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yes, that's the number, (347) 555-0178. Um, and the callback is by 4:03? Okay. But wait, can I still use the oven a little, just to warm the kitchen until they come? It's really cold in here.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "Yes, that number is noted. Please don't use the oven for heat, even briefly. Keep it off and use a space heater only if it's plugged straight into a wall outlet and kept clear of anything flammable. Someone will call you by 4:03 PM.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Okay. So I shouldn't use the oven at all, not even a little? Um, and the space heater, is that safe to run in the kitchen? We only have the one.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "That's right, please don't use the oven at all, not even a little. For the space heater, use it only if it's plugged directly into a wall outlet, not an extension cord or power strip, and keep it at least three feet from curtains, bedding, and anything else that can burn. Turn it off when you leave the room or go to sleep. Someone will call you back by 4:03 PM.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Okay. So I'll keep the oven off. Um, and the callback is by 4:03, right? Is there anything else I should do until then?",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "Yes, the callback is by 4:03 PM. Until then, keep the oven off, keep your CO detector near you, and if the alarm sounds or anyone feels sick or dizzy, get outside right away and call 911. Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Okay, thank you. Um, no, I think that's it. I'll keep the oven off and watch the detector. Thanks.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:17Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "reason": "resolved"
+        },
+        "ok": false,
+        "refused": "gate_safety",
+        "gate": "gate_safety",
+        "say": "If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.",
+        "ms": 2.0,
+        "error": null,
+        "request_id": "bd0e93c1fc4f"
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "I need to be clear with you, Rosa. Based on what you told me, there's no gas smell and no alarm, so the system is asking for the evacuation instruction, but I'm not hearing a current emergency. Still, to be safe: if the CO alarm sounds, or anyone feels sick or dizzy, get outside right away and call 911.\n\nYour callback is by 4:03 PM. Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:19Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "reason": "resolved"
+        },
+        "ok": false,
+        "refused": "gate_safety",
+        "gate": "gate_safety",
+        "say": "If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.",
+        "ms": 3.1,
+        "error": null,
+        "request_id": "44dafe969b18"
+      },
+      {
+        "at": "2026-11-05T20:48:23Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "If the CO alarm sounds, or anyone feels sick or dizzy, get outside right away and call 911.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:23Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "Okay, thanks. I'll keep the oven off. Bye.",
+        "safety_action": "speak_lines",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:23Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "Thanks, Rosa. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:23Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-oven-heat-co-check",
+          "reason": "caller_goodbye"
+        },
+        "ok": false,
+        "refused": "gate_safety",
+        "gate": "gate_safety",
+        "say": "If a window is right there, open it. Then get everyone out of the house now and call 911 once you're outside.",
+        "ms": 3.5,
+        "error": null,
+        "request_id": "c7b1eb3a439d"
+      }
+    ],
+    "flags": [
+      {
+        "id": 214,
+        "call_id": "rtest-11052046-oven-heat-co-check",
+        "kind": "safety_check_cleared",
+        "reason": "Caller said no to the safety check",
+        "priority": "Low",
+        "status": "open",
+        "created_at": "2026-11-05T20:47:49Z"
+      },
+      {
+        "id": 215,
+        "call_id": "rtest-11052046-oven-heat-co-check",
+        "kind": "safety",
+        "reason": "Carbon monoxide reported on the call",
+        "priority": "Urgent",
+        "status": "open",
+        "created_at": "2026-11-05T20:47:54Z"
+      },
+      {
+        "id": 220,
+        "call_id": "rtest-11052046-oven-heat-co-check",
+        "kind": "person",
+        "reason": "No-heat call, boiler quit last night at 2140 Bath Avenue, Brooklyn 11214. Indoor temp 58 F. Caller Rosa Jimenez and son are home. No gas smell, no CO alarm, no one sick. Needs same-day visit; scheduling tool was unavailable.",
+        "priority": "Urgent",
+        "status": "open",
+        "created_at": "2026-11-05T20:48:08Z"
+      },
+      {
+        "id": 240,
+        "call_id": "rtest-11052046-oven-heat-co-check",
+        "kind": "overdue_callback",
+        "reason": "Callback promised by 4:03 PM not done: No-heat call, boiler quit last night at 2140 Bath Avenue, Brooklyn 11214. Indoor temp 58 F. Caller Rosa Jimenez and son are home. No gas smell, no CO alarm, no one sick. Needs same-day visit; scheduling tool was unavailable.",
+        "priority": "High",
+        "status": "open",
+        "created_at": "2026-11-05T21:04:07Z"
+      }
+    ],
+    "callbacks": [
+      {
+        "id": 61,
+        "call_id": "rtest-11052046-oven-heat-co-check",
+        "phone": "(347) 555-0178",
+        "phone_key": "3475550178",
+        "due_at": "2026-11-05T21:03:08Z",
+        "owner": "office",
+        "reason": "No-heat call, boiler quit last night at 2140 Bath Avenue, Brooklyn 11214. Indoor temp 58 F. Caller Rosa Jimenez and son are home. No gas smell, no CO alarm, no one sick. Needs same-day visit; scheduling tool was unavailable.",
+        "status": "overdue",
+        "attempts": 0,
+        "last_attempt_at": null,
+        "created_at": "2026-11-05T20:48:08Z",
+        "updated_at": "2026-11-05T21:04:07Z"
+      }
+    ],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-oven-heat-co-check",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "2140",
+        "street": "bath ave",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11214\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

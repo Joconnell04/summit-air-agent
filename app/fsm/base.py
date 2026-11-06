@@ -99,6 +99,7 @@ class FsmAdapter(Protocol):
         window_start: datetime,
         window_end: datetime,
         technician_ids: list[int] | None = None,
+        tag_type_ids: list[int] | None = None,
     ) -> dict: ...
     def reschedule(
         self,

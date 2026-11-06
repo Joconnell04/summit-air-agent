@@ -22,7 +22,7 @@ from app import lifecycle
 from app.db import iso
 from app.lifecycle import sounds_commercial
 from app.tenant import load_agent
-from app.text import phone_said
+from app.text import phone_said, street_said
 
 AGENT = load_agent(TENANT_DIR)[0]
 
@@ -97,21 +97,27 @@ def test_booking_is_refused_until_the_read_back_was_returned_and_answered(agent,
 def test_a_correction_after_the_read_back_needs_a_new_read_back(agent):
     call = ready_to_book(agent)
     corrected = agent.tool("read_back", call, address=in_area_address(7), phone="caller_id")
-    assert corrected["ok"] and "107 Union St" in corrected["say"]
+    assert corrected["ok"] and "one oh seven Union St" in corrected["say"]
     assert book(agent, call, first_open(agent, call))["refused"] == "gate_read_back"
 
 
-def test_the_read_back_is_one_sentence_with_the_number_in_groups(agent):
-    """Eval round 3: one sentence, no "let me read that back" lead-in, no internal words."""
+def test_the_read_back_is_shorthand_with_the_number_in_groups(agent):
+    """Eval round 3: one sentence, no "let me read that back" lead-in, no internal words. Jackson:
+    "just shorthand like 'the 199 e 4th street and unit 2'": no ZIP, city or "your home"."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's 101 Union St, 11231.")
-    asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    assert asked["say"] == (
-        "I have your home at 101 Union St, Brooklyn, ZIP code one one two three one, and the best "
-        "number is "
-        "two one two, five five five, zero nine nine nine. That's all correct, right?"
+    asked = agent.tool("read_back", call, address=in_area_address(), phone="2125550142")
+    # The sentence after the short connector Jackson asked for ("Perfect."), shorthand otherwise.
+    assert asked["data"]["sentence"] == (
+        "So that's one oh one Union St, and two one two, five five five, zero one four two. "
+        "That's all correct, right?"
     )
     assert "read" not in asked["say"].lower()
+    calling = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    assert calling["data"]["sentence"] == (
+        "So that's one oh one Union St, and the number you're calling from, ending in zero nine nine "
+        "nine. That's all correct, right?"
+    )
 
 
 @pytest.mark.parametrize(
@@ -125,7 +131,7 @@ def test_the_number_calling_said_as_a_phrase_is_the_caller_id(agent, phone):
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
     assert asked["ok"], asked
-    assert "three four seven, five five five, zero one zero one" in asked["say"]
+    assert "the number you're calling from" in asked["say"]
 
 
 @pytest.mark.parametrize("phone", ["555 0142", "212 555 014", "212 555 01422"])
@@ -152,7 +158,7 @@ def test_the_number_im_calling_from_is_the_real_caller_id(agent):
     call = agent.start("+1 (347) 555-0101")["data"]["call_id"]
     agent.turn(call, "It's 101 Union St, 11231.")
     asked = agent.tool("read_back", call, address=in_area_address(), phone="caller_id")
-    assert "three four seven, five five five, zero one zero one" in asked["say"]
+    assert "the number you're calling from" in asked["say"]
 
 
 def test_the_one_ending_in_picks_the_matching_number_on_file(agent, scenarios):
@@ -225,7 +231,7 @@ def test_a_commercial_account_cannot_book_whatever_the_agent_asks(agent, mock, s
         call = ready_to_book(agent, account["phone"])
         refused = book(agent, call, first_open(agent, call), job_type="no_heat")
         assert refused["refused"] == "customer_type", account["name"]
-        assert "works on homes and apartments" in refused["say"]
+        assert "we only service homes" in refused["say"]
     assert fsm_jobs(mock) == before
 
 
@@ -435,14 +441,33 @@ def test_after_hours_a_cold_house_alerts_the_on_call_technician_before_booking(a
     agent.turn(call, "It's 48 in here and dropping. Just two healthy adults at home.")
     found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 48})
     assert found["data"]["after_hours_outcome"] == "tonight_if_on_call_agrees"
-    refused = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
-    assert refused["refused"] == "on_call_first"
+    # The server alerts the on-call technician itself and books in the same call: refused with
+    # on_call_first, the side-by-side's models stalled and never booked or flagged.
+    booked = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
+    assert booked["ok"], booked
+    assert booked["say"].startswith(
+        "I've let our on-call team know this call is top priority, and someone will call you"
+    )
+    assert "Okay, I've booked it" in booked["say"]
+    assert booked["say"].count("top priority") == 1
+    flag = agent.db().execute(
+        "SELECT kind, priority FROM flags WHERE kind = 'person'"
+    ).fetchone()
+    assert tuple(flag) == ("person", "Urgent")
     # No time to ask for: the on-call technician calls back within the tenant's set minutes.
+    due = agent.db().execute("SELECT due_at FROM callbacks").fetchone()[0]
+    assert due == iso(clock() + timedelta(minutes=20))
+
+
+def test_after_hours_an_alert_the_agent_raised_first_isnt_raised_twice(agent, clock):
+    clock.advance(**AFTER_HOURS)
+    call = ready_to_book(agent)
+    agent.turn(call, "It's 48 in here and dropping.")
     flagged = agent.tool("flag_person", call, reason="On-call: 48 F inside", priority="Urgent")
     assert flagged["ok"], flagged
-    assert flagged["data"]["callback_at"] == iso(clock() + timedelta(minutes=20))
-    assert "on-call team know this call is top priority" in flagged["say"]
-    assert book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)["ok"]
+    booked = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
+    assert booked["ok"] and "on-call team" not in booked["say"]
+    assert agent.db().execute("SELECT COUNT(*) FROM flags WHERE kind = 'person'").fetchone()[0] == 1
 
 
 def test_after_hours_a_house_holding_warm_books_the_morning_without_a_flag(agent, clock):
@@ -463,10 +488,8 @@ def test_after_hours_a_hot_house_alerts_the_on_call_technician_before_booking(ag
     clock.advance(**AFTER_HOURS)
     call = ready_to_book(agent)
     agent.turn(call, "The AC died and it's 88 in here.")
-    refused = book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)
-    assert refused["refused"] == "on_call_first"
-    agent.tool("flag_person", call, reason="On-call: 88 F inside, no AC", priority="Urgent")
-    assert book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)["ok"]
+    booked = book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)
+    assert booked["ok"] and booked["say"].startswith("I've let our on-call team know")
 
 
 def test_after_hours_a_safety_override_booking_skips_the_on_call_alert(agent, clock):
@@ -620,7 +643,7 @@ def test_a_known_caller_at_an_address_on_file_is_not_asked_about_accounts(agent,
     call = agent.start(thomas["phone"])["data"]["call_id"]
     agent.turn(call, "The heat's out again.")
     agent.confirm_read_back(
-        call, {"street": "800 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11368"}
+        call, {"street": "89-15 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11427"}
     )
     assert book(agent, call, first_open(agent, call))["ok"]
 
@@ -641,19 +664,35 @@ def test_arrival_hours_read_8_to_2_as_daytime_and_offer_only_windows_inside(agen
 
 def test_arrival_hours_narrower_than_a_window_get_a_shorter_one_that_fits(agent):
     call = ready_to_book(agent)
+    longer = agent.tool("find_slots", call, job_type="tune_up", arrive_before="9", window_minutes=120)
+    assert longer["ok"], longer
+    assert longer["data"]["arrival"]["fits"] is True
+    assert {label for d in longer["data"]["days"] for label in d["labels"]} == {"8 to 9"}
+
+
+def test_windows_are_30_minutes_unless_the_caller_asks(agent):
+    """Jackson's gas test call call_0246b91f77e01a4b18583e6ca8b heard "5 to 7": "by default, it
+    should give a 30 minute way, not a 2 hour window"."""
+    call = ready_to_book(agent)
     found = agent.tool("find_slots", call, job_type="tune_up", arrive_before="9")
     assert found["ok"], found
-    assert found["data"]["arrival"]["fits"] is True
-    assert {label for d in found["data"]["days"] for label in d["labels"]} == {"8 to 9"}
+    assert {label for d in found["data"]["days"] for label in d["labels"]} == {
+        "8 to 8:30", "8:30 to 9"
+    }
+    offered = agent.tool("find_slots", call, job_type="tune_up")["data"]["offer"]
+    start, end = offered["window"].split("-")
+    minutes = (int(end[:2]) * 60 + int(end[2:])) - (int(start[:2]) * 60 + int(start[2:]))
+    assert offered["after_hours"] or minutes == 30
 
 
 def test_an_arrival_time_no_window_fits_is_said_plainly_without_a_promise(agent):
     call = ready_to_book(agent)
     found = agent.tool("find_slots", call, job_type="tune_up", arrive_before="8:15")
+    # No 30-minute window ends by 8:15.
     assert found["ok"], found
     assert found["data"]["arrival"]["fits"] is False
     assert found["say"].startswith(
-        "Our arrival windows are two hours, and the technician can come any time in the window, "
+        "Our arrival windows are 30 minutes, and the technician can come any time in the window, "
         "so I can't promise an exact time."
     )
 
@@ -675,7 +714,7 @@ def test_a_spelled_street_is_joined_into_the_name_for_the_read_back(agent, addre
         "read_back", call, address={"zip": "10302", **address}, phone="caller_id"
     )
     assert asked["ok"], asked
-    assert f"your home at {street}, ZIP code one zero three zero two" in asked["say"]
+    assert asked["data"]["sentence"].startswith(f"So that's {street_said(street)}, and ")
 
 
 def test_an_owner_who_lives_downstairs_with_a_tenant_upstairs_can_book(agent):
@@ -958,14 +997,16 @@ def test_the_confirmation_names_the_day_and_the_date(agent):
     today = next(d for d in found["data"]["days"] if d["day"] == "today")
     booked = book(agent, call, {"date": today["date"], "window": today["windows"][0]})
     assert booked["ok"], booked
-    assert booked["say"].startswith("You're all set for today, Monday, November 2, with the")
+    assert booked["say"].startswith("Okay, I've booked it: the technician will arrive today between")
     # Another caller, so the new address isn't a second home for the first one.
     later = ready_to_book(agent, caller_id="(212) 555-0998", address=in_area_address(5))
     thursday = agent.tool("find_slots", later, job_type="tune_up", day="2026-11-05")
     window = thursday["data"]["windows"][0]["window"]
     on_thursday = book(agent, later, {"date": "2026-11-05", "window": window})
     assert on_thursday["ok"], on_thursday
-    assert on_thursday["say"].startswith("You're all set for Thursday, November 5, with the")
+    assert on_thursday["say"].startswith(
+        "Okay, I've booked it: the technician will arrive Thursday, November 5, between"
+    )
 
 
 def test_the_same_problem_back_after_a_recent_visit_flags_a_person_to_review_it(agent, scenarios):
@@ -974,7 +1015,7 @@ def test_the_same_problem_back_after_a_recent_visit_flags_a_person_to_review_it(
     call = agent.start(thomas["phone"])["data"]["call_id"]
     agent.turn(call, "You were here last week for no heat and it's out again.")
     agent.confirm_read_back(
-        call, {"street": "800 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11368"}
+        call, {"street": "89-15 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11427"}
     )
     booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
     assert booked["ok"], booked
@@ -1001,7 +1042,7 @@ def test_an_unrelated_booking_after_a_recent_visit_is_not_a_return_visit(agent, 
     call = agent.start(thomas["phone"])["data"]["call_id"]
     agent.turn(call, "Hi, I'd like to book my yearly heating tune-up.")
     agent.confirm_read_back(
-        call, {"street": "800 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11368"}
+        call, {"street": "89-15 Springfield Blvd", "unit": "", "city": "Queens", "zip": "11427"}
     )
     booked = book(agent, call, first_open(agent, call))
     assert booked["ok"], booked
@@ -1075,7 +1116,7 @@ def test_confirmed_details_are_not_read_back_again(agent):
     assert book(agent, call, first_open(agent, call))["ok"]
     later = ready_to_book(agent)
     changed = agent.tool("read_back", later, address=in_area_address(3), phone="caller_id")
-    assert changed["say"].startswith("I have your home at 103 Union St")
+    assert changed["data"]["sentence"].startswith("So that's one oh three Union St")
 
 
 def test_a_renter_with_an_unknown_approver_books_with_a_call_before_dispatch(agent):
@@ -1094,7 +1135,7 @@ def test_the_booking_confirmation_is_the_whole_turn_and_asks_anything_else(agent
     call = ready_to_book(agent)
     booked = book(agent, call, first_open(agent, call))
     assert booked["ok"], booked
-    assert booked["say"].startswith("You're all set for ")
+    assert booked["say"].startswith("Okay, I've booked it: ")
     assert booked["say"].endswith(" Anything else?")
 
 
@@ -1102,9 +1143,9 @@ def test_the_booking_confirmation_is_the_whole_turn_and_asks_anything_else(agent
     "advance,day",
     [
         # 11:50 PM Monday: Tuesday's visit is tomorrow.
-        ({"hours": 14, "minutes": 50}, "tomorrow, Tuesday, November 3"),
+        ({"hours": 14, "minutes": 50}, "tomorrow"),
         # 12:20 AM Tuesday: the same visit is today (a live call heard "tomorrow").
-        ({"hours": 15, "minutes": 20}, "today, Tuesday, November 3"),
+        ({"hours": 15, "minutes": 20}, "today"),
     ],
 )
 def test_today_and_tomorrow_come_from_the_visit_date_against_the_local_date(
@@ -1116,7 +1157,7 @@ def test_today_and_tomorrow_come_from_the_visit_date_against_the_local_date(
     window = found["data"]["windows"][0]["window"]
     booked = book(agent, call, {"date": "2026-11-03", "window": window})
     assert booked["ok"], booked
-    assert booked["say"].startswith(f"You're all set for {day}, with the")
+    assert booked["say"].startswith(f"Okay, I've booked it: the technician will arrive {day} between")
 
 
 def test_whose_account_is_asked_with_the_confirmed_read_back_not_by_a_refused_booking(
@@ -1148,7 +1189,7 @@ def test_an_address_already_on_file_confirms_with_no_account_question(agent, sce
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(maria["phone"])["data"]["call_id"]
     agent.turn(call, "It's about the tune-up.")
-    home = {"street": "620 Bedford Ave", "unit": "", "city": "Brooklyn", "zip": "11235"}
+    home = {"street": "620 Bedford Ave", "unit": "", "city": "Brooklyn", "zip": "11249"}
     confirmed = agent.confirm_read_back(call, home)
     assert "account_choice" not in confirmed["data"] and not confirmed["say"]
 
@@ -1236,8 +1277,8 @@ def test_live_call_2_tomorrow_at_two_is_the_window_that_holds_two(agent):
         arrive_before="5 PM",
     )
     assert found["data"]["arrival"] == {"time": "14:00", "fits": True}
-    assert [w["label"] for w in found["data"]["windows"]] == ["2 to 4"]
-    assert found["say"] == "Tomorrow I have 2 to 4."
+    assert [w["label"] for w in found["data"]["windows"]] == ["2 to 2:30"]
+    assert found["say"] == "Tomorrow I have 2 to 2:30."
 
 
 def test_a_named_day_full_this_week_says_so_and_offers_next_weeks_with_its_date():
@@ -1272,8 +1313,8 @@ def test_book_for_tomorrow_at_two_in_a_longer_line_is_the_window_that_holds_it(a
         "find_slots", call, job_type="tune_up", arrive_after="1 PM", arrive_before="3 PM"
     )
     assert found["data"]["arrival"] == {"time": "14:00", "fits": True}
-    assert [w["label"] for w in found["data"]["windows"]] == ["2 to 4"]
-    assert found["say"] == "Tomorrow I have 2 to 4.", "the day comes from the caller's words"
+    assert [w["label"] for w in found["data"]["windows"]] == ["2 to 2:30"]
+    assert found["say"] == "Tomorrow I have 2 to 2:30.", "the day comes from the caller's words"
 
 
 def test_a_named_time_outside_visit_hours_says_the_hours_and_offers_the_nearest(agent):
@@ -1281,7 +1322,7 @@ def test_a_named_time_outside_visit_hours_says_the_hours_and_offers_the_nearest(
     agent.turn(call, "Tomorrow at 8 PM works.")
     found = agent.tool("find_slots", call, job_type="tune_up", arrive_after="8 PM")
     assert found["data"]["arrival"]["fits"] is False
-    assert found["say"] == "Our visits run from 8 AM to 8 PM. Tomorrow I have 6 to 8."
+    assert found["say"] == "Our visits run from 8 AM to 8 PM. Tomorrow I have 7:30 to 8."
 
 
 # ---- all five boroughs (Jackson's call on the Retell number) ------------------------------------
@@ -1307,8 +1348,9 @@ def test_every_nyc_residential_zip_is_in_the_area():
     from app.tenant import Tenant
 
     area = Tenant.load(TENANT_DIR).service_area
-    assert len(area) == 214
-    for zip_code in ("10009", "10458", "11201", "11373", "10314", "10463", "11691"):
+    # MODZCTA's 214, and 11249, a USPS ZIP no census ZIP area has (Retell eval suite round 1).
+    assert len(area) == 215
+    for zip_code in ("10009", "10458", "11201", "11373", "10314", "10463", "11691", "11249"):
         assert zip_code in area, zip_code
     assert "07302" not in area and "11501" not in area
 
@@ -1326,6 +1368,39 @@ def test_a_new_caller_is_asked_their_name_right_after_the_read_back(agent):
     assert booked["ok"], booked
 
 
+def test_a_booking_with_no_name_asks_with_the_booking_name_line(agent):
+    """Jackson's gas test call (call_0246b91f77e01a4b18583e6ca8b): the agent booked without asking
+    the name, and the refusal asked "Can I get a name for the booking?"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'd like to book my furnace's yearly tune-up, please.")
+    agent.confirm_read_back(call, in_area_address())
+    refused = book(agent, call, first_open(agent, call), name="")
+    assert refused["refused"] == "invalid_arguments"
+    assert refused["say"] == "Thanks. And what name should I put the visit under?"
+
+
+def test_a_name_passed_to_read_back_is_not_asked_again_and_goes_on_the_visit(agent, mock):
+    """Jackson's Retell agent asks the name at the start of the call; the confirmed read-back
+    still asked "what name should I put the visit under?", because the name only reached the
+    server in book_appointment."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'd like to book my furnace's yearly tune-up, please.")
+    address = in_area_address()
+    agent.turn(call, f"It's {address['street']}, {address['zip']}.")
+
+    def read_back(**extra):
+        body = {"call_id": call, "address": address, "phone": "caller_id", "name": "Jordan Lee"}
+        return agent.client.post("/tools/read_back", json={**body, **extra}).json()
+
+    asked = read_back()
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes, that's right.")
+    confirmed = read_back(confirmed=True)
+    assert confirmed["ok"] and confirmed["say"] == ""
+    booked = book(agent, call, first_open(agent, call), name="")
+    assert booked["ok"], booked
+
+
 def test_a_new_caller_who_already_gave_a_name_is_not_asked_again(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "Hi, this is Pat Rivera, I need a tune-up.")
@@ -1338,7 +1413,7 @@ def test_a_unit_and_the_zip_are_said_apart_in_the_read_back(agent):
     agent.turn(call, "It's 199 East 4th Street, unit 2, 10009.")
     address = {"street": "199 E 4th St", "unit": "2", "city": "New York", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert "unit 2, New York, ZIP code one zero zero zero nine" in asked["say"]
+    assert asked["data"]["sentence"].startswith("So that's one ninety-nine E Fourth St, unit two, and ")
 
 
 def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
@@ -1348,7 +1423,7 @@ def test_a_unit_heard_with_the_zip_on_the_end_keeps_only_the_unit(agent):
     agent.turn(call, "Yes, 10009.")
     address = {"street": "199 E 4th St", "unit": "210009", "city": "New York", "zip": "10009"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
-    assert "unit 2, New York, ZIP code one zero zero zero nine" in asked["say"]
+    assert asked["data"]["sentence"].startswith("So that's one ninety-nine E Fourth St, unit two, and ")
 
 
 def test_a_caller_who_says_they_are_someone_else_is_booked_as_a_new_customer(
@@ -1398,12 +1473,12 @@ def test_a_caller_can_ask_for_a_shorter_window(agent):
     )
 
 
-def test_the_default_offer_is_the_earliest_open_two_hour_window(agent):
+def test_the_default_offer_is_the_earliest_open_30_minute_window(agent):
     call = ready_to_book(agent)
     found = agent.tool("find_slots", call, job_type="tune_up")
     window = found["data"]["offer"]["window"]
     start, end = int(window[:2]) * 60 + int(window[2:4]), int(window[5:7]) * 60 + int(window[7:])
-    assert end - start == 120
+    assert end - start == 30
 
 
 def test_a_spelling_the_caller_never_said_leaves_the_street_alone(agent):
@@ -1416,5 +1491,24 @@ def test_a_spelling_the_caller_never_said_leaves_the_street_alone(agent):
                "spelled": "E, A, S, T, 4, T, H, S, T, R, E, E, T"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
     assert asked["ok"], asked
-    assert "199 East 4th Street, unit 2" in asked["say"]
+    assert "one ninety-nine East Fourth Street, unit two" in asked["say"]
     assert "Eastth" not in asked["say"]
+
+
+@pytest.mark.parametrize("caller", ["", "anonymous"])
+@pytest.mark.parametrize("phone", ["caller_id", "the number I'm calling from"])
+def test_a_call_with_no_number_asks_for_it_by_name(agent, caller, phone):
+    """Retell's builder agent: a web call or a blocked caller ID has no number to read back."""
+    call = agent.start(caller)["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
+    asked = agent.tool("read_back", call, address=in_area_address(), phone=phone)
+    assert asked["refused"] == "no_caller_number"
+    assert asked["say"] == "I can't see the number you're calling from. Could you read it out for me?"
+
+
+def test_find_slots_takes_since_in_its_facts(agent):
+    """Retell eval suite round 1: 16 find_slots calls refused facts.since as an unknown field."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up",
+                       facts={"issue": "yearly tune-up", "since": "last week"})
+    assert found["ok"], found
