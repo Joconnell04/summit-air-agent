@@ -330,9 +330,10 @@ def _after_address(ctx, needs_unit: bool) -> str:
     return (
         "Ask the next of these you don't have yet, one a turn, built from what the caller already "
         "said and never asking for anything they told you: "
-        f"{unit}only on a no-heat or no-cooling call, how bad it is: when they named a symptom, "
-        f"in their words ('{line('ask_how_bad_symptom')}'), otherwise "
-        "'Is it completely out, or just not keeping up?'; then 'Since when?'; if they haven't said "
+        f"{unit}only on a no-heat or no-cooling call (never a tune-up, maintenance visit or quote), "
+        f"how bad it is: when they named a symptom, in their words ('{line('ask_how_bad_symptom')}'), "
+        "otherwise 'Is it completely out, or just not keeping up?', and then, still only on a "
+        "no-heat or no-cooling call, 'Since when?'; if they haven't said "
         f"what system it is, for heating '{line('ask_system_type_heating')}', for cooling "
         f"'{line('ask_system_type_cooling')}'; when heating, cooling or airflow isn't working (not "
         "a maintenance visit or a quote), one catch-all in its own turn, never with an example "

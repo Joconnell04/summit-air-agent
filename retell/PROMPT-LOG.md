@@ -300,6 +300,10 @@ The safety lines now end with a menu instead of one offer: someone on the team n
 
 On a scripted call Brian offered "eight to eight thirty or eight thirty to nine", the caller said "the last one", and Brian took the last window of the whole day, seven thirty in the evening. One line: "the first one" or "the last one" means among the times just said. The server side of the same call: when a window fills while the caller decides, the server now says so and offers the next one in the same sentence, instead of leaving a dead end. Outcome: tests pass; checked on the next phone round.
 
+### v11 (no silent turns, no tune-up fault questions)
+
+Two lines from the rerun of the booking checks. One: the prompt said "when nothing is left to say, say nothing", and after a caller answered, Brian said nothing for twelve seconds until they asked if he was still there. Now silence is only for after my own question; when the caller has just spoken, Brian answers or asks the next thing, and the socket asks the model once more if its reply comes back empty. Two: the server's next-step text put "Since when?" outside the no-heat and no-cooling condition, so a tune-up got asked since when it needed a tune-up; it now says the fault questions are never for a tune-up, maintenance visit or quote. Outcome: tests pass; checked on the next phone round.
+
 ### Review (issue #183)
 
 I checked it against my change sets 18 to 28, with nothing the server does said twice. Two passes went to the socket lane (`socket-prompt-review-183.md` in the session notes). The first pass's items are in v5, except one. The second pass found only small things:

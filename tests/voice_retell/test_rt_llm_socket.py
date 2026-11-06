@@ -904,3 +904,16 @@ def test_server_led_a_dispatch_after_an_offer_is_the_servers_line_alone(server_l
                                   "My mom's 85 and she's staying with me."]))
     assert second == DISPATCH
 
+
+
+def test_an_empty_reply_after_the_caller_speaks_is_asked_again_once(socket):
+    """Phone check b2r, 6 November: the model wrote nothing after the caller answered, and the
+    caller sat in silence until "are you still there?"."""
+    _, make = socket
+    client, brain = make([([], []), (["Is it completely out, or just not keeping up?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "It's 88 Atlantic Avenue."])
+    assert said(events) == "Is it completely out, or just not keeping up?"
+    nudge = json.dumps(brain.requests[1][-1])
+    assert "The caller is waiting for you" in nudge

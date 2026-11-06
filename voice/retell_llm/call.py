@@ -36,6 +36,12 @@ from .model import Brain, Reply
 
 log = logging.getLogger("voice.retell_llm")
 
+# Added to the caller's line when the model's first try at a reply was empty.
+EMPTY_REPLY_NUDGE = (
+    "[server] The caller is waiting for you. Answer them or ask your next question now, in one "
+    "short sentence."
+)
+
 MAX_HOPS = 6
 # Server-led, the steps whose tools answer from the tool server's own records in milliseconds get
 # no hold phrase (the read-back, the area check, the customer lookups), nor does the goodbye.
@@ -651,6 +657,7 @@ class LlmCall:
     async def _hops(self, out: Response, stages: dict) -> None:
         tool_ms = 0.0
         quality = False
+        nudged = False
         for hop in range(MAX_HOPS):
             self.reply.start_reply()
             # While windows are on offer, the model's text waits for the end of its reply: a reply
@@ -764,6 +771,15 @@ class LlmCall:
                 content.insert(0, {"type": "text", "text": " ".join(kept)})
             if content:
                 self.messages.append({"role": "assistant", "content": content})
+            if (not reply.tool_uses and not kept and not raw and not out.said and not nudged
+                    and self.messages and self.messages[-1]["role"] == "user"):
+                # The model wrote nothing at all after the caller spoke, and the caller sat in
+                # silence until "are you still there?" (phone check b2r, 6 November). Ask once more,
+                # with a nudge, before giving up the turn.
+                nudged = True
+                self._nudge_last_user()
+                log.info("%s: empty reply, asked again", self.server.call_id)
+                continue
             if not reply.tool_uses:
                 break
             called = time.perf_counter()
@@ -778,6 +794,15 @@ class LlmCall:
             )
         if tool_ms:
             stages["tool_ms"] = round(tool_ms, 1)
+
+    def _nudge_last_user(self) -> None:
+        """Add one line to the caller's last message: the reply can't be empty."""
+        last = self.messages[-1]
+        nudge = {"type": "text", "text": EMPTY_REPLY_NUDGE}
+        if isinstance(last["content"], str):
+            last["content"] = [{"type": "text", "text": last["content"]}, nudge]
+        else:
+            last["content"] = [*last["content"], nudge]
 
     async def _run_tools(self, out: Response, uses: list[dict]) -> tuple[list[dict], bool]:
         """Each call goes to the tool server; the server's own lines are said as written. True

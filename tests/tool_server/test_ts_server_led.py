@@ -398,3 +398,13 @@ def test_a_unit_the_caller_already_gave_is_not_asked_again(led):
         assert "apartment or unit number" not in flow._next(ctx, "find_address", None, found)
     finally:
         conn.close()
+
+
+def test_the_fault_questions_are_never_for_a_tune_up(led):
+    """Phone check b1r, 6 November: "Since when has it needed a tune-up?"."""
+    from app import flow
+
+    with open(flow.__file__) as f:
+        source = f.read()
+    assert "never a tune-up, maintenance visit or quote" in source
+    assert "still only on a" in source
