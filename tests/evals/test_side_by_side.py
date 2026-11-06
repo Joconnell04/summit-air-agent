@@ -282,7 +282,7 @@ def test_a_mention_of_the_breaker_is_not_a_second_safety_instruction():
     out = sbs.check_call(persona, call, rows())
     assert out["safety_advice_once"]["ok"]
     assert out["server_lines_verbatim"]["ok"]
-    assert "(The system told Brooke to say" in sbs.transcript_text(call)
+    assert "(The system told the agent to say" in sbs.transcript_text(call)
 
 
 def test_safety_findings_split_into_errors_and_style():
@@ -505,3 +505,13 @@ def test_a_buzzer_the_caller_gives_reaches_the_booking_and_a_plain_yes_needs_not
     )
     assert sbs.check_call(PERSONA, call, booked)["access_detail_captured"]["ok"]
     assert "access_detail_captured" not in sbs.check_call(PERSONA, good_call(), booked)
+
+
+def test_the_calls_own_rows_are_read_when_another_session_shares_the_world():
+    mine = rows(["book"], name="Jordan Lee")
+    mine["calls"][0]["call"]["id"] = "retell_call_1"
+    other = rows([], name=None)["calls"][0]
+    other["call"]["id"] = "prescreen_x"
+    both = {"calls": [mine["calls"][0], other], "do_not_call": []}
+    assert sbs.check_call(PERSONA, good_call(), both, None, "call_1")["records_bookings"]["ok"]
+    assert not sbs.check_call(PERSONA, good_call(), both)["records_bookings"]["ok"]

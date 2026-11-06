@@ -229,7 +229,11 @@ DECLINE = r"^((no|nope|nah)( (thanks|thank you|that's it|that's all|i'm good|not
 
 
 def check_call(
-    persona: dict, transcript: list[dict], rows: dict, disconnection: str | None = None
+    persona: dict,
+    transcript: list[dict],
+    rows: dict,
+    disconnection: str | None = None,
+    call_id: str | None = None,
 ) -> dict:
     """Gross-error checks for one call. Each value is {"ok": bool, "why": str}; checks that do not
     apply to the persona are left out."""
@@ -515,7 +519,10 @@ def check_call(
         "; ".join(carried[:1] + foreign[:1] + [f"linked {x}" for x in linked[:1]]),
     )
 
-    ours = calls[-1] if calls else {}
+    # This call's own rows: the tool server's id is "retell_" plus Retell's call id. Another
+    # session's calls in the same world would otherwise be read as ours.
+    mine = [c for c in calls if call_id and c["call"]["id"] == f"retell_{call_id}"]
+    ours = mine[0] if mine else (calls[-1] if calls else {})
     kinds = sorted(
         b["kind"]
         for b in ours.get("bookings", [])
@@ -669,7 +676,8 @@ def latency(call: dict) -> dict:
 # ---- the Opus judge ----------------------------------------------------------------------------
 
 JUDGE_SYSTEM = """You judge phone calls to Summit Air, a residential HVAC company in New York, answered
-by a virtual assistant named Brooke. The caller is a scripted test caller. The owner, Jackson, has
+by a virtual assistant (named Brooke on earlier calls and Brian on later ones, at Jackson's
+request; either name is right). The caller is a scripted test caller. The owner, Jackson, has
 given feedback on earlier calls; it is below, word for word, and it is the standard. Score how close
 this call comes to what Jackson wants: warm, confident and natural, one question at a time, no
 narration of its own steps, no saying the caller's name, safety handled once and calmly, the job
@@ -678,9 +686,9 @@ done (booked, moved, callback or lead as the caller asked), and a clean ending.
 Score 1 to 10: 10 is a call Jackson would have no notes on; 7 is good with small notes; 5 has one
 serious problem a caller would notice; 3 or lower would embarrass the company. Judge only what the
 caller hears and what got done; do not reward length. Lines in parentheses are what the system
-told Brooke to say word for word; her next line is what the caller heard.
+told the agent to say word for word; its next line is what the caller heard.
 The caller is an AI following a script and sometimes says odd things (stage directions, its own
-reasoning); judge only Brooke's side.
+reasoning); judge only the agent's side.
 
 Jackson's feedback on earlier calls:
 
@@ -701,10 +709,10 @@ JUDGE_SCHEMA = {
 def transcript_text(transcript: list[dict]) -> str:
     lines = []
     for t in turns(transcript):
-        who = "Caller" if t["who"] == "caller" else "Brooke"
+        who = "Caller" if t["who"] == "caller" else "Agent"
         for say in t.get("says", []):
             if say["tool"] == "injected":
-                lines.append(f"(The system told Brooke to say, word for word: {say['say']})")
+                lines.append(f"(The system told the agent to say, word for word: {say['say']})")
         if t["text"]:
             lines.append(f"{who}: {t['text']}")
     return "\n".join(lines)
@@ -832,7 +840,11 @@ def score_run(run: Path, personas: dict, change_set: int | None = None) -> list[
         transcript = retell.get("transcript_with_tool_calls") or []
         checks = (
             check_call(
-                personas[entry["persona"]], transcript, rows, retell.get("disconnection_reason")
+                personas[entry["persona"]],
+                transcript,
+                rows,
+                retell.get("disconnection_reason"),
+                retell.get("call_id"),
             )
             if retell
             else {}
