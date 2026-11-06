@@ -211,6 +211,20 @@ def test_a_sentence_said_with_a_word_changed_counts_as_said():
     assert not flow.said(sentence, ["Thanks so much for calling Summit Air today."])
 
 
+def test_the_booking_sentence_in_haikus_words_counts_as_said():
+    """Eval run 20261106-011527: held back at 0.62 of the words, so the call ended on a second
+    end_call after an extra turn."""
+    assert flow.said(
+        "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+        [
+            (
+                "You're booked for tomorrow, Friday, November 6, between 8 and 8:30 in the "
+                "morning. Anything else I can help with?"
+            )
+        ],
+    )
+
+
 
 def test_end_call_never_waits_on_an_offer_the_caller_already_took(led):
     """Eval run 20261106-010112: the offer was said in other words, and holding the goodbye for it

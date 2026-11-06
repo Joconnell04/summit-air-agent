@@ -1,0 +1,207 @@
+{
+ "call": "eval-readback-yes-but-unit-1-110fff23",
+ "events": [
+  {
+   "at": "2026-11-06T01:19:33Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-110fff23",
+    "caller_id": "(917) 555-0100",
+    "dialed_number": "(678) 336-6730",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 22.1,
+   "error": null,
+   "request_id": "8b167485bfe0"
+  },
+  {
+   "at": "2026-11-06T01:19:34Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-110fff23",
+    "caller_id": "chat",
+    "dialed_number": "",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 3.5,
+   "error": null,
+   "request_id": "d4b6c53852c9"
+  },
+  {
+   "at": "2026-11-06T01:19:41Z",
+   "type": "tool",
+   "tool": "find_address",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-110fff23",
+    "street": "412 Court Street",
+    "borough": "Brooklyn",
+    "spelled": ""
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 285.7,
+   "error": null,
+   "request_id": "9a7d5d7145fa"
+  },
+  {
+   "at": "2026-11-06T01:19:51Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-110fff23",
+    "address": {
+     "street": "412 Court Street",
+     "unit": "4B",
+     "city": "Brooklyn",
+     "zip": "11231",
+     "spelled": ""
+    },
+    "phone": "917-555-0100",
+    "phone_for": "",
+    "name": "Dana Whitfield",
+    "confirmed": false
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "So that's four twelve Court Street, unit four B, and the number you're calling from, ending in zero one zero zero. That's all correct, right?",
+   "ms": 9.6,
+   "error": null,
+   "request_id": "626331ea46c4"
+  },
+  {
+   "at": "2026-11-06T01:19:55Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-110fff23",
+    "address": {
+     "street": "412 Court Street",
+     "unit": "4B",
+     "city": "Brooklyn",
+     "zip": "11231",
+     "spelled": ""
+    },
+    "phone": "917-555-0100",
+    "phone_for": "",
+    "name": "Dana Whitfield",
+    "confirmed": true
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 7.9,
+   "error": null,
+   "request_id": "86b9f3e8e4bc"
+  },
+  {
+   "at": "2026-11-06T01:19:57Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-110fff23",
+    "job_type": "no_heat",
+    "priority": "Urgent",
+    "preferred_days": [],
+    "time_of_day": null,
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "Heat completely out since about 7 AM today, radiators cold",
+     "since": "",
+     "who_home": "",
+     "inside_temp_f": 63.0,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+   "ms": 906.4,
+   "error": null,
+   "request_id": "0796ca8e3063"
+  },
+  {
+   "at": "2026-11-06T01:20:08Z",
+   "type": "tool",
+   "tool": "book_appointment",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-110fff23",
+    "job_type": "no_heat",
+    "slot": {
+     "date": "2026-11-06",
+     "window": "0800-0830"
+    },
+    "details": {
+     "issue": "Heat completely out since about 7 AM today, radiators cold, 63 F inside",
+     "since": "About 7 AM today",
+     "tried": "Caller has not tried anything noted",
+     "who_home": "Caller, home all day",
+     "approver": "Landlord (pre-approved, per caller)",
+     "system_type": "",
+     "arrival_notes": "Buzzer is hard to hear; call caller's cell (917-555-0100) on arrival. No gate code. No pets. Caller asked to be called if an earlier window opens up.",
+     "name": "Dana Whitfield",
+     "inside_temp_f": 63.0
+    },
+    "priority": "Urgent",
+    "separate_problem": false,
+    "new_address_account": null
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+   "ms": 311.4,
+   "error": null,
+   "request_id": "5c04cee11938"
+  },
+  {
+   "at": "2026-11-06T01:20:12Z",
+   "type": "tool",
+   "tool": "end_call",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-110fff23",
+    "reason": "resolved"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 7.3,
+   "error": null,
+   "request_id": "9a1bd2ff1e6c"
+  },
+  {
+   "at": "2026-11-06T01:20:14Z",
+   "type": "tool",
+   "tool": "calls.end",
+   "args": {
+    "reason": "agent_end"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 7.1,
+   "error": null,
+   "request_id": "e8a0b3ba55ef"
+  }
+ ]
+}

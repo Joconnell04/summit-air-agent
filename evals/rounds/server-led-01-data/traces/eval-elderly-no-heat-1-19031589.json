@@ -1,0 +1,246 @@
+{
+ "call": "eval-elderly-no-heat-1-19031589",
+ "events": [
+  {
+   "at": "2026-11-06T01:12:21Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "caller_id": "(332) 555-0118",
+    "dialed_number": "(678) 336-6730",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 32.9,
+   "error": null,
+   "request_id": "bc157090b179"
+  },
+  {
+   "at": "2026-11-06T01:12:22Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "caller_id": "chat",
+    "dialed_number": "",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 3.8,
+   "error": null,
+   "request_id": "3971b06b582d"
+  },
+  {
+   "at": "2026-11-06T01:12:29Z",
+   "type": "tool",
+   "tool": "find_address",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "street": "45 Forest Avenue",
+    "borough": "Staten Island",
+    "spelled": ""
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 131.5,
+   "error": null,
+   "request_id": "7d739a3d0f35"
+  },
+  {
+   "at": "2026-11-06T01:12:30Z",
+   "type": "tool",
+   "tool": "check_service_area",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "zip": "10310"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 6.2,
+   "error": null,
+   "request_id": "575e40d2badd"
+  },
+  {
+   "at": "2026-11-06T01:12:37Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "address": {
+     "street": "45 Forest Avenue",
+     "unit": "",
+     "city": "Staten Island",
+     "zip": "10310",
+     "spelled": ""
+    },
+    "phone": "(332) 555-0118",
+    "phone_for": "",
+    "name": "Evelyn Marsh",
+    "confirmed": false
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "So that's forty-five Forest Avenue, and the number you're calling from, ending in zero one one eight. That's all correct, right?",
+   "ms": 9.9,
+   "error": null,
+   "request_id": "9bb6c356508c"
+  },
+  {
+   "at": "2026-11-06T01:12:40Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "address": {
+     "street": "45 Forest Avenue",
+     "unit": "",
+     "city": "Staten Island",
+     "zip": "10310",
+     "spelled": ""
+    },
+    "phone": "(332) 555-0118",
+    "phone_for": "",
+    "name": "Evelyn Marsh",
+    "confirmed": true
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 8.0,
+   "error": null,
+   "request_id": "c32be0c744fe"
+  },
+  {
+   "at": "2026-11-06T01:12:43Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "job_type": "no_heat",
+    "priority": "Urgent",
+    "preferred_days": [],
+    "time_of_day": null,
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "Heat completely out since last evening, radiators cold",
+     "since": "",
+     "who_home": "Caller lives alone, age 84",
+     "inside_temp_f": 55.0,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "I've marked this call top priority, so you get our soonest opening. The soonest I have is tomorrow, 8 to 8:30. Does that work?",
+   "ms": 826.7,
+   "error": null,
+   "request_id": "b07732467828"
+  },
+  {
+   "at": "2026-11-06T01:12:56Z",
+   "type": "tool",
+   "tool": "book_appointment",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "job_type": "no_heat",
+    "slot": {
+     "date": "2026-11-06",
+     "window": "0800-0830"
+    },
+    "details": {
+     "issue": "Heat completely out since last evening, radiators cold. Inside about 55 F. Caller lives alone, age 84, uses a cane.",
+     "since": "Last evening",
+     "tried": "Caller has not tried anything yet",
+     "who_home": "Caller, Evelyn Marsh, home alone",
+     "approver": "Evelyn Marsh",
+     "system_type": "",
+     "arrival_notes": "Front door, please ring the bell. Caller walks slowly with a cane. No gate, no buzzer, no pets. Technician to speak slowly and explain each repair part before work begins; caller approves after clear explanation.",
+     "name": "",
+     "inside_temp_f": 55.0
+    },
+    "priority": "Urgent",
+    "separate_problem": false,
+    "new_address_account": null
+   },
+   "ok": false,
+   "refused": "on_call_first",
+   "gate": "on_call_first",
+   "say": "Let me get this to our on-call technician first.",
+   "ms": 587.7,
+   "error": null,
+   "request_id": "d7c3bc3f8d4e"
+  },
+  {
+   "at": "2026-11-06T01:12:58Z",
+   "type": "tool",
+   "tool": "flag_person",
+   "args": {
+    "callback_time": null,
+    "callback_in_minutes": 15,
+    "callback_after": null,
+    "callback_before": null,
+    "callback_day": "today",
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "reason": "Elderly caller, 84, lives alone, no heat since last evening, inside about 55 F. Booking requested for tomorrow morning 8 to 8:30 but needs on-call technician confirmation. Caller uses a cane; asks for bell at front door and slow explanation of any repairs.",
+    "priority": "Urgent",
+    "system_calls_back": true
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "I've let our on-call team know this call is top priority, and someone will call you by 8:27 PM.",
+   "ms": 7.2,
+   "error": null,
+   "request_id": "5478efb1c79e"
+  },
+  {
+   "at": "2026-11-06T01:13:02Z",
+   "type": "tool",
+   "tool": "end_call",
+   "args": {
+    "call_id": "eval-elderly-no-heat-1-19031589",
+    "reason": "resolved"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 11.1,
+   "error": null,
+   "request_id": "3a66a87ae4a6"
+  },
+  {
+   "at": "2026-11-06T01:13:04Z",
+   "type": "tool",
+   "tool": "calls.end",
+   "args": {
+    "reason": "agent_end"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 14.7,
+   "error": null,
+   "request_id": "3100eb3e9b63"
+  }
+ ]
+}

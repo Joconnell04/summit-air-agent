@@ -1,0 +1,207 @@
+{
+ "call": "eval-readback-yes-but-unit-1-533cc8f9",
+ "events": [
+  {
+   "at": "2026-11-06T01:24:10Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-533cc8f9",
+    "caller_id": "(917) 555-0100",
+    "dialed_number": "(678) 336-6730",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 19.0,
+   "error": null,
+   "request_id": "283316583815"
+  },
+  {
+   "at": "2026-11-06T01:24:10Z",
+   "type": "tool",
+   "tool": "calls.start",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-533cc8f9",
+    "caller_id": "chat",
+    "dialed_number": "",
+    "direction": "inbound"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 3.1,
+   "error": null,
+   "request_id": "1c4f137d0f39"
+  },
+  {
+   "at": "2026-11-06T01:24:20Z",
+   "type": "tool",
+   "tool": "find_address",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-533cc8f9",
+    "street": "412 Court Street",
+    "borough": "Brooklyn, Carroll Gardens",
+    "spelled": ""
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 6.9,
+   "error": null,
+   "request_id": "ad2cd703ddec"
+  },
+  {
+   "at": "2026-11-06T01:24:28Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-533cc8f9",
+    "address": {
+     "street": "412 Court Street",
+     "unit": "4B",
+     "city": "Brooklyn",
+     "zip": "11231",
+     "spelled": ""
+    },
+    "phone": "917-555-0100",
+    "phone_for": "",
+    "name": "Dana Whitfield",
+    "confirmed": false
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "So that's four twelve Court Street, unit four B, and the number you're calling from, ending in zero one zero zero. That's all correct, right?",
+   "ms": 10.0,
+   "error": null,
+   "request_id": "74e6aee30e7a"
+  },
+  {
+   "at": "2026-11-06T01:24:31Z",
+   "type": "tool",
+   "tool": "read_back",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-533cc8f9",
+    "address": {
+     "street": "412 Court Street",
+     "unit": "4B",
+     "city": "Brooklyn",
+     "zip": "11231",
+     "spelled": ""
+    },
+    "phone": "917-555-0100",
+    "phone_for": "",
+    "name": "Dana Whitfield",
+    "confirmed": true
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 9.3,
+   "error": null,
+   "request_id": "10589cdd51b2"
+  },
+  {
+   "at": "2026-11-06T01:24:33Z",
+   "type": "tool",
+   "tool": "find_slots",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-533cc8f9",
+    "job_type": "no_heat",
+    "priority": null,
+    "preferred_days": [],
+    "time_of_day": null,
+    "moving_a_visit": false,
+    "window_minutes": null,
+    "day": null,
+    "arrive_after": null,
+    "arrive_before": null,
+    "facts": {
+     "issue": "Heat completely out since this morning, radiators cold",
+     "since": "",
+     "who_home": "",
+     "inside_temp_f": 63.0,
+     "temp_falling_fast": false
+    }
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+   "ms": 890.0,
+   "error": null,
+   "request_id": "575d7b610e69"
+  },
+  {
+   "at": "2026-11-06T01:24:51Z",
+   "type": "tool",
+   "tool": "book_appointment",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-533cc8f9",
+    "job_type": "no_heat",
+    "slot": {
+     "date": "2026-11-06",
+     "window": "0800-0830"
+    },
+    "details": {
+     "issue": "Heat completely out since this morning, radiators cold, apartment about 63 F",
+     "since": "This morning",
+     "tried": "Caller has not tried anything yet",
+     "who_home": "Caller (Dana Whitfield), home all day",
+     "approver": "Landlord, told caller to contact Summit Air; name not known to caller",
+     "system_type": "",
+     "arrival_notes": "No gate code. Buzzer for front door, apartment 4B. No pets. Caller home all day; knock, and call caller's number if no answer.",
+     "name": "",
+     "inside_temp_f": 63.0
+    },
+    "priority": null,
+    "separate_problem": false,
+    "new_address_account": null
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+   "ms": 298.9,
+   "error": null,
+   "request_id": "b11f46e96c82"
+  },
+  {
+   "at": "2026-11-06T01:24:54Z",
+   "type": "tool",
+   "tool": "end_call",
+   "args": {
+    "call_id": "eval-readback-yes-but-unit-1-533cc8f9",
+    "reason": "resolved"
+   },
+   "ok": false,
+   "refused": "say_first",
+   "gate": "flow_say_first",
+   "say": "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+   "ms": 5.8,
+   "error": null,
+   "request_id": "86d88386d368"
+  },
+  {
+   "at": "2026-11-06T01:24:57Z",
+   "type": "tool",
+   "tool": "calls.end",
+   "args": {
+    "reason": "caller_hangup"
+   },
+   "ok": true,
+   "refused": null,
+   "gate": null,
+   "say": "",
+   "ms": 5.4,
+   "error": null,
+   "request_id": "fbd9927ae2a5"
+  }
+ ]
+}

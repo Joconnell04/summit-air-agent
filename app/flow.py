@@ -45,10 +45,11 @@ OUTCOME_TOOLS = (
     "flag_person", "record_lead", "mark_do_not_call",
 )
 
-# Share of a sentence's words an agent line must hold to count as having said it. The agent's
-# lines are the model's own text, so a sentence said as written matches whole; this leaves room
-# for a word or two changed. ASSUMED.
-SAID_SHARE = 0.7
+# Share of a sentence's words the agent's lines after it must hold to count as having said it. The
+# gate is for a sentence never said at all (end_call in the same turn as the booking), which shares
+# almost no words. Haiku's rewordings of the booking sentence shared 0.62 to 0.94 of its words
+# (MEASURED, evals/rounds/server-led-01-data), and 0.7 held one back.
+SAID_SHARE = 0.5
 
 
 def guide(ctx, tool: str, args, handler: Callable) -> Result:
