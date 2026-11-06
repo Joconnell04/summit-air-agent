@@ -10,10 +10,14 @@
 # agent, dial the persona, put the line back on Jackson's agent, then dump the world's rows for
 # the call. The line goes back to Jackson's agent on any exit, error or signal included.
 # Runs on the summit-air server from the arm's checkout (~/summit-air/server-led), with
-# run_persona.py and rows.py from the side-by-side folder copied beside this file.
+# run_persona.py and rows.py from the side-by-side folder in ~/summit-air/socket-runs/tools (outside
+# the checkout, which deploy.sh replaces).
 set -u
 main() {
-  HERE="$(cd "$(dirname "$0")" && pwd)"
+  TOOLS="${SOCKET_TOOLS:-$HOME/summit-air/socket-runs/tools}"
+  for f in run_persona.py rows.py; do
+    [ -f "$TOOLS/$f" ] || { echo "missing $TOOLS/$f"; exit 2; }
+  done
   SLATE="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
   mkdir -p "$2/calls"
   OUT="$(cd "$2" && pwd)"
@@ -57,7 +61,7 @@ main() {
     start_ms="$(date +%s%3N)"
     echo "=== $tag start $(date -u +%T)"
     timeout 420 env PYTHONPATH="$CODE" uv run --env-file "$HOME/summit-air/.env" python \
-      "$HERE/run_persona.py" "$persona" --to "$NUMBER" --minutes 5.5 > "$OUT/calls/$tag.log" 2>&1 &
+      "$TOOLS/run_persona.py" "$persona" --to "$NUMBER" --minutes 5.5 > "$OUT/calls/$tag.log" 2>&1 &
     caller=$!
     # A second call on the line while ours runs is someone else, most likely Jackson: the line
     # goes back to his agent at once and the slate stops.
@@ -74,7 +78,7 @@ main() {
     end_ms="$(date +%s%3N)"
     restore
     sleep 15  # the socket closes the call on the tool server
-    python3 "$HERE/rows.py" "$DATA/tools.db" "$start_ms" "$end_ms" "$before" > "$OUT/calls/$tag.rows.json" 2>&1
+    python3 "$TOOLS/rows.py" "$DATA/tools.db" "$start_ms" "$end_ms" "$before" > "$OUT/calls/$tag.rows.json" 2>&1
     printf '{"n": %d, "arm": "socket", "agent_id": "%s", "world": "server-led", "number": "%s", "persona": "%s", "reset": "%s", "start_ms": %s, "end_ms": %s, "log": "calls/%s.log", "rows": "calls/%s.rows.json"}\n' \
       "$i" "${SOCKET_AGENT:-}" "$NUMBER" "$(basename "$persona" .txt)" "$reset" "$start_ms" "$end_ms" "$tag" "$tag" >> "$OUT/manifest.jsonl"
     echo "=== $tag end $(date -u +%T)"
