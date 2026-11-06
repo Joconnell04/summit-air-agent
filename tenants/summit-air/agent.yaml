@@ -240,7 +240,7 @@ callbacks:
 # address until Summit Air gives one. seek_earlier is left out: that booking already has a time,
 # and the office looks for an earlier one in the morning.
 on_call_alerts:
-  email: on-call@summit-air.example
+  email: Joeshmow2020@gmail.com
   priorities: [Urgent]
   skip_kinds: [seek_earlier]
   # A flag older than this when the job first sees it is not emailed: the moment has passed.

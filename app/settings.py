@@ -90,6 +90,9 @@ class Settings:
     smtp_user: str = field(default_factory=lambda: os.environ.get("SMTP_USER", ""))
     smtp_password: str = field(default_factory=lambda: os.environ.get("SMTP_PASSWORD", ""))
     mail_from: str = field(default_factory=lambda: os.environ.get("MAIL_FROM", ""))
+    # AgentMail (https://docs.agentmail.to): with a key set, mail goes out through the inbox named
+    # in MAIL_FROM over its HTTP API instead of SMTP.
+    agentmail_api_key: str = field(default_factory=lambda: os.environ.get("AGENTMAIL_API_KEY", ""))
     # Owner reports (story O-8). With no token they are held, not filed (app/reports.py).
     reports_github_token: str = field(
         default_factory=lambda: os.environ.get("REPORTS_GITHUB_TOKEN", "")
