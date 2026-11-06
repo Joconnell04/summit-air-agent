@@ -1,0 +1,6 @@
+$ uv run pytest -v tests/servicetitan_mock/test_st_booking.py tests/tool_server/test_ts_booking.py 
+tests/tool_server/test_ts_booking.py::test_eight_callers_racing_for_the_last_slot_get_it_once PASSED
+tests/tool_server/test_ts_booking.py::test_eight_parallel_retries_of_one_booking_book_once PASSED
+tests/tool_server/test_ts_booking.py::test_the_same_visit_twice_on_one_call_is_refused PASSED
+tests/servicetitan_mock/test_st_booking.py::test_assigning_a_technician_who_is_busy_is_a_conflict PASSED
+============================== 4 passed in 3.96s ===============================

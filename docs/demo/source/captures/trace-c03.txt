@@ -1,0 +1,14 @@
+$ uv run python -m app.trace c03 --db data/owner-demo/tool.db
+call c03  summit-air  from (347) 555-0123  started 2026-11-05T13:20:00Z
+ended 2026-11-05T13:23:01Z (caller_hangup)  outcome safety  safety lines_said  linked to -
+
+13:20:00    tool calls.start -> ok  (19.7 ms)
+              args {"call_id": "c03", "caller_id": "(347) 555-0123", "dialed_number": "(646) 624-0418", "direction": "inbound"}
+13:20:06  caller: My furnace is making a noise and honestly it smells a bit like gas in here.  [safety: speak_lines]
+13:20:15   agent: Please get everyone out of the house now. Don't flip any switches or use the stove, and call 911 or the gas company once you're outside.
+13:20:21  caller: Okay, okay, I'm going outside now.
+13:23:01    tool calls.end -> ok  (0.5 ms)
+              args {"reason": "caller_hangup"}
+
+flags:
+  {"id": 2, "call_id": "c03", "kind": "safety", "reason": "Gas smell reported on the call", "priority": "Urgent", "status": "open", "created_at": "2026-11-05T13:20:06Z"}
