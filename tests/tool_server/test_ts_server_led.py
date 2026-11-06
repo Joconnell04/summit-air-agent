@@ -10,8 +10,8 @@ from app.tenant import Tenant, load_agent
 LINES = load_agent(TENANT_DIR)[0]["lines"]
 APPROVAL, HOME = LINES["ask_approval"], LINES["ask_someone_home"]
 # Getting in is one question, with no pets (agent.yaml visit_questions.pets: false).
-ARRIVAL = ("Will someone be home to let the technician in, and is there a gate code or buzzer "
-           "they should know about?")
+ARRIVAL = ("Will someone be home to let the technician in? If there's a gate code or buzzer "
+           "they'll need, just let me know.")
 GATE = LINES["ask_gate"]
 ACCESS = "Is there a gate code or buzzer the technician should know about?"
 
@@ -285,3 +285,28 @@ def test_next_comes_right_after_say():
     assert list(Result(True, "Hi.", {}, next="Wait.").body()) == ["ok", "say", "next", "data",
                                                                  "refused"]
     assert "next" not in Result(True, "Hi.").body()
+
+
+def test_a_plain_yes_answers_both_halves_of_getting_in(led):
+    call = ready_to_book(led)
+    slot = slot_of(offer(led, call))
+    led.turn(call, "That works. I'm the owner.")
+    refused = book(led, call, slot)
+    assert refused["say"].endswith(ARRIVAL)
+    led.say(call, refused["say"])
+    led.turn(call, "Yes.")
+    assert book(led, call, slot)["ok"]
+
+
+def test_nobody_home_asks_once_how_the_technician_gets_in(led):
+    call = ready_to_book(led)
+    slot = slot_of(offer(led, call))
+    led.turn(call, "That works. I'm the owner.")
+    refused = book(led, call, slot)
+    led.say(call, refused["say"])
+    led.turn(call, "No, nobody will be home.")
+    refused = book(led, call, slot)
+    assert refused["say"].endswith("How can the technician get in?")
+    led.say(call, refused["say"])
+    led.turn(call, "The super has a key.")
+    assert book(led, call, slot)["ok"]

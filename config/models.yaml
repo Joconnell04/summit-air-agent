@@ -116,8 +116,10 @@ voice:
   # most once every this many caller turns.
   bridge: {after_s: 0.7, min_turns_between: 2}
   # The socket arm (voice/retell_llm, server-led): one short hold phrase ("One sec.") when a step's
-  # tool work hasn't finished this long after the caller stopped talking (Jackson's ask).
-  hold_phrase_after_s: 0.7
+  # tool work hasn't finished this long after Retell asks for the reply, which comes about 0.3 to
+  # 0.5 s after the caller's last word, so about 1.3 to 1.5 s from it (Jackson: only on genuinely
+  # long waits; at 0.7 s it fired on 12 of 13 tool waits). Never on two turns in a row.
+  hold_phrase_after_s: 1.0
   # Counted from the caller's turn ("caller", Jackson's ask) or from the tool's own start ("tool").
   hold_phrase_from: caller
   # The pause after the goodbye before the line drops; a caller who speaks in it keeps the call

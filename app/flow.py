@@ -36,6 +36,19 @@ VISIT_QUESTIONS = (
     ("ask_access", r"\bgate code\b|\bbuzzer\b|\bpets?\b", r"\bgate\b|\bbuzzer\b|\bpets?\b|\bdogs?\b|\bcats?\b|\bdoorman\b"),
 )
 
+# A caller saying nobody will be home, and the follow-up that asks how the technician gets in
+# (Jackson's change set 25): asked once, unless the caller already said how.
+NOBODY_HOME = (
+    r"\b(no ?one|nobody)(\s+(will|is|'ll|'s))?\s+(be\s+)?(home|here|there)\b"
+    r"|\bwon'?t be (home|there|here)\b|\bnot (going to|gonna) be (home|there|here)\b"
+)
+HOW_IN = (
+    "ask_how_in",
+    r"\bhow (can|could|will|would|should) (the )?(technician|tech|they|someone) get in\b",
+    (r"\b(key|lockbox|lock box|super|superintendent|doorman|neighbou?r|landlord|code is|"
+    r"leave (it|the door) (open|unlocked))\b"),
+)
+
 # The short connector before each visit question the server asks, in turn, so quick questions
 # don't all open the same way (Jackson's change sets 18 and 22).
 ACKS = ("Got it.", "Okay, thanks.", "Perfect.")
@@ -133,8 +146,8 @@ def question_line(ctx, missing: list[str]) -> str:
     """The next visit question as the server says it. Getting in is one question, someone home and
     a gate code or buzzer (the tenant's arrival question), and only its missing half when the caller
     answered the other (Jackson's change set 19)."""
-    if missing[0] == "ask_approval":
-        return ctx.tenant.line("ask_approval")
+    if missing[0] in ("ask_approval", "ask_how_in"):
+        return ctx.tenant.line(missing[0])
     if "ask_someone_home" in missing and "ask_access" in missing:
         return ctx.tenant.arrival_question
     return ctx.tenant.line("ask_gate" if missing[0] == "ask_access" else missing[0])
@@ -157,7 +170,22 @@ def visit_questions_missing(ctx, job_type: str = "") -> list[str]:
         )
         if not settled:
             missing.append(key)
+    nobody = [t for t in after if t["speaker"] == "caller"
+              and re.search(NOBODY_HOME, t["text"], re.IGNORECASE)]
+    if nobody and not _settled(HOW_IN, [t for t in after if t["seq"] >= nobody[0]["seq"]]):
+        missing.append(HOW_IN[0])
     return missing
+
+
+def _settled(question: tuple, turns: list) -> bool:
+    _, asked, volunteered = question
+    return any(
+        t["speaker"] == "caller" and re.search(volunteered, t["text"], re.IGNORECASE) for t in turns
+    ) or any(
+        t["speaker"] == "agent" and re.search(asked, t["text"], re.IGNORECASE)
+        and any(c["speaker"] == "caller" and c["seq"] > t["seq"] for c in turns)
+        for t in turns
+    )
 
 
 def _words(text: str) -> list[str]:

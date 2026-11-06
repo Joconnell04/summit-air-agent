@@ -249,8 +249,8 @@ class Tenant:
             "Will someone be home to let the technician in, and is there a gate code, a buzzer or "
             "a pet they should know about?"
             if pets
-            else "Will someone be home to let the technician in, and is there a gate code or "
-            "buzzer they should know about?"
+            else "Will someone be home to let the technician in? If there's a gate code or buzzer "
+            "they'll need, just let me know."
         )
         # The catch-all asked on a heating, cooling or airflow problem ("Anything else the
         # technician should know, like water leaking ...?"): words of it the server finds in the

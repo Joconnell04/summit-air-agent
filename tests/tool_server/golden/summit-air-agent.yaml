@@ -254,6 +254,7 @@ lines:
   ask_catch_all_heating: Anything else the technician should know, like banging pipes or it shutting off
     on its own?
   ask_gate: And is there a gate code or buzzer the technician should know about?
+  ask_how_in: How can the technician get in?
   ask_someone_home: Will someone be home to let the technician in?
   ask_system_type: Is that a boiler, a furnace, central air or a mini-split?
   billing_callback: I'm sorry about that. Billing goes through our office, so I've asked them to look
@@ -1599,7 +1600,20 @@ voice:
     bridge_moment: Alright, one moment.
     bridge_one_sec: Okay, just give me one second.
     bridge_pull_up: Sure, let me pull that up.
-  closing: Thanks so much for calling Summit Air today. Have a great day!
+  closing: Thanks for calling Summit Air.
+  closing_niceties:
+    afternoon:
+    - Have a great afternoon!
+    - Enjoy the rest of your afternoon!
+    evening:
+    - Have a good evening!
+    - Enjoy your evening!
+    morning:
+    - Have a great morning!
+    - Enjoy the rest of your morning!
+    night:
+    - Have a good night!
+    - Get some rest tonight!
   fallback: Thanks for calling Summit Air. If you smell gas, hang up and call 9-1-1 from outside. We can't
     take your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.

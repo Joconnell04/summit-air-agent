@@ -545,6 +545,8 @@ lines:
   ask_access: Is there a gate code, a buzzer, or any pets the technician should know about?
   # The gate half of the arrival question, when the caller already said someone will be home.
   ask_gate: And is there a gate code or buzzer the technician should know about?
+  # Asked once when the caller says nobody will be home (change set 25).
+  ask_how_in: How can the technician get in?
   # The catch-all after "since when" on a heating, cooling or airflow problem, with examples that
   # fit (Jackson's change set 22).
   ask_catch_all_heating: Anything else the technician should know, like banging pipes or it shutting off on its own?
@@ -596,7 +598,13 @@ voice:
   # The socket arm (voice/retell_llm, server-led): its closing, word for word, Jackson's line; the
   # check-in after about 8 seconds of silence, at most twice; and the hold phrases said once when a
   # step's tool work outlasts config/models.yaml voice.hold_phrase_after_s, in turn.
-  closing: Thanks so much for calling Summit Air today. Have a great day!
+  closing: Thanks for calling Summit Air.
+  # One of these after the closing, fit to the time of day, chosen per call (change set 24).
+  closing_niceties:
+    morning: [Have a great morning!, Enjoy the rest of your morning!]
+    afternoon: [Have a great afternoon!, Enjoy the rest of your afternoon!]
+    evening: [Have a good evening!, Enjoy your evening!]
+    night: [Have a good night!, Get some rest tonight!]
   are_you_there: Are you still there?
   hold_phrases:
     - One sec.

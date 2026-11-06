@@ -19,6 +19,8 @@ import logging
 import re
 import time
 from collections.abc import Awaitable, Callable
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from prompts.assemble import (
     SENTENCE_END,
@@ -88,6 +90,23 @@ def unnarrated(sentence: str) -> str:
     return rest[:1].upper() + rest[1:] if rest != sentence else sentence
 
 
+# Thanking the caller for a wait (Jackson's change set 24: never).
+THANKS_FOR_WAITING = re.compile(
+    r"\bthanks?( you)?( so much)? for (waiting|holding|your patience|holding on|bearing with)",
+    re.IGNORECASE,
+)
+# A goodbye of the model's own; the socket says the closing itself (Jackson's change set 24).
+GOODBYE = re.compile(
+    r"\b(thanks?|thank you)( so much)? for calling\b|\bhave a (great|good|nice|wonderful|lovely)\b"
+    r"|\btake care\b|\bgoodbye\b",
+    re.IGNORECASE,
+)
+WEEKDAY_DATE = re.compile(
+    r"\b(today|tomorrow),?\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday),?"
+    r"(\s+(january|february|march|april|may|june|july|august|september|october|november|december)"
+    r"\s+\d{1,2}(st|nd|rd|th)?)?",
+    re.IGNORECASE,
+)
 # A name said to the caller at the end of a sentence: "You're welcome, Evelyn."
 VOCATIVE = re.compile(r",\s+([A-Z][a-z]+)(?=[.!?]?$)")
 # The server's own short connector at the start of a sentence (app/flow.py ACKS).
@@ -101,6 +120,11 @@ def without_vocative(sentence: str, known: set[str]) -> str:
     if not match or match[1].lower() not in known:
         return sentence
     return sentence.strip()[: match.start()] + sentence.strip()[match.end(1):]
+
+
+def plain_day(sentence: str) -> str:
+    """Today and tomorrow are said alone, never with the weekday or date (change set 19)."""
+    return WEEKDAY_DATE.sub(lambda m: m[1], sentence)
 
 
 def caller_text(transcript: list[dict]) -> str:
@@ -187,6 +211,7 @@ class LlmCall:
         server_led: bool = False,
         hold_after_s: float = 0.7,
         hold_from: str = "caller",
+        tz: str = "America/New_York",
     ):
         self.server = server
         self.brain = brain
@@ -213,6 +238,11 @@ class LlmCall:
         self.hold_from = hold_from
         self.hold_phrases = list(lines.get("hold_phrases") or ["One sec."])
         self.hold_stats = {"waits": 0, "fired": 0}
+        # Whether the last caller turn got a hold phrase: never two turns in a row.
+        self.held_last_turn = False
+        self.drops: dict[str, int] = {}
+        # For the closing's nicety, fit to the tenant's time of day.
+        self.tz = tz
         self.reminders = 0
         self.messages: list[dict] = []
         self.reply = SpokenReply()
@@ -389,9 +419,41 @@ class LlmCall:
             stages["hold_ms"] = out.hold_ms
         self.stages.append(stages)
 
+    def _clean(self, sentence: str) -> tuple[str, str]:
+        """Server-led: a sentence of the model's as the caller will hear it, and why it was cut,
+        if it was. A question is never cut, only tidied, so the filter can't take the actual
+        question away (DECISIONS 112: the custom stack's filter left half replies)."""
+        tidy = plain_day(without_vocative(unnarrated(sentence), self._known_names()))
+        if tidy.rstrip().endswith("?"):
+            return tidy, ""
+        if NARRATES.match(tidy):
+            return "", "narrates"
+        if THANKS_FOR_WAITING.search(tidy):
+            return "", "thanks_for_waiting"
+        return tidy, ""
+
+    def _dropped(self, sentence: str, reason: str) -> None:
+        """Every sentence the filter cuts is logged in full, and counted per call."""
+        self.drops[reason] = self.drops.get(reason, 0) + 1
+        log.info("%s: dropped (%s) %r", self.server.call_id, reason, sentence)
+
     def _known_names(self) -> set[str]:
         """Every word the caller said and every name on the accounts the call found."""
         return self.reply._caller_words | self.reply.names
+
+    def _closing(self) -> str:
+        """The tenant's closing plus one nicety fit to the time of day, chosen per call, never two
+        (Jackson's change set 24)."""
+        base = self.lines.get("closing") or self.lines["goodbye"]
+        niceties = self.lines.get("closing_niceties") or {}
+        hour = datetime.now(ZoneInfo(self.tz)).hour
+        part = ("morning" if 5 <= hour < 12 else "afternoon" if hour < 17
+                else "evening" if hour < 22 else "night")
+        options = niceties.get(part) or []
+        if not options:
+            return base
+        pick = options[sum(map(ord, self.server.call_id or "")) % len(options)]
+        return f"{base} {pick}"
 
     def _wait_on(self, out: Response, tool: str) -> None:
         """A tool is being written or run: the wait the hold phrase may cover, counted once."""
@@ -403,6 +465,9 @@ class LlmCall:
     async def _hold_watch(self, out: Response, began: float) -> None:
         """One hold phrase per wait: only when a tool's work hasn't finished `hold_after_s` after
         the caller stopped talking and the caller has heard nothing yet. Logged when it fires."""
+        if self.held_last_turn:
+            self.held_last_turn = False
+            return
         while not out.closed and not out.stale() and not out.said:
             waited = time.perf_counter() - began
             start = out.tool_began if self.hold_from == "tool" else began
@@ -411,6 +476,7 @@ class LlmCall:
                 phrase = self.hold_phrases[self.hold_stats["fired"] % len(self.hold_phrases)]
                 self.hold_stats["fired"] += 1
                 out.hold_ms = round(waited * 1000, 1)
+                self.held_last_turn = True
                 log.info("%s: hold phrase %r at %.0f ms, waiting on %s", self.server.call_id,
                          phrase, out.hold_ms, out.tool_wait)
                 await out.say(phrase)
@@ -423,6 +489,9 @@ class LlmCall:
             self.reply.start_reply()
             holding = self.reply.holding()
             pending, held, kept = "", [], []
+            # Server-led: the model's goodbyes wait for the end of the reply (the socket says the
+            # closing when it ends the call), and the raw sentences, for the fallback.
+            goodbyes, raw = [], []
             reply = Reply()
             async for delta in self.brain.stream(self.system, self.messages, self.tools, reply):
                 if out.stale():
@@ -436,8 +505,13 @@ class LlmCall:
                     continue
                 for sentence in done:
                     if self.server_led:
-                        sentence = without_vocative(unnarrated(sentence), self._known_names())
-                        if NARRATES.match(sentence):
+                        raw.append(sentence)
+                        sentence, reason = self._clean(sentence)
+                        if reason:
+                            self._dropped(raw[-1], reason)
+                            continue
+                        if GOODBYE.search(sentence):
+                            goodbyes.append(sentence)
                             continue
                     if sentence and (said := self.reply.sentence(sentence)):
                         kept.append(said)
@@ -455,11 +529,29 @@ class LlmCall:
             if holding:
                 last = self.reply.text(" ".join([*held, pending]), calls)
             else:
-                rest = (without_vocative(unnarrated(pending), self._known_names())
-                        if self.server_led else pending)
-                if self.server_led and NARRATES.match(rest):
-                    rest = ""
+                rest = pending
+                if self.server_led and pending.strip():
+                    raw.append(pending)
+                    rest, reason = self._clean(pending)
+                    if reason:
+                        self._dropped(pending, reason)
+                    elif GOODBYE.search(rest):
+                        goodbyes.append(rest)
+                        rest = ""
                 last = self.reply.sentence(rest) if rest.strip() else ""
+            ending = any(name == "end_call" for name, _ in calls)
+            for goodbye in goodbyes:
+                if ending:
+                    self._dropped(goodbye, "goodbye_with_end_call")
+                elif said := self.reply.sentence(goodbye):
+                    kept.append(said)
+                    await out.say(said)
+            if (self.server_led and not reply.tool_uses and not kept and not last and raw
+                    and not out.said):
+                # The filter cut the whole reply: say it as the model wrote it rather than leave
+                # the caller in silence, and log that it happened.
+                last = " ".join(" ".join(raw).split())
+                self._dropped(last, "fallback_spoke_whole_reply")
             # Server-led, the unfinished text that comes with a tool call is never said: it is the
             # lead-in or a question the result answers. The model's next request writes the reply
             # when the server has nothing to say.
@@ -520,8 +612,8 @@ class LlmCall:
             elif spoken_first(envelope):
                 await out.say(spoken_first(envelope), fixed=True)
             if ending and data.get("hang_up") and self.server_led and not say:
-                # Jackson's closing, word for word; the model's own goodbye in this reply was not said.
-                await out.say(self.lines.get("closing") or self.lines["goodbye"], fixed=True)
+                # The closing is the socket's alone; the model's own goodbye in this reply was cut.
+                await out.say(self._closing(), fixed=True)
                 self.ended = "agent_end"
                 finished = True
             elif ending and data.get("hang_up"):
@@ -593,5 +685,6 @@ class LlmCall:
             await self.server.transfer_done(self.transfer_id, "handed_off")
         await self.server.end(self.ended)
         await self.server.aclose()
-        log.info("%s ended (%s), model tokens %s, hold phrases %s", self.server.call_id, self.ended,
-                 json.dumps(self.tokens, sort_keys=True), json.dumps(self.hold_stats))
+        log.info("%s ended (%s), model tokens %s, hold phrases %s, drops %s", self.server.call_id,
+                 self.ended, json.dumps(self.tokens, sort_keys=True), json.dumps(self.hold_stats),
+                 json.dumps(self.drops, sort_keys=True))

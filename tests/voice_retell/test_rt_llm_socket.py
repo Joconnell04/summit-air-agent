@@ -539,13 +539,13 @@ def test_server_led_one_hold_phrase_a_wait_and_never_the_same_twice_running(monk
         first = said(ask(ws, 1, ["Hi.", "45 Forest Avenue."]))
         second = said(ask(ws, 2, ["Hi.", "45 Forest Avenue.", first, "Yes."]))
         third = said(ask(ws, 3, ["Hi.", "45 Forest Avenue.", first, "Yes.", second, "Again?"]))
-    phrases = [t.split(" ")[0] + " " + t.split(" ")[1] for t in (first, second, third)]
     assert first == "One sec. What's the ZIP code there?"
-    assert second.startswith("Okay, one moment. ") and third.startswith("Just a moment. ")
-    assert len(set(phrases)) == 3
+    # Never on two turns in a row, and the next one is a different phrase.
+    assert second == offer
+    assert third == f"Okay, one moment. {offer}"
 
 
-def test_server_led_the_goodbye_is_jacksons_line_and_gets_no_hold(monkeypatch):
+def test_server_led_the_goodbye_is_the_sockets_alone_and_gets_no_hold(monkeypatch):
     end = {"id": "t1", "name": "end_call", "input": {"reason": "done"}}
     server, client, _ = slow_socket(monkeypatch, {"end_call": 0.2},
                                     [(["Thanks for calling, take care!"], [end])])
@@ -553,7 +553,14 @@ def test_server_led_the_goodbye_is_jacksons_line_and_gets_no_hold(monkeypatch):
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "No, that's all."])
-    assert said(events) == "Thanks so much for calling Summit Air today. Have a great day!"
+    # One closing, with one nicety for the time of day; the model's own goodbye is never said.
+    text = said(events)
+    niceties = [n for part in ("morning", "afternoon", "evening", "night")
+                for n in llm_socket.tenant_lines(llm_socket.ROOT / "tenants", "summit-air")
+                ["closing_niceties"][part]]
+    assert text.startswith("Thanks for calling Summit Air. ")
+    assert text.removeprefix("Thanks for calling Summit Air. ") in niceties
+    assert "take care" not in text.lower()
     assert events[-1]["end_call"] is True
 
 
@@ -610,3 +617,44 @@ def test_server_led_counted_from_the_tool_a_slow_model_alone_gets_no_hold_phrase
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         assert said(ask(ws, 1, ["Hi.", "Yes."])) == offer
+
+
+def test_server_led_today_and_tomorrow_are_said_alone(server_led):
+    _, make = server_led
+    client, _ = make([(["Tomorrow, Saturday, November 7 works for the visit. ", "Anything else?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "When is it?"])) == (
+            "Tomorrow works for the visit. Anything else?")
+
+
+def test_server_led_never_thanks_the_caller_for_waiting(server_led):
+    _, make = server_led
+    client, _ = make([(["Thanks for waiting. ", "What's the street address?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Okay, I'm back."])) == "What's the street address?"
+
+
+def test_server_led_a_question_is_never_cut(server_led):
+    _, make = server_led
+    client, _ = make([(["Let me ask, is it completely out?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "The heat's off."])) == "Let me ask, is it completely out?"
+
+
+def test_server_led_a_reply_the_filter_would_empty_is_said_whole(server_led):
+    _, make = server_led
+    client, _ = make([(["I'm checking on that for you now."], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Is the tech coming?"])) == "I'm checking on that for you now."
+
+
+def test_server_led_a_goodbye_without_end_call_is_said(server_led):
+    _, make = server_led
+    client, _ = make([(["You too, have a great day!"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Have a good one."])) == "You too, have a great day!"

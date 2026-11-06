@@ -47,6 +47,10 @@ def socket_key(api_key: str) -> str:
     return hmac.new(api_key.encode(), b"summit-air retell-llm socket", hashlib.sha256).hexdigest()[:32]
 
 
+def tenant_timezone(tenants_dir: Path, slug: str) -> str:
+    return yaml.safe_load((tenants_dir / slug / "config.yaml").read_text())["company"]["timezone"]
+
+
 def tenant_lines(tenants_dir: Path, slug: str) -> dict:
     return voice_lines(tenants_dir / slug)
 
@@ -132,6 +136,7 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
             server, the_brain(), send, system, specs, tenant_lines(tenants, slug),
             phone=details.get("call_type") == "phone_call", dead_air_checks=checks,
             server_led=server_led, hold_after_s=hold_after, hold_from=hold_from,
+            tz=tenant_timezone(tenants, slug),
         )
         return call, variables.get("greeting", "")
 
