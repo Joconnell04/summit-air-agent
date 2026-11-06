@@ -167,7 +167,10 @@ def house_guidance(guidance: dict[str, list[str]]) -> str:
 
 
 # The open question before booking when the tenant names none (tenants' visit_questions).
-ARRIVAL_QUESTION = "Is there a gate code or buzzer the technician should know about?"
+ARRIVAL_QUESTION = (
+    "Will someone be home to let the technician in, and is there a gate code or buzzer they "
+    "should know about?"
+)
 
 
 def tool_specs(job_types: list[str]) -> list[dict]:

@@ -246,6 +246,8 @@ class JobDetails(Body):
     tried: str = Field("", max_length=300)
     who_home: str = Field("", max_length=120)
     approver: str = Field("", max_length=120)
+    # Who'll let the technician in and any gate code or buzzer come from one answer to one question
+    # (prompts/spine.md); the first goes in who_home, the second in arrival_notes.
     system_type: str = Field("", max_length=120)
     arrival_notes: str = Field("", max_length=300)
     name: str = Field(

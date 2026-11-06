@@ -484,6 +484,7 @@ FLAG_LABELS = {
     "seek_earlier": "Earlier slot",
     "queue_failed": "Booking stuck",
     "limit": "Limit reached",
+    "grader": "Call check",
 }
 LABEL_CHARS = 24
 
@@ -507,6 +508,7 @@ FLAG_TITLES = {
     "callback_requested": "Asked to be called back",
     "limit": "Hit a per-call limit",
     "approval_check": "Confirm who approves before dispatch",
+    "grader": "Something went wrong on this call",
 }
 
 

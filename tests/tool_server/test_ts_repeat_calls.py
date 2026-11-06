@@ -134,11 +134,11 @@ def test_there_is_no_cut_off_greeting():
     start = {"customers": [{"name": "Jackson O", "residential": True}],
              "linked_call": {"dropped": True, "caller_name": "Jackson"}}
     assert greeting(start, voice) == (
-        "Hi Jackson, thanks so much for calling Summit Air today! I'm Brooke, the virtual "
+        "Hi Jackson, thanks so much for calling Summit Air today! I'm Brian, the virtual "
         "assistant. How can I help?"
     )
     assert greeting({}, voice) == (
-        "Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual "
+        "Hi there, thanks so much for calling Summit Air today! I'm Brian, the virtual "
         "assistant. How can I help?"
     )
     assert not any(v.rstrip().endswith("Summit Air.") for v in (voice["greeting_known"],

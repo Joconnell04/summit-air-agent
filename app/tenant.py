@@ -105,8 +105,33 @@ def _rank(level: str) -> int:
     return LEVELS.index(level) if level in LEVELS else -1
 
 
+def with_assistant_name(agent: dict) -> dict:
+    """The tenant's `assistant_name` put into every line that says {assistant_name}, so renaming
+    the assistant is one edit (Brooke to Brian, when Jackson's agent changed voice)."""
+    name = agent.get("assistant_name")
+    if not name:
+        return agent
+    for section in ("voice", "lines"):
+        lines = agent.get(section) or {}
+        for key, value in lines.items():
+            if isinstance(value, str) and "{assistant_name}" in value:
+                lines[key] = value.replace("{assistant_name}", name)
+    return agent
+
+
+def voice_lines(folder: Path) -> dict:
+    """The tenant's `voice` lines (greetings and the rest the voice layer says itself), with the
+    assistant's name in them."""
+    return with_assistant_name(yaml.safe_load((Path(folder) / "agent.yaml").read_text()))["voice"]
+
+
 def load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str | None]:
     """A tenant's agent.yaml merged over its trade's, and the trade's name (None without one)."""
+    agent, trade = _load_agent(folder, trades_dir)
+    return with_assistant_name(agent), trade
+
+
+def _load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str | None]:
     agent = yaml.safe_load((Path(folder) / "agent.yaml").read_text())
     trade = agent.pop("extends", None)
     if trade is None:
@@ -218,10 +243,14 @@ class Tenant:
         # The one open question before booking (prompts/spine.md). Pets only when the tenant asks
         # about them; Summit Air doesn't (Jackson, call_2fb4e053ba8b76b57c348845990).
         pets = agent.get("visit_questions", {}).get("pets", False)
+        # One question for getting in: someone home and a code (Jackson, call
+        # call_549de89ecc2428e409b64072e34), so the caller isn't asked twice.
         self.arrival_question = (
-            "Anything the tech should know when they get there, like a gate code, a buzzer or a pet?"
+            "Will someone be home to let the technician in, and is there a gate code, a buzzer or "
+            "a pet they should know about?"
             if pets
-            else "Is there a gate code or buzzer the technician should know about?"
+            else "Will someone be home to let the technician in, and is there a gate code or "
+            "buzzer they should know about?"
         )
         self.fsm_tenant_id: int = company["tenant_id"]
         self.name: str = company["company"]["name"]

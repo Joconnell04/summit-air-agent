@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_ui.html" import q, count, empty with context %}
+{% from "_checks.html" import range_form, estimate_box, progress, flag_list with context %}
+{% block title %}{{ tenant }}: checks{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Checks<span>/</span><span>{% if schedule.enabled %}Every day at {{ minute_clock(schedule.at[:2] | int * 60 + schedule.at[3:] | int) }}{% else %}Daily check off{% endif %}</span></div>
+      <h1 class="page-title">Call checks</h1>
+    </div>
+  </div>
+
+  <section class="panel" id="run">
+    <div class="panel-head"><h2>Check calls</h2><span class="sub">finds calls where something went wrong, not wording</span></div>
+    <div class="panel-body">
+      {% if not on %}<p class="muted">Checks are off on this server.</p>
+      {% elif cost_check is defined %}{{ estimate_box(cost_check, asked, "/owner/checks" ~ q(slug)) }}
+      {% elif is_admin %}{{ range_form("/owner/checks" ~ q(slug), asked if asked is defined else none) }}
+      {% else %}<p class="muted">An admin can check a range of calls. Anyone can check one call from its page.</p>{% endif %}
+      {% if error is defined %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+      {% if active %}{{ progress(active) }}{% endif %}
+      {% if shown_run is defined and shown_run.finished %}
+      <p class="muted" role="status">Checked {{ shown_run.done }} {{ "call" if shown_run.done == 1 else "calls" }}: {% if shown_run.flagged %}{{ shown_run.flagged }} with a problem{% else %}no problems found{% endif %}.{% if shown_run.status == "failed" %} Stopped early: {{ shown_run.error }}{% endif %}</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel" id="flagged">
+    <div class="panel-head"><h2>Calls with a problem</h2>{{ count(flagged | length, flagged | length > 0) }}<span class="sub">each is also on Today as a flag</span></div>
+    {% if flagged %}{{ flag_list(flagged) }}{% else %}{{ empty("No problems found yet.") }}{% endif %}
+  </section>
+
+  {% if runs %}
+  <section class="panel compact">
+    <div class="panel-head"><h2>Recent checks</h2></div>
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>When</th><th>What</th><th class="right">Calls</th><th class="right">Problems</th><th class="right">Cost</th></tr></thead>
+      <tbody>
+      {% for r in runs %}
+        <tr>
+          <td class="fit num">{{ local(r.created).strftime("%a %b %-d, %-I:%M %p") }}</td>
+          <td>{% if r.scope == "daily" %}Daily check{% elif r.scope == "call" %}One call{% else %}Calls from a range{% endif %}{% if r.status == "failed" %} <span class="tag high">Stopped</span>{% elif not r.finished %} <span class="tag info">Running</span>{% endif %}</td>
+          <td class="fit right num">{{ r.done }} of {{ r.total }}</td>
+          <td class="fit right num">{{ r.flagged }}</td>
+          <td class="fit right num">${{ "%.2f" | format(r.cost_usd) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+  {% endif %}
+</main>
+{% endblock %}

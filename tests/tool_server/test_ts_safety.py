@@ -1018,7 +1018,7 @@ def test_the_greetings_name_brooke():
     """Jackson's gas test call: the assistant is Brooke, and a touch warmer."""
     voice = load_agent(TENANT_DIR)[0]["voice"]
     assert voice["greeting_unknown"] == (
-        "Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual "
+        "Hi there, thanks so much for calling Summit Air today! I'm Brian, the virtual "
         "assistant. How can I help?"
     )
-    assert "I'm Brooke" in voice["greeting_known"]
+    assert "I'm Brian" in voice["greeting_known"]

@@ -28,6 +28,7 @@ import yaml
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
+from app.tenant import voice_lines
 from prompts import assemble
 
 from .server import UNREACHABLE, ToolServer
@@ -133,7 +134,7 @@ class Brain:
         data = started["data"]
         folder = self.tenants_dir / data["tenant"]["slug"]
         specs = assemble.tool_specs(assemble.job_types(folder))
-        voice = yaml.safe_load((folder / "agent.yaml").read_text())["voice"]
+        voice = voice_lines(folder)
         conv = Conversation(
             call_id=call_id,
             system=assemble.instructions(data),

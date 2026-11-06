@@ -302,7 +302,8 @@ def test_the_arrival_question_asks_no_pets_for_summit_air(agent):
     from prompts import assemble
 
     start = agent.start(UNKNOWN)["data"]
-    question = "Is there a gate code or buzzer the technician should know about?"
+    question = ("Will someone be home to let the technician in, and is there a gate code or "
+                "buzzer they should know about?")
     assert start["tenant"]["arrival_question"] == question
     text = assemble.instructions(start)
     assert question in text and " pet" not in text.lower().replace("pets or the house", "")
@@ -330,3 +331,77 @@ def test_a_repair_visit_still_needs_its_intake(agent):
     assert refused["refused"] == "invalid_arguments"
     assert set(refused["data"]["errors"]) == {"since", "tried", "who_home", "approver"}
     assert refused["say"] == ""
+
+
+def test_getting_in_is_one_question(agent):
+    """Jackson's call call_549de89ecc2428e409b64072e34 asked "someone home" and "gate code or
+    buzzer" as two questions."""
+    from prompts import assemble
+
+    start = agent.start(UNKNOWN)["data"]
+    question = ("Will someone be home to let the technician in, and is there a gate code or "
+                "buzzer they should know about?")
+    assert start["tenant"]["arrival_question"] == question
+    assert question in assemble.instructions(start)
+
+
+def test_today_and_tomorrow_are_said_without_the_weekday_or_date(agent, mock):
+    """Jackson's call call_549de89ecc2428e409b64072e34: today and tomorrow are "today" and
+    "tomorrow", in find_slots, book_appointment and reschedule_appointment alike. The clock is
+    Monday, November 2, 9 AM."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    assert found["data"]["offer"]["day"] in ("today", "tomorrow")
+    for said in (found["say"],):
+        assert "Monday" not in said and "Tuesday" not in said and "November" not in said, said
+    today = agent.tool("find_slots", call, job_type="tune_up", day="today")
+    assert today["say"].startswith("Today I have"), today["say"]
+    slot = {"date": today["data"]["windows"][0]["date"], "window": today["data"]["windows"][0]["window"]}
+    booked = book(agent, call, slot, name="Pat Rivera")
+    assert booked["ok"], booked
+    assert "arrive today between" in booked["say"] and "Monday" not in booked["say"]
+    agent.say(call, booked["say"])
+    agent.turn(call, "Actually, can we move it to tomorrow?")
+    tomorrow = agent.tool("find_slots", call, job_type="tune_up", day="tomorrow")
+    window = tomorrow["data"]["windows"][0]
+    moved = agent.tool("reschedule_appointment", call, booking_id=booked["data"]["booking_id"],
+                       slot={"date": window["date"], "window": window["window"]},
+                       reason="caller asked")
+    assert moved["ok"], moved
+    assert moved["say"].startswith("Done, I've moved it to tomorrow, between "), moved["say"]
+    assert "Tuesday" not in moved["say"] and "November" not in moved["say"]
+
+
+def test_a_buzzer_code_is_not_a_unit_change(agent):
+    """Eval world, call_7f892564bd0df180ca6eb994b4a: "The buzzer is 2B." after the read-back
+    confirmed unit one F forced a second read-back."""
+    address = {**in_area_address(), "unit": "1F"}
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Hi, the heat's out in my house.")
+    agent.turn(call, f"It's {address['street']}, apartment 1F, {address['zip']}.")
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes, that's right.")
+    assert agent.tool("read_back", call, address=address, phone="caller_id", confirmed=True)["ok"]
+    agent.say(call, "Will someone be home to let the technician in, and is there a gate code or "
+                    "buzzer they should know about?")
+    answer = agent.turn(call, "Yeah, I'll be home. The buzzer is 2B.")
+    assert "readback_changed" not in answer["data"]["hints"]
+    booked = book(agent, call, first_open(agent, call), name="Pat Rivera",
+                  arrival_notes="Buzzer 2B")
+    assert booked["ok"], booked
+
+
+def test_the_assistants_name_is_one_tenant_setting():
+    """Jackson renamed the assistant to Brian with Cartesia's Brian voice; the greetings take the
+    name from assistant_name, so a rename is one edit."""
+    from pathlib import Path
+
+    from app.tenant import load_agent, voice_lines
+
+    raw = (TENANT_DIR / "agent.yaml").read_text()
+    assert "I'm {assistant_name}" in raw and "I'm Brian" not in raw and "Brooke" not in raw
+    voice = voice_lines(TENANT_DIR)
+    assert "I'm Brian, the virtual assistant" in voice["greeting_unknown"]
+    assert "I'm Brian, the virtual assistant" in voice["greeting_known"]
+    assert load_agent(Path(TENANT_DIR))[0]["voice"]["greeting_unknown"] == voice["greeting_unknown"]

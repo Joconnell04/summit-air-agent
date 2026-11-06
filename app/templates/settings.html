@@ -32,6 +32,25 @@
     </div>
   </form>
 
+  {% set cs = check_schedule %}
+  <form class="panel" id="checks" method="post" action="/owner/checks/schedule{{ q(slug) }}">
+    <div class="panel-head">
+      <h2>Call checks</h2><span class="sub">a daily look for calls where something went wrong</span>
+      {% if is_admin %}<div class="end">{% if saved == "checks" %}<span class="tag done">Saved</span>{% endif %}<button class="btn primary" type="submit">Save</button></div>{% endif %}
+    </div>
+    <div class="table-wrap">
+    <table class="table form">
+      <thead><tr><th>Setting</th><th class="right">State</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="what" id="label-check-daily">Daily check</span><div class="why small">Checks the day's calls and flags any that went wrong on Today. Never emails.</div></td>
+          <td class="fit right">{% if is_admin %}<div class="actions"><label class="sr-only" for="check-at">Time</label><input class="field time-field" id="check-at" type="time" name="at" value="{{ cs.at }}" required>{{ on_off("enabled", cs.enabled, "label-check-daily") }}</div>{% elif cs.enabled %}<span class="tag done">{{ minute_clock(cs.at[:2] | int * 60 + cs.at[3:] | int) }}</span>{% else %}<span class="tag outline">Off</span>{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </form>
+
   <section class="panel" id="users">
     <div class="panel-head">
       <h2>Users</h2>{{ count(users | length) }}<span class="sub">admins change settings, rules and users</span>

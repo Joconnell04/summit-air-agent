@@ -52,6 +52,7 @@ def record(
     fsm: list,
     error: str | None,
     replayed: bool,
+    lock_ms: float = 0.0,
 ) -> dict:
     return {
         "ts": iso(now),
@@ -66,6 +67,9 @@ def record(
         "result": body["data"],
         "replayed": replayed,
         "ms": ms,
+        # Time spent waiting for the call's lock before the handler ran: a calls.start took 2.9 s
+        # with 16 ms of it in ServiceTitan, and this says whether the rest was a wait.
+        "lock_ms": lock_ms,
         "fsm": fsm,
         "error": error,
     }

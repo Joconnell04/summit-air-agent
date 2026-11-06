@@ -28,7 +28,9 @@ from . import (
     bench,
     bench_rules,
     cards,
+    checks_view,
     db,
+    failure_grader,
     flow,
     geocode,
     heads_up,
@@ -70,7 +72,14 @@ from .schemas import (
 )
 from .settings import WORKER_STALE_SECONDS, Settings
 from .tenant import Tenants
-from .tools import TOOLS, Ctx, attach_late_job_notes, demand_handoff, needs_on_call_tonight
+from .tools import (
+    TOOLS,
+    Ctx,
+    attach_late_job_notes,
+    demand_handoff,
+    needs_on_call_tonight,
+    warm_capacity,
+)
 
 log = logging.getLogger("app")
 
@@ -110,7 +119,12 @@ class Services:
         self.tenants = Tenants.load(settings.tenants_dir, settings.default_tenant, settings.trades_dir)
         clients = fsm_clients or {}
         self.fsm = {t.slug: make_adapter(t, settings, clients.get(t.slug)) for t in self.tenants}
-        self.caches = {t.slug: SlotCache(settings.slot_cache_seconds) for t in self.tenants}
+        self.caches = {
+            t.slug: SlotCache(
+                settings.slot_cache_seconds, background=settings.jobs_interval_seconds > 0
+            )
+            for t in self.tenants
+        }
         self.side_model = side_model or side_models.from_settings(settings.side_model)
         # One address lookup per tenant, or the one given (tests and the eval world).
         self.geocoders = {
@@ -121,6 +135,15 @@ class Services:
             summary.model_from_config() if settings.summaries else None
         )
         self.guidance_check = guidance_check or check_guidance
+        # The failure grader's model and transcript source (None when off), and how a run is
+        # started: a background thread, or run inline by tests.
+        self.grader_model = (
+            failure_grader.model_from_config() if settings.failure_grader else None
+        )
+        self.grader_transcripts = (
+            failure_grader.transcripts_from_env() if settings.failure_grader else None
+        )
+        self.grader_runner = failure_grader.in_background
         self.report_poster = reports.github_poster(settings)
         self.weather = weather_clients or (
             {t.slug: weather.client(t.weather) for t in self.tenants} if settings.weather else {}
@@ -200,6 +223,7 @@ def run(
     error, replayed = None, False
     try:
         with services.lock(call_id or request_id):
+            lock_ms = round((time.perf_counter() - started) * 1000, 1)
             try:
                 result = _replay(conn, key, tool, call_id, args) if key else None
                 replayed = result is not None
@@ -231,6 +255,7 @@ def run(
             fsm=timings,
             error=error,
             replayed=replayed,
+            lock_ms=lock_ms,
         )
         with db.tx(conn):
             logs.write(services.settings.log_path, conn, line)
@@ -404,7 +429,18 @@ def create_app(
                 record=services.bucket is not None,
             )
 
-        return run(services, request, "calls.start", body.call_id, body.model_dump(), fn)
+        response = run(services, request, "calls.start", body.call_id, body.model_dump(), fn)
+        # The capacity find_slots will want, fetched off the request while the greeting plays.
+        # Only where the background jobs run (not in tests, which drive the mock themselves).
+        if services.settings.jobs_interval_seconds > 0 and response.get("ok"):
+            tenant = services.tenants.for_number(body.dialed_number)
+            threading.Thread(
+                target=warm_capacity,
+                args=(tenant, services.fsm[tenant.slug], services.caches[tenant.slug],
+                      services.clock()),
+                daemon=True,
+            ).start()
+        return response
 
     @app.post("/calls/{call_id}/turn")
     def call_turn(request: Request, call_id: str, body: TurnIn):
@@ -622,6 +658,7 @@ def create_app(
         return {"ok": True, "say": "", "data": found, "refused": None}
 
     owner_view.add_routes(app)
+    checks_view.add_routes(app)
     schedule_view.add_routes(app)
     bench.add_routes(app)
     bench_rules.add_routes(app)

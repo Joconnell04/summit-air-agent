@@ -18,6 +18,7 @@ from pathlib import Path
 
 import yaml
 
+from app.tenant import voice_lines
 from app.tools import TOOLS
 from evals.models import Model, Usage
 from evals.results import TurnTiming
@@ -139,8 +140,7 @@ def assembled_tool_specs(tenant_slug: str) -> list[dict]:
 def greeting(start_data: dict) -> str | None:
     """The worker's fixed opening line from the tenant's `voice` lines, when both exist."""
     assemble = _assemble()
-    agent_yaml = TENANTS_DIR / start_data["tenant"]["slug"] / "agent.yaml"
-    voice = yaml.safe_load(agent_yaml.read_text()).get("voice")
+    voice = voice_lines(TENANTS_DIR / start_data["tenant"]["slug"])
     if assemble is None or not hasattr(assemble, "greeting") or not voice:
         return None
     return assemble.greeting(start_data, voice)
@@ -230,7 +230,7 @@ class InProcessAgent:
         if self.reply is not None and hasattr(self.reply, "names"):
             self.reply.names = _assemble().call_names(started["data"])
         if self.reply is not None and hasattr(self.reply, "holding_lines"):
-            voice = yaml.safe_load((TENANTS_DIR / slug / "agent.yaml").read_text()).get("voice") or {}
+            voice = voice_lines(TENANTS_DIR / slug) or {}
             self.reply.holding_lines = list(voice.get("holding") or [])
         self.tools = assembled_tool_specs(slug) if _assemble() else tool_specs()
         safety = started["data"].get("safety")
@@ -282,7 +282,7 @@ class InProcessAgent:
         """go_quiet with the live timings (config/models.yaml voice.dead_air) and the tenant's
         lines."""
         timings = yaml.safe_load((ROOT / "config" / "models.yaml").read_text())["voice"]["dead_air"]
-        lines = yaml.safe_load((TENANTS_DIR / self.slug / "agent.yaml").read_text())["voice"]
+        lines = voice_lines(TENANTS_DIR / self.slug)
         return self.go_quiet(timings["check_in_s"], timings["hang_up_s"], lines)
 
     def go_quiet(self, check_in_s: float, hang_up_s: float, lines: dict) -> AgentTurn:

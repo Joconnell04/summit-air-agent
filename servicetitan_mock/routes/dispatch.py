@@ -65,6 +65,7 @@ def get_capacity(
     # A window that starts the evening before the range can still end inside it.
     first_day = body.startsOnOrAfter.astimezone(cfg.tz).date() - timedelta(days=1)
     last_day = body.endsOnOrBefore.astimezone(cfg.tz).date()
+    snapshot = capacity.Snapshot(conn, body.startsOnOrAfter, body.endsOnOrBefore)
     frames = []
     day = first_day
     while day <= last_day:
@@ -76,7 +77,7 @@ def get_capacity(
                 continue
             hours = _hours(end - start)
             for unit_id in unit_ids:
-                s = capacity.slots(conn, cfg, day, window, unit_id, skills)
+                s = snapshot.slots(cfg, day, window, unit_id, skills)
                 free = s.free_fit_ids if skill_based else s.free_ids
                 frames.append(
                     {

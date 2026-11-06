@@ -45,6 +45,7 @@ approval:
   - not sure who approves
   - not sure if i can approve
   - not sure i can approve
+assistant_name: Brian
 callbacks:
   after_goodbye_minutes: 60
   after_lead_minutes: 30
@@ -221,9 +222,12 @@ lines:
   account_choice: Should I put this under your account?
   account_name: Whose name should the account for that address be under?
   account_which: I see more than one account on this number. Whose name should the visit go under?
+  address_ask_borough: And which borough is that in?
   address_ask_unit: And what's the apartment or unit number there?
   address_ask_zip: What's the ZIP code there?
   address_not_found: I'm not finding that street. Could you spell the street name for me?
+  address_unverified: I can't find that one in the city's records, so I'll book it as you gave it, and
+    our office will confirm the address before the technician heads out.
   address_which: Is that the one in {places}?
   after_confirmation: Anything else?
   anything_else_first: Is there anything else I can help with?
@@ -1576,9 +1580,9 @@ voice:
     take your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.
-  greeting_known: Hi {first_name}, thanks so much for calling Summit Air today! I'm Brooke, the virtual
+  greeting_known: Hi {first_name}, thanks so much for calling Summit Air today! I'm Brian, the virtual
     assistant. How can I help?
-  greeting_unknown: Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant.
+  greeting_unknown: Hi there, thanks so much for calling Summit Air today! I'm Brian, the virtual assistant.
     How can I help?
   holding:
   - Just give me one second.

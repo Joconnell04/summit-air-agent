@@ -9,7 +9,7 @@ from evals.scenario import Scenario
 # The worker says the greeting from the tenant's `voice` lines with no model step, so the in-process
 # agent does too and the scripted agent model is never asked for one.
 GREETING = (
-    "Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant. "
+    "Hi there, thanks so much for calling Summit Air today! I'm Brian, the virtual assistant. "
     "How can I help?"
 )
 
