@@ -71,6 +71,12 @@ def arm_tools(path: Path, specs: list[dict]) -> list[dict]:
     ]
 
 
+def hold_phrase_after_s(config_path: Path) -> float:
+    """How long a step's tool work may run, from the caller's last word, before the hold phrase
+    (config/models.yaml voice.hold_phrase_after_s)."""
+    return float(yaml.safe_load(config_path.read_text())["voice"].get("hold_phrase_after_s", 0.7))
+
+
 def dead_air_checks(config_path: Path) -> int:
     """How many check-ins Retell asks for before the goodbye (config/models.yaml dead_air)."""
     timings = yaml.safe_load(config_path.read_text())["voice"]["dead_air"]
@@ -86,6 +92,7 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
     tenants = Path(os.environ.get("TENANTS_DIR") or ROOT / "tenants")
     default_tenant = os.environ.get("RETELL_LLM_TENANT", "summit-air")
     checks = dead_air_checks(ROOT / "config" / "models.yaml")
+    hold_after = hold_phrase_after_s(ROOT / "config" / "models.yaml")
     prompt_file = os.environ.get("RETELL_LLM_PROMPT")
     tools_file = os.environ.get("RETELL_LLM_TOOLS")
     server_led = os.environ.get("RETELL_LLM_SERVER_LED") == "1"
@@ -116,7 +123,7 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
         call = LlmCall(
             server, the_brain(), send, system, specs, tenant_lines(tenants, slug),
             phone=details.get("call_type") == "phone_call", dead_air_checks=checks,
-            server_led=server_led,
+            server_led=server_led, hold_after_s=hold_after,
         )
         return call, variables.get("greeting", "")
 

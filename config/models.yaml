@@ -115,6 +115,9 @@ voice:
   # Bridge line (docs/latency.md): played only when a tool hasn't answered after this long, and at
   # most once every this many caller turns.
   bridge: {after_s: 0.7, min_turns_between: 2}
+  # The socket arm (voice/retell_llm, server-led): one short hold phrase ("One sec.") when a step's
+  # tool work hasn't finished this long after the caller stopped talking (Jackson's ask).
+  hold_phrase_after_s: 0.7
   # The pause after the goodbye before the line drops; a caller who speaks in it keeps the call
   # open (Jackson: "a 1 or 2 second wait", issue #149; 1.5 s is the middle, ASSUMED).
   end_call_grace_s: 1.5

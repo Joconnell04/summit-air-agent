@@ -35,18 +35,16 @@ from .model import Brain, Reply
 log = logging.getLogger("voice.retell_llm")
 
 MAX_HOPS = 6
-# Server-led, a tool still running after this long gets one of the tenant's holding lines, so the
-# caller isn't left in silence and Retell doesn't drop the socket (a 4.2 s find_slots on a busy box
-# ended call_9cae55b8f0de04239f783dacecd with error_llm_websocket_runtime).
-HOLD_AFTER_S = 1.5
-# Server-led, the look-ups whose result the caller would otherwise wait for in silence: the moment
-# the model starts calling one, the caller hears a short acknowledgment from code, so the reply
-# starts at the model's first token rather than after the tool and a second model request.
-ACK_TOOLS = (
-    "find_address", "check_service_area", "find_slots", "read_back", "find_customer",
-    "get_customer_history", "lookup_hvac_info",
+# Server-led, the hold phrase covers the wait on every tool but the goodbye.
+NO_HOLD_TOOLS = ("end_call",)
+# Server-led, a sentence of the model's that narrates its own step ("I'm booking that now.",
+# "Confirming the address and phone now.", "Let me check.") is never said.
+NARRATES = re.compile(
+    r"^\W*((okay|ok|alright|got it|sure),?\s+)?(let me\b|i'?ll (check|look|book|confirm|pull|get|"
+    r"find|search|see)\b|(i'?m |i am )?(booking|checking|confirming|looking|pulling|getting|"
+    r"searching|finding)\b)",
+    re.IGNORECASE,
 )
-ACKS = ("Okay.", "Got it.")
 # Turn results whose text is spoken as the server wrote it, before the model answers.
 SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 CONNECTED = "(The call has connected.)"
@@ -122,6 +120,9 @@ class Response:
         self.call = call
         self.id = response_id
         self.said = False
+        # Server-led: a tool is running or being written, the wait the hold phrase covers.
+        self.tool_wait = ""
+        self.hold_ms: float | None = None
 
         self.closed = False
 
@@ -167,6 +168,7 @@ class LlmCall:
         phone: bool,
         dead_air_checks: int = 4,
         server_led: bool = False,
+        hold_after_s: float = 0.7,
     ):
         self.server = server
         self.brain = brain
@@ -184,10 +186,12 @@ class LlmCall:
         # The server-led flow (app/flow.py, SERVER_LED=1 on the tool server): every sentence a
         # tool result carries is spoken here as written, and the model writes only the rest.
         self.server_led = server_led
-        # The tenant's holding lines without the ones that narrate ("Let me pull that up."), in turn.
-        self.holding = [h for h in lines.get("holding") or [] if not h.lower().startswith("let me")]
-        self.held = 0
-        self.acks = 0
+        # Server-led: when a step's tool work hasn't finished this long after the caller stopped
+        # talking, one hold phrase ("One sec."), the tenant's, in turn, never twice in a row
+        # (config/models.yaml voice.hold_phrase_after_s).
+        self.hold_after_s = hold_after_s
+        self.hold_phrases = list(lines.get("hold_phrases") or ["One sec."])
+        self.hold_stats = {"waits": 0, "fired": 0}
         self.reminders = 0
         self.messages: list[dict] = []
         self.reply = SpokenReply()
@@ -354,30 +358,60 @@ class LlmCall:
 
     async def _think(self, out: Response, began: float, server_ms: float) -> None:
         stages: dict[str, float] = {"server_ms": server_ms}
+        watch = asyncio.create_task(self._hold_watch(out, began)) if self.server_led else None
+        try:
+            await self._hops(out, stages)
+        finally:
+            if watch is not None:
+                watch.cancel()
+        if out.hold_ms is not None:
+            stages["hold_ms"] = out.hold_ms
+        self.stages.append(stages)
+
+    def _wait_on(self, out: Response, tool: str) -> None:
+        """A tool is being written or run: the wait the hold phrase may cover, counted once."""
+        if out.tool_wait or tool in NO_HOLD_TOOLS:
+            return
+        out.tool_wait = tool
+        self.hold_stats["waits"] += 1
+
+    async def _hold_watch(self, out: Response, began: float) -> None:
+        """One hold phrase per wait: only when a tool's work hasn't finished `hold_after_s` after
+        the caller stopped talking and the caller has heard nothing yet. Logged when it fires."""
+        while not out.closed and not out.stale() and not out.said:
+            waited = time.perf_counter() - began
+            if out.tool_wait and waited >= self.hold_after_s:
+                phrase = self.hold_phrases[self.hold_stats["fired"] % len(self.hold_phrases)]
+                self.hold_stats["fired"] += 1
+                out.hold_ms = round(waited * 1000, 1)
+                log.info("%s: hold phrase %r at %.0f ms, waiting on %s", self.server.call_id,
+                         phrase, out.hold_ms, out.tool_wait)
+                await out.say(phrase)
+                return
+            await asyncio.sleep(0.05)
+
+    async def _hops(self, out: Response, stages: dict) -> None:
         tool_ms = 0.0
         for hop in range(MAX_HOPS):
             self.reply.start_reply()
             holding = self.reply.holding()
             pending, held, kept = "", [], []
-            # Server-led, the latest finished sentence waits for the next one: the sentence just
-            # before a tool call ("I'm booking that now.") is the one that narrates, and it is
-            # dropped when the server then speaks.
-            tail = ""
             reply = Reply()
             async for delta in self.brain.stream(self.system, self.messages, self.tools, reply):
                 if out.stale():
                     break
                 pending += delta
                 *done, pending = SENTENCE_END.split(pending)
-                if self.server_led and reply.tool_started in ACK_TOOLS and not out.said:
-                    await out.say(ACKS[self.acks % len(ACKS)])
-                    self.acks += 1
+                if self.server_led and reply.tool_started:
+                    self._wait_on(out, reply.tool_started)
                 if holding:
                     held += done
                     continue
                 for sentence in done:
                     if self.server_led:
-                        sentence, tail = tail, unnarrated(sentence)
+                        sentence = unnarrated(sentence)
+                        if NARRATES.match(sentence):
+                            continue
                     if sentence and (said := self.reply.sentence(sentence)):
                         kept.append(said)
                         await out.say(said)
@@ -394,12 +428,13 @@ class LlmCall:
             if holding:
                 last = self.reply.text(" ".join([*held, pending]), calls)
             else:
-                ends = [tail, unnarrated(pending) if self.server_led else pending]
-                ends = [s for s in ends if s.strip()]
-                last = " ".join(k for s in ends if (k := self.reply.sentence(s)))
-            # Server-led, the text that comes with a tool call is never said: it is the lead-in
-            # ("Got it, one sec.", "Confirming the address now.") or a question the result answers.
-            # The model's next request writes the reply when the server has nothing to say.
+                rest = unnarrated(pending) if self.server_led else pending
+                if self.server_led and NARRATES.match(rest):
+                    rest = ""
+                last = self.reply.sentence(rest) if rest.strip() else ""
+            # Server-led, the unfinished text that comes with a tool call is never said: it is the
+            # lead-in or a question the result answers. The model's next request writes the reply
+            # when the server has nothing to say.
             deferred = self.server_led and bool(reply.tool_uses)
             if last and not deferred:
                 kept.append(last)
@@ -420,7 +455,6 @@ class LlmCall:
                 break
         if tool_ms:
             stages["tool_ms"] = round(tool_ms, 1)
-        self.stages.append(stages)
 
     async def _run_tools(self, out: Response, uses: list[dict]) -> tuple[list[dict], bool]:
         """Each call goes to the tool server; the server's own lines are said as written. True
@@ -428,6 +462,8 @@ class LlmCall:
         results, finished = [], False
         for use in uses:
             name = use["name"]
+            if self.server_led:
+                self._wait_on(out, name)
             envelope = await self._tool(out, name, dict(use["input"]))
             self.reply.tool_done(name, envelope)
             data = envelope.get("data") or {}
@@ -450,7 +486,12 @@ class LlmCall:
                 finished = True
             elif spoken_first(envelope):
                 await out.say(spoken_first(envelope), fixed=True)
-            if ending and data.get("hang_up"):
+            if ending and data.get("hang_up") and self.server_led and not say:
+                # Jackson's closing, word for word; the model's own goodbye in this reply was not said.
+                await out.say(self.lines.get("closing") or self.lines["goodbye"], fixed=True)
+                self.ended = "agent_end"
+                finished = True
+            elif ending and data.get("hang_up"):
                 if not out.said and not data.get("signed_off"):
                     await out.say(self.lines["goodbye"], fixed=True)
                 self.ended = "agent_end"
@@ -467,17 +508,7 @@ class LlmCall:
         return results, finished
 
     async def _tool(self, out: Response, name: str, args: dict) -> dict:
-        """One tool call. Server-led, one holding line if it runs long; the call itself is never
-        cut short by a newer turn (writes are idempotent)."""
-        task = asyncio.ensure_future(self.server.tool(name, args, self.writes.get(name, False)))
-        if not self.server_led or not self.holding:
-            return await task
-        try:
-            return await asyncio.wait_for(asyncio.shield(task), HOLD_AFTER_S)
-        except TimeoutError:
-            await out.say(self.holding[self.held % len(self.holding)])
-            self.held += 1
-            return await task
+        return await self.server.tool(name, args, self.writes.get(name, False))
 
     async def _put_through(self, out: Response, flagged: dict) -> bool:
         """After a person flag the server may send the caller to a person now (app/transfer.py).
@@ -503,6 +534,12 @@ class LlmCall:
             self.transcript = transcript
             await self._post_heard(len(transcript))
             self.reminders += 1
+            if self.server_led:
+                # Jackson's check-in after about 8 seconds of silence, at most twice (the agent's
+                # reminder settings); the call stays open, and Retell ends it after a long silence.
+                await out.say(self.lines.get("are_you_there") or self.lines["still_here"])
+                await out.done()
+                return
             if self.reminders < self.dead_air_checks:
                 await out.say(self.lines["still_here"])
                 await out.done()
@@ -523,5 +560,5 @@ class LlmCall:
             await self.server.transfer_done(self.transfer_id, "handed_off")
         await self.server.end(self.ended)
         await self.server.aclose()
-        log.info("%s ended (%s), model tokens %s", self.server.call_id, self.ended,
-                 json.dumps(self.tokens, sort_keys=True))
+        log.info("%s ended (%s), model tokens %s, hold phrases %s", self.server.call_id, self.ended,
+                 json.dumps(self.tokens, sort_keys=True), json.dumps(self.hold_stats))

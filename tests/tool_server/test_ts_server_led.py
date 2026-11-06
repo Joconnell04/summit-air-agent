@@ -9,7 +9,10 @@ from app.tenant import Tenant, load_agent
 
 LINES = load_agent(TENANT_DIR)[0]["lines"]
 APPROVAL, HOME = LINES["ask_approval"], LINES["ask_someone_home"]
-# Summit Air asks no pets question (agent.yaml visit_questions.pets: false).
+# Getting in is one question, with no pets (agent.yaml visit_questions.pets: false).
+ARRIVAL = ("Will someone be home to let the technician in, and is there a gate code or buzzer "
+           "they should know about?")
+GATE = LINES["ask_gate"]
 ACCESS = "Is there a gate code or buzzer the technician should know about?"
 
 
@@ -123,15 +126,19 @@ def test_a_booking_waits_for_the_visit_questions_one_at_a_time(led):
     led.say(call, refused["say"])
     led.turn(call, "Yes.")
     refused = book(led, call, slot)
-    assert refused["say"] == f"Okay. {HOME}"
+    # Getting in is one question, with no pets.
+    assert refused["say"] == f"Okay, thanks. {ARRIVAL}"
     led.say(call, refused["say"])
-    led.turn(call, "Yes, I'll be here.")
-    refused = book(led, call, slot)
-    assert refused["say"] == f"Got it. {ACCESS}"
-    assert "pet" not in refused["say"]
-    led.say(call, refused["say"])
-    led.turn(call, "There's a buzzer.")
+    led.turn(call, "Yes, and there's a buzzer.")
     assert book(led, call, slot)["ok"]
+
+
+def test_only_the_missing_half_of_getting_in_is_asked(led):
+    call = ready_to_book(led)
+    slot = slot_of(offer(led, call))
+    led.turn(call, "That works. I'm the owner, and I'll be home all day.")
+    refused = book(led, call, slot)
+    assert refused["say"].endswith(GATE) and "home" not in refused["say"]
 
 
 def test_an_estimate_has_nothing_to_approve(led):
@@ -139,7 +146,7 @@ def test_an_estimate_has_nothing_to_approve(led):
     slot = slot_of(offer(led, call, job_type="estimate"))
     led.turn(call, "Sure, that works.")
     refused = book(led, call, slot, job_type="estimate")
-    assert refused["say"] == f"Got it. {HOME}"
+    assert refused["say"] == f"Got it. {ARRIVAL}"
 
 
 def test_the_unit_is_asked_only_for_a_building(led):

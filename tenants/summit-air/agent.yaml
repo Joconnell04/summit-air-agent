@@ -532,6 +532,13 @@ lines:
   ask_approval: Will you be able to approve any repair work the technician recommends?
   ask_someone_home: Will someone be home to let the technician in?
   ask_access: Is there a gate code, a buzzer, or any pets the technician should know about?
+  # The gate half of the arrival question, when the caller already said someone will be home.
+  ask_gate: And is there a gate code or buzzer the technician should know about?
+  # The catch-all after "since when" on a heating, cooling or airflow problem, with examples that
+  # fit (Jackson's change set 22).
+  ask_catch_all_heating: Anything else the technician should know, like banging pipes or it shutting off on its own?
+  ask_catch_all_cooling: Anything else the technician should know, like water leaking or it turning on and off a lot?
+  ask_catch_all_airflow: Anything else the technician should know, like weak airflow in some rooms or a lot of dust?
   # The server-led flow asks the system type once if the caller hasn't said it (Jackson's live calls).
   ask_system_type: Is that a boiler, a furnace, central air or a mini-split?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
@@ -575,6 +582,15 @@ voice:
   # Said when the model ends the call without a goodbye of its own (knowledge/sign-off.md). Generic
   # and kind, the same on any day (eval round 3).
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.
+  # The socket arm (voice/retell_llm, server-led): its closing, word for word, Jackson's line; the
+  # check-in after about 8 seconds of silence, at most twice; and the hold phrases said once when a
+  # step's tool work outlasts config/models.yaml voice.hold_phrase_after_s, in turn.
+  closing: Thanks so much for calling Summit Air today. Have a great day!
+  are_you_there: Are you still there?
+  hold_phrases:
+    - One sec.
+    - Okay, one moment.
+    - Just a moment.
   # Said by the worker when the tool server can't be reached, then the call ends.
   server_down: >-
     Sorry, our system is having trouble right now. Please call us back in a few minutes, and if you

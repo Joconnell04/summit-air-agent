@@ -313,8 +313,8 @@ def test_server_led_a_question_from_the_server_is_the_whole_turn(server_led):
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "It's 718 555 0118."])
-    # A short acknowledgment from code the moment the model starts the look-up, then the sentence.
-    assert said(events) == f"Okay. {READ_BACK}"
+    # A tool that answers fast gets no hold phrase.
+    assert said(events) == READ_BACK
     # Interruptible, so the caller can correct it.
     assert not any(e.get("no_interruption_allowed") for e in events)
     assert len(brain.requests) == 1
@@ -371,19 +371,20 @@ def test_server_led_a_lead_in_held_before_a_server_sentence_is_never_said(server
     server.tools["find_customer"] = envelope(say="Should I put this under your account?")
     client, _ = make([
         ([], [find]), (["What's the best number? "], []),
-        (["Got it, one sec. "], [lookup]),
+        (["I'm checking that now. "], [lookup]),
         (["Thanks. "], [history]), (["What's the best number? "], []),
     ])
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         ask(ws, 1, ["Hi.", "45 Forest Avenue."])
         events = ask(ws, 2, ["Hi.", "45 Forest Avenue.", "What's the best number?", "My account."])
-        assert said(events) == "Got it. Should I put this under your account?"
+        assert said(events) == "Should I put this under your account?"
         # A tool with nothing to say: the model's next request writes the reply, and the text that
         # came with the call is dropped all the same.
         events = ask(ws, 3, ["Hi.", "45 Forest Avenue.", "What's the best number?", "My account.",
                              "Should I put this under your account?", "Yes."])
-    assert said(events) == "Okay. What's the best number?"
+    # Before the read-back the whole reply is held, so its lead-in goes with the tool call.
+    assert said(events) == "What's the best number?"
 
 
 def test_server_led_the_arm_brings_its_own_prompt_and_tools(server_led, monkeypatch, tmp_path):
@@ -448,7 +449,7 @@ def test_server_led_an_offer_without_a_question_still_waits_for_the_caller(serve
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "Yes, that's all correct."])
-    assert said(events) == f"Okay. {offer}"
+    assert said(events) == offer
     assert len(brain.requests) == 1
 
 
@@ -464,7 +465,7 @@ def test_server_led_the_model_never_names_its_step(server_led):
 def test_server_led_a_slow_tool_gets_one_holding_line(monkeypatch):
     monkeypatch.setenv("RETELL_API_KEY", API_KEY)
     monkeypatch.setenv("RETELL_LLM_SERVER_LED", "1")
-    monkeypatch.setattr("voice.retell_llm.call.HOLD_AFTER_S", 0.05)
+    monkeypatch.setattr(llm_socket, "hold_phrase_after_s", lambda path: 0.05)
     server = FakeToolServer()
     offer = "The soonest I have is today, 12 to 12:30. Does that work?"
     server.tools["find_slots"] = envelope(say=offer, data={"offer": {"window": "1200-1230"}})
@@ -480,20 +481,101 @@ def test_server_led_a_slow_tool_gets_one_holding_line(monkeypatch):
     with TestClient(app).websocket_connect(path()) as ws:
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "Yes, that's all correct."])
-    # The tenant's holding line, never one that narrates, then the offer as written.
-    assert said(events) == f"Okay. Just give me one second. {offer}"
+    # One of the tenant's hold phrases, then the offer as written.
+    assert said(events) == f"One sec. {offer}"
 
 
-def test_server_led_no_acknowledgment_before_a_booking_or_after_the_model_spoke(server_led):
+def test_server_led_the_models_first_sentence_streams_at_once(server_led):
     server, make = server_led
-    book = {"id": "t1", "name": "book_appointment", "input": {}}
     slots = {"id": "t2", "name": "find_slots", "input": {"job_type": "no_heat"}}
-    booked = "Okay, I've booked it: the technician will arrive today between 12 and 12:30. Anything else?"
-    server.tools["book_appointment"] = envelope(say=booked)
     server.tools["find_slots"] = envelope(ok=False, refused="read_back_first")
-    client, _ = make([([], [book]), (["Sure. ", "What's the address? "], [slots]), ([], [])])
+    client, _ = make([(["Sure. ", "What's the address? "], [slots]), ([], [])])
     with client.websocket_connect(path()) as ws:
         open_call(ws)
-        assert said(ask(ws, 1, ["Hi.", "No gate code."])) == booked
-        # The model's "Sure." was said already, so no acknowledgment is added before the tool.
-        assert said(ask(ws, 2, ["Hi.", "No gate code.", booked, "Can I book another?"])) == "Sure."
+        events = ask(ws, 1, ["Hi.", "Can I book a visit?"])
+    assert said(events) == "Sure. What's the address?"
+    assert events[0]["content"] == "Sure."
+
+
+def slow_socket(monkeypatch, delays: dict, replies, after_s=0.05):
+    """A socket whose tools answer after `delays` seconds, with the hold phrase after `after_s`."""
+    monkeypatch.setenv("RETELL_API_KEY", API_KEY)
+    monkeypatch.setenv("RETELL_LLM_SERVER_LED", "1")
+    monkeypatch.setattr(llm_socket, "hold_phrase_after_s", lambda path: after_s)
+    server = FakeToolServer()
+
+    async def slow(request: httpx.Request) -> httpx.Response:
+        await asyncio.sleep(delays.get(request.url.path.removeprefix("/tools/"), 0))
+        return server.handle(request)
+
+    brain = FakeBrain(replies)
+    app = llm_socket.create_app(brain=brain, transport=httpx.MockTransport(slow))
+    return server, TestClient(app), brain
+
+
+def test_server_led_a_fast_tool_gets_no_hold_phrase(monkeypatch):
+    slots = {"id": "t1", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    offer = "The soonest I have is today, 12 to 12:30. Does that work?"
+    server, client, _ = slow_socket(monkeypatch, {}, [([], [slots])], after_s=0.5)
+    server.tools["find_slots"] = envelope(say=offer, data={"offer": {"window": "1200-1230"}})
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Yes."])) == offer
+
+
+def test_server_led_one_hold_phrase_a_wait_and_never_the_same_twice_running(monkeypatch):
+    address = {"id": "t1", "name": "find_address", "input": {}}
+    slots = {"id": "t2", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    offer = "The soonest I have is today, 12 to 12:30. Does that work?"
+    server, client, _ = slow_socket(
+        monkeypatch, {"find_address": 0.2, "find_slots": 0.2},
+        [([], [address]), ([], [slots]), ([], [slots])],
+    )
+    server.tools["find_address"] = envelope(say="What's the ZIP code there?", ok=False,
+                                            refused="zip_asked")
+    server.tools["find_slots"] = envelope(say=offer, data={"offer": {"window": "1200-1230"}})
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        first = said(ask(ws, 1, ["Hi.", "45 Forest Avenue."]))
+        second = said(ask(ws, 2, ["Hi.", "45 Forest Avenue.", first, "Yes."]))
+        third = said(ask(ws, 3, ["Hi.", "45 Forest Avenue.", first, "Yes.", second, "Again?"]))
+    phrases = [t.split(" ")[0] + " " + t.split(" ")[1] for t in (first, second, third)]
+    assert first == "One sec. What's the ZIP code there?"
+    assert second.startswith("Okay, one moment. ") and third.startswith("Just a moment. ")
+    assert len(set(phrases)) == 3
+
+
+def test_server_led_the_goodbye_is_jacksons_line_and_gets_no_hold(monkeypatch):
+    end = {"id": "t1", "name": "end_call", "input": {"reason": "done"}}
+    server, client, _ = slow_socket(monkeypatch, {"end_call": 0.2},
+                                    [(["Thanks for calling, take care!"], [end])])
+    server.tools["end_call"] = envelope(data={"hang_up": True})
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "No, that's all."])
+    assert said(events) == "Thanks so much for calling Summit Air today. Have a great day!"
+    assert events[-1]["end_call"] is True
+
+
+def test_server_led_a_narrating_sentence_is_never_said(server_led):
+    _, make = server_led
+    client, _ = make([(["I'm booking that now. ", "What's the best number?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Sure."])) == "What's the best number?"
+
+
+def test_server_led_silence_gets_are_you_still_there_and_the_call_stays_open(server_led):
+    _, make = server_led
+    client, _ = make()
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        for rid in (1, 2):
+            ws.send_text(json.dumps({"interaction_type": "reminder_required", "response_id": rid,
+                                     "transcript": transcript("Hi.")}))
+            events = []
+            while not (event := json.loads(ws.receive_text())).get("content_complete"):
+                events.append(event)
+            events.append(event)
+            assert said(events) == "Are you still there?"
+            assert "end_call" not in events[-1]

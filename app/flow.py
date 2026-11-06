@@ -36,9 +36,9 @@ VISIT_QUESTIONS = (
     ("ask_access", r"\bgate code\b|\bbuzzer\b|\bpets?\b", r"\bgate\b|\bbuzzer\b|\bpets?\b|\bdogs?\b|\bcats?\b|\bdoorman\b"),
 )
 
-# The short acknowledgment before each visit question the server asks, in turn, so three quick
-# questions don't all open the same way (Jackson's live calls, retell-live-calls-01.md).
-ACKS = ("Got it.", "Okay.")
+# The short connector before each visit question the server asks, in turn, so quick questions
+# don't all open the same way (Jackson's change sets 18 and 22).
+ACKS = ("Got it.", "Okay, thanks.", "Perfect.")
 
 # The tools whose sentence ends a piece of work: a booking, a change, a lead, a callback. end_call
 # waits on these. The others are steps a later step answers (an offer the caller took, a read-back
@@ -94,7 +94,7 @@ def _gate(ctx, tool: str, args) -> None:
             ack = ACKS[(len(asked) - len(missing)) % len(ACKS)]
             raise Refused(
                 "visit_questions_first",
-                f"{ack} {question_line(ctx, missing[0])}",
+                f"{ack} {question_line(ctx, missing)}",
                 gate="flow_visit_questions",
             ).with_next("Say this sentence as written and wait for the answer. Then call "
                         "book_appointment again with the answers so far in details, saying nothing.")
@@ -129,10 +129,15 @@ def visit_questions(ctx, job_type: str = "") -> tuple:
     return tuple(q for q in VISIT_QUESTIONS if not (q[0] == "ask_approval" and job_type in skip))
 
 
-def question_line(ctx, key: str) -> str:
-    """A visit question as the server says it: the tenant's line, and its own open question before
-    booking for access (a gate code or buzzer, pets only when the tenant asks about them)."""
-    return ctx.tenant.arrival_question if key == "ask_access" else ctx.tenant.line(key)
+def question_line(ctx, missing: list[str]) -> str:
+    """The next visit question as the server says it. Getting in is one question, someone home and
+    a gate code or buzzer (the tenant's arrival question), and only its missing half when the caller
+    answered the other (Jackson's change set 19)."""
+    if missing[0] == "ask_approval":
+        return ctx.tenant.line("ask_approval")
+    if "ask_someone_home" in missing and "ask_access" in missing:
+        return ctx.tenant.arrival_question
+    return ctx.tenant.line("ask_gate" if missing[0] == "ask_access" else missing[0])
 
 
 def visit_questions_missing(ctx, job_type: str = "") -> list[str]:
@@ -237,7 +242,12 @@ def _after_address(ctx, needs_unit: bool) -> str:
     return (
         f"Ask the next of these you don't have yet, one a turn, skipping any the caller already "
         f"answered: {unit}only on a no-heat or no-cooling call, 'Is it completely out, or just not "
-        "keeping up?', then 'Since when?'; if they haven't said what system it is, "
+        "keeping up?', then 'Since when?'; when heating, cooling or airflow isn't working (not a "
+        "maintenance visit or a quote), one catch-all in its own turn: heating "
+        f"'{ctx.tenant.line('ask_catch_all_heating')}', cooling "
+        f"'{ctx.tenant.line('ask_catch_all_cooling')}', vents or airflow "
+        f"'{ctx.tenant.line('ask_catch_all_airflow')}', with the answer in the job's issue; "
+        "if they haven't said what system it is, "
         f"'{ctx.tenant.line('ask_system_type')}'; then 'What's the best phone number to reach "
         "you?'. Once you have the phone number, call read_back."
     )
