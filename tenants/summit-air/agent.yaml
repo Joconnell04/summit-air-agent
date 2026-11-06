@@ -424,6 +424,12 @@ lines:
   address_which: Is that the one in {places}?
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_ask_zip: What's the ZIP code there?
+  # The lookup missed twice and no borough was said: asked once, so the visit can be booked.
+  address_ask_borough: And which borough is that in?
+  # The city's records don't have the address: booked as the caller gave it, confirmed by the office.
+  address_unverified: >-
+    I can't find that one in the city's records, so I'll book it as you gave it, and our office will
+    confirm the address before the technician heads out.
   # A building with more than one home in it, read back with no unit (MapPLUTO's unit count).
   address_ask_unit: And what's the apartment or unit number there?
   # Asked before a number goes on the do-not-call list (Jackson's number went on it from "don't call

@@ -1810,7 +1810,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     if from_caller and found.status in ("unavailable", "none"):
         return from_caller
     if found.status == "unavailable":
-        _ask_zip(ctx, "address_lookup_down", house, street)
+        return _unverified(ctx, "address_lookup_down", house, street, args.borough)
     if found.status == "none":
         thread = records.thread(ctx.conn, ctx.call["id"])
         misses = ctx.conn.execute(
@@ -1819,7 +1819,7 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
             thread,
         ).fetchone()[0]
         if misses >= 2:
-            _ask_zip(ctx, "address_not_found", house, street)
+            return _unverified(ctx, "address_not_found", house, street, args.borough)
         raise Refused(
             "address_not_found",
             ctx.tenant.line("address_not_found"),
@@ -2127,6 +2127,67 @@ def _zip_asked(ctx: Ctx, house: str, street: str) -> bool:
             (ctx.call["id"], _zip_asked_key(house, street)),
         ).fetchone()
     )
+
+
+def _borough_said(ctx: Ctx, hint: str) -> str:
+    """The borough the agent passed, or one a caller line on this call names."""
+    boroughs = (ctx.tenant.address_lookup or {}).get("boroughs") or {}
+    texts = [hint] + [r["text"] for r in _caller_lines(ctx)]
+    for text in texts:
+        said = f" {words(text)} "
+        for name, borough in sorted(boroughs.items(), key=lambda kv: -len(kv[0])):
+            if f" {words(name).strip()} " in said:
+                return borough
+    return ""
+
+
+def _unverified(ctx: Ctx, code: str, house: str, street: str, hint: str) -> Result:
+    """Booking-first when the city's records can't confirm the address: with a borough known, the
+    visit goes on the borough's placeholder ZIP, marked unverified, and book_appointment flags the
+    office to confirm the address before dispatch (socket-arm call
+    call_1bcb4106a02dff87609d8e7fd8b ended in a callback instead). With no borough, the caller is
+    asked for it once; only after that, the ZIP."""
+    zips = (ctx.tenant.address_lookup or {}).get("unverified_zips") or {}
+    borough = _borough_said(ctx, hint)
+    if not borough:
+        line = ctx.tenant.line("address_ask_borough")
+        if zips and _hand_out_once(ctx, line):
+            raise Refused(code, line, need="ask which borough, then look it up again with borough")
+        _ask_zip(ctx, code, house, street)
+    zip_code = zips.get(borough)
+    if not zip_code:
+        _ask_zip(ctx, code, house, street)
+    with tx(ctx.conn):
+        ctx.conn.execute(
+            "INSERT INTO address_lookups (call_id, house, street, hint, status, zips_json, source, "
+            "at) VALUES (?, ?, ?, ?, 'one', ?, 'unverified', ?)",
+            (ctx.call["id"], geocode.house_key(house), geocode.street_match_key(street), borough,
+             json.dumps([zip_code]), iso(ctx.now)),
+        )
+    return ok(
+        ctx.tenant.line("address_unverified"),
+        street=f"{house} {street}",
+        street_said=street_said(f"{house} {street}"),
+        zip=zip_code,
+        borough=borough,
+        in_area=True,
+        area=borough,
+        verified=False,
+        note="Not in the city's records: read back and book with this street and ZIP as given. "
+        "Don't ask for the ZIP; the office confirms the address before dispatch.",
+    )
+
+
+def _unverified_address(ctx: Ctx, readback: dict) -> bool:
+    """The read-back's address is one find_address booked unverified on this call."""
+    split = geocode.split_address(readback["street"])
+    if not split:
+        return False
+    return ctx.conn.execute(
+        "SELECT 1 FROM address_lookups WHERE call_id = ? AND source = 'unverified' AND house = ? "
+        "AND street = ?",
+        (ctx.call["id"], geocode.house_key(split[0]), geocode.street_match_key(split[1])),
+    ).fetchone() is not None
 
 
 def _ask_zip(ctx: Ctx, code: str, house: str, street: str) -> None:
@@ -2670,6 +2731,19 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     check_approval = _approval_unclear(ctx, details["approver"])
     if check_approval:
         pending_notes.append("Confirm who can approve the work before dispatch.")
+    unverified = _unverified_address(ctx, readback)
+    if unverified:
+        pending_notes.append(
+            "Address not in the city's records, and the ZIP is the borough's placeholder: confirm "
+            "the address with the caller before dispatch."
+        )
+        with tx(ctx.conn):
+            records.add_flag(
+                ctx.conn, ctx.call["id"], "person",
+                f"Confirm the address before dispatch: {readback['street']} isn't in the city's "
+                "records, and the visit is booked on the borough's placeholder ZIP",
+                ctx.now, "High",
+            )
     request = {
         "call_id": ctx.call["id"],
         "job_type": args.job_type,

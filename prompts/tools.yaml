@@ -14,7 +14,9 @@ find_address: >-
   neighborhood only if they said one. When it returns the address, its ZIP is already checked
   against the service area: use that ZIP and street in the read-back, which confirms it, and don't
   ask for the ZIP. If you say the street yourself, say it as `street_said` ("one ninety-nine East
-  Fourth Street"). If it asks which one or asks to spell the street, ask the caller its sentence
+  Fourth Street"). When it returns `verified: false` (the city's records don't have the address),
+  its sentence is spoken for you: read back and book with that street and ZIP, and never ask the
+  caller for the ZIP; the office confirms the address before dispatch. If it asks which one or asks to spell the street, ask the caller its sentence
   and call it again with `borough` or `spelled`.
 find_slots: >-
   Availability for a job type. Without `day` it returns one opening to offer (the caller's

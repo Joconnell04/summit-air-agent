@@ -302,7 +302,8 @@ def test_the_arrival_question_asks_no_pets_for_summit_air(agent):
     from prompts import assemble
 
     start = agent.start(UNKNOWN)["data"]
-    question = "Is there a gate code or buzzer the technician should know about?"
+    question = ("Will someone be home to let the technician in, and is there a gate code or "
+                "buzzer they should know about?")
     assert start["tenant"]["arrival_question"] == question
     text = assemble.instructions(start)
     assert question in text and " pet" not in text.lower().replace("pets or the house", "")
@@ -369,3 +370,23 @@ def test_today_and_tomorrow_are_said_without_the_weekday_or_date(agent, mock):
     assert moved["ok"], moved
     assert moved["say"].startswith("Done, I've moved it to tomorrow, between "), moved["say"]
     assert "Tuesday" not in moved["say"] and "November" not in moved["say"]
+
+
+def test_a_buzzer_code_is_not_a_unit_change(agent):
+    """Eval world, call_7f892564bd0df180ca6eb994b4a: "The buzzer is 2B." after the read-back
+    confirmed unit one F forced a second read-back."""
+    address = {**in_area_address(), "unit": "1F"}
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Hi, the heat's out in my house.")
+    agent.turn(call, f"It's {address['street']}, apartment 1F, {address['zip']}.")
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes, that's right.")
+    assert agent.tool("read_back", call, address=address, phone="caller_id", confirmed=True)["ok"]
+    agent.say(call, "Will someone be home to let the technician in, and is there a gate code or "
+                    "buzzer they should know about?")
+    answer = agent.turn(call, "Yeah, I'll be home. The buzzer is 2B.")
+    assert "readback_changed" not in answer["data"]["hints"]
+    booked = book(agent, call, first_open(agent, call), name="Pat Rivera",
+                  arrival_notes="Buzzer 2B")
+    assert booked["ok"], booked
