@@ -605,3 +605,13 @@ def test_the_socket_agents_calls_start_server_led_and_no_others(client, bridge, 
         assert signed(client, "/retell/inbound", body).status_code == 200
     flows = rows(tool_app, "SELECT call_id, flow FROM call_flows")
     assert flows == [{"call_id": "retell_sock", "flow": "server_led"}]
+
+
+def test_events_for_an_ignored_agent_never_start_a_call(bridge, tool_app):
+    """The hold line a transfer rings is a Retell agent on the same account, so its events reach
+    this webhook; one was logged as a call and left open (6 November)."""
+    bridge.ignored_agents = {"agent_hold"}
+    hold = call_obj("hold1", GREETING, agent_id="agent_hold")
+    assert bridge.webhook({"event": "call_started", "call": hold})
+    assert bridge.webhook({"event": "call_ended", "call": hold})
+    assert rows(tool_app, "SELECT id FROM calls WHERE id = 'retell_hold1'") == []

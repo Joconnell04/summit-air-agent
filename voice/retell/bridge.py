@@ -242,6 +242,11 @@ class Bridge:
         # (docs/ai-process/briefs/socket-cutover.md); every other agent's calls start as before.
         self.server_led_agents = set(filter(None, os.environ.get(
             "RETELL_SERVER_LED_AGENTS", "").split(",")))
+        # Agents whose calls aren't Summit Air calls, such as the hold line a transfer rings: Retell
+        # sends their events here too (the account's webhook), and a call logged for one stayed
+        # open on the tool server and blocked the live-world reset (6 November).
+        self.ignored_agents = set(filter(None, os.environ.get(
+            "RETELL_IGNORE_AGENTS", "").split(",")))
         # The last call object each call's events brought, for the word timings the hang-up
         # reads when get-call has none.
         self.seen: dict[str, dict] = {}
@@ -345,7 +350,7 @@ class Bridge:
             return self.chat_event(name, event["chat"] or {})
         call = dict(event.get("call") or {})
         rid = retell_id(call)
-        if not rid:
+        if not rid or call.get("agent_id") in self.ignored_agents:
             return True
         # transcript_updated sends the transcript beside the call object, not inside it.
         if event.get("transcript_with_tool_calls") and not call.get("transcript_with_tool_calls"):
