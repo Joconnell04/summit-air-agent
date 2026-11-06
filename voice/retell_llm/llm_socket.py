@@ -133,7 +133,7 @@ def create_app(brain: Brain | None = None, transport=None) -> FastAPI:
             server, the_brain(), send, system, specs, tenant_lines(tenants, slug),
             phone=details.get("call_type") == "phone_call", dead_air_checks=checks,
             server_led=server_led, hold_after_s=hold_after, hold_from=hold_from,
-            tz=tenant_timezone(tenants, slug),
+            tz=tenant_timezone(tenants, slug), call_start_ms=details.get("start_timestamp"),
         )
         return call, variables.get("greeting", "")
 

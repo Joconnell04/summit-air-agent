@@ -19,8 +19,6 @@ import logging
 import re
 import time
 from collections.abc import Awaitable, Callable
-from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from prompts.assemble import (
     SENTENCE_END,
@@ -37,8 +35,11 @@ from .model import Brain, Reply
 log = logging.getLogger("voice.retell_llm")
 
 MAX_HOPS = 6
-# Server-led, the hold phrase covers the wait on every tool but the goodbye.
-NO_HOLD_TOOLS = ("end_call",)
+# Server-led, the steps whose tools answer from the tool server's own records in milliseconds get
+# no hold phrase (the read-back, the area check, the customer lookups), nor does the goodbye.
+NO_HOLD_TOOLS = (
+    "end_call", "read_back", "check_service_area", "find_customer", "get_customer_history",
+)
 # Server-led, a sentence of the model's that narrates its own step ("I'm booking that now.",
 # "Confirming the address and phone now.", "Let me check.") is never said.
 NARRATES = re.compile(
@@ -131,19 +132,20 @@ def without_vocative(sentence: str, known: set[str]) -> str:
     return sentence.strip()[: match.start()] + sentence.strip()[match.end(1):]
 
 
-def part_of_day(hour: int) -> str:
-    if 5 <= hour < 12:
-        return "morning"
-    if 12 <= hour < 17:
-        return "afternoon"
-    if 17 <= hour < 22:
-        return "evening"
-    return "night"
-
-
 def plain_day(sentence: str) -> str:
     """Today and tomorrow are said alone, never with the weekday or date (change set 19)."""
     return WEEKDAY_DATE.sub(lambda m: m[1], sentence)
+
+
+def last_word_at(transcript: list[dict], call_start_ms: int | None) -> float | None:
+    """When the caller's last word ended, as a Unix time, from Retell's word timings (seconds
+    from the call's start). None when the timings or the start are missing."""
+    if not call_start_ms:
+        return None
+    for entry in reversed(transcript):
+        if entry.get("role") == "user" and entry.get("words"):
+            return call_start_ms / 1000 + entry["words"][-1]["end"]
+    return None
 
 
 def caller_text(transcript: list[dict]) -> str:
@@ -183,6 +185,8 @@ class Response:
         # When the first tool call of the wait went to the tool server.
         self.tool_began: float | None = None
         self.hold_ms: float | None = None
+        # Server-led: a question was said in this reply, so nothing more of the model's follows.
+        self.asked = False
 
         self.closed = False
 
@@ -231,6 +235,7 @@ class LlmCall:
         hold_after_s: float = 0.7,
         hold_from: str = "caller",
         tz: str = "America/New_York",
+        call_start_ms: int | None = None,
     ):
         self.server = server
         self.brain = brain
@@ -263,6 +268,9 @@ class LlmCall:
         self.caller_said = ""
         # For the closing's nicety, fit to the tenant's time of day.
         self.tz = tz
+        # The call's start (Retell's start_timestamp), so a wait counts from the caller's last word.
+        self.call_start_ms = call_start_ms
+        self.last_word: float | None = None
         self.reminders = 0
         self.messages: list[dict] = []
         self.reply = SpokenReply()
@@ -324,6 +332,7 @@ class LlmCall:
             if out.stale():
                 return
             began = self.began = time.perf_counter()
+            self.last_word = last_word_at(transcript, self.call_start_ms)
             self.transcript = transcript
             if self.ended in ("agent_end", "stepped_away"):
                 # The goodbye was cut off and Retell dropped the hang-up: the caller is still
@@ -463,12 +472,10 @@ class LlmCall:
         return self.reply._caller_words | self.reply.names
 
     def _closing(self) -> str:
-        """The tenant's closing plus one nicety fit to the time of day, chosen per call, never two
-        (Jackson's change set 24)."""
+        """The tenant's closing plus one of its pinned niceties, each measured to end falling in
+        the agent's voice (agent.yaml closing_niceties), chosen per call, never two."""
         base = self.lines.get("closing") or self.lines["goodbye"]
-        niceties = self.lines.get("closing_niceties") or {}
-        part = part_of_day(datetime.now(ZoneInfo(self.tz)).hour)
-        options = niceties.get(part) or []
+        options = self.lines.get("closing_niceties") or []
         if not options:
             return base
         pick = options[sum(map(ord, self.server.call_id or "")) % len(options)]
@@ -489,8 +496,14 @@ class LlmCall:
             return
         while not out.closed and not out.stale() and not out.said:
             waited = time.perf_counter() - began
-            start = out.tool_began if self.hold_from == "tool" else began
-            due = start is not None and time.perf_counter() - start >= self.hold_after_s
+            if self.hold_from == "tool":
+                due = (out.tool_began is not None
+                       and time.perf_counter() - out.tool_began >= self.hold_after_s)
+            elif self.last_word is not None:
+                # From the caller's last word, as the caller feels the wait (Jackson).
+                due = time.time() - self.last_word >= self.hold_after_s
+            else:
+                due = waited >= self.hold_after_s
             if out.tool_wait and due:
                 phrase = self.hold_phrases[self.hold_stats["fired"] % len(self.hold_phrases)]
                 self.hold_stats["fired"] += 1
@@ -534,8 +547,12 @@ class LlmCall:
                             goodbyes.append(sentence)
                             continue
                     if sentence and (said := self.reply.sentence(sentence)):
+                        if self.server_led and out.asked:
+                            self._dropped(said, "after_question")
+                            continue
                         kept.append(said)
                         await out.say(said)
+                        out.asked = out.asked or said.rstrip().endswith("?")
             for kind, count in reply.tokens.items():
                 self.tokens[kind] = self.tokens.get(kind, 0) + count
             if hop == 0:
@@ -564,8 +581,12 @@ class LlmCall:
                 if ending:
                     self._dropped(goodbye, "goodbye_with_end_call")
                 elif said := self.reply.sentence(goodbye):
+                    if out.asked:
+                        self._dropped(said, "after_question")
+                        continue
                     kept.append(said)
                     await out.say(said)
+                    out.asked = out.asked or said.rstrip().endswith("?")
             if (self.server_led and not reply.tool_uses and not kept and not last and raw
                     and not out.said):
                 # The filter cut the whole reply: say it as the model wrote it rather than leave
@@ -576,6 +597,11 @@ class LlmCall:
             # lead-in or a question the result answers. The model's next request writes the reply
             # when the server has nothing to say.
             deferred = self.server_led and bool(reply.tool_uses)
+            if last and self.server_led and out.asked and not deferred:
+                # One question a turn: the model's question already ended this reply (Jackson's
+                # call call_046f37112cac691a50019893717 heard its question and the name line together).
+                self._dropped(last, "after_question")
+                last = ""
             if last and not deferred:
                 kept.append(last)
                 await out.say(last)

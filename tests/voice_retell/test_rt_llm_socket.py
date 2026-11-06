@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 from voice.retell_llm import llm_socket
-from voice.retell_llm.call import caller_text, heard_after, part_of_day
+from voice.retell_llm.call import caller_text, heard_after, last_word_at
 from voice.retell_llm.model import Reply
 from voice.retell_llm.rig_adapter import rig_agent_body, socket_url
 
@@ -558,11 +558,9 @@ def test_server_led_the_goodbye_is_the_sockets_alone_and_gets_no_hold(monkeypatc
         events = ask(ws, 1, ["Hi.", "No, that's all."])
     # One closing, with one nicety for the time of day; the model's own goodbye is never said.
     text = said(events)
-    niceties = [n for part in ("morning", "afternoon", "evening", "night")
-                for n in llm_socket.tenant_lines(llm_socket.ROOT / "tenants", "summit-air")
-                ["closing_niceties"][part]]
-    assert text.startswith("Thanks for calling Summit Air. ")
-    assert text.removeprefix("Thanks for calling Summit Air. ") in niceties
+    niceties = llm_socket.tenant_lines(llm_socket.ROOT / "tenants", "summit-air")["closing_niceties"]
+    assert text.startswith("Thanks for calling Summit Air today. ")
+    assert text.removeprefix("Thanks for calling Summit Air today. ") in niceties
     assert "take care" not in text.lower()
     assert events[-1]["end_call"] is True
 
@@ -663,11 +661,17 @@ def test_server_led_a_goodbye_without_end_call_is_said(server_led):
         assert said(ask(ws, 1, ["Hi.", "Have a good one."])) == "You too, have a great day!"
 
 
-@pytest.mark.parametrize("hour,part", [(1, "night"), (4, "night"), (5, "morning"), (11, "morning"),
-                                       (12, "afternoon"), (16, "afternoon"), (17, "evening"),
-                                       (21, "evening"), (22, "night"), (23, "night")])
-def test_the_closing_nicety_fits_the_hour(hour, part):
-    assert part_of_day(hour) == part
+def test_the_closing_is_always_a_pinned_falling_line():
+    """Jackson heard "Thanks for calling Summit Air." rise like a question; only niceties measured
+    to fall in Brian's voice are pinned (retell/arms/socket/closing-pitch-01.json)."""
+    lines = llm_socket.tenant_lines(llm_socket.ROOT / "tenants", "summit-air")
+    measured = json.loads((llm_socket.ROOT / "retell" / "arms" / "socket"
+                           / "closing-pitch-01.json").read_text())
+    falling = {m["sentence"].strip() for m in measured if m.get("falls")}
+    assert lines["closing"] == "Thanks for calling Summit Air today."
+    assert lines["closing_niceties"]
+    for nicety in lines["closing_niceties"]:
+        assert nicety in falling, f"{nicety} has no falling measurement"
 
 
 def test_server_led_no_server_connector_after_the_models_own(server_led):
@@ -688,7 +692,7 @@ def test_server_led_nothing_of_the_models_before_the_closing_when_the_caller_is_
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         text = said(ask(ws, 1, ["Hi.", "That's all."]))
-    assert text.startswith("Thanks for calling Summit Air. ") and "all set" not in text
+    assert text.startswith("Thanks for calling Summit Air today. ") and "all set" not in text
 
 
 def test_server_led_a_done_caller_still_hears_a_reply_that_keeps_the_call_open(server_led):
@@ -705,3 +709,31 @@ def test_server_led_lets_get_you_booked_is_narration(server_led):
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         assert said(ask(ws, 1, ["Hi.", "My AC is leaking."])) == "Can I get your name?"
+
+
+def test_server_led_nothing_follows_the_models_question(server_led):
+    _, make = server_led
+    client, _ = make([(["Oh no, sorry it's leaking. ",
+                        "Is the leak coming from an indoor unit? ",
+                        "Actually, I don't see an account under your number. ",
+                        "Can I get your name?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        text = said(ask(ws, 1, ["Hi.", "Air conditioning is leaking."]))
+    assert text == "Oh no, sorry it's leaking. Is the leak coming from an indoor unit?"
+
+
+def test_the_wait_counts_from_the_callers_last_word():
+    transcript = [{"role": "agent", "content": "Hi.", "words": [{"start": 0.5, "end": 1.0}]},
+                  {"role": "user", "content": "My heat.", "words": [{"start": 2.0, "end": 3.5}]}]
+    assert last_word_at(transcript, 1_000_000) == 1_000 + 3.5
+    assert last_word_at(transcript, None) is None
+
+
+def test_server_led_the_read_back_never_gets_a_hold_phrase(monkeypatch):
+    read_back = {"id": "t1", "name": "read_back", "input": {}}
+    server, client, _ = slow_socket(monkeypatch, {"read_back": 0.2}, [([], [read_back])])
+    server.tools["read_back"] = envelope(say=READ_BACK, data={"confirmed": False})
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "This number."])) == READ_BACK

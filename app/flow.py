@@ -263,22 +263,30 @@ UNIT_QUESTION = "'Is there an apartment or unit number?'"
 
 
 def _after_address(ctx, needs_unit: bool) -> str:
-    """The questions between the address and the read-back. The unit only for a building with more
-    than one home (find_address `needs_unit`); 'completely out' only on a no-heat or no-cooling
-    call; the system type once (Jackson's live calls)."""
+    """The questions between the address and the read-back, built from what the caller already
+    said (Jackson's call call_046f37112cac691a50019893717): the unit only for a building with more
+    than one home (find_address `needs_unit`); how bad only on a no-heat or no-cooling call, in
+    their words when they named a symptom; the system type fit to the issue; a catch-all that
+    never offers an example they already gave."""
     unit = f"{UNIT_QUESTION}, unless they said it's a house or gave one; " if needs_unit else ""
+    line = ctx.tenant.line
     return (
-        f"Ask the next of these you don't have yet, one a turn, skipping any the caller already "
-        f"answered: {unit}only on a no-heat or no-cooling call, 'Is it completely out, or just not "
-        "keeping up?', then 'Since when?'; when heating, cooling or airflow isn't working (not a "
-        "maintenance visit or a quote), one catch-all in its own turn: heating "
-        f"'{ctx.tenant.line('ask_catch_all_heating')}', cooling "
-        f"'{ctx.tenant.line('ask_catch_all_cooling')}', vents or airflow "
-        f"'{ctx.tenant.line('ask_catch_all_airflow')}', with the answer in the job's issue; "
-        "if they haven't said what system it is, "
-        f"'{ctx.tenant.line('ask_system_type')}'; then 'What's the best phone number to reach "
-        "you?'. Once you have the phone number, call read_back with the job type."
+        "Ask the next of these you don't have yet, one a turn, built from what the caller already "
+        "said and never asking for anything they told you: "
+        f"{unit}only on a no-heat or no-cooling call, how bad it is: when they named a symptom, "
+        f"in their words ('{line('ask_how_bad_symptom')}'), otherwise "
+        "'Is it completely out, or just not keeping up?'; then 'Since when?'; if they haven't said "
+        f"what system it is, for heating '{line('ask_system_type_heating')}', for cooling "
+        f"'{line('ask_system_type_cooling')}'; when heating, cooling or airflow isn't working (not "
+        "a maintenance visit or a quote), one catch-all in its own turn, never with an example "
+        f"they already gave: heating '{line('ask_catch_all_heating')}', cooling "
+        f"'{line('ask_catch_all_cooling')}', vents or airflow '{line('ask_catch_all_airflow')}' "
+        "(after a symptom they named: 'Besides the leak, anything else ...'), with the answer in "
+        "the job's issue; then 'What's the best phone number to reach you?'. Once you have the "
+        "phone number, call read_back with the job type."
     )
+
+
 ANYTHING_ELSE = (
     "If the sentence didn't ask already, ask 'Anything else?'. When the caller has nothing else, "
     "say the goodbye and call end_call."

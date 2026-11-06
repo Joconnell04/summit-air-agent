@@ -556,6 +556,11 @@ lines:
   ask_catch_all_airflow: Anything else the technician should know, like weak airflow in some rooms or a lot of dust?
   # The server-led flow asks the system type once if the caller hasn't said it (Jackson's live calls).
   ask_system_type: Is that a boiler, a furnace, central air or a mini-split?
+  # The system type fit to the issue: never a furnace to a cooling caller (Jackson's call 046f37).
+  ask_system_type_heating: Is it a boiler, a furnace, or a heat pump?
+  ask_system_type_cooling: Is it central air, a mini-split, or a window or wall unit?
+  # How bad, in the caller's words, when they named a symptom (Jackson's call 046f37).
+  ask_how_bad_symptom: You mentioned it's leaking. Is it still cooling, or has it stopped?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
   # has no booking yet (DECISIONS.md 085). {unit} is "5C".
   next_unit: Now let's set up apartment {unit}.
@@ -600,13 +605,12 @@ voice:
   # The socket arm (voice/retell_llm, server-led): its closing, word for word, Jackson's line; the
   # check-in after about 8 seconds of silence, at most twice; and the hold phrases said once when a
   # step's tool work outlasts config/models.yaml voice.hold_phrase_after_s, in turn.
-  closing: Thanks for calling Summit Air.
-  # One of these after the closing, fit to the time of day, chosen per call (change set 24).
-  closing_niceties:
-    morning: [Have a great morning!, Enjoy the rest of your morning!]
-    afternoon: [Have a great afternoon!, Enjoy the rest of your afternoon!]
-    evening: [Have a good evening!, Enjoy your evening!]
-    night: [Have a good night!, Get some rest tonight!]
+  closing: Thanks for calling Summit Air today.
+  # Only niceties measured to end falling in Brian's voice (retell/arms/socket/closing_pitch.py on
+  # 41 recorded calls, retell/arms/socket/closing-pitch-01.json): "Have a great day!" fell on 36 of
+  # 36 (median -18 semitones a second over its last 400 ms), while "Thanks for calling Summit Air."
+  # rose on 5 of 5 and "Have a good night!" on 3 of 3. Add one here only after it measures falling.
+  closing_niceties: [Have a great day!]
   are_you_there: Are you still there?
   hold_phrases:
     - One sec.
