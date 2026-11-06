@@ -427,6 +427,8 @@ lines:
   address_which: Is that the one in {places}?
   address_not_found: I'm not finding that street. Could you spell the street name for me?
   address_ask_zip: What's the ZIP code there?
+  # A numbered street said with no East or West where both exist (Jackson's call 046f37).
+  address_which_direction: Is that {east} or {west}?
   # The lookup missed twice and no borough was said: asked once, so the visit can be booked.
   address_ask_borough: And which borough is that in?
   # The city's records don't have the address: booked as the caller gave it, confirmed by the office.

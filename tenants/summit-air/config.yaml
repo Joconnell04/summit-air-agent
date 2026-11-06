@@ -68,7 +68,9 @@ address_lookup:
   # the address before dispatch (Jackson; socket-arm call call_1bcb4106a02dff87609d8e7fd8b ended in
   # a callback). ASSUMED placeholders, one central ZIP a borough; never spoken to the caller.
   unverified_zips: {Manhattan: "10001", Brooklyn: "11201", Queens: "11101", Bronx: "10451",
-                    Staten Island: "10301"}
+                    Staten Island: "10301",
+                    # No borough even after asking once: the office confirms it (never the ZIP).
+                    unknown: "10001"}
   zip_boroughs: {"100": Manhattan, "101": Manhattan, "102": Manhattan, "103": Staten Island,
                  "104": Bronx, "112": Brooklyn, "110": Queens, "111": Queens, "113": Queens,
                  "114": Queens, "116": Queens}

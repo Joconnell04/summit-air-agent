@@ -1844,6 +1844,13 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
         return from_caller
     if found.status == "unavailable":
         return _unverified(ctx, "address_lookup_down", house, street, args.borough)
+    if found.status == "none" and _numbered_without_direction(street):
+        # "199 4th Street": in Manhattan that is East 4th or West 4th, never plain 4th (Jackson's
+        # call call_046f37112cac691a50019893717 booked "199 4th Street" unverified). Asked as a
+        # choice, never spelled.
+        found = _with_direction(ctx, house, street, args.borough) or found
+        if found.status == "none":
+            return _unverified(ctx, "address_not_found", house, street, args.borough)
     if found.status == "none":
         thread = records.thread(ctx.conn, ctx.call["id"])
         misses = ctx.conn.execute(
@@ -2173,6 +2180,31 @@ def _one_offer(
     return offer, f"{lead}The soonest I have is {named}, {offer['label']}. Does that work?"
 
 
+def _numbered_without_direction(street: str) -> bool:
+    """ "4th Street", "4 St": a numbered street the caller gave with no East or West."""
+    key = geocode.street_match_key(street).split()
+    return bool(key) and key[0].isdigit() and not {"e", "w", "east", "west"} & set(key)
+
+
+def _with_direction(ctx: Ctx, house: str, street: str, borough: str) -> geocode.Found | None:
+    """The numbered street looked up as East and as West. Both found: the caller is asked which,
+    in their own words. One found: that one. Neither: None."""
+    if not ctx.geocoder:
+        return None
+    hits = {}
+    for side in ("East", "West"):
+        found = ctx.geocoder.find(house, f"{side} {street}", borough)
+        if found.status in ("one", "several"):
+            hits[side] = found
+    if len(hits) == 2:
+        raise Refused(
+            "address_direction",
+            ctx.tenant.line("address_which_direction", east=f"East {street}", west=f"West {street}"),
+            need="ask East or West, then look it up again with the street the caller picks",
+        )
+    return next(iter(hits.values()), None)
+
+
 def _zip_asked_key(house: str, street: str) -> str:
     """Per house and street, so an address the caller corrects gets its own lookup (PR #139
     re-check: "Sorry, I'm actually at 248 Duffield Street" was stuck on the first one's ask)."""
@@ -2212,8 +2244,9 @@ def _unverified(ctx: Ctx, code: str, house: str, street: str, hint: str) -> Resu
         line = ctx.tenant.line("address_ask_borough")
         if zips and _hand_out_once(ctx, line):
             raise Refused(code, line, need="ask which borough, then look it up again with borough")
-        _ask_zip(ctx, code, house, street)
-    zip_code = zips.get(borough)
+    # Never the ZIP (Jackson): with no borough even after asking, the visit books on the tenant's
+    # fallback ZIP, unverified, and the office confirms the address before dispatch.
+    zip_code = zips.get(borough) or zips.get("unknown")
     if not zip_code:
         _ask_zip(ctx, code, house, street)
     with tx(ctx.conn):
