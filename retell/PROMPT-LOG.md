@@ -143,6 +143,10 @@ The combined access question made me answer "yes, and no" (yes someone's home, n
 
 "Thanks for calling Summit Air." sounded like a question again on the socket line. The version I liked earlier had "today" after the brand, and that's what kept the line falling. So the goodbye is "Thanks for calling Summit Air today." plus one nicety, and it never repeats the booking. The socket lane is checking candidate closings for a falling pitch so this stays fixed.
 
+### Change set 28 (06:55)
+
+Not a prompt change, a tools change, but it explains a bug I kept hearing. After the socket turned out to be using an old copy of the tool definitions, we diffed my agent's tools against the server's. The callback day only allowed "today" or "tomorrow", so "Monday morning" could never be stored as Monday. The model had no way to say it. Two newer fields were missing too (when the problem started, and my answer to the catch-all question). All synced, 0 drift now, and a drift test is coming so the tools can't fall behind the server again.
+
 ## Side-by-side arms (issue #169)
 
 Four versions of the agent on the real phone line, scripted callers, scored by our checks, an Opus 5.5 judge and Retell's own latency and cost. One call per arm and persona, so judge means within about half a point are noise. Source for every number in this section unless it says otherwise: `evals/rounds/side-by-side-01.md` on joco/side-by-side-014a4c, MEASURED from `side-by-side-01-data/results.json`.
