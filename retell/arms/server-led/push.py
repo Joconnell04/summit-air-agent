@@ -68,6 +68,9 @@ def voice_body(jackson: dict, llm_id: str) -> dict:
         "agent_name": AGENT_NAME,
         "response_engine": {"type": "retell-llm", "llm_id": llm_id},
         "webhook_url": f"{BASE_URL}/retell/webhook",
+        # Retell's own do-not-call detection hangs up mid-call; mark_do_not_call on our server
+        # handles the request instead (side-by-side lane, #169).
+        "enable_dnc_detection": False,
     }
 
 
