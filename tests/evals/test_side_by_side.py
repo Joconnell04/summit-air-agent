@@ -56,7 +56,7 @@ def good_call():
         agent("I have one ninety-nine East Fourth Street. Is that right?", 2),
         user("Yes."),
         *tool("find_slots", "t2", say="The soonest is today, 4 to 6."),
-        agent("The soonest is today, Thursday, between 4 and 6. Does that work?", 3),
+        agent("The soonest is today, between 4 and 6. Does that work?", 3),
         user("Sure."),
         agent("Anything else?", 4),
         user("No, that's it."),
@@ -352,3 +352,20 @@ def test_the_residential_question_is_not_a_confirmation():
     assert sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))["no_double_confirm"][
         "ok"
     ]
+
+
+def test_the_access_question_is_one_question_and_a_dated_today_fails():
+    assert (
+        sbs.questions(
+            "Will someone be home to let the technician in, and is there a gate code or buzzer they should know about?"
+        )
+        == 1
+    )
+    call = good_call()
+    call[10] = agent("The soonest is tomorrow, Friday, November 6, 8 to 8:30. Does that work?", 3)
+    assert not sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))[
+        "no_date_with_today_or_tomorrow"
+    ]["ok"]
+    assert sbs.check_call(PERSONA, good_call(), rows(["book"], name="Jordan Lee"))[
+        "no_date_with_today_or_tomorrow"
+    ]["ok"]

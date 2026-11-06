@@ -157,11 +157,20 @@ def visit_steps(rng: random.Random, s: Script, window: str | None) -> None:
     s.add(
         f'If asked whether you can approve repair work, say "{pick(rng, ["yes", "yes, I can", "sure"])}".'
     )
-    s.add(
-        f'If asked whether someone will be home, say "{pick(rng, ["yes", "yeah, I will be", "yes, all day"])}".'
+    # One access question since change set 19: someone home, and a gate code or buzzer.
+    home = pick(rng, ["yes, I'll be home", "yeah, someone will be here", "yes, all day"])
+    gate = pick(
+        rng,
+        [
+            "no gate code",
+            "the buzzer is 2B",
+            "nothing like that",
+            "the gate code is four four one two",
+        ],
     )
     s.add(
-        f'If asked about a gate code or buzzer, say "{pick(rng, ["no gate code", "the buzzer is 2B", "nothing like that", "the gate code is four four one two"])}".'
+        f'If asked whether someone will be home and about a gate code or buzzer, say "{home}, and {gate}". '
+        f'If they ask only whether someone will be home, say "{home}". If they ask only about a gate code or buzzer, say "{gate}".'
     )
 
 

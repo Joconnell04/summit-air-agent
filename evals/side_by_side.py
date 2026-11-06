@@ -82,6 +82,13 @@ def norm(text: str) -> str:
 
 TAG_QUESTION = r",?\s*\b(right|correct|okay|yeah)\?"
 CLARIFIER = r"\blike an? [^?.!]*\?"
+ACCESS_QUESTION = r"[^.?!]*let the technician in, and is there a gate code[^?]*\?"
+# Today or tomorrow said with its weekday or date ("tomorrow, Friday, November 6"), which change
+# set 19 rules out.
+DATED_DAY = (
+    r"\b(today|tomorrow)\b,?\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|"
+    r"january|february|march|april|may|june|july|august|september|october|november|december)\b"
+)
 QUESTION_WORD = (
     r"(is|are|do|does|did|what'?s?|where'?s?|when|which|who|how|can|could|will|would|should)"
 )
@@ -93,6 +100,8 @@ def questions(text: str) -> int:
     ("Like a home or an apartment?") belong to the question before them, so they are not counted."""
     text = re.sub(TAG_QUESTION, "?", text, flags=re.IGNORECASE)
     text = re.sub(CLARIFIER, "", text, flags=re.IGNORECASE)
+    # Jackson's one access question (change set 19) joins two asks on purpose.
+    text = re.sub(ACCESS_QUESTION, "the access question?", text, flags=re.IGNORECASE)
     # "Is it a business, and is that where you'd like the technician?" is two questions; "Got it,
     # and what street?" is one, since the clause before "and" is not a question.
     joined = 0
@@ -279,6 +288,9 @@ def check_call(
             if not said_verbatim(say["say"], heard):
                 missed.append(f"{say['tool']}: {say['say'][:80]}")
     put("server_lines_verbatim", not missed, "; ".join(missed[:3]))
+
+    dated = [t["text"] for t in agents if re.search(DATED_DAY, t["text"], re.IGNORECASE)]
+    put("no_date_with_today_or_tomorrow", not dated, "; ".join(d[:100] for d in dated[:2]))
 
     closings = [t for t in agents if norm(CLOSING) in norm(t["text"])]
     put("closing_said_once", len(closings) <= 1, f"{len(closings)} closings")
