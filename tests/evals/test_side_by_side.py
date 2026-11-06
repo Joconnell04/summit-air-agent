@@ -445,3 +445,25 @@ def test_a_matched_caller_is_not_asked_the_name_and_the_no_match_line_comes_once
     assert not sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))[
         "no_match_line_once"
     ]["ok"]
+
+
+def test_change_set_24_goodbye_waiting_and_check_ins():
+    call = good_call()
+    call[-1] = agent("Thanks for calling Summit Air. Have a great day. Take care.", 5)
+    out = sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))
+    assert not out["closing_one_nicety"]["ok"] and out["closing_said_once"]["ok"]
+    call[-1] = agent("Thanks for calling Summit Air. Have a good night.", 5)
+    call[2] = agent("Thanks for waiting. Can I get your first and last name?")
+    out = sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))
+    assert out["closing_one_nicety"]["ok"] and not out["no_thanks_for_waiting"]["ok"]
+    nagging = good_call()[:-2] + [
+        agent("Are you still there?"),
+        user("..."),
+        agent("Are you still there?"),
+        user("..."),
+        agent("Are you still there?"),
+        user("No, that's it. Bye."),
+    ]
+    assert not sbs.check_call(PERSONA, nagging, rows(["book"], name="Jordan Lee"))[
+        "still_there_at_most_twice"
+    ]["ok"]

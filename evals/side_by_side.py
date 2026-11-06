@@ -28,6 +28,11 @@ FEEDBACK = ROOT / "evals" / "rounds" / "retell-live-calls-01.md"
 JUDGE_MODEL = "claude-opus-5-5"
 
 CLOSING = "thanks so much for calling summit air today. have a great day"
+# Either goodbye: the earlier "Thanks so much for calling Summit Air today" or change set 24's
+# "Thanks for calling Summit Air."
+CLOSINGS = r"thanks (so much )?for calling summit air"
+NICETY = r"\b(have a (great|good|nice|lovely|wonderful) (day|night|evening|one)|take care|stay (warm|safe|cool))\b"
+THANKS_FOR_WAITING = r"\bthank(s| you) (so much )?for (waiting|holding|your patience|bearing with)"
 OPEN_DOOR = "if anything makes this more urgent for you, just let me know"
 
 # The agent describing its own steps, from Jackson's feedback in retell-live-calls-01.md and the
@@ -109,7 +114,7 @@ def norm(text: str) -> str:
 
 TAG_QUESTION = r",?\s*\b(right|correct|okay|yeah)\?"
 CLARIFIER = r"\blike an? [^?.!]*\?"
-ACCESS_QUESTION = r"[^.?!]*let the technician in, and is there a gate code[^?]*\?"
+ACCESS_QUESTION = r"[^.?!]*let the technician in(, and|\? and) is there a gate code[^?]*\?"
 # Today or tomorrow said with its weekday or date ("tomorrow, Friday, November 6"), which change
 # set 19 rules out.
 DATED_DAY = (
@@ -365,7 +370,21 @@ def check_call(
     dated = [t["text"] for t in agents if re.search(DATED_DAY, t["text"], re.IGNORECASE)]
     put("no_date_with_today_or_tomorrow", not dated, "; ".join(d[:100] for d in dated[:2]))
 
-    closings = [t for t in agents if norm(CLOSING) in norm(t["text"])]
+    # The greeting also says "thanks for calling Summit Air", so it is left out.
+    closings = [t for t in agents[1:] if re.search(CLOSINGS, norm(t["text"]))]
+    # Change set 24: the goodbye carries one nicety at most; nobody is thanked for waiting; the
+    # silence check-in comes at most twice.
+    for t in closings[-1:]:
+        niceties = len(re.findall(NICETY, norm(t["text"])))
+        put("closing_one_nicety", niceties <= 1, f"{niceties} niceties: {t['text'][-90:]}")
+    thanked = [t["text"] for t in agents if re.search(THANKS_FOR_WAITING, t["text"], re.IGNORECASE)]
+    put("no_thanks_for_waiting", not thanked, "; ".join(x[:80] for x in thanked[:1]))
+    still_there = sum(
+        1 for t in agents if re.search(r"are you still there", t["text"], re.IGNORECASE)
+    )
+    put(
+        "still_there_at_most_twice", still_there <= 2, f'"Are you still there?" {still_there} times'
+    )
     put("closing_said_once", len(closings) <= 1, f"{len(closings)} closings")
 
     if any(norm(OPEN_DOOR) in norm(s["say"]) for t in agents for s in t["says"]):
