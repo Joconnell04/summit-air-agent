@@ -19,5 +19,6 @@ One file per round of testing, with its numbers and the results files behind the
 | [stt-ink2-01.md](stt-ink2-01.md) | Cartesia Ink-2 against Deepgram Nova-3 for speech-to-text |
 | [retell-flow-01.md](retell-flow-01.md) | Retell's Conversation Flow built to our design, against our stack |
 | [lookup-prefetch-01.md](lookup-prefetch-01.md) | Handing the model the lookup result in the same turn: no difference worth turning on; code kept on its branch |
+| [side-by-side-01.md](side-by-side-01.md) | Four agent arms on the real line (as-is, Sonnet, behavioral prompt, server-led): build on the server-led arm behind the custom-LLM socket; no safety errors on any arm |
 
 The ten real phone calls are scripted in [../live-calls.md](../live-calls.md).

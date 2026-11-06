@@ -1,0 +1,40 @@
+dialing +16466240418 from room testcall-e319e9f4
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hi, I want to book a tune-up for my boiler.
+agent : Sure. I can set that up. I get your name?
+caller: Morgan Diaz.
+agent : Thanks. And this is for a residential property. Right? Like a home or an apartment?
+caller: Yes, a house.
+agent : Got it. What's the street address for the house?
+caller: Eighty-four twenty-two one hundred first avenue in Queens.
+agent : What's the best phone number to reach you?
+caller: The number I'm calling from.
+agent : So that's eighty four twenty two one hundred first Avenue, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: Wait, what address did you say?
+agent : The address is eighty four twenty two one hundred First Avenue in Ozone Park, Queens. Is that correct?
+caller: Yes, that's right.
+agent : The soonest I have is tomorrow. Friday, November sixth, arriving between eight and eight thirty in the morning. Does that work?
+caller: Hmm, Friday's not great for me. Do you have anything Saturday morning? Any time after nine is fine.
+agent : Saturday, I have nine to nine thirty, nine thirty to ten, or anything from ten up to noon. Works for you?
+caller: Yeah, nine-thirty to ten works. I'll take that one.
+agent : Great. Will you be able to approve any repair work the technician recommends?
+caller: Yes, I can approve it. Just tell me the price first.
+agent : The technician will go over any cost with you before doing the work. Will someone be home to let the technician in?
+caller: Yes, I'll be home.
+agent : Is there a gate code, a buzzer, or any pets the technician should know about?
+caller: Yes, a gate code... no, wait. Per the script: visit questions answer "yes", "yes", "no pets". The question asks gate code, buzzer,
+agent : Okay,
+caller: Yes, there's a buzzer. And no pets.
+agent : Okay,
+caller: Oh, and am I a member already?
+agent : I don't see a membership on file for you, Morgan. Would you like to hear a bit about our membership?
+caller: Sure, tell me.
+agent : Our summit standard membership covers two tune ups a year and gets you priority scheduling if anything breaks. It also includes a discount on repairs and no after hours fee. Want me to have someone tell you more?
+caller: Okay, can someone call me about signing up?
+agent : What time works best for someone to call you back?
+caller: Monday morning.
+agent : Someone from our team will call you tomorrow before twelve PM to tell you more. Anything else I can help with?
+caller: That's it, bye.
+agent : Thanks so much for calling Summit Air today. Have a great day.
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 25

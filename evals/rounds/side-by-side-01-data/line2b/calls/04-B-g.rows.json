@@ -1,0 +1,94 @@
+{
+ "window": [
+  "2026-11-06T01:28:33Z",
+  "2026-11-06T01:31:40Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_8bea915381ea96aed9f23f16021",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T01:28:45Z",
+    "ended_at": "2026-11-06T01:31:34Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "declined_commercial",
+    "commercial": 1,
+    "summary_status": "pending",
+    "turn_seq": 36,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 337,
+     "call_id": "retell_call_8bea915381ea96aed9f23f16021",
+     "kind": "payment",
+     "reason": "Caller wants to pay by card: send a payment link or call to take the payment",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T01:30:11Z"
+    },
+    {
+     "id": 338,
+     "call_id": "retell_call_8bea915381ea96aed9f23f16021",
+     "kind": "person",
+     "reason": "Dental office (commercial) with broken AC, hot inside, patients coming in. Caller Casey Park, 917-555-0142, wants a call back as soon as possible today. Also asked about repair cost and payment link.",
+     "priority": "High",
+     "status": "open",
+     "created_at": "2026-11-06T01:31:16Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 85,
+     "call_id": "retell_call_8bea915381ea96aed9f23f16021",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T02:01:16Z",
+     "owner": "on_call",
+     "reason": "Dental office (commercial) with broken AC, hot inside, patients coming in. Caller Casey Park, 917-555-0142, wants a call back as soon as possible today. Also asked about repair cost and payment link.",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T01:31:16Z",
+     "updated_at": "2026-11-06T01:31:16Z"
+    }
+   ],
+   "leads": [
+    {
+     "id": 40,
+     "call_id": "retell_call_8bea915381ea96aed9f23f16021",
+     "kind": "commercial",
+     "summary": "Dental office; contact Casey Park +16466240418; AC broken at dental office, hot inside, patients coming in. Phone 917-555-0142. Asked about repair cost.",
+     "status": "stored",
+     "fsm_key": "retell_call_8bea915381ea96aed9f23f16021:lead:10a4d708420f1018974d80c7a9557c3e818db4c8",
+     "request_json": "{\"callReasonId\": 704, \"customerId\": null, \"leadCustomerName\": \"Dental office\", \"leadPhone\": \"+16466240418\", \"summary\": \"Dental office; contact Casey Park +16466240418; AC broken at dental office, hot inside, patients coming in. Phone 917-555-0142. Asked about repair cost.\", \"campaignId\": 301}",
+     "fsm_lead_id": 3,
+     "callback_id": null,
+     "attempts": 1,
+     "last_error": null,
+     "created_at": "2026-11-06T01:29:33Z"
+    }
+   ]
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T01:31:51Z"
+}

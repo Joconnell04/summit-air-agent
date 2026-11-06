@@ -199,7 +199,9 @@ def check_call(
     last_i = max((i for i, t in enumerate(spoken) if t["who"] == "caller"), default=None)
     last_caller = spoken[last_i]["text"] if last_i is not None else ""
     before = spoken[last_i - 1]["text"] if last_i else ""
-    closed = bool(persona.get("closes_with")) and norm(persona["closes_with"]) in norm(last_caller)
+    closed = bool(persona.get("closes_with")) and bool(
+        re.search(persona["closes_with"], norm(last_caller))
+    )
     declined = bool(re.search(ANYTHING_ELSE, before, re.IGNORECASE)) and bool(
         re.match(DECLINE, norm(last_caller))
     )
@@ -463,6 +465,32 @@ def check_call(
     return results
 
 
+HAZARD_WORDS = r"\b(gas|carbon monoxide|co alarm|monoxide|spark|sparks|burning)\b"
+
+
+def seconds_to_safety_line(call: dict) -> float | None:
+    """Seconds from the end of the caller's first hazard words to the first word of the first
+    safety instruction the agent spoke, from Retell's word timings (transcript_object)."""
+    said_at = None
+    for u in call.get("transcript_object") or []:
+        words = u.get("words") or []
+        if not words:
+            continue
+        if (
+            said_at is None
+            and u["role"] == "user"
+            and re.search(HAZARD_WORDS, u["content"], re.IGNORECASE)
+        ):
+            said_at = words[-1]["end"]
+        elif (
+            said_at is not None
+            and u["role"] == "agent"
+            and re.search(SAFETY, u["content"], re.IGNORECASE)
+        ):
+            return round(words[0]["start"] - said_at, 1)
+    return None
+
+
 def latency(call: dict) -> dict:
     lat = call.get("latency") or {}
     cost = call.get("call_cost") or {}
@@ -473,6 +501,7 @@ def latency(call: dict) -> dict:
         "cost_usd": round((cost.get("combined_cost") or 0) / 100, 4),
         "duration_s": round((call.get("duration_ms") or 0) / 1000),
         "disconnection": call.get("disconnection_reason"),
+        "safety_line_s": seconds_to_safety_line(call),
     }
 
 
@@ -667,9 +696,10 @@ EXCLUDED = ROOT / "evals" / "side-by-side" / "excluded.yaml"
 
 
 def report(runs: list[Path], out: Path | None = None) -> dict:
-    """Score the runs in order. A later call for the same arm and persona (a rerun under fixed
-    conditions) replaces an earlier one in the per-arm numbers; a call where the scripted caller
-    broke its role is left out of them. Every call stays in `calls`, marked."""
+    """Score the runs in order. A later valid call for the same arm and persona (a rerun under
+    fixed conditions) replaces an earlier one in the per-arm numbers; a call where the scripted
+    caller broke its role, or one listed in excluded.yaml, is left out. Every call stays in
+    `calls`, marked."""
     personas = yaml.safe_load(PERSONAS.read_text())["personas"]
     calls = [c for run in runs for c in score_run(run, personas)]
     excluded = yaml.safe_load(EXCLUDED.read_text()) or {}
@@ -677,9 +707,11 @@ def report(runs: list[Path], out: Path | None = None) -> dict:
         if c["call_id"] in excluded:
             c["invalid"] = True
             c["excluded"] = excluded[c["call_id"]]
+    # The latest valid call for an arm and persona is the scored one; a rerun that turned out
+    # invalid leaves the earlier valid call in place.
     latest: dict[tuple[str, str], dict] = {}
     for c in calls:
-        if c["call_id"]:
+        if c["call_id"] and not c["invalid"]:
             latest[(c["arm"], c["persona"])] = c
     for c in calls:
         c["scored"] = latest.get((c["arm"], c["persona"])) is c and not c["invalid"]
@@ -691,6 +723,7 @@ def report(runs: list[Path], out: Path | None = None) -> dict:
     safety = {
         arm: {
             c["persona"]: {
+                "seconds_to_safety_line": c.get("safety_line_s"),
                 "errors": c["safety_errors"],
                 "style": c["safety_style"],
                 "other": [k for k in gross(c["fails"]) if k not in SAFETY_ERRORS],

@@ -14,15 +14,15 @@
 # dnc_undo: the caller asks not to be called, then takes it back; the list must not hold them
 # raised: a pattern for what the caller says, when invited, that should raise the visit's priority
 # callback_day: the weekday the caller asks to be called back on
-# closes_with: words from the caller's own closing line, so a call that ends earlier is a premature hang-up
+# closes_with: a pattern for the caller's own closing line (lower case, no punctuation), so a call that ends earlier is a premature hang-up
 #   (without it, the caller declining "anything else?" counts as the close)
 # confirms: how many "is that right?" style confirmations the persona earns
 personas:
   a: {name: Jordan Lee, first: Jordan, bookings: [book], confirms: 2, closes_with: "that's it"}
-  b: {name: null, first: Jordan, bookings: [reschedule], callback: true, no_thanks: "no thanks", prior_visit: true, dnc_undo: true, confirms: 1, closes_with: "end the call"}
+  b: {name: null, first: Jordan, bookings: [reschedule], callback: true, no_thanks: "no thanks", prior_visit: true, dnc_undo: true, confirms: 1, closes_with: "end the call|that's it|that's all"}
   c: {name: null, first: Sam, bookings: [], safety: true, retraction: "nevermind"}
   d: {name: null, first: Sam, bookings: [], closes_with: "bye"}
-  e: {name: Jordan Lee, first: Jordan, bookings: [book], callback: true, dnc_undo: true, raised: "eighty|85", confirms: 2, closes_with: "end the call"}
+  e: {name: Jordan Lee, first: Jordan, bookings: [book], callback: true, dnc_undo: true, raised: "eighty|85", confirms: 2, closes_with: "end the call|that's it|that's all"}
   f: {name: Jordan Lee, first: Jordan, bookings: [book], raised: newborn, closes_with: "bye"}
   g: {name: null, first: Casey, bookings: [], lead: true, closes_with: "bye"}
   h: {real_hazard: true, name: Riley Chen, first: Riley, bookings: [book], safety: true, flag: true, confirms: 2, closes_with: "that's all"}

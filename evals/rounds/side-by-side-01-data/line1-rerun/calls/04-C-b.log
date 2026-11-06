@@ -1,0 +1,36 @@
+dialing +16466240418 from room testcall-c3f57ed4
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hi Brooke, I need to move my appointment to a different time.
+agent : Sure. I can help with that. I get the name on the account first?
+caller: Yeah, it's Jordan Lee. The address is one ninety-nine East Fourth Street.
+agent : Got it.
+caller: Okay, so I booked a no-heat visit
+agent : I'm not fine
+caller: Sorry, I think I got cut off. I just need to move the visit I booked for today. Can you tell me what times you have?
+agent : I'm sorry. I'm not finding a record under that address yet. Could you tell me the ZIP code for one nine nine East fourth Street? And is the booking under the phone number you're calling from?
+caller: Hmm, I don't know the ZIP off the top of my head, sorry. I'm calling from my cell, but I'm not sure which number I booked with. Can you try looking it up by the name, Jordan Lee?
+agent : The find underscore customer tool only searches by phone or address, so I'll look up the address to get the ZIP first. Got it. That's one nine nine East fourth Street in Manhattan. Let me check for your booking there. I still don't see a booking under that address or this number. It may be under a different phone number. You give me the best number you booked with?
+caller: I don't have a different number to try, sorry. Could you check under the name Jordan Lee at that address? Or maybe try my cell again, in case it got entered differently.
+agent : I'm sorry. I can't search by name, and the cell number and address didn't match anything. I can't move a visit I can't find, but I can book you a new time now or have someone call you back to sort out the existing one. Which would you prefer?
+caller: Hmm, okay. Can you just book me a new one for today, then? Whatever's earliest works. I really need heat today.
+agent : It's after hours right now, so I'll look at what's open for today. Nothing's open for the rest of today. Since it's after hours, I can have someone call you back first thing or check tomorrow's openings. Which would you like?
+caller: Okay, first thing tomorrow works. Can someone call me then? I really need heat, so the sooner the better.
+agent : Our team has your request, but your number is on our do not call list. So I can't promise a callback time. If you want us to call you again, I can take that off the list. Would you like me to do that?
+caller: Wait, my number's on a do not call list? I never asked for that. Can you tell me how it got there? And yeah, take it off, I do want to hear from you guys about the heat. Please just make sure someone actually calls me back first thing tomorrow.
+agent : I'm sorry. I don't have details on how it got on the list. I'll take it off now. Your number is off the do not call list now, so we can call you again. Your callback request for first thing tomorrow is with our team, and I've marked it urgent. There anything else I can help with?
+caller: Yeah, actually, why does my radiator bang so loud?
+agent : Banging radiators are common with steam heat. Usually water trapped in the pipes, and a technician can check that when they come out. Is there anything else I can help with?
+caller: Got it, thanks. Okay, one more thing: am I a member with you guys?
+agent : I couldn't find a membership on your account since I wasn't able to locate a under your number or that address. I can't confirm it. Would you like to hear a bit about our membership?
+caller: No thanks.
+agent : No problem. Anything else I can help with?
+caller: I've got a question about a bill. Can someone call me about it?
+agent : When's a good time for someone to call you back about your bill?
+caller: Tomorrow afternoon works.
+agent : I've let our team know about your bill and someone will call you tomorrow between twelve PM and five PM. There anything else I can help with?
+caller: Honestly, don't call me anymore.
+agent : Just to confirm, you'd like us to stop calling this number? Would include the callbacks for your heat and your bill.
+caller: Yeah.
+agent : Understood. We won't call you. So much for calling Summit Air today. Have a great day.
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 25

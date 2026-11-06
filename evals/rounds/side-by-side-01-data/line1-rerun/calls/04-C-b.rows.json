@@ -1,0 +1,86 @@
+{
+ "window": [
+  "2026-11-06T02:48:12Z",
+  "2026-11-06T02:52:49Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_b8641369a8b7e72f85cfaecc267",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16466240418",
+    "direction": "inbound",
+    "started_at": "2026-11-06T02:48:23Z",
+    "ended_at": "2026-11-06T02:52:42Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "callback",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 54,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 63,
+     "call_id": "retell_call_b8641369a8b7e72f85cfaecc267",
+     "kind": "person",
+     "reason": "No heat at 199 East 4th Street, Manhattan. Caller Jordan Lee wants a new visit today, none available; needs heat as soon as possible. Existing booking not found under phone or address; caller wants to move it.",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T02:50:37Z"
+    },
+    {
+     "id": 68,
+     "call_id": "retell_call_b8641369a8b7e72f85cfaecc267",
+     "kind": "person",
+     "reason": "Billing question from Jordan Lee at 199 East 4th Street, Manhattan. Wants a callback tomorrow afternoon. Also has an urgent no-heat callback request from earlier today.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T02:52:10Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 25,
+     "call_id": "retell_call_b8641369a8b7e72f85cfaecc267",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Billing question from Jordan Lee at 199 East 4th Street, Manhattan. Wants a callback tomorrow afternoon. Also has an urgent no-heat callback request from earlier today. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "cancelled",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T02:52:10Z",
+     "updated_at": "2026-11-06T02:52:34Z"
+    }
+   ],
+   "leads": []
+  }
+ ],
+ "do_not_call": [
+  {
+   "phone_key": "6466240418",
+   "phone": "+16466240418",
+   "call_id": "retell_call_b8641369a8b7e72f85cfaecc267",
+   "added_at": "2026-11-06T02:52:34Z"
+  }
+ ],
+ "dumped_at": "2026-11-06T02:53:00Z"
+}
