@@ -49,6 +49,14 @@ NARRATES = re.compile(
     r"searching|finding)\b)",
     re.IGNORECASE,
 )
+# A statement about what the booking needs, which explains a gate to the caller ("The booking
+# needs one more detail.", "To book the safety check, I need your name first."; done-bar calls).
+GATE_TALK = re.compile(
+    r"^\W*((okay|ok|alright|got it|sure),?\s+)?(the booking needs\b|to book (it|this|that|the "
+    r"[\w -]+?),? (i )?need\b|i need (one|a) more detail\b|(i|we) need (that|this|a few "
+    r"(more )?details?) (first|before)\b)",
+    re.IGNORECASE,
+)
 # Turn results whose text is spoken as the server wrote it, before the model answers.
 SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 CONNECTED = "(The call has connected.)"
@@ -310,6 +318,8 @@ class LlmCall:
         self.call_start_ms = call_start_ms
         self.last_word: float | None = None
         self.reminders = 0
+        # Server-led: find_slots offered windows and nothing is booked yet.
+        self.offer_open = False
         self.messages: list[dict] = []
         self.reply = SpokenReply()
         self.current_id = -1
@@ -499,6 +509,8 @@ class LlmCall:
             return "", "repeats_said"
         if NARRATES.match(tidy):
             return "", "narrates"
+        if GATE_TALK.match(tidy):
+            return "", "explains_gate"
         if THANKS_FOR_WAITING.search(tidy):
             return "", "thanks_for_waiting"
         return tidy, ""
@@ -570,7 +582,11 @@ class LlmCall:
         tool_ms = 0.0
         for hop in range(MAX_HOPS):
             self.reply.start_reply()
-            holding = self.reply.holding()
+            # While windows are on offer, the model's text waits for the end of its reply: a reply
+            # that calls find_slots again (a fact that makes it urgent) is the server's dispatch
+            # line alone, never the model's slot offer before it (call
+            # call_63eff21840ce12f1518561da90f said both).
+            holding = self.reply.holding() or (self.server_led and self.offer_open)
             pending, held, kept = "", [], []
             # Server-led: the model's goodbyes wait for the end of the reply (the socket says the
             # closing when it ends the call), and the raw sentences, for the fallback.
@@ -622,6 +638,11 @@ class LlmCall:
                 last = self.reply.text(" ".join([*held, pending]), calls)
                 if self.server_led and last:
                     last = self._one_question(last)
+                    parts = [p for p in SENTENCE_END.split(last) if p.strip()]
+                    if out.hold_ms is not None and len(parts) > 1 and LONE_ACK.match(parts[0]):
+                        # "One sec." already opened the reply: no "Got it." stacked on it.
+                        self._dropped(parts[0], "ack_after_hold")
+                        last = " ".join(parts[1:])
             else:
                 rest = pending
                 if self.server_led and pending.strip():
@@ -691,11 +712,23 @@ class LlmCall:
                     out.tool_began = time.perf_counter()
             envelope = await self._tool(out, name, dict(use["input"]))
             self.reply.tool_done(name, envelope)
+            if name == "find_slots" and envelope.get("ok"):
+                self.offer_open = not (envelope.get("data") or {}).get("dispatched")
+            elif name == "book_appointment" and envelope.get("ok"):
+                self.offer_open = False
             data = envelope.get("data") or {}
             ending = name == "end_call" and envelope.get("ok")
             parts = data.get("parts") if envelope.get("ok") else None
             line = spoken_by_server(name, envelope)
             say = envelope.get("say") or ""
+            put = False
+            if self.server_led and name == "flag_person" and envelope.get("ok") and self.phone:
+                # Put through first, so the caller hears either the handoff or the callback line,
+                # never both (call call_63eff21840ce12f1518561da90f heard the callback time, then
+                # "I'm connecting you").
+                put = await self._put_through(out, envelope)
+                if put:
+                    say, finished = "", True
             if parts:
                 # A read-back the caller asked to hear slower. Retell has no per-sentence speed,
                 # so the parts are said at the call's one speed.
@@ -727,7 +760,8 @@ class LlmCall:
                     await out.say(self.lines["goodbye"], fixed=True)
                 self.ended = "agent_end"
                 finished = True
-            person = name == "flag_person" and envelope.get("ok") and self.phone
+            person = (name == "flag_person" and envelope.get("ok") and self.phone
+                      and not self.server_led)
             if person and await self._put_through(out, envelope):
                 finished = True
             if name == "request_transfer" and envelope.get("ok"):

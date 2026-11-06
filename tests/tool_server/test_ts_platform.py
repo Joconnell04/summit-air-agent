@@ -112,6 +112,41 @@ def test_the_call_never_ends_before_the_caller_was_asked_for_anything_else(agent
     assert agent.tool("end_call", call, reason="resolved")["data"]["hang_up"] is True
 
 
+@pytest.mark.parametrize("asked", [
+    "Anything else I can help with?",
+    "Is there something else you need?",
+    "Are you all set?",
+    "Is that it for today?",
+    "Is that everything?",
+])
+def test_any_way_of_asking_for_anything_else_lets_the_call_end(agent, asked):
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["ok"]
+    agent.say(call, asked)
+    agent.turn(call, "No.")
+    assert agent.tool("end_call", call, reason="resolved")["data"]["hang_up"] is True
+
+
+def test_a_confirmation_that_says_all_set_is_not_asking(agent):
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["ok"]
+    agent.say(call, "You're all set for Thursday morning.")
+    agent.turn(call, "Great.")
+    assert agent.tool("end_call", call, reason="resolved")["refused"] == "anything_else_first"
+
+
+def test_a_refusal_says_the_question_so_the_next_end_call_goes_through(agent):
+    """No dead air: the refusal carries the question to say, and once the caller answers it the
+    next end_call ends the call."""
+    call = ready_to_book(agent)
+    assert book(agent, call, first_open(agent, call))["ok"]
+    refused = agent.tool("end_call", call, reason="resolved")
+    assert refused["refused"] == "anything_else_first" and refused["say"].endswith("?")
+    agent.say(call, refused["say"])
+    agent.turn(call, "No.")
+    assert agent.tool("end_call", call, reason="resolved")["data"]["hang_up"] is True
+
+
 def test_a_caller_who_says_thats_all_unasked_can_be_let_go(agent):
     call = ready_to_book(agent)
     assert book(agent, call, first_open(agent, call))["ok"]

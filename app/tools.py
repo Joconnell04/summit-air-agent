@@ -85,6 +85,7 @@ from .text import (
     street_said,
     unit_clean,
     unit_key,
+    unit_settled,
     with_spelled_name,
     words,
 )
@@ -2545,6 +2546,13 @@ def _unit_for_building(ctx: Ctx, address: dict) -> None:
     Street, nine homes). Asked once, so a caller who says there's none isn't asked again."""
     if address["unit"]:
         return
+    said = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller'", (ctx.call["id"],)
+    ).fetchall()
+    if unit_settled([r["text"] for r in said]) == "none":
+        # "No, it's just the house" already answered it (call call_51d7bc63abd9040be451a8bc596
+        # asked three times).
+        return
     split = geocode.split_address(address["street"])
     if not split:
         return
@@ -4934,8 +4942,11 @@ def end_call(ctx: Ctx, args: EndCallIn) -> Result:
     return ok(hang_up=True)
 
 
-# An agent line that asks whether there's more, in the model's words or the tenant's.
-ASKS_ANYTHING_ELSE = ("anything else", "something else")
+# A question that asks whether there's more, in the model's words or the tenant's. Only a
+# question counts, so "You're all set for Thursday." isn't one.
+ASKS_ANYTHING_ELSE = (
+    "anything else", "something else", "all set", "that it", "that everything", "anything more",
+)
 # A caller who says there's nothing more without being asked.
 ALL_DONE = ("thats all", "thats it", "thats everything", "all set", "nothing else")
 
@@ -4952,8 +4963,9 @@ def _caller_finished(ctx: Ctx, booked_seq: int) -> bool:
     for row in rows:
         text_words = words(row["text"])
         if row["speaker"] == "agent":
+            questions = [words(q) for q in re.findall(r"[^.!?]*\?", row["text"])]
             asked = asked or own in text_words or any(
-                has_phrase(text_words, p) for p in ASKS_ANYTHING_ELSE
+                has_phrase(q, p) for q in questions for p in ASKS_ANYTHING_ELSE
             )
         elif asked or says_goodbye(row["text"]) or any(
             has_phrase(text_words, p) for p in ALL_DONE

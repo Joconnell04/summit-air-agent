@@ -656,11 +656,12 @@ voice:
 
 # Job types booked without the repair intake (since, tried, who's home, approver): a quote for a new
 # system, where nothing broke and nobody approves (Jackson, call_2fb4e053ba8b76b57c348845990).
-# Job types with no fault to ask about (since when, what was tried): a tune-up. The server-led flow
-# never asks them there, so a booking can't require them (done-bar persona i's tune-up was refused).
+# Job types with no fault to ask about (since when, what was tried): a tune-up, and a check after a
+# gas smell or an alarm. The server-led flow never asks them there, so a booking can't require them
+# (done-bar persona i's tune-up was refused; call call_d101fce0cddb6792cb6214aaacb asked five times).
 intake:
   skip_for: [estimate]
-  no_fault_for: [tune_up]
+  no_fault_for: [tune_up, safety_check]
 
 # The assistant's name, said in the greetings ({assistant_name} in a line). Jackson's agent uses
 # Cartesia's Brian voice.

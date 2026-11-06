@@ -32,6 +32,7 @@ class FakeToolServer:
         self.posts: list[tuple[str, dict]] = []
         self.turns: dict[str, dict] = {}
         self.tools: dict[str, dict] = {}
+        self.transfer = envelope(data={"transfer": None})
 
     def handle(self, request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content or b"{}")
@@ -39,8 +40,14 @@ class FakeToolServer:
         self.posts.append((path, body))
         if path.endswith("/turn") and body["speaker"] == "caller":
             return httpx.Response(200, json=self.turns.get(body["text"], envelope()))
+        if path.endswith("/transfer"):
+            return httpx.Response(200, json=self.transfer)
         if path.startswith("/tools/"):
-            return httpx.Response(200, json=self.tools.get(path.removeprefix("/tools/"), envelope()))
+            got = self.tools.get(path.removeprefix("/tools/"), envelope())
+            if isinstance(got, list):
+                # One result per call, in order; the last one repeats.
+                got = got.pop(0) if len(got) > 1 else got[0]
+            return httpx.Response(200, json=got)
         return httpx.Response(200, json=envelope())
 
     def lines(self, speaker: str) -> list[str]:
@@ -834,3 +841,66 @@ def test_server_led_a_transfer_says_its_sentence_once(server_led, phone):
         open_call(ws, details)
         events = ask(ws, 1, ["Hi.", "Can I talk to a real person?"])
     assert said(events) == (CONNECTING if phone else FALLBACK)
+
+
+CALLBACK = "I've let our team know, and someone will call you by 10:20 PM."
+FLAG = {"id": "f1", "name": "flag_person", "input": {"reason": "Wants a person"}}
+
+
+@pytest.mark.parametrize("put_through", [True, False], ids=["put_through", "callback"])
+def test_server_led_a_flag_says_the_handoff_or_the_callback_never_both(server_led, put_through):
+    """Call call_63eff21840ce12f1518561da90f said the callback time, then "I'm connecting you"."""
+    server, make = server_led
+    server.tools["flag_person"] = envelope(say=CALLBACK, data={"flag_id": 3, "callback_id": 4})
+    if put_through:
+        server.transfer = envelope(say=CONNECTING, data={"transfer": {
+            "id": 9, "role": "on_call", "phone": "+12125550111"}})
+    phone = {**DETAILS, "call": {**DETAILS["call"], "call_type": "phone_call"}}
+    client, _ = make([([], [FLAG]), (["Anything else?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws, phone)
+        events = ask(ws, 1, ["Hi.", "Can someone call me?"])
+    if put_through:
+        assert said(events) == CONNECTING
+        assert events[-1]["transfer_number"] == "+12125550111"
+    else:
+        assert said(events).startswith(CALLBACK) and CONNECTING not in said(events)
+
+
+@pytest.mark.parametrize("line", [
+    "The booking needs one more detail.",
+    "To book the safety check, need your name first.",
+    "Got it, to book this I need a few details.",
+    "I need one more detail for the technician.",
+])
+def test_server_led_a_line_about_what_the_booking_needs_is_cut(server_led, line):
+    _, make = server_led
+    client, _ = make([([f"{line} What's your name?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "I want a tune-up."])) == "What's your name?"
+
+
+OFFER = "The soonest I have is today, 8 to 8:30. Does that work?"
+DISPATCH = ("Okay. Our on-call technician will call you within twenty minutes and head out to "
+            "you at 199 East Fourth Street.")
+
+
+def test_server_led_a_dispatch_after_an_offer_is_the_servers_line_alone(server_led):
+    """Call call_63eff21840ce12f1518561da90f said the model's slot offer, then the dispatch."""
+    server, make = server_led
+    server.tools["find_slots"] = [envelope(say=OFFER), envelope(say=DISPATCH,
+                                                                data={"dispatched": True})]
+    slots = {"id": "s1", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    again = {"id": "s2", "name": "find_slots", "input": {"job_type": "no_heat",
+                                                          "facts": {"who_home": "mom, 85"}}}
+    client, _ = make([([], [slots]),
+                      (["Thanks for telling me. ", "I can offer today, 8 to 8:30, or other times. "],
+                       [again])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Yes, that's right."])) == OFFER
+        second = said(ask(ws, 2, ["Hi.", "Yes, that's right.", OFFER,
+                                  "My mom's 85 and she's staying with me."]))
+    assert second == DISPATCH
+

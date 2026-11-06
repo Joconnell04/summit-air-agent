@@ -19,6 +19,7 @@ from collections.abc import Callable
 from . import records
 from .db import iso, tx
 from .envelope import Refused, Result
+from .text import unit_settled
 
 # The visit questions, the patterns that find each one in an agent line (said in any words), and
 # the patterns that find a caller who answered it before being asked.
@@ -287,16 +288,20 @@ def _out_jobs(ctx) -> list[str]:
 UNIT_QUESTION = "'Is there an apartment or unit number?'"
 
 
-UNIT_SAID = re.compile(
-    r"\b(unit|apt|apartment|suite|floor)\s+\w+|#\s*\w+|\b\d+(st|nd|rd|th)\s+floor\b", re.IGNORECASE
-)
-
-
-def _unit_said(ctx) -> bool:
-    """The caller already gave the unit ("1700 Bedford Avenue, unit 4B"): it isn't asked again."""
+def _unit_said(ctx) -> str:
+    """What the caller said that settles the unit ("unit 4B", or "none" for "it's just the
+    house"), so it isn't asked again; "" when they haven't."""
     if getattr(ctx, "conn", None) is None:
-        return False
-    return any(t["speaker"] == "caller" and UNIT_SAID.search(t["text"]) for t in _turns(ctx))
+        return ""
+    return unit_settled([t["text"] for t in _turns(ctx) if t["speaker"] == "caller"])
+
+
+def _safety_call(ctx) -> bool:
+    """The caller reported a gas smell or an alarm on this call, so the visit checks that."""
+    call = getattr(ctx, "call", None)
+    # keys(), since `in` on a sqlite3.Row looks at its values.
+    keys = call.keys() if call is not None else ()
+    return bool("safety_signal_at" in keys and call["safety_signal_at"])
 
 
 def _after_address(ctx, needs_unit: bool) -> str:
@@ -305,8 +310,22 @@ def _after_address(ctx, needs_unit: bool) -> str:
     than one home (find_address `needs_unit`); how bad only on a no-heat or no-cooling call, in
     their words when they named a symptom; the system type fit to the issue; a catch-all that
     never offers an example they already gave."""
-    unit = (f"{UNIT_QUESTION}, unless they said it's a house; "
-            if needs_unit and not _unit_said(ctx) else "")
+    said_unit = _unit_said(ctx)
+    if not needs_unit or said_unit == "none":
+        unit = ""
+    elif said_unit:
+        unit = f"never the unit, which they gave ('{said_unit}'); "
+    else:
+        unit = f"{UNIT_QUESTION}, unless they said it's a house; "
+    if _safety_call(ctx):
+        # A gas smell or an alarm is the issue already: no outage, since-when, tried or system
+        # questions (calls call_51d7bc63abd9040be451a8bc596, call_d101fce0cddb6792cb6214aaacb).
+        return (
+            "This visit is a safety check, so never ask how bad it is, since when, what was tried, "
+            "what the issue is or what kind of system it is. Ask the next of these you don't have "
+            f"yet, one a turn: {unit}'What's the best phone number to reach you?'. Once you have "
+            "the phone number, call read_back with the job type."
+        )
     line = ctx.tenant.line
     return (
         "Ask the next of these you don't have yet, one a turn, built from what the caller already "
