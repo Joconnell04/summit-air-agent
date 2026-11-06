@@ -1,5 +1,5 @@
 """Every call gets one label for the owner, Urgent, Routine or No visit, with its reason
-(DECISIONS.md 121), stored on the call and shown on the owner view; a booked job carries it to the
+(DECISIONS.md 122), stored on the call and shown on the owner view; a booked job carries it to the
 CRM as a tag."""
 
 from test_ts_owner import booked_tune_up, caller, commercial, out_of_area
