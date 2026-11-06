@@ -411,6 +411,32 @@ def check_call(
             all(k in kinds for k in want) and (want or not kinds),
             f"bookings {kinds}, expected {want}",
         )
+    if persona.get("unit_ask"):
+        # Asked for the apartment or unit before the read-back (change set 18).
+        before = agents[
+            : next(
+                (
+                    i
+                    for i, t in enumerate(agents)
+                    if any(x["name"] == "read_back" for x in t["tools"])
+                ),
+                len(agents),
+            )
+        ]
+        put(
+            "unit_asked",
+            any(
+                re.search(r"\b(apartment|unit)\b[^?]*\?", t["text"], re.IGNORECASE) for t in before
+            ),
+            "a building's unit was never asked before the read-back",
+        )
+    if persona.get("job_type"):
+        jobs = [b.get("job_type") for b in ours.get("bookings", [])]
+        put(
+            "records_job_type",
+            persona["job_type"] in jobs,
+            f"booked {jobs}, expected {persona['job_type']}",
+        )
     if persona.get("callback"):
         put("records_callback", bool(ours.get("callbacks")), "no callback row")
     day = persona.get("callback_day")

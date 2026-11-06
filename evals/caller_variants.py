@@ -117,7 +117,10 @@ def contact_steps(
     rng: random.Random, s: Script, name: str, address: str, borough: str, unit: str, log: dict
 ) -> None:
     """Name, residential, address, phone and the read-back, with this variant's quirks."""
-    say_unit = f", {unit}" if unit else ""
+    # Half of the callers with a unit say it with the street; the rest wait to be asked, which
+    # the agent must do for a building (change set 18).
+    log["unit_volunteered"] = bool(unit) and chance(rng, 0.5)
+    say_unit = f", {unit}" if log["unit_volunteered"] else ""
     s.add(f'If asked for your name, say "{name}". If asked to spell it, spell it slowly.')
     s.add(
         f'If asked whether it is a home, say "{pick(rng, ["yes, a house", "yeah, it is my apartment", "yes, residential", "it is my home, yes"])}".'
@@ -128,6 +131,10 @@ def contact_steps(
         )
     else:
         s.add(f'If asked for the address, say "{address}{say_unit}".')
+    if unit and not log["unit_volunteered"]:
+        s.add(f'If asked for an apartment or unit number, say "{unit}".')
+    elif not unit:
+        s.add('If asked for an apartment or unit number, say "no, it\'s a house".')
     s.add(
         f'If asked which borough, say "{borough}". If asked for a ZIP code, say "I don\'t know it offhand".'
     )
@@ -154,7 +161,7 @@ def visit_steps(rng: random.Random, s: Script, window: str | None) -> None:
         f'If asked whether someone will be home, say "{pick(rng, ["yes", "yeah, I will be", "yes, all day"])}".'
     )
     s.add(
-        f'If asked about a gate code, a buzzer or pets, say "{pick(rng, ["no pets, no gate code", "we have a dog", "one cat, and the buzzer is 2B", "nothing like that"])}".'
+        f'If asked about a gate code or buzzer, say "{pick(rng, ["no gate code", "the buzzer is 2B", "nothing like that", "the gate code is four four one two"])}".'
     )
 
 
@@ -170,7 +177,32 @@ def windows(rng: random.Random) -> str:
     )
 
 
+SYSTEMS = ["a boiler", "a gas furnace", "central air", "a mini-split"]
+
+
+def system_step(rng: random.Random, s: Script, log: dict) -> None:
+    """The system type, asked once by the agent if the caller hasn't said (change set 18)."""
+    log["system_said"] = pick(rng, SYSTEMS)
+    s.add(f'If asked what kind of system it is, say "{log["system_said"]}".')
+
+
 def routine(rng: random.Random, name: str, log: dict, s: Script) -> dict:
+    # One in five routine callers wants a quote for a new system, which books an estimate visit
+    # (change set 18: booking is the job; a quote is a visit, not a callback).
+    if chance(rng, 0.2):
+        opening = pick(
+            rng,
+            [
+                "Hi, I'm thinking about replacing my old furnace, can I get a quote for a new one?",
+                "Hey, I want to get central air put in, can someone give me an estimate?",
+                "Hi, my boiler is really old, I'd like a quote on a new system.",
+            ],
+        )
+        log["estimate"] = True
+        s.add(f'Open with: "{opening}"')
+        s.add('If asked whether something is wrong, say "no, it still works, it is just old".')
+        system_step(rng, s, log)
+        return {"bookings": ["book"], "job_type": "estimate"}
     system, opening = pick(
         rng,
         [
@@ -207,6 +239,7 @@ def elderly(rng: random.Random, name: str, log: dict, s: Script) -> dict:
     )
     log["who"] = who
     s.add(f'Open with: "{opening}"')
+    system_step(rng, s, log)
     s.add(
         f'If asked whether it is completely out or not keeping up, say "{pick(rng, ["completely out", "totally out", "nothing at all"])}".'
     )
@@ -325,6 +358,8 @@ def build(journey: str, index: int, seed: int) -> dict:
         "first": first,
         "closes_with": CLOSES_WITH,
         "journey": journey,
+        # A building's unit the caller didn't volunteer: the agent must ask for it.
+        "unit_ask": bool(unit) and "unit_volunteered" in log and not log["unit_volunteered"],
         **expect,
     }
     return {
