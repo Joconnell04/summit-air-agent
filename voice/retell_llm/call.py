@@ -234,7 +234,6 @@ class LlmCall:
         server_led: bool = False,
         hold_after_s: float = 0.7,
         hold_from: str = "caller",
-        tz: str = "America/New_York",
         call_start_ms: int | None = None,
     ):
         self.server = server
@@ -266,8 +265,6 @@ class LlmCall:
         self.held_last_turn = False
         self.drops: dict[str, int] = {}
         self.caller_said = ""
-        # For the closing's nicety, fit to the tenant's time of day.
-        self.tz = tz
         # The call's start (Retell's start_timestamp), so a wait counts from the caller's last word.
         self.call_start_ms = call_start_ms
         self.last_word: float | None = None
