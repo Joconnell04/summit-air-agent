@@ -1,0 +1,38 @@
+dialing +16783366730 from room testcall-d56be7ad
+agent : Hi there. Thanks so much for calling Summit Air today. I'm Brooke, the virtual assistant. How can I help?
+caller: Hey, we have no heat at all.
+agent : I'm sorry about that. What kind of system do you have? Like a boiler, furnace, or something else?
+caller: a gas furnace
+agent : Got it. Can I get your name?
+caller: Luis Goldberg
+agent : Thanks. And this is for your home. Right?
+caller: yes, a house
+agent : Okay. What's the street address?
+caller: one sixty Remsen Street
+agent : Is it completely out? Or just not keeping up?
+caller: totally out
+agent : Got it. Since when?
+caller: since this morning
+agent : Okay. What's the best phone number to reach you?
+caller: this number
+agent : So that's one sixty Remsen Street, and the number you're calling from ending in zero four one eight. That's all correct. Right?
+caller: yep, that is right
+agent : The soonest I have is today, one to one thirty. Does that work? If anything makes this more urgent for you, just let me know.
+caller: my mom's eighty-five and she lives with me
+agent : Okay.
+agent : Thanks for telling me. I've moved you up, and this is still our soonest opening. Does that still work?
+agent : Will you be able to approve any repair work the technician recommends?
+caller: okay
+agent : I can't tell if okay was a yes to the one to one thirty window or to the repair question, so I'll ask the repair one. Will you be able to approve any repair work the technician recommends?
+caller: yes
+agent : Got it. Will someone be home to let the technician in?
+caller: yes
+agent : Okay. Is there a gate code or buzzer the technician should know about?
+caller: nothing like that
+agent : Okay. I've booked it. The technician will arrive today between one and one thirty. Anything else?
+caller: No, I'm good. Bye.
+agent : Thanks so much for calling Summit Air today. Have a great day. Take care.
+failed to synthesize speech: no audio frames were pushed for text: [Silence], retrying in 0.1s
+failed to synthesize speech: no audio frames were pushed for text: [Silence], retrying in 2.0s
+the agent hung up
+livekit_ffi::server:279:livekit_ffi::server - Attempted to drop unknown FFI handle: 25
