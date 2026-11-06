@@ -858,6 +858,9 @@ def main() -> None:
     parser.add_argument(
         "--markdown", action="store_true", help="report: print the round doc tables"
     )
+    parser.add_argument(
+        "--personas", type=Path, action="append", help="report: a generated variants.yaml"
+    )
     args = parser.parse_args()
     if args.action == "judge":
         for run in args.runs:
@@ -867,9 +870,8 @@ def main() -> None:
         if args.markdown:
             print(markdown(result))
         else:
-            print(
-                json.dumps({k: result[k] for k in ("arms", "safety", "server_findings")}, indent=1)
-            )
+            keys = ("arms", "journeys", "safety", "server_findings")
+            print(json.dumps({k: result[k] for k in keys}, indent=1))
 
 
 if __name__ == "__main__":

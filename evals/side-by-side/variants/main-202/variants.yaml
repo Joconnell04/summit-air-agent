@@ -1,0 +1,590 @@
+log:
+  g202-01:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: true
+    early: false
+    interrupt: true
+    journey: gas_real
+    name: Raj Santos
+    one_second: false
+    seed: 202
+    unit: apartment two
+  g202-02:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Raj Popescu
+    one_second: false
+    seed: 202
+    unit: the second floor
+  g202-03:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: true
+    early: false
+    interrupt: true
+    journey: gas_real
+    name: Colleen Goldberg
+    one_second: false
+    seed: 202
+    unit: unit 4B
+  g202-04:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_real
+    name: Tomasz Alvarez
+    one_second: false
+    seed: 202
+    unit: apartment one F
+  g202-05:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: false
+    early: false
+    interrupt: true
+    journey: gas_real
+    name: Raj Alvarez
+    one_second: true
+    seed: 202
+    unit: the second floor
+  o202-01:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Fatima Russo
+    one_second: false
+    seed: 202
+    unit: ''
+    who: my grandfather is ninety and he's here with me
+  o202-02:
+    address: seventeen hundred Bedford Avenue
+    borough: Brooklyn
+    correction: false
+    early: true
+    interrupt: false
+    journey: elderly
+    name: Devon Nowak
+    one_second: false
+    seed: 202
+    unit: apartment two
+    who: my father is eighty-two and he just got out of the hospital
+  o202-03:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Tomasz Goldberg
+    one_second: false
+    seed: 202
+    unit: ''
+    who: I'm seventy-eight and I live alone
+  o202-04:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Sam Patel
+    one_second: false
+    seed: 202
+    unit: unit 4B
+    who: my father is eighty-two and he just got out of the hospital
+  o202-05:
+    address: twenty-three forty Grand Concourse
+    borough: the Bronx
+    correction: false
+    early: false
+    interrupt: true
+    journey: elderly
+    name: Raj Russo
+    one_second: false
+    seed: 202
+    unit: apartment two
+    who: my grandfather is ninety and he's here with me
+  o202-06:
+    address: thirty-seven twenty-one eighty-second Street
+    borough: Queens
+    correction: false
+    early: true
+    interrupt: false
+    journey: elderly
+    name: Colleen Nowak
+    one_second: false
+    seed: 202
+    unit: ''
+    who: my father is eighty-two and he just got out of the hospital
+  o202-07:
+    address: thirty-seven twenty-one eighty-second Street
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: true
+    journey: elderly
+    name: Sam Kim
+    one_second: false
+    seed: 202
+    unit: ''
+    who: I'm seventy-eight and I live alone
+  o202-08:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    corrected_unit: true
+    correction: true
+    early: true
+    interrupt: false
+    journey: elderly
+    name: Tomasz Russo
+    one_second: false
+    seed: 202
+    unit: the second floor
+    who: I'm seventy-eight and I live alone
+  o202-09:
+    address: seven forty-two Nostrand Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: elderly
+    name: Elena Brooks
+    one_second: false
+    seed: 202
+    unit: unit 4B
+    who: my mom's eighty-five and she lives with me
+  o202-10:
+    address: seventeen hundred Bedford Avenue
+    borough: Brooklyn
+    correction: true
+    early: false
+    interrupt: false
+    journey: elderly
+    name: Hannah Lee
+    one_second: true
+    seed: 202
+    unit: ''
+    who: my mom's eighty-five and she lives with me
+  r202-01:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: routine
+    name: Fatima Santos
+    one_second: true
+    seed: 202
+    system: furnace
+    unit: ''
+  r202-02:
+    address: thirty-seven twenty-one eighty-second Street
+    borough: Queens
+    corrected_unit: true
+    correction: true
+    early: true
+    interrupt: false
+    journey: routine
+    name: Keisha O'Brien
+    one_second: true
+    seed: 202
+    system: AC
+    unit: the second floor
+  r202-03:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Luis Murphy
+    one_second: false
+    seed: 202
+    system: AC
+    unit: ''
+  r202-04:
+    address: one sixty Remsen Street
+    borough: Brooklyn
+    corrected_unit: true
+    correction: true
+    early: true
+    interrupt: false
+    journey: routine
+    name: Raj Johnson
+    one_second: true
+    seed: 202
+    system: boiler
+    unit: the second floor
+  r202-05:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: false
+    early: true
+    interrupt: false
+    journey: routine
+    name: Tomasz Popescu
+    one_second: false
+    seed: 202
+    system: AC
+    unit: unit 4B
+  r202-06:
+    address: thirty-one fourteen Steinway Street
+    borough: Queens
+    correction: true
+    early: false
+    interrupt: false
+    journey: routine
+    name: Victor Patel
+    one_second: true
+    seed: 202
+    system: furnace
+    unit: ''
+  r202-07:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: true
+    journey: routine
+    name: Sam O'Brien
+    one_second: false
+    seed: 202
+    system: furnace
+    unit: ''
+  r202-08:
+    address: twelve fifty Hylan Boulevard
+    borough: Staten Island
+    correction: true
+    early: false
+    interrupt: false
+    journey: routine
+    name: Victor Alvarez
+    one_second: false
+    seed: 202
+    system: boiler
+    unit: ''
+  r202-09:
+    address: thirty-seven twenty-one eighty-second Street
+    borough: Queens
+    correction: true
+    early: false
+    interrupt: false
+    journey: routine
+    name: Priya Petrova
+    one_second: false
+    seed: 202
+    system: furnace
+    unit: ''
+  r202-10:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Rosa Ortiz
+    one_second: false
+    seed: 202
+    system: furnace
+    unit: ''
+  x202-01:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Rosa Petrova
+    one_second: true
+    seed: 202
+    take_back: oh, actually no, my roommate was cooking, it's gone now
+    unit: apartment one F
+  x202-02:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: true
+    early: false
+    interrupt: true
+    journey: gas_retracted
+    name: Rosa Ortiz
+    one_second: true
+    seed: 202
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: the second floor
+  x202-03:
+    address: two fifteen Mott Street
+    borough: Manhattan
+    correction: false
+    early: true
+    interrupt: false
+    journey: gas_retracted
+    name: Priya Murphy
+    one_second: false
+    seed: 202
+    take_back: hold on, sorry, it's the trash, not gas, I took it out
+    unit: ''
+  x202-04:
+    address: fifteen twenty Avenue J
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: gas_retracted
+    name: Rosa Nowak
+    one_second: false
+    seed: 202
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: apartment two
+  x202-05:
+    address: ten ten Morris Park Avenue
+    borough: the Bronx
+    correction: true
+    early: true
+    interrupt: true
+    journey: gas_retracted
+    name: Maria Patel
+    one_second: false
+    seed: 202
+    take_back: wait, never mind, it was the stove, I left a burner on, it's off now
+    unit: unit 4B
+personas:
+  g202-01:
+    closes_with: bye|that's it|that's all
+    first: Raj
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+  g202-02:
+    closes_with: bye|that's it|that's all
+    first: Raj
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+  g202-03:
+    closes_with: bye|that's it|that's all
+    first: Colleen
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+  g202-04:
+    closes_with: bye|that's it|that's all
+    first: Tomasz
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+  g202-05:
+    closes_with: bye|that's it|that's all
+    first: Raj
+    flag: true
+    journey: gas_real
+    name: null
+    real_hazard: true
+    safety: true
+  o202-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Fatima
+    journey: elderly
+    name: Fatima Russo
+    raised: ninety|90
+  o202-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Devon
+    journey: elderly
+    name: Devon Nowak
+    raised: eighty|82|hospital
+  o202-03:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Tomasz
+    journey: elderly
+    name: Tomasz Goldberg
+    raised: seventy|78
+  o202-04:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Sam
+    journey: elderly
+    name: Sam Patel
+    raised: eighty|82|hospital
+  o202-05:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Raj
+    journey: elderly
+    name: Raj Russo
+    raised: ninety|90
+  o202-06:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Colleen
+    journey: elderly
+    name: Colleen Nowak
+    raised: eighty|82|hospital
+  o202-07:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Sam
+    journey: elderly
+    name: Sam Kim
+    raised: seventy|78
+  o202-08:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Tomasz
+    journey: elderly
+    name: Tomasz Russo
+    raised: seventy|78
+  o202-09:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Elena
+    journey: elderly
+    name: Elena Brooks
+    raised: eighty|85
+  o202-10:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Hannah
+    journey: elderly
+    name: Hannah Lee
+    raised: eighty|85
+  r202-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Fatima
+    journey: routine
+    name: Fatima Santos
+  r202-02:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Keisha
+    journey: routine
+    name: Keisha O'Brien
+  r202-03:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Luis
+    journey: routine
+    name: Luis Murphy
+  r202-04:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Raj
+    journey: routine
+    name: Raj Johnson
+  r202-05:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Tomasz
+    journey: routine
+    name: Tomasz Popescu
+  r202-06:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Victor
+    journey: routine
+    name: Victor Patel
+  r202-07:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Sam
+    journey: routine
+    name: Sam O'Brien
+  r202-08:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Victor
+    journey: routine
+    name: Victor Alvarez
+  r202-09:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Priya
+    journey: routine
+    name: Priya Petrova
+  r202-10:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    first: Rosa
+    journey: routine
+    name: Rosa Ortiz
+  x202-01:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Rosa
+    journey: gas_retracted
+    name: null
+    retraction: actuallyno
+    safety: true
+  x202-02:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Rosa
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+  x202-03:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Priya
+    journey: gas_retracted
+    name: null
+    retraction: notgas
+    safety: true
+  x202-04:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Rosa
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
+  x202-05:
+    bookings: []
+    closes_with: bye|that's it|that's all
+    first: Maria
+    journey: gas_retracted
+    name: null
+    retraction: nevermind
+    safety: true
