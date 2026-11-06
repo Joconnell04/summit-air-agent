@@ -17,6 +17,7 @@ from toolkit import START, TENANT_DIR, Clock, make_server
 from app.tools import TOOLS
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
+from voice.retell.api import RetellError
 from voice.retell.bridge import Bridge, ToolServer, build_app
 from voice.retell.ledger import Ledger
 
@@ -30,6 +31,9 @@ class FakeRetell:
         self.stopped: list[str] = []
         self.unrecorded: list[str] = []
         self.calls: dict[str, dict] = {}
+        self.variables: list[tuple[str, dict]] = []
+        # A test sets this to make Update Live Call fail.
+        self.down = False
 
     def say_next(self, call_id: str, context: str) -> None:
         self.said.append((call_id, context))
@@ -46,6 +50,11 @@ class FakeRetell:
 
     def keep_no_recording(self, call_id: str) -> None:
         self.unrecorded.append(call_id)
+
+    def set_variables(self, call_id: str, variables: dict) -> None:
+        if self.down:
+            raise RetellError("update-live-call: 500")
+        self.variables.append((call_id, variables))
 
 
 class Later:

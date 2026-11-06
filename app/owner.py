@@ -46,6 +46,7 @@ OUTCOMES = {
     "declined_commercial": "Turned away: commercial",
     "declined_out_of_area": "Turned away: outside the area",
     "callback": "Callback promised",
+    "transferred": "Put through to the office",
     "no_booking": "No booking needed",
 }
 
@@ -502,6 +503,7 @@ FLAG_LABELS = {
     "queue_failed": "Booking stuck",
     "limit": "Limit reached",
     "grader": "Call check",
+    "transfer": "Put through",
 }
 LABEL_CHARS = 24
 
@@ -522,6 +524,7 @@ FLAG_TITLES = {
     "seek_earlier": "Looking for an earlier slot",
     "queue_failed": "Booking didn't reach ServiceTitan",
     "person": "Asked for a person",
+    "transfer": "Put through to the office",
     "callback_requested": "Asked to be called back",
     "limit": "Hit a per-call limit",
     "approval_check": "Confirm who approves before dispatch",

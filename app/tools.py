@@ -58,6 +58,7 @@ from .schemas import (
     MoveIn,
     NoteIn,
     ReadBackIn,
+    RequestTransferIn,
     RescheduleIn,
     ServiceAreaIn,
     Slot,
@@ -4497,6 +4498,93 @@ def flag_person(ctx: Ctx, args: FlagIn) -> Result:
     )
 
 
+def _transfer_refusal(ctx: Ctx, args: RequestTransferIn) -> Refused | None:
+    """Why this call can't go to the office now, or None when it can. Checked in this order so the
+    caller hears the most useful line: a safety or commercial call first, then the office hours."""
+    call = ctx.call
+    if call["safety_signal_at"] and call["safety_state"] != "cleared":
+        # The safety flag already has a person following up once the caller is safe (journey 3).
+        return Refused(
+            "transfer_safety", "", need="not on a safety call; a person already follows it up"
+        )
+    if call["commercial"]:
+        return Refused("transfer_commercial", "", need="a commercial caller gets record_lead")
+    if transfer.tried(ctx.conn, call["id"]):
+        return Refused(
+            "transfer_tried",
+            "",
+            need="this call was already put through once; offer a callback with flag_person",
+        )
+    # A request for a person has to be the caller's own: the model's reason alone isn't enough.
+    if args.reason == "person" and not transfer.asked_for_person(ctx.conn, call["id"]):
+        return Refused(
+            "transfer_not_asked",
+            "",
+            need="the caller hasn't asked for a person; carry on with what they need",
+        )
+    if not ctx.tenant.is_open(ctx.now):
+        return Refused(
+            "transfer_closed",
+            ctx.tenant.line("transfer_closed"),
+            need="the office is closed: ask when they'd like a call back, then call flag_person",
+        )
+    if (
+        not ctx.tenant.transfer
+        or not transfer.switched_on(ctx.conn, ctx.tenant, call)
+        or not transfer.number(ctx.tenant, "office", ctx.numbers)
+    ):
+        return Refused(
+            "transfer_unavailable",
+            ctx.tenant.line("transfer_unavailable"),
+            need="nobody can take the call now: ask when they'd like a call back, then call "
+            "flag_person",
+        )
+    return None
+
+
+def request_transfer(ctx: Ctx, args: RequestTransferIn) -> Result:
+    """Put the call through to the office now (Retell's transfer_call), when the server allows it:
+    office hours, the owner's switch on, an office number set, a request for a person in the
+    caller's own words or a complaint or billing question, never a safety or commercial call, and
+    once per call. The flag and a fallback callback are stored first, so a transfer nobody answers
+    leaves the caller with a named callback time (`fallback`), never with nothing."""
+    refused = _transfer_refusal(ctx, args)
+    if refused is not None:
+        raise refused
+    minutes = ctx.tenant.transfer["fallback_callback_minutes"]
+    when = _callback_due(ctx, CallbackTime(callback_in_minutes=minutes), read_caller=False)
+    labels = {"person": "Asked for a person", "complaint": "Complaint", "billing": "Billing"}
+    reason = f"{labels[args.reason]}: {args.summary}"
+    with tx(ctx.conn):
+        flag_id = records.add_flag(ctx.conn, ctx.call["id"], "transfer", reason, ctx.now)
+        callback_id = records.add_callback(
+            ctx.conn, ctx.tenant, ctx.call, when.due, reason, ctx.now
+        )
+        transfer_id = ctx.conn.execute(
+            "INSERT INTO transfers (call_id, flag_id, callback_id, role, summary, started_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (ctx.call["id"], flag_id, callback_id, "office", reason, iso(ctx.now)),
+        ).lastrowid
+    fallback = (
+        ctx.tenant.line("transfer_no_answer", when=when.spoken)
+        if callback_id
+        else ctx.tenant.line("flag_stored_no_callback")
+    )
+    return ok(
+        ctx.tenant.line("transfer_connecting"),
+        transfer={
+            "id": transfer_id,
+            "role": "office",
+            "number": transfer.number(ctx.tenant, "office", ctx.numbers),
+        },
+        flag_id=flag_id,
+        callback_id=callback_id,
+        fallback=fallback,
+        note="Say this sentence, then call transfer_call. If the transfer doesn't go through, "
+        "say the fallback sentence.",
+    )
+
+
 def demand_handoff(ctx: Ctx, text: str) -> Result | None:
     """A caller who demands a person on this line is sent to one now (app/transfer.py decides who,
     from their words). Not a tool: the turn endpoint asks after the safety check, so the model
@@ -4825,6 +4913,7 @@ TOOLS = {
     "cancel_appointment": (cancel_appointment, CancelIn, True),
     "record_move": (record_move, MoveIn, True),
     "flag_person": (flag_person, FlagIn, True),
+    "request_transfer": (request_transfer, RequestTransferIn, True),
     "record_lead": (record_lead, LeadIn, True),
     "add_note": (add_note, NoteIn, True),
     "mark_do_not_call": (mark_do_not_call, DoNotCallIn, True),

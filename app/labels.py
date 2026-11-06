@@ -29,6 +29,7 @@ VISIT_OUTCOMES = {
     "changed_booking": "visit moved or cancelled",
     "callback": "callback promised",
     "flagged": "passed to a person",
+    "transferred": "put through to the office",
 }
 NO_VISIT_OUTCOMES = {
     "declined_commercial": "a business, turned away",

@@ -364,6 +364,14 @@ lines:
   # The first line names no caller, in case a voicemail greeting answered.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: "{priority}Caller at {phone}: {reason}. Putting you through now."
+  # Retell's warm transfer (request_transfer): said just before the call goes to the office, and
+  # when it can't.
+  transfer_connecting: Okay, I'll connect you with someone from our team now. One moment.
+  transfer_closed: >-
+    Our office is closed right now, so I can't put you through, but I can have someone call you
+    back. When's a good time?
+  transfer_unavailable: >-
+    I can't put you through right now, but I can have someone call you back. When's a good time?
   # Cold handoff, said to a caller who demanded a person, just before the call is sent through.
   handoff_now: Transferring you to a person now.
   lead_stored: Someone from our team will call you {when} to tell you more.

@@ -258,9 +258,6 @@ class FlowToolServer(ToolServer):
             f"/calls/{call_id}/transfer", {"flag_id": flag_id, "callback_id": callback_id}
         )
 
-    def transfer_done(self, call_id: str, transfer_id: int, outcome: str) -> dict | None:
-        return self._post(f"/calls/{call_id}/transfer/{transfer_id}/done", {"outcome": outcome})
-
     def handoff_done(self, call_id: str, handoff_id: int, outcome: str) -> dict | None:
         return self._post(f"/calls/{call_id}/handoff/{handoff_id}/done", {"outcome": outcome})
 
