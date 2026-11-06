@@ -513,3 +513,15 @@ def test_a_reply_that_offers_choices_ends_with_a_question_in_both_profiles():
     for name in ("identity.md", "stripped.md"):
         text = (assemble.PROMPTS / name).read_text()
         assert "ends with a direct question" in text, name
+
+
+def test_the_now_line_is_the_tool_servers_clock_not_the_bridges():
+    """Retell call call_bbfbed1552e4f96e41400b1897f: the eval world's server was shifted to about
+    11 AM, but the prompt said "Now: ... 10:26 PM" beside an 11:30 AM slot."""
+    from prompts import assemble
+
+    start = {"tenant": {"slug": "summit-air", "name": "Summit Air", "timezone": "America/New_York"},
+             "now": "2026-11-05T16:26:00Z"}
+    text = assemble.instructions(start)
+    assert "Now: Thursday 5 November 2026, 11:26 AM (America/New_York)." in text
+    assert '"now"' not in text

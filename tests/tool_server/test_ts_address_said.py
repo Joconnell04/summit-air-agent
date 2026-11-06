@@ -74,3 +74,13 @@ def test_unit_2_and_2_read_back_and_confirm_as_one_address(agent):
     )
     assert confirmed["ok"], confirmed
     assert confirmed["data"]["address"]["unit"] == "2"
+
+
+@pytest.mark.parametrize("unit,said", [
+    ("2nd floor", "second floor"), ("Floor 3", "third floor"), ("1st fl.", "first floor"),
+    ("Basement", "basement"),
+])
+def test_a_floor_is_said_as_a_floor(unit, said):
+    """Retell call call_bbfbed1552e4f96e41400b1897f read "2nd floor" as "two n d f l o o r"."""
+    assert unit_said(unit) == said
+    assert address_said("55 Water Street", unit) == f"fifty-five Water Street, {said}"

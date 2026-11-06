@@ -81,6 +81,7 @@ def sample_call(tenant, content: dict) -> dict:
     call context the page's prompt is built on, and labelled there as a sample."""
     return {
         "tenant": {"slug": tenant.slug, "name": tenant.name, "timezone": str(tenant.tz)},
+        "now": None,  # the page's own clock
         "after_hours": False,
         "caller": {"phone": "+12125550100", "known_number": False, "do_not_call": False},
         "customers": [],
