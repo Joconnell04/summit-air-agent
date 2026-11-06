@@ -192,3 +192,31 @@ def test_refusals_dont_narrate_the_agents_steps(agent):
     assert bad["refused"] == "invalid_arguments" and bad["say"] == ""
     early = book(agent, call, {"date": "2026-11-03", "window": "0900-0930"}, name="Pat Rivera")
     assert early["refused"] == "gate_read_back" and early["say"] == ""
+
+
+@pytest.mark.parametrize("tool", ["flag_person", "record_lead"])
+def test_the_callback_day_the_caller_named_wins_over_the_models(agent, tool):
+    """On every Haiku arm, "Monday morning" went in as callback_day "tomorrow" and was confirmed
+    as "tomorrow before 12 PM" (Retell calls call_5b998cf4ab209eb48c2ae5e9a0b and
+    call_fc470f8ddd2d56cf55be68fc119). The clock is Monday, November 2, 9 AM."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Could someone call me back Thursday morning about a new furnace?")
+    window = {"callback_day": "tomorrow", "callback_before": "12 PM"}
+    if tool == "flag_person":
+        result = agent.tool(tool, call, reason="Wants a call about a new furnace", **window)
+    else:
+        result = agent.tool(tool, call, kind="install", details={
+            "contact_name": "Pat Rivera", "need": "a new furnace", **window})
+    assert result["ok"], result
+    assert "Thursday" in result["say"] and "tomorrow" not in result["say"], result["say"]
+    due = agent.db().execute("SELECT due_at FROM callbacks").fetchone()[0]
+    assert due.startswith("2026-11-05"), due
+
+
+def test_the_part_of_day_the_caller_named_wins_over_the_models(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "Tomorrow afternoon works for a call back.")
+    result = agent.tool("flag_person", call, reason="Call back", callback_day="tomorrow",
+                        callback_before="11 AM")
+    assert result["ok"], result
+    assert "tomorrow" in result["say"] and "11 AM" not in result["say"], result["say"]

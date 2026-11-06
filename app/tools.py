@@ -3690,9 +3690,71 @@ def _as_the_caller_said_it(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
     )
 
 
-def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
-    """The callback time and the words for it. The words always come from here, never the model."""
+CALLBACK_DAY_LINES = 3  # the caller's recent lines a callback's day and part of day are read from
+PARTS_OF_DAY = {
+    "morning": (None, time(12, 0)),
+    "afternoon": (time(12, 0), time(17, 0)),
+    "evening": (time(17, 0), None),
+}
+
+
+def _callback_day_said(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
+    """The day and part of day the caller named for the callback, over what the model passed: on
+    every Haiku arm, "Monday morning" went in as callback_day "tomorrow" and was confirmed as
+    "tomorrow before 12 PM" (Retell calls call_5b998cf4ab209eb48c2ae5e9a0b and
+    call_fc470f8ddd2d56cf55be68fc119). Read from the caller's last few lines, newest first."""
+    rows = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq DESC LIMIT ?",
+        (ctx.call["id"], CALLBACK_DAY_LINES),
+    ).fetchall()
+    update: dict = {}
+    for row in rows:
+        said = words(row["text"])
+        if "callback_day" not in update:
+            day = next(
+                (d for d in ("tomorrow", *WEEKDAY_NAMES) if f" {d} " in said),
+                "today" if (" today " in said or " tonight " in said) else None,
+            )
+            if day and day != asked.callback_day:
+                update["callback_day"] = day
+        if "part" not in update:
+            part = next((p for p in PARTS_OF_DAY if f" {p} " in said), None)
+            if part:
+                update["part"] = part
+    part = update.pop("part", None)
+    if part and not asked.callback_in_minutes and not _fits_part(asked, part):
+        start, end = PARTS_OF_DAY[part]
+        update |= {
+            "callback_time": None,
+            "callback_after": _clock_said(start) if start else None,
+            "callback_before": _clock_said(end) if end else None,
+        }
+    return asked.model_copy(update=update) if update else asked
+
+
+def _fits_part(asked: CallbackTime, part: str) -> bool:
+    """Whether the times the model passed sit inside the part of day the caller named."""
+    start, end = PARTS_OF_DAY[part]
+    times = []
+    for value in (asked.callback_time, asked.callback_after, asked.callback_before):
+        if not value:
+            continue
+        try:
+            times.append(clock_time(value))
+        except ValueError:
+            return True  # an ISO time or something we can't read: left as it is
+    return bool(times) and all(
+        (start is None or t >= start) and (end is None or t <= end) for t in times
+    )
+
+
+def _callback_due(ctx: Ctx, asked: CallbackTime, read_caller: bool = True) -> CallbackWhen:
+    """The callback time and the words for it. The words always come from here, never the model.
+    read_caller is False once the day was moved here (a time gone today is tomorrow), so the
+    caller's "today" doesn't move it back."""
     tenant, now = ctx.tenant, ctx.now
+    if read_caller:
+        asked = _callback_day_said(ctx, asked)
     asked = _local_iso(tenant, _as_the_caller_said_it(ctx, asked))
     days = _days_ahead(tenant, now, asked.callback_day)
     try:
@@ -3722,7 +3784,9 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
             # model ended the call with no callback). A bare time is that time tomorrow; "after"
             # or "before" a time already gone is the soonest callback.
             if asked.callback_time and not (asked.callback_after or asked.callback_before):
-                return _callback_due(ctx, asked.model_copy(update={"callback_day": "tomorrow"}))
+                return _callback_due(
+                    ctx, asked.model_copy(update={"callback_day": "tomorrow"}), read_caller=False
+                )
             return _soonest_callback(tenant, now)
         if reason == "outside callback hours":
             opens, closes = (
