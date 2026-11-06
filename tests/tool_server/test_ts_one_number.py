@@ -302,8 +302,8 @@ def test_the_arrival_question_asks_no_pets_for_summit_air(agent):
     from prompts import assemble
 
     start = agent.start(UNKNOWN)["data"]
-    question = ("Will someone be home to let the technician in, and is there a gate code or "
-                "buzzer they should know about?")
+    question = ("Will someone be home to let the technician in? If there's a gate code or buzzer "
+                "they'll need, just let me know.")
     assert start["tenant"]["arrival_question"] == question
     text = assemble.instructions(start)
     assert question in text and " pet" not in text.lower().replace("pets or the house", "")
@@ -339,8 +339,8 @@ def test_getting_in_is_one_question(agent):
     from prompts import assemble
 
     start = agent.start(UNKNOWN)["data"]
-    question = ("Will someone be home to let the technician in, and is there a gate code or "
-                "buzzer they should know about?")
+    question = ("Will someone be home to let the technician in? If there's a gate code or buzzer "
+                "they'll need, just let me know.")
     assert start["tenant"]["arrival_question"] == question
     assert question in assemble.instructions(start)
 
@@ -383,8 +383,8 @@ def test_a_buzzer_code_is_not_a_unit_change(agent):
     agent.say(call, asked["say"])
     agent.turn(call, "Yes, that's right.")
     assert agent.tool("read_back", call, address=address, phone="caller_id", confirmed=True)["ok"]
-    agent.say(call, "Will someone be home to let the technician in, and is there a gate code or "
-                    "buzzer they should know about?")
+    agent.say(call, "Will someone be home to let the technician in? If there's a gate code or "
+                    "buzzer they'll need, just let me know.")
     answer = agent.turn(call, "Yeah, I'll be home. The buzzer is 2B.")
     assert "readback_changed" not in answer["data"]["hints"]
     booked = book(agent, call, first_open(agent, call), name="Pat Rivera",

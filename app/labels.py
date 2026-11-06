@@ -1,5 +1,5 @@
 """One label per call for the owner: Urgent, Routine or No visit, each with its reason in a few
-words, such as "Urgent: an older person or a baby at home, no heat" (DECISIONS.md 121).
+words, such as "Urgent: an older person or a baby at home, no heat" (DECISIONS.md 122).
 
 Urgent is the server's priority at High or Urgent, a hazard the safety route heard (a gas smell, a
 carbon monoxide alarm, sparks), or a technician dispatched on the call. Routine is any other call

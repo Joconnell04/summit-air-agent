@@ -1968,7 +1968,7 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
                 note="A technician is already dispatched on this call; don't offer times.",
             )
         # The read-back came first, below High; the caller's facts since raised it (DECISIONS.md
-        # 122), so the visit is dispatched now rather than offered.
+        # 123), so the visit is dispatched now rather than offered.
         readback = records.readback(ctx.call)
         if (
             readback
@@ -2652,7 +2652,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
         )
     if answered and _dispatched(ctx):
         # The dispatch sentence was the read-back, and the visit is already booked: nothing more
-        # to ask but the way in (DECISIONS.md 122).
+        # to ask but the way in (DECISIONS.md 123).
         return ok(confirmed=True, dispatched=True, address=address, phone=phone,
                   next=_after_dispatch(ctx))
     if answered:
@@ -2777,7 +2777,7 @@ def _connector(ctx: Ctx, sentence: str) -> str:
 # ---- emergency dispatch ----------------------------------------------------------------------
 
 # Intake a dispatch doesn't ask for: no approval question, nothing tried, no since (DECISIONS.md
-# 122). The technician summary carries whatever the caller did say.
+# 123). The technician summary carries whatever the caller did say.
 NOT_ASKED = "not asked: emergency dispatch"
 # The window has to open within this many minutes for the caller to hear "within the next hour".
 DISPATCH_HOUR_MINUTES = 60
@@ -2836,7 +2836,7 @@ def _replace_dispatch(ctx: Ctx, standing: sqlite3.Row) -> None:
 def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
     """Book the soonest technician for a no-heat or no-cooling call the server scores High or
     Urgent, with no windows offered, no separate read-back and no approval question (DECISIONS.md
-    122). The sentence it returns names the address and the number, so it is also the read-back:
+    123). The sentence it returns names the address and the number, so it is also the read-back:
     the caller's yes, or no answer at all, confirms it. A call on the safety route never dispatches;
     its visit waits until the problem is shut off. None when the call doesn't dispatch, and
     read_back reads its own sentence."""
@@ -2972,8 +2972,9 @@ def _dispatch_said(ctx: Ctx, window: dict, current: dict, on_call: bool) -> str:
 def _after_dispatch(ctx: Ctx) -> str:
     return (
         "Wait for the caller. A yes, or no answer, confirms it. Then ask only "
-        f'"{ctx.tenant.arrival_question}", save the answer with add_note (attach_to job), and ask '
-        '"Anything else?". If they correct the unit or the number, call read_back with the '
+        f'"{ctx.tenant.arrival_question}" A plain yes means someone is home and there is no '
+        "code; if no one will be home, ask how the technician can get in. Save what they say with "
+        'add_note (attach_to job), and ask "Anything else?". If they correct the unit or the number, call read_back with the '
         "corrected details and the job type: the visit moves with them and its sentence is said "
         "for you. Don't offer times, read back again or ask who approves the work."
     )

@@ -471,7 +471,7 @@ def test_a_window_is_any_run_of_half_hour_blocks_and_overlaps_take_the_technicia
 
 
 def test_a_job_keeps_the_tag_types_it_was_booked_with(small):
-    """The tool server tags each job with its call's label, Urgent or Routine (DECISIONS.md 121)."""
+    """The tool server tags each job with its call's label, Urgent or Routine (DECISIONS.md 122)."""
     api, ids = small
     tagged = book(api, ids, tagTypeIds=[804])
     assert tagged.status_code == 200, tagged.text

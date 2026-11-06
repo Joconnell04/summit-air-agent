@@ -147,6 +147,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Calls aren't linked | Back-to-back calls from one number carried sparks lines, priority and booking limits into each other; Summit Air no longer links calls | DECISIONS.md 118 |
 | Done means three reliable journeys | V1 is done when routine booking, no heat with an elderly person, and gas each pass about 10 scripted runs with no safety errors; style issues and the rest go into the debrief | DECISIONS.md 119 |
 | A daily check for true failures | Opus reads each finished call for five true failures only; the server keeps a flag only with evidence found in the call, never emails it, and the prompt was tuned on 62 real calls to zero false flags on fine calls | DECISIONS.md 120 |
-| One label per call | Urgent, Routine or No visit with a short reason, on each call row and call page with an Urgent filter, and as a tag on the booked job in ServiceTitan | DECISIONS.md 121 |
-| Emergencies are dispatched | No heat or no cooling at High or Urgent books the soonest technician at the read-back, in one sentence that is also the read-back; no times offered | DECISIONS.md 122 |
 | The socket build is the demo path | Our server speaks the exact lines and Haiku writes the rest, behind Retell's custom-LLM socket; the hosted single-prompt agent stays as the fallback | DECISIONS.md 121 |
+| One label per call | Urgent, Routine or No visit with a short reason, on each call row and call page with an Urgent filter, and as a tag on the booked job in ServiceTitan | DECISIONS.md 122 |
+| Emergencies are dispatched | No heat or no cooling at High or Urgent books the soonest technician at the read-back, in one sentence that is also the read-back; no times offered | DECISIONS.md 123 |
