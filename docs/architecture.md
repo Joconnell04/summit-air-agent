@@ -6,7 +6,7 @@ Status: written before the build, when the voice platform (#4) was still open, s
 
 ## Parts
 
-1. **Caller and phone number.** One Twilio number, (646) 624-0418, connected to LiveKit through a Twilio Elastic SIP Trunk (C-38). No texts in V1 (DECISIONS.md 007).
+1. **Caller and phone number.** The demo line is (516) 212-9051, a Retell number answered by the socket agent (DECISIONS.md 127). The LiveKit stack this section describes used one Twilio number, (646) 624-0418, through a Twilio Elastic SIP Trunk (C-38). No texts in V1 (DECISIONS.md 007).
 2. **Voice layer.** Hears the caller, runs the conversation, speaks. Thin: it turns speech into text, calls our tools, and turns replies into speech.
 3. **Tool server (the integration layer).** Every fact and rule lives here: lookups, priority, the safety and read-back gates, booking, flags, texts, call records. The model asks; the server decides.
 4. **FSM adapter.** The only code that talks to the company's field service system. Today it points at the mock ServiceTitan; later at the real one (C-03).

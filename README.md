@@ -15,7 +15,7 @@ caller --phone--> Retell: ears, turn-taking, backchannels, voice
                   (servicetitan_mock/)      (/owner, /bench)
 ```
 
-Call it at (646) 624-0418. The owner view is at https://45-77-105-247.sslip.io/owner and the debug bench at https://45-77-105-247.sslip.io/bench (both need a login).
+Call it at (516) 212-9051 (DECISIONS.md 127). A caller who asks for a person is put through to the office phone, or to a hold line when the owner view's Settings has Hold line on. The owner view is at https://45-77-105-247.sslip.io/owner and the debug bench at https://45-77-105-247.sslip.io/bench (both need a login).
 
 **How we got here.** We tried several stacks and gave each a fair test: a layered custom stack (LiveKit, Deepgram, Claude, Cartesia), Retell native, OpenAI's full-duplex model and others, then four agent arms side by side on the real phone line. The layered stack's own seams caused the stalls; the hosted model kept rewording sentences the server owned. The answer was Retell for the voice and our server for every word that has to be right. The story in order: [DECISIONS.md](DECISIONS.md) 111, 112, 121 and 124, the [simplicity slate](evals/rounds/simplicity-slate-01.md) and the [side-by-side](evals/rounds/side-by-side-01.md).
 
