@@ -1,5 +1,6 @@
 """Two calls at once on one world (evals/pairs.py), with scripted agents against the real tool server
 and mock, so the race and the checks that read ServiceTitan are tested offline."""
+
 import json
 import sqlite3
 import threading
@@ -20,8 +21,14 @@ LAST_SLOT = pairs.load(pairs.PAIRS_DIR / "two-callers-last-slot.yaml")
 SAME_TECH = pairs.load(pairs.PAIRS_DIR / "two-callers-same-tech.yaml")
 TODAY = date(2026, 11, 2)
 AFTERNOON = {"date": "2026-11-02", "window": "1200-1400"}
-DETAILS = {"issue": "no heat", "since": "this morning", "tried": "the thermostat",
-           "who_home": "two healthy adults", "approver": "the caller", "inside_temp_f": 63}
+DETAILS = {
+    "issue": "no heat",
+    "since": "this morning",
+    "tried": "the thermostat",
+    "who_home": "two healthy adults",
+    "approver": "the caller",
+    "inside_temp_f": 63,
+}
 
 
 @pytest.fixture(scope="module")
@@ -70,9 +77,12 @@ def booking_agent(name: str, street: str, zip_code: str) -> ScriptedModel:
         if isinstance(last, list) and last and last[-1].get("type") == "tool_result":
             result = json.loads(last[-1]["content"])
             alt = state["alternative"] = result["data"]["alternatives"][0]
-            return say(f"{result['say']} I have {alt['day']} {alt['label']} instead. Does that work?")
+            return say(
+                f"{result['say']} I have {alt['day']} {alt['label']} instead. Does that work?"
+            )
         booked = any(
-            m["role"] == "assistant" and isinstance(m["content"], str)
+            m["role"] == "assistant"
+            and isinstance(m["content"], str)
             and m["content"].startswith("You're all set")
             for m in messages
         )
@@ -80,45 +90,70 @@ def booking_agent(name: str, street: str, zip_code: str) -> ScriptedModel:
             return say("Great. Goodbye.")
         alt = state["alternative"]
         slot = {"date": alt["date"], "window": alt["window"]}
-        return use("book_appointment", job_type="no_heat", slot=slot,
-                   details={**DETAILS, "name": name})
+        return use(
+            "book_appointment", job_type="no_heat", slot=slot, details={**DETAILS, "name": name}
+        )
 
-    return ScriptedModel([
-        use("read_back", address=address, phone="caller_id"),
-        use("read_back", address=address, phone="caller_id", confirmed=True),
-        use("book_appointment", "Perfect, booking that now.", job_type="no_heat", slot=AFTERNOON,
-            details={**DETAILS, "name": name}),
-        next_step,
-        next_step,
-        next_step,
-    ])
+    return ScriptedModel(
+        [
+            use("read_back", address=address, phone="caller_id"),
+            use("read_back", address=address, phone="caller_id", confirmed=True),
+            use(
+                "book_appointment",
+                "Perfect, booking that now.",
+                job_type="no_heat",
+                slot=AFTERNOON,
+                details={**DETAILS, "name": name},
+            ),
+            next_step,
+            next_step,
+            next_step,
+        ]
+    )
 
 
 def agents():
-    return [booking_agent("Janelle Brooks", "8410 Ridge Blvd", "11209"),
-            booking_agent("Omar Haddad", "412 Avenue C", "11218")]
+    return [
+        booking_agent("Janelle Brooks", "8410 Ridge Blvd", "11209"),
+        booking_agent("Omar Haddad", "412 Avenue C", "11218"),
+    ]
 
 
 # Each caller gives their ZIP before the read-back, since the server acts only on a ZIP the caller
 # said (app/tools.py _zip_known), and their name, so the read-back doesn't ask for it.
 CALLERS = [
-    ["Hi, this is Janelle Brooks, my heat is out at 8410 Ridge Blvd, 11209.", "Yes, that's right.",
-     "Okay, that works."],
-    ["Hi, this is Omar Haddad, my heat is out at 412 Avenue C, 11218.", "Yes, that's right.",
-     "Okay, that works."],
+    [
+        "Hi, this is Janelle Brooks, my heat is out at 8410 Ridge Blvd, 11209.",
+        "Yes, that's right.",
+        "Okay, that works.",
+    ],
+    [
+        "Hi, this is Omar Haddad, my heat is out at 412 Avenue C, 11218.",
+        "Yes, that's right.",
+        "Okay, that works.",
+    ],
 ]
 
 
 def test_every_pair_file_loads_and_leaves_only_its_open_windows(seed_dir, tmp_path):
     for pair in pairs.load_all():
-        world = World(tmp_path / pair.id, seeded_db(seed_dir / "seed"),
-                      pair.scenarios()[0].start_time)
+        world = World(
+            tmp_path / pair.id, seeded_db(seed_dir / "seed"), pair.scenarios()[0].start_time
+        )
         pairs.fill(world.st_db, pair.world)
         call = world.server.start(f"probe-{pair.id}", "(332) 555-0199")["data"]["call_id"]
-        found = world.server.tool("find_slots", call, {
-            "job_type": pair.world.job_type,
-            "facts": {"issue": "no heat", "who_home": "two healthy adults", "inside_temp_f": 63},
-        })
+        found = world.server.tool(
+            "find_slots",
+            call,
+            {
+                "job_type": pair.world.job_type,
+                "facts": {
+                    "issue": "no heat",
+                    "who_home": "two healthy adults",
+                    "inside_temp_f": 63,
+                },
+            },
+        )
         days = {d["date"]: d["windows"] for d in found["data"]["days"]}
         kept = {}
         for k in pair.world.keep_open:
@@ -178,9 +213,14 @@ def test_only_the_first_booking_after_a_confirmed_read_back_is_held():
 
     calls = []
     server = pairs.HeldServer(Server(), Meeting())
-    for name, args in [("book_appointment", {}), ("read_back", {}),
-                       ("read_back", {"confirmed": True}), ("find_slots", {}),
-                       ("book_appointment", {}), ("book_appointment", {})]:
+    for name, args in [
+        ("book_appointment", {}),
+        ("read_back", {}),
+        ("read_back", {"confirmed": True}),
+        ("find_slots", {}),
+        ("book_appointment", {}),
+        ("book_appointment", {}),
+    ]:
         calls.append(name)
         server.tool(name, "c", args)
     assert held_at == [5], "held once, at the first booking after the confirmation"
@@ -189,8 +229,9 @@ def test_only_the_first_booking_after_a_confirmed_read_back_is_held():
 def test_two_callers_for_the_last_slot_one_gets_it_the_other_is_told_and_books_the_next(
     seed_dir, tmp_path, capsys, picked_together
 ):
-    results = pairs.run_pair(harness(seed_dir, tmp_path), LAST_SLOT, caller_turns=CALLERS,
-                             agent_models=agents())
+    results = pairs.run_pair(
+        harness(seed_dir, tmp_path), LAST_SLOT, caller_turns=CALLERS, agent_models=agents()
+    )
     assert [r.outcome for r in results] == ["pass", "pass"], [r.check_failures for r in results]
     assert {"one_job_per_technician_window", "window_jobs", "slot_taken"} <= set(results[0].checks)
     said = [" ".join(t.text for t in r.transcript if t.role == "agent") for r in results]
@@ -203,8 +244,12 @@ def test_two_callers_with_two_technicians_free_both_get_the_window(
 ):
     # Both reach for the same technician, so the loser has to look again and take the other one.
     monkeypatch.setattr(app_capacity.random, "choice", lambda technicians: technicians[0])
-    results = pairs.run_pair(harness(seed_dir, tmp_path), SAME_TECH,
-                             caller_turns=CALLERS_SAME_ZIP, agent_models=agents_same_zip())
+    results = pairs.run_pair(
+        harness(seed_dir, tmp_path),
+        SAME_TECH,
+        caller_turns=CALLERS_SAME_ZIP,
+        agent_models=agents_same_zip(),
+    )
     assert [r.outcome for r in results] == ["pass", "pass"], [r.check_failures for r in results]
     assert "mock answered slot_taken 1 time(s)" in capsys.readouterr().out
 
@@ -216,8 +261,10 @@ CALLERS_SAME_ZIP = [
 
 
 def agents_same_zip():
-    return [booking_agent("Priya Shah", "220 Beverley Rd", "11218"),
-            booking_agent("Daniel Okafor", "515 E 5th St", "11218")]
+    return [
+        booking_agent("Priya Shah", "220 Beverley Rd", "11218"),
+        booking_agent("Daniel Okafor", "515 E 5th St", "11218"),
+    ]
 
 
 def test_with_no_lock_and_no_constraint_the_pair_checks_catch_the_double_booking(
@@ -242,21 +289,25 @@ def test_with_no_lock_and_no_constraint_the_pair_checks_catch_the_double_booking
 
     real_slots = pairs.capacity.slots
     monkeypatch.setattr(pairs, "fill", broken_fill)
-    results = pairs.run_pair(harness(seed_dir, tmp_path), LAST_SLOT, caller_turns=CALLERS,
-                             agent_models=agents())
+    results = pairs.run_pair(
+        harness(seed_dir, tmp_path), LAST_SLOT, caller_turns=CALLERS, agent_models=agents()
+    )
     assert [r.outcome for r in results] == ["fail", "fail"]
     failed = results[0].check_failures
     assert any(f.startswith("one_job_per_technician_window: technician") for f in failed), failed
-    assert "window_jobs: 2 of the calls' jobs are in the 1200-1400 window on 2026-11-02, " \
-           "expected 1" in failed
+    assert (
+        "window_jobs: 2 of the calls' jobs are in the 1200-1400 window on 2026-11-02, "
+        "expected 1" in failed
+    )
     assert results[0].must_pass_failures, "S-27 is a must-pass line"
 
 
 def test_a_failed_pair_check_fails_both_calls_but_a_broken_harness_stays_an_error(
     seed_dir, tmp_path
 ):
-    results = pairs.run_pair(harness(seed_dir, tmp_path), LAST_SLOT, caller_turns=CALLERS,
-                             agent_models=agents())
+    results = pairs.run_pair(
+        harness(seed_dir, tmp_path), LAST_SLOT, caller_turns=CALLERS, agent_models=agents()
+    )
     scenario = LAST_SLOT.scenarios()[0]
     failed = pairs.with_pair_checks(results[0], scenario, LAST_SLOT, ["taken_refusals: x"])
     assert failed.outcome == "fail"
@@ -267,17 +318,25 @@ def test_a_failed_pair_check_fails_both_calls_but_a_broken_harness_stays_an_erro
 
 def test_a_pair_never_met_at_the_booking_when_one_call_ends_first(seed_dir, tmp_path):
     quiet = ScriptedModel([say("Okay, goodbye.")])
-    results = pairs.run_pair(harness(seed_dir, tmp_path), SAME_TECH, caller_turns=[["Hi."]] * 2,
-                             agent_models=[quiet, agents()[1]])
-    assert "booked_together: the calls never reached a booking at the same moment, " \
-           "so nothing raced" in results[0].check_failures
+    results = pairs.run_pair(
+        harness(seed_dir, tmp_path),
+        SAME_TECH,
+        caller_turns=[["Hi."]] * 2,
+        agent_models=[quiet, agents()[1]],
+    )
+    assert (
+        "booked_together: the calls never reached a booking at the same moment, "
+        "so nothing raced" in results[0].check_failures
+    )
 
 
 def test_the_run_hash_covers_the_pair_file_once_and_leaves_scenarios_alone():
     ids = ["two-callers-last-slot-a", "two-callers-last-slot-b"]
     assert run_hash(ids, "fast") == run_hash(ids[:1], "fast")
     assert pairs.pair_file("no-heat-unknown-caller") is None
-    assert pairs.pair_file("two-callers-last-slot-a") == pairs.PAIRS_DIR / "two-callers-last-slot.yaml"
+    assert (
+        pairs.pair_file("two-callers-last-slot-a") == pairs.PAIRS_DIR / "two-callers-last-slot.yaml"
+    )
 
 
 def test_pairs_run_only_on_our_stack(capsys):

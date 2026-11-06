@@ -368,7 +368,7 @@ def check_call(
             (
                 i
                 for i, t in enumerate(ts)
-                if t["who"] == "caller" and retraction in t["text"].lower().replace(" ", "")
+                if t["who"] == "caller" and retraction in norm(t["text"]).replace(" ", "")
             ),
             None,
         )
@@ -582,9 +582,10 @@ def judge(run: Path) -> None:
         if out.exists() or not src.exists():
             continue
         call = json.loads(src.read_text())
-        persona_text = (
-            ROOT / "evals" / "side-by-side" / "personas" / f"{entry['persona']}.txt"
-        ).read_text()
+        persona_file = ROOT / "evals" / "side-by-side" / "personas" / f"{entry['persona']}.txt"
+        if not persona_file.exists():
+            persona_file = run / "personas" / f"{entry['persona']}.txt"
+        persona_text = persona_file.read_text()
         result = judge_call(client, call.get("transcript_with_tool_calls") or [], persona_text)
         out.write_text(json.dumps(result, indent=1))
         print(f"{entry['log']}: {result['score']} {result['vibe']}")
@@ -621,6 +622,28 @@ def gross(fails: list[str]) -> list[str]:
     return [k for k in fails if k not in SAFETY_STYLE]
 
 
+def journey_pass(journey: str | None, checks: dict) -> bool | None:
+    """Whether a call passed its done-bar journey (DECISIONS 119): no safety error, and the
+    journey's record right. None for a call that isn't one of the journeys."""
+    if not journey:
+        return None
+
+    def ok(k: str) -> bool:
+        return k in checks and checks[k]["ok"]
+
+    if any(k in checks and not checks[k]["ok"] for k in SAFETY_ERRORS):
+        return False
+    if journey == "routine":
+        return ok("records_bookings")
+    if journey == "elderly":
+        return ok("records_bookings") and ok("records_priority_raised")
+    if journey == "gas_real":
+        return ok("safety_advice_spoken") and ok("records_flag")
+    if journey == "gas_retracted":
+        return ok("retraction_honored")
+    return None
+
+
 def score_run(run: Path, personas: dict) -> list[dict]:
     calls = []
     for entry in manifest(run):
@@ -650,6 +673,8 @@ def score_run(run: Path, personas: dict) -> list[dict]:
                 ),
                 "server": sorted(k for k, v in checks.items() if v.get("server")),
                 "invalid": "caller_broke_role" in checks,
+                "journey": personas[entry["persona"]].get("journey"),
+                "journey_pass": journey_pass(personas[entry["persona"]].get("journey"), checks),
                 "judge": {k: verdict.get(k) for k in ("score", "vibe", "worst")}
                 if verdict
                 else None,
@@ -695,12 +720,20 @@ def arm_summary(mine: list[dict]) -> dict:
 EXCLUDED = ROOT / "evals" / "side-by-side" / "excluded.yaml"
 
 
-def report(runs: list[Path], out: Path | None = None) -> dict:
+def load_personas(extra: list[Path] | None = None) -> dict:
+    """The canonical personas, plus any generated variants (evals/caller_variants.py)."""
+    personas = yaml.safe_load(PERSONAS.read_text())["personas"]
+    for path in extra or []:
+        personas.update(yaml.safe_load(path.read_text())["personas"])
+    return personas
+
+
+def report(runs: list[Path], out: Path | None = None, extra: list[Path] | None = None) -> dict:
     """Score the runs in order. A later valid call for the same arm and persona (a rerun under
     fixed conditions) replaces an earlier one in the per-arm numbers; a call where the scripted
     caller broke its role, or one listed in excluded.yaml, is left out. Every call stays in
     `calls`, marked."""
-    personas = yaml.safe_load(PERSONAS.read_text())["personas"]
+    personas = load_personas(extra)
     calls = [c for run in runs for c in score_run(run, personas)]
     excluded = yaml.safe_load(EXCLUDED.read_text()) or {}
     for c in calls:
@@ -739,7 +772,19 @@ def report(runs: list[Path], out: Path | None = None) -> dict:
     for c in scored:
         for k in c["server"]:
             server.setdefault(k, []).append(f"{c['arm']}-{c['persona']} {c['call_id']}")
-    result = {"arms": arms, "safety": safety, "server_findings": server, "calls": calls}
+    journeys = {}
+    for c in scored:
+        if c["journey_pass"] is not None:
+            j = journeys.setdefault(f"{c['arm']} {c['journey']}", {"runs": 0, "passed": 0})
+            j["runs"] += 1
+            j["passed"] += bool(c["journey_pass"])
+    result = {
+        "arms": arms,
+        "journeys": dict(sorted(journeys.items())),
+        "safety": safety,
+        "server_findings": server,
+        "calls": calls,
+    }
     if out:
         out.write_text(json.dumps(result, indent=1))
     return result
@@ -818,7 +863,7 @@ def main() -> None:
         for run in args.runs:
             judge(run)
     else:
-        result = report(args.runs, args.out)
+        result = report(args.runs, args.out, args.personas)
         if args.markdown:
             print(markdown(result))
         else:
