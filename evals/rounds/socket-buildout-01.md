@@ -106,6 +106,23 @@ The coordinator listened to four done-bar calls. Each fault below has a test, no
 
 **An address the city can't find (call_974282c5d5a9e22788abd7075f8).** The area check runs only at the borough level. find_address asks the borough once and books on that borough's placeholder ZIP (`unverified_zips`; all five boroughs are in the service area). book_appointment then flags the office to confirm the address before dispatch (`app/tools.py _unverified`). The gap is an address outside the city with no borough given even when asked: it books on the tenant's fallback ZIP, treated as in the area, so only the office flag catches it. Asking the ZIP there would close it, against Jackson's "never ask the ZIP", so it is left for his call.
 
+### Reruns on the fixed build (161261f, 4 calls)
+
+The rest of the $15 cap paid for 4 of the 5 calls that found the spot-check faults. Persona e and persona j ran on the night clock (offset 0), g176-04 and x176-02 on the daytime clock (+8). The boiler tune-up (r176-06) didn't fit under the cap and wasn't rerun. Its fixes, no since or tried on a tune-up and the gate lines cut, are covered by tests only. Run folders: `socket-runs/rerun1` and `rerun2`.
+
+| Call | Fault it found | Rerun |
+|---|---|---|
+| e: elderly no-heat, then a billing callback | Billing callback put through to on-call at night; unit asked after "unit two"; slot offer and dispatch in one turn; server sentences said twice | **Gone:** the callback stayed a callback with no transfer, the unit wasn't asked, and nothing was said twice (the socket dropped 3 copies, logged `repeats_said`). **New:** the dispatch sentence was lost (below) |
+| j: CO false alarm, then a furnace check | Outage, since and tried asked (since five times); job type said aloud; "to book, I need your name" | **Gone:** no fault questions, the unit wasn't asked (given with the street), and no gate talk. Booked today 8 to 8:30 with the safety-check note, then a clean goodbye |
+| g176-04: gas_real | Unit asked three times; "Is it heating that's the issue?" | **Gone:** no issue, outage, since or tried question. The unit didn't come up, since the lookup found a house. Safety line once, booked today 1 to 1:30, access answered |
+| x176-02: gas_retracted | The advice said again after "my roommate was cooking" | **Gone:** the advice was said once, and the retraction was taken. No booking, which is right |
+
+All 51 agent lines on these calls were recorded in place (`linecheck.py`), and there were no safety errors.
+
+**New on e: the dispatch sentence was lost.** The caller's "My mom's 85 and she's staying with me" came in two parts, and Retell replaced the response while `find_slots` was booking the dispatch. That cancelled the turn, so the sentence never played. The model's next `find_slots` came back with nothing to say, so it improvised "A technician is already dispatched to your address, so you don't need to pick a time." The visit was right, and the caller heard the window later ("booked for today between 8 and 8:30"), but the server's dispatch wording never reached them. **Fixed in 885f2c8:** `find_slots` on a dispatched call returns the dispatch sentence while no agent line has said it. It is tested, and not yet called.
+
+Minor, not fixed: a "Yeah." opens some replies, which looks like Retell's backchannel heard by the caller agent. On x176-02, "The problem you're having with your heating or cooling?" was a fragment, and "Got it. Okay." stacked two openers.
+
 ## 6. Filter and hold phrase
 
 From the socket's per-call close logs (37 socket calls today, including the done bar):
@@ -129,12 +146,12 @@ The first round on (646), before the arm had its own number, scored 7 calls. 3 o
 
 | | |
 |---|---|
-| Retell, done bar | $12.96 for 31 two-leg calls (MEASURED, `combined_cost` from `POST /v3/list-calls`): 30 done-bar calls at $12.77, $0.426 a call, plus the caller agent's one smoke call. Under the $15 cap |
+| Retell, done bar | $14.65 for 35 two-leg calls (MEASURED, `combined_cost` from `POST /v3/list-calls`): 30 done-bar calls at $12.77 ($0.426 a call), 4 reruns at $1.69, and the caller agent's one smoke call at $0.19. Under the $15 cap |
 | Retell, before the cap | The earlier round on (646) and the Twilio-era calls, $2.35 for 9 calls (MEASURED), not counted against the cap |
 | Anthropic, socket | About $0.07 on a long call: 330k to 410k cache-read, 20k cache-write and 2k output tokens (MEASURED tokens from the socket's close log; price ASSUMED at Haiku list rates of $0.10, $1.25 and $5 a million) |
 
 ## 10. Not done
 
 - **Runs 7 to 10 per journey.** Jackson kept the $15 cap, so the bar is reported on 6 runs (DECISIONS 126). gas_retracted's one miss is a known issue with its fix.
-- **The persona-round and spot-check fixes on the phone.** All of d080929 and 54b7f6a are tested in code only. The next paid run should start with persona e and one gas and one tune-up call.
+- **The last fixes on the phone.** The rerun covered 4 of the 5 spot-check calls (section 5). Still tested in code only: the tune-up questions (r176-06 not rerun), the unit on a building where the caller says "just the house", the slot offer before a dispatch, and the unheard dispatch sentence (885f2c8).
 - **Denoising.** The socket agent still has denoising off for the audio-gap test. It goes back to `noise-cancellation` when the coordinator says.
