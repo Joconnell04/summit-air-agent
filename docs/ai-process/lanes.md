@@ -10,13 +10,13 @@ issue backfilled (the issue body says so).
 |---|---|---|---|
 | [#171](https://github.com/Joconnell04/summit-air-agent/issues/171) | Lane: server-led booking flow and a short prompt (the big fix) | none yet |  |
 | [#176](https://github.com/Joconnell04/summit-air-agent/issues/176) | Lane: server-led flow behind Retell's custom-LLM socket | none yet |  |
-| [#183](https://github.com/Joconnell04/summit-air-agent/issues/183) | Lane: consolidate Jackson's agent prompt (reorganize, keep what tested well) | none yet |  |
 | [#184](https://github.com/Joconnell04/summit-air-agent/issues/184) | Lane: warm transfer scaffold (hold line placeholder for a human) | none yet |  |
 
 ## Done, newest first
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
+| [#183](https://github.com/Joconnell04/summit-air-agent/issues/183) | Lane: consolidate Jackson's agent prompt (reorganize, keep what tested well) | see issue |  |
 | [#181](https://github.com/Joconnell04/summit-air-agent/issues/181) | Prompt iteration log (retell/PROMPT-LOG.md) | see issue |  |
 | [#178](https://github.com/Joconnell04/summit-air-agent/issues/178) | Lane: Opus failure grader with owner-view and bench controls | see issue |  |
 | [#175](https://github.com/Joconnell04/summit-air-agent/issues/175) | Lane: Sonnet 5.5 build-out to the done bar | see issue |  |
