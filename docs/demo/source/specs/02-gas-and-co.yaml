@@ -1,0 +1,100 @@
+# Video 2: gas and carbon monoxide. Boxes are in page pixels of the 1600 px screenshots.
+num: 2
+total: 5
+title: Gas and carbon monoxide
+chips: ["Gas smell", "Cleared, still booking", "Can it skip them?"]
+segments:
+  - kind: intro
+    dur: 5
+    kicker: Video 2 of 5
+    big: Gas and carbon monoxide
+    list:
+      - "What happens if someone calls and smells gas?"
+      - "The fire department cleared it. Can they still get a tech?"
+      - "Can the AI skip the safety lines, or change them?"
+    show: Start from Today, Needs attention.
+
+  - kind: ask
+    scenario: 0
+    dur: 3.5
+    kicker: The owner asks
+    big: "“What happens if someone calls and smells gas?”"
+
+  - kind: image
+    src: today.png
+    scenario: 0
+    steps:
+      - zoom: 1150
+        box: [185, 871, 876, 68]
+        show: Needs attention. The 8:20 gas call.
+        say: Gas calls go to the top of the list for a person, marked Urgent, whatever else is going on.
+
+  - kind: image
+    src: call-c03.png
+    scenario: 0
+    steps:
+      - cam: [150, 60, 1300]
+        box: [185, 258, 806, 71]
+        show: Open it. Point at the red line under the caller.
+        say: The moment the caller said gas, the server locked booking. Nothing gets scheduled before the safety lines.
+      - box: [185, 328, 806, 93]
+        show: The agent's line, then the green check.
+        say: Then it says your signed-off script, word for word. Get out, no switches, call 911 or the gas company.
+      - box: [1016, 193, 400, 101]
+        show: What happened.
+        say: Nothing was booked, and a person is flagged to follow up once everyone is safe.
+
+  - kind: ask
+    scenario: 1
+    dur: 3.5
+    kicker: The owner asks
+    big: "“The fire department cleared it. Can they still get a tech?”"
+
+  - kind: image
+    src: call-c19.png
+    scenario: 1
+    steps:
+      - cam: [150, 60, 1300]
+        box: [185, 258, 806, 196]
+        show: The 4:30 carbon monoxide call.
+        say: Same order. The safety lines come first, then the caller says the fire department cleared it and asks for a check.
+      - box: [185, 687, 806, 57]
+        show: The last step, logged as a safety override.
+        say: Once the lines are said, a caller who insists can book a safety check. It's logged as an override.
+      - zoom: 1000
+        box: [1033, 471, 366, 101]
+        show: Job booked. Urgent, booked on a safety call.
+        say: It goes in Urgent, and you can pull up every call where someone pushed past the script.
+
+  - kind: ask
+    scenario: 2
+    dur: 3.5
+    kicker: The owner asks
+    big: "“Can the AI skip the safety lines, or change them?”"
+
+  - kind: image
+    src: rules.png
+    scenario: 2
+    steps:
+      - cam: [0, 400, 1600]
+        box: [185, 605, 1230, 108]
+        show: Bench, Rules. Fixed responses, Safety.
+        say: These are fixed responses. The agent says them word for word, and no screen can edit them.
+
+  - kind: term
+    capture: tests-safety.txt
+    scenario: 2
+    label: the safety tests
+    steps:
+      - hl: [2, 3]
+        show: The tests behind it.
+        say: The server won't book or hang up until those exact words are said. Every change runs these first.
+      - hl: [4, 10]
+        show: And what doesn't set it off.
+        say: A gas bill or a gas furnace that won't start is not an emergency, so normal calls stay normal.
+
+  - kind: outro
+    dur: 5
+    kicker: Takeaway
+    big: Safety lines first, booking locked until they're said.
+    sub: "Script: docs/demo/02-gas-and-co.md"

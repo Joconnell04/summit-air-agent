@@ -1,0 +1,4 @@
+$ sqlite3 -header -column data/owner-demo/world.db "SELECT a.job_id, t.name AS technician, a.window_date, a.window_id, a.status FROM appointments a JOIN technicians t ON t.id = a.technician_id WHERE a.job_id = 608;"
+job_id  technician     window_date  window_id  status   
+------  -------------  -----------  ---------  ---------
+608     Paul Kowalski  2026-11-05   0800-1000  Scheduled

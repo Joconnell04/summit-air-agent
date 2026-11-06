@@ -1,0 +1,112 @@
+# Video 4: callbacks and the calls it couldn't book. Boxes are in page pixels of the 1600 px
+# screenshots.
+num: 4
+total: 5
+title: Callbacks and leads
+chips: ["Promised callbacks", "Really called back", "Calls it couldn't book"]
+segments:
+  - kind: intro
+    dur: 5
+    kicker: Video 4 of 5
+    big: Callbacks and leads
+    list:
+      - "Where do I see the callbacks it promised?"
+      - "How do I know the office actually called back?"
+      - "What about the calls it couldn't book?"
+    show: Start from Today, the tray on the right.
+
+  - kind: ask
+    scenario: 0
+    dur: 3.5
+    kicker: The owner asks
+    big: "“Where do I see the callbacks it promised?”"
+
+  - kind: image
+    src: today.png
+    scenario: 0
+    steps:
+      - zoom: 1600
+        box: [1087, 752, 328, 596]
+        show: Today, Callbacks tab.
+        say: Every callback the agent promises lands here, with the time it promised and who owes it.
+      - box: [1087, 800, 328, 195]
+        show: The two marked Late.
+        say: Two are late. Nobody has to remember them; they turn red on their own.
+      - box: [185, 939, 876, 155]
+        show: Needs attention, the Late callback rows.
+        say: Late callbacks also climb into Needs attention, next to the safety calls.
+
+  - kind: image
+    src: call-c09.png
+    scenario: 0
+    steps:
+      - cam: [150, 60, 1300]
+        box: [185, 258, 806, 71]
+        show: Open the 10:20 complaint.
+        say: A customer says the noise is back a week after a repair. The agent doesn't argue; it flags a manager.
+      - box: [1016, 193, 400, 80]
+        show: What happened.
+        say: And it promised a call back by 2:00 PM, a time the server gave it, not one the model made up.
+
+  - kind: ask
+    scenario: 1
+    dur: 3.5
+    kicker: The owner asks
+    big: "“How do I know the office actually called back?”"
+
+  - kind: code
+    file: app/jobs.py
+    lines: [227, 234]
+    scenario: 1
+    steps:
+      - hl: [4, 8]
+        show: When a callback counts as done.
+        say: It's marked done only when ServiceTitan's call log shows a call to that number, tagged Callback resolved.
+
+  - kind: term
+    capture: sql-call-log.txt
+    scenario: 1
+    label: the outbound calls in ServiceTitan's call log
+    steps:
+      - hl: [6, 6]
+        show: The office's call to the complaint number.
+        say: There's the office calling that number back at 1:30, tagged resolved. That's what turned it green.
+
+  - kind: term
+    capture: tests-callbacks.txt
+    scenario: 1
+    label: the callback tests
+    steps:
+      - hl: [3, 4]
+        show: Voicemail and no answer.
+        say: A voicemail or no answer never counts as done. The callback stays open until someone reaches them.
+
+  - kind: ask
+    scenario: 2
+    dur: 3.5
+    kicker: The owner asks
+    big: "“What about the calls it couldn't book?”"
+
+  - kind: image
+    src: today-leads.png
+    scenario: 2
+    steps:
+      - zoom: 1250
+        box: [1087, 752, 328, 367]
+        show: Click Leads.
+        say: A heat pump quote, a membership question and an office building. Each one is sent to sales in ServiceTitan.
+
+  - kind: image
+    src: today-away.png
+    scenario: 2
+    steps:
+      - zoom: 1250
+        box: [1087, 752, 328, 182]
+        show: Click Turned away.
+        say: Turned away shows the calls outside what you serve, like a commercial building or Hoboken, each with the reason.
+
+  - kind: outro
+    dur: 5
+    kicker: Takeaway
+    big: Every promise has a time, and it's only done when ServiceTitan shows it.
+    sub: "Script: docs/demo/04-callbacks.md"

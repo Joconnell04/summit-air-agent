@@ -1,0 +1,119 @@
+# Video 1: an urgent call, start to finish. Boxes and cameras are in page pixels of the 1600 px
+# screenshots in ../shots; hl ranges count lines within the excerpt shown.
+num: 1
+total: 5
+title: An urgent call, start to finish
+chips: [The 7:42 call, Why Urgent, Told late]
+segments:
+  - kind: intro
+    dur: 5
+    kicker: Video 1 of 5
+    big: An urgent call, start to finish
+    list:
+      - "Show me what happened on that 7:42 call."
+      - "Why is it Urgent? Did the AI decide that?"
+      - "What if they mention grandpa only after hearing the wait?"
+    show: Have the owner view open on Today before you start.
+
+  - kind: ask
+    scenario: 0
+    dur: 3.5
+    kicker: The owner asks
+    big: "“Show me what happened on that 7:42 call.”"
+
+  - kind: image
+    src: today.png
+    scenario: 0
+    steps:
+      - cam: [0, 70, 1600]
+        box: [184, 165, 246, 130]
+        show: Today. Point at Need a person.
+        say: This is your day so far. Every call, every booking, and the four calls that need a person.
+      - cam: [0, 1190, 1600]
+        box: [185, 1725, 876, 44]
+        tag: 7:42 AM, before the office opened
+        show: Jobs booked, bottom row.
+        say: Here's the first call of the day. No heat, booked for 8 to 10, marked Urgent.
+
+  - kind: image
+    src: call-c01.png
+    scenario: 0
+    steps:
+      - cam: [150, 60, 1300]
+        box: [185, 258, 806, 99]
+        show: Click the row. Read the caller's words.
+        say: The parent is 84 and it's 52 degrees inside. Those two facts are what made it urgent.
+      - box: [185, 357, 806, 146]
+        show: The read-back, then the yes.
+        say: Before booking, it reads the address and number back. The server won't book until the caller says yes.
+      - box: [185, 578, 806, 38]
+        show: Flagged for a person.
+        say: It also alerted the on-call team and promised a call back within 20 minutes.
+
+  - kind: ask
+    scenario: 1
+    dur: 3.5
+    kicker: The owner asks
+    big: "“Why is it Urgent? Did the AI decide that?”"
+
+  - kind: image
+    src: call-c01.png
+    scenario: 1
+    steps:
+      - zoom: 1000
+        box: [1033, 492, 366, 114]
+        show: Job booked panel. Point at Why.
+        say: The reason is in plain words, below 55 inside and an older person at home, quoting the caller.
+
+  - kind: image
+    src: call-c01-tech.png
+    scenario: 1
+    steps:
+      - cam: [150, 700, 1100]
+        box: [281, 842, 694, 142]
+        tag: "\"priority\": null"
+        show: Click Technical details. Find priority null.
+        say: The model never asked for a priority. It passed the facts, and our server set Urgent from your rules.
+
+  - kind: code
+    file: tenants/summit-air/agent.yaml
+    lines: [168, 185]
+    scenario: 1
+    steps:
+      - hl: [4, 4]
+        show: Your company's priority rules.
+        say: Below 55 inside is Urgent. These cutoffs are yours to set, and rules can only raise a priority.
+
+  - kind: term
+    capture: tests-priority.txt
+    scenario: 1
+    label: three of the priority tests
+    steps:
+      - hl: [3, 3]
+        show: The test that pins it.
+        say: A caller who just says make it urgent, with no new fact, gets nothing raised. That runs on every change.
+
+  - kind: ask
+    scenario: 2
+    dur: 3.5
+    kicker: The owner asks
+    big: "“What if they mention grandpa only after hearing the wait?”"
+
+  - kind: image
+    src: call-c05.png
+    scenario: 2
+    steps:
+      - cam: [150, 300, 1300]
+        box: [185, 579, 806, 33]
+        show: Open the 9:03 call. Point at the late line.
+        say: This caller heard the time first, then mentioned a dad who is 79. The server believes them and raises it.
+      - zoom: 1000
+        box: [1033, 501, 366, 134]
+        show: Point at Raised, after the caller heard the wait.
+        say: It still books Urgent, but marks the raise so your dispatcher can judge it. Missing an at-risk caller is worse.
+
+  - kind: outro
+    dur: 5
+    kicker: Takeaway
+    big: The model gathers the facts. Your rules set the priority.
+    sub: "Script: docs/demo/01-urgent-call.md"

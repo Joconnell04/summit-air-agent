@@ -1,0 +1,12 @@
+$ uv run pytest -v tests/tool_server/test_ts_safety.py 
+tests/tool_server/test_ts_safety.py::test_a_clear_signal_on_any_turn_returns_the_exact_lines_and_flags_a_person PASSED
+tests/tool_server/test_ts_safety.py::test_booking_tools_wait_for_the_lines_then_an_insisting_caller_can_book PASSED
+tests/tool_server/test_ts_safety.py::test_gas_alone_a_gas_bill_or_a_gas_furnace_triggers_nothing[gas] PASSED
+tests/tool_server/test_ts_safety.py::test_gas_alone_a_gas_bill_or_a_gas_furnace_triggers_nothing[My gas bill is huge this month] PASSED
+tests/tool_server/test_ts_safety.py::test_gas_alone_a_gas_bill_or_a_gas_furnace_triggers_nothing[The gas furnace won't turn on] PASSED
+tests/tool_server/test_ts_safety.py::test_gas_alone_a_gas_bill_or_a_gas_furnace_triggers_nothing[I called the gas company already] PASSED
+tests/tool_server/test_ts_safety.py::test_gas_alone_a_gas_bill_or_a_gas_furnace_triggers_nothing[I don't smell gas, the heat just won't come on] PASSED
+tests/tool_server/test_ts_safety.py::test_gas_alone_a_gas_bill_or_a_gas_furnace_triggers_nothing[no gas smell or anything] PASSED
+tests/tool_server/test_ts_safety.py::test_gas_alone_a_gas_bill_or_a_gas_furnace_triggers_nothing[We live in a co-op on Ocean Parkway] PASSED
+tests/tool_server/test_ts_safety.py::test_a_safety_call_that_drops_before_the_lines_gets_a_person_and_a_callback PASSED
+============================== 10 passed in 0.80s ==============================

@@ -1,0 +1,6 @@
+$ uv run pytest -v tests/tool_server/test_ts_callback_done.py 
+tests/tool_server/test_ts_callback_done.py::test_a_call_back_from_the_office_tagged_resolved_marks_the_callback_done PASSED
+tests/tool_server/test_ts_callback_done.py::test_a_voicemail_or_no_answer_is_no_contact_and_never_marks_the_callback_done[voicemail] PASSED
+tests/tool_server/test_ts_callback_done.py::test_a_voicemail_or_no_answer_is_no_contact_and_never_marks_the_callback_done[no answer] PASSED
+tests/tool_server/test_ts_callback_done.py::test_the_owner_view_counts_the_callback_done_only_after_the_log_shows_it PASSED
+============================== 4 passed in 0.85s ===============================
