@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 117. The repo is handed over as Summit Air's deployment repo, not a template
+
+Decided: before the handover, the repo gets a clear front door and stays shaped as what a Revin FDE would leave behind for one customer and for the Revin team: the agent, the rules it can't break, the tests that prove them, and the record of why. It doesn't become a generic template or a "plug in your keys" product.
+Why: the assignment frames the work as an FDE building for one customer "tomorrow" and judges "what you chose to build vs. skip"; a template builds for Revin's platform rather than for Summit Air, costs time right before the demo, and Revin already has its own product. The history (decisions, eval rounds, process) shows judgment, but a reviewer looking at "prompting and architecture ahead of time" should find the prompt, the rules and the architecture first and the history one level down.
+Considered: leaving the repo as is (the history crowds the root); a template or starter in the style of a vendor's public repo (off-target for the brief, and turning one customer into a template is better done with a second real customer).
+Would change if: Revin asks for a reusable starting point, in which case `tenants/` is already the seam.
+Discussion: docs/ai-process/phases.md (Repo front door)
+Issue: none
+
 ## 116. No post-trained small model for the voice agent
 
 Decided: the agent stays on a Retell-hosted Claude model. We don't post-train and self-host a small model (a Qwen 8B-class model with a merged adapter on a RunPod GPU).
