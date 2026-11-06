@@ -1,0 +1,972 @@
+{
+  "general_tools": [
+    {
+      "args_at_root": false,
+      "description": "Look up a customer by a phone number or an address the caller gave. Returns only records that match, with membership, open jobs, last service date, recent calls and notes. The number the call came from was already looked up before hello.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "find_customer",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "city": {
+                    "maxLength": 60,
+                    "type": "string"
+                  },
+                  "spelled": {
+                    "description": "The street name as the caller spelled it, letter by letter, such as \"H, O, U, S, T, O, N\". The server joins the letters into the street name.",
+                    "maxLength": 120,
+                    "type": "string"
+                  },
+                  "street": {
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "unit": {
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "zip": {
+                    "pattern": "^\\d{5}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "street",
+                  "zip"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/find_customer"
+    },
+    {
+      "args_at_root": false,
+      "description": "Older history for a customer already matched on this call: past jobs, past calls or equipment. Use it for questions like \"when were you last out here?\" that the call context doesn't answer.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "get_customer_history",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customer_id": {
+            "type": "integer"
+          },
+          "months_back": {
+            "type": "integer"
+          },
+          "what": {
+            "enum": [
+              "jobs",
+              "calls",
+              "equipment"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id",
+          "what"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/get_customer_history"
+    },
+    {
+      "args_at_root": false,
+      "description": "Check a five-digit ZIP against the service area. Call it as soon as the caller gives the ZIP; never guess one from the street.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "check_service_area",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "zip": {
+            "pattern": "^\\d{5}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zip"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/check_service_area"
+    },
+    {
+      "args_at_root": false,
+      "description": "Find the ZIP for a street address when the caller gave the house number and street but no ZIP, or doesn't know it. Pass the house number and street as they said them, and the borough or neighborhood only if they said one. When it returns the address, its ZIP is already checked against the service area: use that ZIP and street in the read-back and don't ask for the ZIP. If it asks which one or asks to spell the street, ask the caller its sentence and call it again with `borough` or `spelled`.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "find_address",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "borough": {
+            "description": "The borough or neighborhood, only if the caller said one",
+            "maxLength": 60,
+            "type": "string"
+          },
+          "spelled": {
+            "description": "The street name as the caller spelled it, letter by letter",
+            "maxLength": 120,
+            "type": "string"
+          },
+          "street": {
+            "description": "The house number and street as the caller said them, such as \"248 Duffield St\" or \"41-12 Bell Blvd\"",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "street"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/find_address"
+    },
+    {
+      "args_at_root": false,
+      "description": "Openings for a job type, only after the read-back is confirmed (or with `moving_a_visit`). Windows are 30 minutes unless the caller asks for another length (`window_minutes`). With `day` (today, tomorrow, a weekday or a date) that day's windows. A time the caller names goes in `arrive_after`. Put what bears on priority in `facts`, as the caller said it.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "find_slots",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "arrive_after": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller can only have the technician arrive after this local time, such as \"8\" or \"1 PM\". Only what the caller said; a bare hour such as \"2\" means 2 PM."
+          },
+          "arrive_before": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller needs the technician to arrive before this local time, such as \"10\" or \"2\". Only what the caller said; \"8 to 2\" is arrive_after \"8\" and arrive_before \"2\"."
+          },
+          "day": {
+            "description": "One day's exact windows: today, tomorrow, a weekday name or a date (YYYY-MM-DD).",
+            "type": "string"
+          },
+          "facts": {
+            "additionalProperties": false,
+            "description": "What the agent has heard that bears on priority. The server sets priority from the caller's own lines.",
+            "properties": {
+              "inside_temp_f": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "issue": {
+                "maxLength": 300,
+                "type": "string"
+              },
+              "temp_falling_fast": {
+                "type": "boolean"
+              },
+              "who_home": {
+                "maxLength": 300,
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "job_type": {
+            "enum": [
+              "no_heat",
+              "no_cooling",
+              "tune_up",
+              "safety_check",
+              "estimate"
+            ],
+            "maxLength": 40,
+            "type": "string"
+          },
+          "moving_a_visit": {
+            "description": "True when finding a new time for a visit the caller already has, before reschedule_appointment.",
+            "type": "boolean"
+          },
+          "preferred_days": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 7,
+            "type": "array"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Low",
+                  "Normal",
+                  "High",
+                  "Urgent"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The agent's view; logged, not used"
+          },
+          "time_of_day": {
+            "anyOf": [
+              {
+                "enum": [
+                  "morning",
+                  "afternoon",
+                  "evening"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "window_minutes": {
+            "description": "Window length in minutes, in 30-minute steps, only when the caller asked for a length (\"an hour\" is 60). Two hours by default.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_type"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/find_slots"
+    },
+    {
+      "args_at_root": false,
+      "description": "Reads back the address and phone number. The first call returns the sentence to say. On the caller's yes, call again with the same details and `confirmed: true`. When the number reaches someone else (\"call my daughter at ...\"), pass whom it reaches in `phone_for`, in their words.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "read_back",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "additionalProperties": false,
+            "properties": {
+              "city": {
+                "maxLength": 60,
+                "type": "string"
+              },
+              "spelled": {
+                "description": "The street name as the caller spelled it, letter by letter, such as \"H, O, U, S, T, O, N\". The server joins the letters into the street name.",
+                "maxLength": 120,
+                "type": "string"
+              },
+              "street": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "unit": {
+                "maxLength": 20,
+                "type": "string"
+              },
+              "zip": {
+                "pattern": "^\\d{5}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "street",
+              "zip"
+            ],
+            "type": "object"
+          },
+          "confirmed": {
+            "type": "boolean"
+          },
+          "name": {
+            "description": "The caller's name, if they gave it earlier in the call. Pass it so the server doesn't ask again.",
+            "type": "string"
+          },
+          "phone": {
+            "description": "The digits as the caller said them, caller_id for the number calling, or the last four digits of a number on file",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "phone_for": {
+            "description": "Who the number reaches when it isn't the caller, as the caller said it, such as \"my daughter Ana\". Empty for the caller's own number.",
+            "maxLength": 60,
+            "type": "string"
+          }
+        },
+        "required": [
+          "address",
+          "phone"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/read_back"
+    },
+    {
+      "args_at_root": false,
+      "description": "Book the window the caller chose, with the intake details. `slot.date` and `slot.window` are the `date` and `window` code from find_slots' `offer` or `windows`, never the spoken label. If it refuses, follow its `say` and `next`. To move a visit the caller already has, use reschedule_appointment instead.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "book_appointment",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "details": {
+            "additionalProperties": false,
+            "description": "The intake every booking carries. Address and phone come from the read-back.",
+            "properties": {
+              "approver": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              "arrival_notes": {
+                "maxLength": 300,
+                "type": "string"
+              },
+              "inside_temp_f": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "issue": {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              "name": {
+                "description": "Needed for a caller not on file, and for the account holder at a new address booked with new_address_account own",
+                "maxLength": 80,
+                "type": "string"
+              },
+              "since": {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              "system_type": {
+                "maxLength": 120,
+                "type": "string"
+              },
+              "tried": {
+                "maxLength": 300,
+                "minLength": 1,
+                "type": "string"
+              },
+              "who_home": {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "issue",
+              "since",
+              "tried",
+              "who_home",
+              "approver"
+            ],
+            "type": "object"
+          },
+          "job_type": {
+            "enum": [
+              "no_heat",
+              "no_cooling",
+              "tune_up",
+              "safety_check",
+              "estimate"
+            ],
+            "maxLength": 40,
+            "type": "string"
+          },
+          "new_address_account": {
+            "anyOf": [
+              {
+                "enum": [
+                  "own",
+                  "caller"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only when a caller on file books an address that isn't theirs on file: own puts the address on its own account, in details.name, with the caller as a contact (the usual choice, such as a parent's house); caller adds it to the caller's own account (they moved, or it's theirs). Ask the caller which."
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "enum": [
+                  "Low",
+                  "Normal",
+                  "High",
+                  "Urgent"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The agent's view; logged, not used"
+          },
+          "separate_problem": {
+            "description": "True only when the caller has an open visit at this address and confirmed this is a different problem that needs its own visit. To move a visit, use reschedule_appointment.",
+            "type": "boolean"
+          },
+          "slot": {
+            "additionalProperties": false,
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "window": {
+                "description": "The window code find_slots returned (such as morning), not its spoken label",
+                "maxLength": 40,
+                "type": "string"
+              }
+            },
+            "required": [
+              "date",
+              "window"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "job_type",
+          "slot",
+          "details"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/book_appointment"
+    },
+    {
+      "args_at_root": false,
+      "description": "Move a booking that belongs to this caller to a new window, with the reason. `slot.window` is the window code from find_slots, not the spoken label.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "reschedule_appointment",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "booking_id": {
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "slot": {
+            "additionalProperties": false,
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "window": {
+                "description": "The window code find_slots returned (such as morning), not its spoken label",
+                "maxLength": 40,
+                "type": "string"
+              }
+            },
+            "required": [
+              "date",
+              "window"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "booking_id",
+          "slot",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/reschedule_appointment"
+    },
+    {
+      "args_at_root": false,
+      "description": "Cancel a booking that belongs to this caller, after a clear yes and the reason. Returns two windows to offer instead.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "cancel_appointment",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "booking_id": {
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 200,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "booking_id",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/cancel_appointment"
+    },
+    {
+      "args_at_root": false,
+      "description": "For a caller on file who says they moved house. First find the new address (find_address, or check_service_area with their ZIP), then read it back with read_back, then call this. It saves the new address and moves their open visits there, or, outside the area, cancels the visits at the old address. Its `say` tells the caller what happened.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "record_move",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customer_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The account that moved; leave it out when one customer is matched"
+          },
+          "from_location_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The location they moved out of, only when the account has more than one and the caller said which"
+          }
+        },
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/record_move"
+    },
+    {
+      "args_at_root": false,
+      "description": "Ask a person to follow up: a callback the caller wants, a complaint, a reschedule that needs a person, someone at risk. When the caller asked for a window (\"after 5\", \"before 3\", \"between 1 and 3\"), pass it as callback_after and callback_before, not callback_time. \"This afternoon\" is after 12 PM and before 5 PM, \"this morning\" before 12 PM, \"this evening\" after 5 PM. \"Tomorrow\" goes in callback_day. Its `say` names the callback time.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "flag_person",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "callback_after": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller asked to be called after this local time today, such as \"5 PM\". Only what the caller said; use it instead of callback_time."
+          },
+          "callback_before": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The caller asked to be called before this local time today, such as \"3 PM\". Only what the caller said; use it instead of callback_time."
+          },
+          "callback_day": {
+            "description": "The day the caller asked for. The times above are on that day; a bare hour such as \"2\" means 2 PM.",
+            "enum": [
+              "today",
+              "tomorrow"
+            ],
+            "type": "string"
+          },
+          "callback_in_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "callback_time": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A local time such as \"4:30 PM\", or ISO with an offset"
+          },
+          "priority": {
+            "enum": [
+              "Normal",
+              "High",
+              "Urgent"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 300,
+            "minLength": 3,
+            "type": "string"
+          },
+          "system_calls_back": {
+            "description": "True when the caller only asked to be called back (after dropped calls, or a plain 'call me back'): the system dials them at that time. False when a person has to handle it.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/flag_person"
+    },
+    {
+      "args_at_root": false,
+      "description": "Save one lead: commercial (company, contact, need), membership sign-up interest, or an install or replacement quote. A window the caller asked for goes in callback_after and callback_before, and \"tomorrow\" in callback_day. Its `say` tells the caller what happens next.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "record_lead",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "details": {
+            "additionalProperties": false,
+            "properties": {
+              "callback_after": {
+                "anyOf": [
+                  {
+                    "maxLength": 40,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The caller asked to be called after this local time today, such as \"5 PM\". Only what the caller said; use it instead of callback_time."
+              },
+              "callback_before": {
+                "anyOf": [
+                  {
+                    "maxLength": 40,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The caller asked to be called before this local time today, such as \"3 PM\". Only what the caller said; use it instead of callback_time."
+              },
+              "callback_day": {
+                "description": "The day the caller asked for. The times above are on that day; a bare hour such as \"2\" means 2 PM.",
+                "enum": [
+                  "today",
+                  "tomorrow"
+                ],
+                "type": "string"
+              },
+              "callback_in_minutes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "callback_time": {
+                "anyOf": [
+                  {
+                    "maxLength": 40,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "A local time such as \"4:30 PM\", or ISO with an offset"
+              },
+              "company": {
+                "maxLength": 120,
+                "type": "string"
+              },
+              "contact_name": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              "need": {
+                "maxLength": 300,
+                "minLength": 3,
+                "type": "string"
+              }
+            },
+            "required": [
+              "contact_name",
+              "need"
+            ],
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "commercial",
+              "membership",
+              "install"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "details"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/record_lead"
+    },
+    {
+      "args_at_root": false,
+      "description": "Append a short note for the team about this customer or this call's job.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "add_note",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "attach_to": {
+            "enum": [
+              "customer",
+              "job"
+            ],
+            "type": "string"
+          },
+          "customer_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "text": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/add_note"
+    },
+    {
+      "args_at_root": false,
+      "description": "The caller asked not to be called again. Its `say` confirms it.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "mark_do_not_call",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "confirmed": {
+            "description": "True once the caller said yes to the confirm question it returned.",
+            "type": "boolean"
+          },
+          "undo": {
+            "description": "True when the caller wants to be called again after all.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/mark_do_not_call"
+    },
+    {
+      "args_at_root": false,
+      "description": "Ask to end the call, after your goodbye. Call it once, on its own: the system hangs up a moment later. If it returns a sentence instead, say that and keep listening.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "end_call",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "enum": [
+              "resolved",
+              "caller_goodbye",
+              "wrong_number",
+              "spam",
+              "not_a_customer",
+              "declined",
+              "other"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/end_call"
+    },
+    {
+      "args_at_root": false,
+      "description": "Call only when the caller asks how heating or cooling equipment works, what a sound or symptom might mean, or about maintenance. Pass their question.",
+      "max_retry": 1,
+      "method": "POST",
+      "name": "lookup_hvac_info",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "question": {
+            "maxLength": 300,
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "type": "object"
+      },
+      "speak_after_execution": true,
+      "speak_during_execution": false,
+      "timeout_ms": 10000,
+      "type": "custom",
+      "url": "https://server-led.45-77-105-247.sslip.io/retell/tools/lookup_hvac_info"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+# Public HTTPS for the server-led arm's test instance, installed as
+# /etc/caddy/sites/summit-server-led.caddy by deploy/server-led/deploy.sh. Its own hostname, so
+# the Retell site stays untouched. The bridge checks Retell's signature on every request; the tool
+# server and the mock's reset need the eval token, as on the Retell eval instance.
+server-led.45-77-105-247.sslip.io {
+	handle /retell/* {
+		reverse_proxy 127.0.0.1:8132
+	}
+	@mock_reset {
+		path /mock/debug/reset
+		header X-Debug-Token {$SUMMIT_EVAL_TOKEN}
+	}
+	handle @mock_reset {
+		uri strip_prefix /mock
+		reverse_proxy 127.0.0.1:8131
+	}
+	@tools {
+		header X-Debug-Token {$SUMMIT_EVAL_TOKEN}
+	}
+	handle @tools {
+		reverse_proxy 127.0.0.1:8130
+	}
+	handle {
+		respond 404
+	}
+}

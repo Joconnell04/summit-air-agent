@@ -518,6 +518,12 @@ lines:
   # A raised priority that leaves the offered window where it was (Jackson's wording).
   priority_same_offer: Thanks for telling me. I've moved you up, and this is still our soonest opening. Does that still work?
   anything_else_first: Is there anything else I can help with?
+  # The server-led arm (app/flow.py): the open-door line ends the first offer on a no-heat or
+  # no-cooling call, and the three visit questions come before a booking, one a turn.
+  open_door: If anything makes this more urgent for you, just let me know.
+  ask_approval: Will you be able to approve any repair work the technician recommends?
+  ask_someone_home: Will someone be home to let the technician in?
+  ask_access: Is there a gate code, a buzzer, or any pets the technician should know about?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
   # has no booking yet (DECISIONS.md 085). {unit} is "5C".
   next_unit: Now let's set up apartment {unit}.

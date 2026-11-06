@@ -34,3 +34,17 @@ def test_the_watchdog_leaves_the_numbers_routing_alone_unless_fallback_is_on():
     script = (Path(__file__).resolve().parents[1] / "deploy" / "summit-air" / "watchdog.sh").read_text()
     assert script.count("scripts.phone.fallback") == 2
     assert script.count('[ "${PHONE_FALLBACK:-off}" = on ]') == 2
+
+
+def test_the_server_led_instance_never_reaches_the_live_services():
+    """Issue #171: the arm's test instance runs beside the live services and must never share their
+    ports, folders or Caddy site, or restart Caddy."""
+    folder = ROOT / "deploy" / "server-led"
+    run, deploy = (folder / "run.sh").read_text(), (folder / "deploy.sh").read_text()
+    for live in (":8100", ":8101", ":8102", ":8110", ":8111", ":8112"):
+        assert live not in run
+    assert "SERVER_LED=1" in run and "--if-stale" in run
+    assert "summit-air/app" not in deploy and "summit-air/retell/" not in deploy
+    assert "restart caddy" not in deploy and "reload caddy" in deploy
+    site = (folder / "Caddyfile").read_text()
+    assert site.count("server-led.45-77-105-247.sslip.io {") == 1

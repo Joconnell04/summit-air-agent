@@ -1,0 +1,21 @@
+# One process of the server-led arm's test instance, run as jackson from ~/summit-air/server-led
+# (deploy/server-led/deploy.sh):
+#   summit-server-led@mock    its own mock ServiceTitan (8131)
+#   summit-server-led@tools   its tool server, with SERVER_LED=1 (8130)
+#   summit-server-led@bridge  the bridge its Retell agents call (8132)
+[Unit]
+Description=Summit Air server-led arm: %i
+After=network-online.target
+
+[Service]
+User=jackson
+WorkingDirectory=/home/jackson/summit-air/server-led
+EnvironmentFile=/home/jackson/summit-air/.env
+EnvironmentFile=/home/jackson/summit-air/retell.env
+EnvironmentFile=-/home/jackson/summit-air/server-led.env
+ExecStart=/bin/sh deploy/server-led/run.sh %i
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

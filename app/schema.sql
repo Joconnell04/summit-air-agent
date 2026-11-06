@@ -699,3 +699,16 @@ CREATE TABLE IF NOT EXISTS kept_misses (
     attempts INTEGER NOT NULL,
     next_at TEXT NOT NULL
 );
+
+-- Every result on a server-led instance (app/flow.py), with the caller turn it answered, so the
+-- gates can tell what was said after it.
+CREATE TABLE IF NOT EXISTS flow_results (
+    id INTEGER PRIMARY KEY,
+    call_id TEXT NOT NULL REFERENCES calls (id) ON DELETE CASCADE,
+    tool TEXT NOT NULL,
+    ok INTEGER NOT NULL,
+    say TEXT NOT NULL,
+    turn_seq INTEGER NOT NULL,
+    at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_flow_results_call ON flow_results (call_id);
