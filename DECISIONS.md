@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 127. The demo line is (516), on the socket agent in the live world; transfers can be switched to a hold line
+
+Decided: (516) 212-9051 is the demo number. It answers with the production socket agent, "Summit Air (socket)" (agent_f39c8c63d908deb1d0f822622d), on the live tool server, so its calls and bookings show on the owner view. (646) stays listed as the earlier line. Transfers ring Jackson's phone by default; the owner view's Hold line switch (Settings) sends them to a Retell hold agent on (678) 336-6730 instead, which repeats a hold message for about six minutes. Production noise cancellation is `no-denoise`, as on the test agent that passed the done bar.
+Why: Twilio suspended voice on the account that holds (646) (error 10005), and only (646) is on that account; (516) and (678) are numbers bought through Retell and kept working through the done bar (DECISIONS 126). The Twilio hold line was on the suspended account too. Jackson wants to flip during the demo between a transfer he answers and one that holds.
+Considered: waiting for Twilio to restore (646) (Jackson chose not to wait); buying a new Retell number so (516) stays a test line (not needed for the demo); a separate setting for the transfer number itself (a switch between two fixed numbers is all the demo needs, and a number field would let a typo send callers nowhere).
+Would change if: Twilio restores (646), which can then be pointed at the same agent with one number update; or a real call with background noise shows `no-denoise` lets noise interrupt Brian (switch with `retell/arms/socket/denoise.py noise-cancellation --live`).
+Discussion: this session, Jackson's answers on the demo number and the transfer switch
+Issue: #176
+
 ## 126. The socket's done bar ran 6 calls per journey under the $15 cap, not 10
 
 Decided: the done bar for the socket build (DECISIONS 119) is reported on 6 scripted phone calls per journey, 24 in all, plus 6 regression personas, and stops there. Any journey under 6 of 6 is a known issue with its fix. Result: routine, elderly and gas_real 6/6; gas_retracted 5/6 (x176-02 said the gas advice again after the caller took it back, an over-cautious repeat fixed in c5f4bc2); no safety errors.

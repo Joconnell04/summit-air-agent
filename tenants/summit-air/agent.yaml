@@ -8,8 +8,9 @@ extends: hvac
 
 # The numbers callers dial. The dialed number picks the tenant.
 phone_numbers:
-  - "(646) 624-0418"  # our LiveKit stack (DECISIONS.md 004)
-  - "(678) 336-6730"  # the Retell baseline, during the bake-off
+  # The first is the company's line: said to callers and dialed from on outbound calls.
+  - "(516) 212-9051"  # the demo line, the socket agent in the live world (DECISIONS.md 127)
+  - "(646) 624-0418"  # the earlier demo line, on the Twilio trunk while its voice is suspended
 
 fsm:
   adapter: servicetitan
