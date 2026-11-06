@@ -20,6 +20,24 @@ Considered: keeping keyword search only (it found the right page on all 10 too, 
 Would change if: live calls show Haiku mangling lookup answers (turn the hand-off on and compare), or the library grows past a few hundred passages (move the index out of the repository).
 Discussion: evals/rounds/knowledge-rag-01.md
 
+## 131. A safety call ends with a menu, and a danger no list names is caught by the side model
+
+Decided: the gas, carbon monoxide and general hazard lines end with one menu: "Once everyone's safe, I can connect you with someone on our team right now, or book an appointment with one of our technicians to check it out. And if it's really urgent, we can send someone out right away to help." A person now is the handoff ("Got it, transferring you now.", no details taken). An appointment is the normal booking at High. Someone right away raises the call to Urgent and is an emergency dispatch at the read-back, after the agent has the address and a clear picture of the source. A callback isn't offered but works if asked. The lines and the menu are said once. A caller line with one of a short list of hazard word stems, while no safety kind is active, is read by the side model (OpenAI Decisions, the `active_hazard` question, threshold 0.8, at most 1 s); a yes brings the general lines ("If anyone's in danger, the safest thing is to get away from it and call 9-1-1 from somewhere safe."). The question says plainly that a leak, a drip or water on the floor is a technician's job, not a 9-1-1 call.
+Why: Jackson wanted the safety route to end in help, with the choice of a person, a visit or someone now, and not to be limited to gas and CO without a growing list of phrases. Supersedes the single dispatch offer of DECISIONS.md 129.
+Considered: a longer phrase list for fires, sparks and floods (the list never ends); asking the side model on every line (cost and wait on lines that can't be a hazard); offering a callback in the menu (four choices is too many to hear).
+Would change if: live calls show the side model firing on ordinary lines (raise the threshold) or missing real dangers (widen the stems).
+Discussion: this session, Jackson's safety menu messages; tests/tool_server/test_ts_safety_dispatch.py, test_ts_side_model.py
+Issue: #176
+
+## 130. Priority levels, seasons, visit types, the can-it-wait question and the on-call roster
+
+Decided: priority is Low for planned work (tune-up, estimate), Normal for a fault with no strong signal ("not keeping up"), High for a fault the caller describes ("completely out", "banging", "won't turn on") or no heat in the heating season (October 1 to May 31) or no cooling in the cooling season (June 15 to September 15), and Urgent for special call-outs (an older person, a baby, a medical condition, an active hazard, dangerous indoor temperatures). Every visit is either an Emergency dispatch (someone sent right away, always Urgent) or Scheduled; a call that left no visit is No visit, and priority is its own field. A High no-heat or no-cooling call asks once, before any times, "Can this wait for a scheduled visit, or do you need someone out right away?"; asking for someone right away raises it to Urgent, and Urgent dispatches. After hours, two on-call technicians each stay busy two hours a dispatch (ASSUMED); with both out, the caller hears "after their current job, in about X".
+Why: Jackson asked for these levels, for winter and summer on the server's own dates, for one plain Scheduled-or-Emergency label on visits, and for the caller to be offered an emergency dispatch rather than the server deciding alone.
+Considered: Option A wording for the question ("I can book you the soonest appointment, or if you need someone out right away..."), which invites more dispatches; tracking on-call technicians in the CRM (more lookups for the same answer).
+Would change if: the owner's real on-call roster or job length differ (agent.yaml after_hours), or callers say "right away" so often that dispatches swamp the on-call technicians.
+Discussion: this session, Jackson's plan 2 messages; tests/tool_server/test_ts_priority.py, test_ts_dispatch.py, test_ts_labels.py
+Issue: #176
+
 ## 129. The gas and carbon monoxide lines offer an emergency technician, dispatched as Urgent
 
 Decided: the safety lines end with one question, "Once everyone's safe, would you like us to send a technician out right away?" A yes is dispatched at the read-back as a safety check, the same way as an urgent no-heat call: the soonest technician (the on-call technician after hours), no menu of times, the booking note that the technician works on it only once it's been checked and found safe, and the label Urgent. A no carries on as usual. The lines and the offer are said once per hazard, so neither comes back.

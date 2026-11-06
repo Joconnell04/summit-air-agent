@@ -27,3 +27,26 @@ Talk track: "The address lookup is a small example of something bigger. Anything
 ## Answering questions from their own material
 
 Today the agent answers equipment questions ("why is my furnace short-cycling?") from one page of HVAC basics the company owns (`knowledge/hvac-basics.md`), matched by plain word overlap, with no prices and no repair steps, so every answer can be traced to the line it came from. That is the right size for a page. For a company with a real library, such as manuals for the brands it services, warranty and maintenance-plan terms, or past job notes, or one that wants the agent to answer deeper technical questions, we'd recommend full retrieval (RAG): the documents split into passages and indexed, the few best passages fetched for each question, and the answer kept to what they say, with the source named in the call log. It plugs in behind the same tool, so the rules about prices and repairs stay where they are (docs/later.md C-86).
+
+## Priority, visit types and the on-call roster
+
+Two fields on every visit. Visit type is Emergency dispatch (a technician sent right away, always Urgent) or Scheduled (every other visit); a call that left no visit is No visit. Priority is its own field:
+
+| Priority | When | Example |
+|---|---|---|
+| Low | Planned work, nothing wrong | tune-up, maintenance, estimate |
+| Normal | Something's wrong, no strong signal | "it's not keeping up" |
+| High | A fault the caller describes, or no heat in the heating season (Oct 1 to May 31), or no cooling in the cooling season (Jun 15 to Sep 15) | "it's completely out", "it's banging" |
+| Urgent | A special call-out, and every emergency dispatch | an older person, a baby or a medical condition at home; an active hazard |
+
+On a High no-heat or no-cooling call, Brian asks once: "Can this wait for a scheduled visit, or do you need someone out right away?" Someone right away makes it Urgent and an emergency dispatch. In the day an emergency dispatch takes the soonest technician on the schedule; after hours it goes to the on-call technicians. The company file says there are two (ASSUMED), each busy about two hours a dispatch, and when both are out the caller hears "the first one free will call you and head to you after their current job, in about an hour and a half."
+
+Talk track: "Every visit is either scheduled or an emergency dispatch, and priority is separate. The caller decides whether it can wait; the server decides what counts as urgent from what they said."
+
+## The safety menu
+
+Gas, carbon monoxide or any other danger the side model hears gets the safety lines once, then one menu: someone on the team now, an appointment, or someone sent right away. A person now is put straight through; an appointment books at High; someone right away is an emergency dispatch once Brian has the address and knows where the problem is. If the caller takes it back ("it was the stove"), the call carries on as usual. A leak is never treated as a 9-1-1 call.
+
+## Equipment questions
+
+The agent answers equipment questions ("why do my radiators bang?") from five short pages the company owns, searched by meaning with an embedding index, so a caller's own wording finds the right passage. No prices and no repair steps are in the pages, and the agent never mentions a document. A bigger library is the same feature with more pages. Sending these answers to a larger model (Sonnet) is built and switched off: on 10 test questions it was no more accurate and about 1.4 seconds slower to its first word (evals/rounds/knowledge-rag-01.md, MEASURED).

@@ -15,8 +15,10 @@ from .tenant import Tenant
 
 # MEASURED (docs/cost.md): Retell's bill over the minutes of all 65 socket calls.
 VOICE_PER_MINUTE = 0.096
-# MEASURED (docs/cost.md): Claude Haiku's tokens a call, at the list price in config/models.yaml.
-MODEL_PER_CALL = 0.004
+# The models a call uses: Claude Haiku's tokens (MEASURED, docs/cost.md, about $0.004), plus the
+# side model's hazard and at-risk questions and the equipment lookup's embeddings (ASSUMED under
+# $0.001 together: a few short lines at OpenAI's per-token prices).
+MODEL_PER_CALL = 0.005
 # ASSUMED: the server (one small box, about $20) and two Retell numbers (about $2 each).
 FIXED_MONTHLY = 24.0
 # Used until the company has calls of its own (MEASURED averages of the same 65 calls; the volume

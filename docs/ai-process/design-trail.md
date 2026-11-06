@@ -156,3 +156,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Demo line on (516), hold line switch | Twilio suspended (646), so the demo moved to (516), a Retell number on the production socket agent in the live world; a Hold line switch on the owner view sends transfers to a Retell hold agent on (678) instead of the office phone | DECISIONS.md 127, #176 |
 | Labels describe visits | Urgent and Routine only for a visit booked, dispatched or moved; any call that left no visit is No visit, with its reason | DECISIONS.md 128 |
 | Safety lines offer a dispatch | Gas and CO lines end by offering a technician right away; a yes is an Urgent dispatch at the read-back, a no carries on without repeating | DECISIONS.md 129 |
+| Priority levels and visit types | Low, Normal, High, Urgent by the caller's words and the season; visits are Emergency dispatch or Scheduled; a High call asks whether it can wait; two on-call technicians after hours | DECISIONS.md 130 |
+| Safety menu and hazard check | The lines end with a person now, an appointment or someone right away; the side model catches dangers no phrase list names | DECISIONS.md 131 |
+| Equipment library by embeddings | Five pages searched by meaning, keyword fallback, Sonnet hand-off built and left off | DECISIONS.md 132 |

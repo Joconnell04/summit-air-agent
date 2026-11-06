@@ -292,6 +292,10 @@ From the done-bar spot-checks. On the CO false-alarm call (call_d101fce0cddb6792
 
 The safety lines now end by offering a technician right away, and the prompt says what to do with the answer: on a yes, get the address if I don't have it and call `read_back` with `safety_check`, and the server dispatches it as Urgent; on a no, carry on and never bring the hazard back up. I wanted the safety route to end in help, since plenty of people trip it by accident. One sentence in the safety section; nothing else in the prompt moved. Outcome: kept. On the phone, a no (call_ce4e1564beb13b911156234d074) got the lines once and went straight to my hours question, no loop; a yes after a world reset (gas_yes rerun) asked for the address and number and dispatched "within the next hour". The first yes fell back to the normal booking steps because the test number already had an open visit at that address, which is the open-job guard doing its job, so reset the live world before the demo.
 
+### v9 (safety menu)
+
+The safety lines now end with a menu instead of one offer: someone on the team now, an appointment, or someone sent right away. The prompt says what to do with each: a person now is the server's handoff and I say nothing of my own; an appointment is the normal booking with `safety_check`; someone right away needs the address and a clear picture of where the problem is, asked only if they haven't already said it, and then `read_back` dispatches it. If it's something a heating and cooling tech can't fix, like the gas meter, say who to call. Outcome: checked on the phone after deploy, results in docs/client-notes.md and the round doc.
+
 ### Review (issue #183)
 
 I checked it against my change sets 18 to 28, with nothing the server does said twice. Two passes went to the socket lane (`socket-prompt-review-183.md` in the session notes). The first pass's items are in v5, except one. The second pass found only small things:

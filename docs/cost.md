@@ -34,6 +34,8 @@ From 65 calls to the socket agent on (516), 5 to 6 November: Retell's own `combi
 
 Retell bills about $0.096 a minute of call on this build (MEASURED, all 65), because the model runs on our own Anthropic key and Retell charges only its voice engine, the Cartesia voice and the phone line. Haiku is under 2% of a call. So cost scales with minutes, not with how clever the call is: a booking costs more than a question because it lasts four times as long.
 
+Since 6 November the server also asks the side model (OpenAI Decisions) about a possible hazard on any caller line with a hazard word, and embeds a caller's equipment question with OpenAI's small embedding model. Both are a few short lines at per-token prices, under $0.001 a call together (ASSUMED), so the owner view's estimate counts the models at $0.005 a call.
+
 At scale, with the mix above: 1,000 calls a month is about $240, and 10,000 is about $2,400, plus the server (one box, about $20 a month, ASSUMED) and Retell's number rental. The one call worth capping is the open line: at 8 minutes of silence it costs three bookings. Bringing `end_call_after_silence_ms` (retell/socket/push.py) down to 3 minutes would make it about $0.29.
 
 ## Three ways to run it
