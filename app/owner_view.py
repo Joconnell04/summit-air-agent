@@ -27,6 +27,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import (
     accounts,
+    cost,
     failure_grader,
     owner,
     owner_settings,
@@ -394,7 +395,14 @@ def add_routes(app: FastAPI) -> None:
                 "ledger": owner.ledger(results["now"], results["before"]),
                 "refused_label": lambda code: plain.REFUSED.get(code, (code, ""))[0],
                 "reports": reports.recent(conn, found),
+                "cost": cost.recommended(conn, found, services.clock()),
             }
+            context["cost_now"] = cost.monthly(**{
+                k: context["cost"][k] for k in (
+                    "calls_per_month", "minutes_per_call", "booked_share", "voice_per_minute",
+                    "fixed_monthly", "model_per_call",
+                )
+            })
         finally:
             conn.close()
         return _render(request, "results.html", context)

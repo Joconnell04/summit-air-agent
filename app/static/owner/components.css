@@ -825,3 +825,19 @@ details.raw summary { cursor: pointer; color: var(--muted); font-size: var(--tex
 .check-body { display: grid; gap: var(--s-3); justify-items: start; }
 .check-body p { margin: 0; }
 .check-body .check-progress { margin-top: 0; width: 100%; }
+
+/* Results: cost estimate. One row a input: label, slider, value, suggestion. */
+.cost-body { padding-bottom: 0; }
+.cost-inputs { display: grid; gap: var(--s-1); padding-bottom: var(--s-4); }
+.cost-row { display: grid; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr) 84px minmax(110px, 150px); gap: var(--s-4); align-items: center; min-height: var(--control-h); }
+.cost-row .what { font-weight: var(--medium); }
+.cost-row input[type=range] { width: 100%; min-width: 0; accent-color: var(--ember-action); }
+.cost-row output { text-align: right; font-weight: var(--semibold); font-variant-numeric: tabular-nums; }
+.cost-row .why { color: var(--faint); }
+@media (max-width: 720px) {
+  .cost-row { grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-1) var(--s-3); padding-block: var(--s-2); }
+  .cost-row input[type=range] { grid-column: 1 / -1; grid-row: 2; }
+  .cost-row .why { grid-column: 1 / -1; }
+  .cost-body .figure { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
+  .cost-body .figure:first-child { border-top: 0; }
+}

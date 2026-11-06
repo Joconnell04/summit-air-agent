@@ -233,6 +233,44 @@
     });
   }
 
+  // Results: the cost estimate. The same sum as app/cost.py monthly(), rerun as the inputs slide.
+
+  function setupCost(panel) {
+    var suggested = JSON.parse(document.getElementById("cost-data").textContent);
+    var inputs = panel.querySelectorAll("input[type=range]");
+    function money(v, cents) {
+      if (v === null || !isFinite(v)) { return "-"; }
+      return "$" + (cents ? v.toFixed(2) : Math.round(v).toLocaleString("en-US"));
+    }
+    function shown(kind, v) {
+      if (kind === "count") { return Math.round(v).toLocaleString("en-US"); }
+      if (kind === "minutes") { return v.toFixed(1) + " min"; }
+      if (kind === "share") { return Math.round(v * 100) + "%"; }
+      if (kind === "rate") { return "$" + v.toFixed(3); }
+      return "$" + Math.round(v);
+    }
+    function draw() {
+      var x = {};
+      Array.prototype.forEach.call(inputs, function (i) {
+        x[i.name] = parseFloat(i.value);
+        panel.querySelector('[data-out="' + i.name + '"]').textContent = shown(i.dataset.kind, x[i.name]);
+      });
+      var perCall = x.minutes_per_call * x.voice_per_minute + suggested.model_per_call;
+      var total = x.calls_per_month * perCall + x.fixed_monthly;
+      var booked = x.calls_per_month * x.booked_share;
+      panel.querySelector('[data-fig="total"]').textContent = money(total);
+      panel.querySelector('[data-fig="per_call"]').textContent = money(perCall, true);
+      panel.querySelector('[data-fig="per_booked_job"]').textContent = booked ? money(total / booked, true) : "-";
+      panel.querySelector('[data-fig="per_year"]').textContent = money(total * 12);
+    }
+    Array.prototype.forEach.call(inputs, function (i) { i.addEventListener("input", draw); });
+    panel.querySelector("[data-cost-reset]").addEventListener("click", function () {
+      Array.prototype.forEach.call(inputs, function (i) { i.value = suggested[i.name]; });
+      draw();
+    });
+    draw();
+  }
+
   // Results: calls by hour, filtered by call type
 
   function setupHours(chart) {
@@ -559,6 +597,7 @@
     each(document, "[data-player]", setupPlayer);
     each(document, "[data-call-list]", setupCallList);
     each(document, "[data-hours-chart]", setupHours);
+    each(document, "[data-cost]", setupCost);
     each(document, "[data-graph]", setupNodeGraph);
     each(document, "[data-live]", setupLive);
   });

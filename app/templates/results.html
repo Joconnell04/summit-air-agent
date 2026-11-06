@@ -78,6 +78,46 @@
     </div>
   </section>
 
+  {# Cost estimate: five inputs, each starting at a value suggested from this company's recent
+     calls; owner.js (setupCost) reruns app/cost.py monthly() as they slide. #}
+  {% set c = cost %}
+  {% macro money(v, cents=false) %}{% if v is none %}-{% elif cents %}${{ "%.2f" | format(v) }}{% else %}${{ "{:,.0f}".format(v) }}{% endif %}{% endmacro %}
+  <section class="panel" data-cost>
+    <div class="panel-head">
+      <h2>Cost estimate</h2>
+      <span class="sub">{% if c.from_calls %}suggested from your last {{ c.calls }} calls over {{ c.days }} day{{ "" if c.days == 1 else "s" }}{% else %}suggested from test calls until you have your own{% endif %}</span>
+      <div class="end"><button class="btn" type="button" data-cost-reset>Use suggested</button></div>
+    </div>
+    <script type="application/json" id="cost-data">{{ c | tojson }}</script>
+    <div class="panel-body cost-body">
+    <div class="cost-inputs">
+      {% for key, label, lo, hi, step, kind in [
+        ("calls_per_month", "Calls a month", 100, 20000, 100, "count"),
+        ("minutes_per_call", "Minutes a call", 0.5, 8, 0.1, "minutes"),
+        ("booked_share", "Calls that book", 0, 1, 0.01, "share"),
+        ("voice_per_minute", "Voice rate a minute", 0.05, 0.2, 0.001, "rate"),
+        ("fixed_monthly", "Server and numbers", 0, 200, 1, "dollars"),
+      ] %}
+      {% set v = c[key] %}
+      {% set shown = ("{:,.0f}".format(v) if kind == "count" else ("%.1f min" | format(v)) if kind == "minutes" else pct(v) if kind == "share" else ("$%.3f" | format(v)) if kind == "rate" else ("$%.0f" | format(v))) %}
+      <label class="cost-row">
+        <span class="what">{{ label }}</span>
+        <input type="range" name="{{ key }}" min="{{ lo }}" max="{{ hi }}" step="{{ step }}" value="{{ v }}" data-kind="{{ kind }}" aria-label="{{ label }}">
+        <output class="num" data-out="{{ key }}">{{ shown }}</output>
+        <span class="why small">Suggested {{ shown }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="figures">
+      <div class="figure"><span class="label">A month</span><span class="value" data-fig="total">{{ money(cost_now.total) }}</span><span class="sub">calls plus the fixed cost</span></div>
+      <div class="figure"><span class="label">A call</span><span class="value" data-fig="per_call">{{ money(cost_now.per_call, true) }}</span><span class="sub">voice by the minute, plus the model</span></div>
+      <div class="figure"><span class="label">A booked job</span><span class="value" data-fig="per_booked_job">{{ money(cost_now.per_booked_job, true) }}</span><span class="sub">the month over the jobs booked</span></div>
+      <div class="figure"><span class="label">A year</span><span class="value" data-fig="per_year">{{ money(cost_now.per_year) }}</span><span class="sub">twelve months at this rate</span></div>
+    </div>
+    </div>
+    <div class="panel-foot">The rates are measured on the agent's own calls: about ${{ "%.3f" | format(c.voice_per_minute) }} a minute for the voice and phone line, and about ${{ "%.3f" | format(c.model_per_call) }} a call for the AI model. Server and numbers are an estimate.</div>
+  </section>
+
   <div class="split wide-side">
     <section class="panel">
       <div class="panel-head"><h2>Booking rate by call type</h2></div>

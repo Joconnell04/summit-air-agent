@@ -10,6 +10,8 @@ Five short silent videos that walk through the questions the owner of a 40-tech 
 | 4 | [Callbacks and leads](videos/04-callbacks.mp4) | [04-callbacks.md](04-callbacks.md) | Where are the callbacks it promised? How do I know the office called back? What about the calls it couldn't book? |
 | 5 | [Your rules, your business](videos/05-your-rules.mp4) | [05-your-rules.md](05-your-rules.md) | Can I change my hours or area? Can I change what it says? How do I know it won't quote prices? |
 
+If the owner asks what else it can connect to, the address lookup is the example: see [docs/client-notes.md](../client-notes.md#the-address-lookup-shows-how-any-of-their-tools-can-plug-in).
+
 A suggested order for the meeting: 1 right after the first live call (it's the requirement the owner named on the kickoff call), 2 when safety comes up or right after, 3 and 4 when the owner asks how it fits the office, and 5 near the end, ahead of next steps.
 
 ## What the videos show, and what they don't

@@ -15,3 +15,11 @@ Today the agent can cancel or move a visit while it is still Scheduled. Once a t
 ## Connecting to their real ServiceTitan
 
 The mock of ServiceTitan is matched to ServiceTitan's published API specs (docs/explorations/006-servicetitan-field-names.md). Going live means a ServiceTitan app key and a tenant id from Summit Air, and ideally a sandbox tenant to check the few shapes the specs leave open, such as whether capacity is counted in hours or jobs.
+
+## The address lookup shows how any of their tools can plug in
+
+When a caller says "40 Fulton Street", the agent doesn't ask for a ZIP: the tool server looks the street up in NYC Planning's GeoSearch, a free public service, and gets the exact address, borough and ZIP back in well under a second (app/geocode.py, `find_address` in docs/tools.md). If two boroughs have that street, it asks which one. The caller never notices a lookup happened.
+
+That's the pattern for any system Summit Air already runs on. Each one becomes a tool on our server: the server calls it, decides what it means, and hands the agent one sentence to say. The agent never talks to the outside system directly, so adding one doesn't change the prompt or the safety rules, and every call to it is logged on the owner view like everything else. GeoSearch is the proof of concept; ServiceTitan is the same shape at a larger size.
+
+Talk track: "The address lookup is a small example of something bigger. Anything your business already uses, whether that's your CRM, your payment system or your parts supplier, can be plugged in the same way, and the agent gets more useful with each one without getting less predictable."
