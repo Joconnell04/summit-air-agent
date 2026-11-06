@@ -579,3 +579,22 @@ def test_server_led_silence_gets_are_you_still_there_and_the_call_stays_open(ser
             events.append(event)
             assert said(events) == "Are you still there?"
             assert "end_call" not in events[-1]
+
+
+def test_server_led_a_name_at_the_end_of_a_sentence_is_never_said(server_led):
+    _, make = server_led
+    client, _ = make([(["You're welcome, Evelyn. ", "Anything else?"], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "It's Evelyn Marsh. Thanks!"])) == "You're welcome. Anything else?"
+
+
+def test_server_led_no_second_opener_right_after_a_hold_phrase(monkeypatch):
+    book = {"id": "t1", "name": "book_appointment", "input": {}}
+    server, client, _ = slow_socket(monkeypatch, {"book_appointment": 0.2}, [([], [book])])
+    question = "Will you be able to approve any repair work the technician recommends?"
+    server.tools["book_appointment"] = envelope(ok=False, say=f"Got it. {question}",
+                                                refused="visit_questions_first")
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Yes, that works."])) == f"One sec. {question}"

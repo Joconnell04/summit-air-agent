@@ -88,6 +88,21 @@ def unnarrated(sentence: str) -> str:
     return rest[:1].upper() + rest[1:] if rest != sentence else sentence
 
 
+# A name said to the caller at the end of a sentence: "You're welcome, Evelyn."
+VOCATIVE = re.compile(r",\s+([A-Z][a-z]+)(?=[.!?]?$)")
+# The server's own short connector at the start of a sentence (app/flow.py ACKS).
+CONNECTOR = re.compile(r"^(Got it|Okay, thanks|Perfect|Okay)\.\s+")
+
+
+def without_vocative(sentence: str, known: set[str]) -> str:
+    """Server-led: a caller's name said at the end of a sentence comes out (Jackson: never say
+    the caller's name)."""
+    match = VOCATIVE.search(sentence.strip())
+    if not match or match[1].lower() not in known:
+        return sentence
+    return sentence.strip()[: match.start()] + sentence.strip()[match.end(1):]
+
+
 def caller_text(transcript: list[dict]) -> str:
     """What the caller has said since the agent last spoke."""
     lines = []
@@ -368,6 +383,10 @@ class LlmCall:
             stages["hold_ms"] = out.hold_ms
         self.stages.append(stages)
 
+    def _known_names(self) -> set[str]:
+        """Every word the caller said and every name on the accounts the call found."""
+        return self.reply._caller_words | self.reply.names
+
     def _wait_on(self, out: Response, tool: str) -> None:
         """A tool is being written or run: the wait the hold phrase may cover, counted once."""
         if out.tool_wait or tool in NO_HOLD_TOOLS:
@@ -409,7 +428,7 @@ class LlmCall:
                     continue
                 for sentence in done:
                     if self.server_led:
-                        sentence = unnarrated(sentence)
+                        sentence = without_vocative(unnarrated(sentence), self._known_names())
                         if NARRATES.match(sentence):
                             continue
                     if sentence and (said := self.reply.sentence(sentence)):
@@ -428,7 +447,8 @@ class LlmCall:
             if holding:
                 last = self.reply.text(" ".join([*held, pending]), calls)
             else:
-                rest = unnarrated(pending) if self.server_led else pending
+                rest = (without_vocative(unnarrated(pending), self._known_names())
+                        if self.server_led else pending)
                 if self.server_led and NARRATES.match(rest):
                     rest = ""
                 last = self.reply.sentence(rest) if rest.strip() else ""
@@ -477,6 +497,9 @@ class LlmCall:
                 await out.say(" ".join(p["text"] for p in parts), fixed=True)
                 finished = True
             elif self.server_led and say:
+                if out.hold_ms is not None:
+                    # Right after "One sec.", the server's own "Got it." would stack two openers.
+                    say = CONNECTOR.sub("", say, count=1)
                 # Interruptible, so the caller can correct a read-back; a safety refusal is not.
                 await out.say(say, fixed=envelope.get("refused") == "gate_safety")
                 if line or ends_turn(envelope):
