@@ -51,3 +51,14 @@ def test_the_server_led_instance_never_reaches_the_live_services():
     assert "restart caddy" not in deploy and "reload caddy" in deploy
     site = (folder / "Caddyfile").read_text()
     assert site.count("server-led.45-77-105-247.sslip.io {") == 1
+
+
+def test_the_live_socket_serves_the_live_world_on_its_own_port():
+    """docs/ai-process/briefs/socket-cutover.md: the socket beside the live bridge, on 8114, against
+    the live tool server, behind its own Caddy route."""
+    run = (ROOT / "deploy" / "retell" / "run.sh").read_text()
+    llm = run[run.index("  llm)"):run.index(";;", run.index("  llm)"))]
+    assert "TOOL_SERVER_URL=http://127.0.0.1:8100" in llm and "--port 8114" in llm
+    assert "RETELL_LLM_SERVER_LED=1" in llm
+    assert "handle /retell-llm/*" in (ROOT / "deploy" / "retell" / "Caddyfile").read_text()
+    assert " llm; do" in (ROOT / "deploy" / "retell" / "deploy.sh").read_text()

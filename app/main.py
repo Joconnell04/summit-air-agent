@@ -320,7 +320,7 @@ def _tool_route(app: FastAPI, name: str, handler: Callable, model: type[BaseMode
 
         def call(conn, key):
             ctx = _ctx(services, conn, body.call_id, key)
-            if services.settings.server_led:
+            if services.settings.server_led or flow.server_led(conn, body.call_id):
                 return flow.guide(ctx, name, body, handler)
             return handler(ctx, body)
 
@@ -420,7 +420,7 @@ def create_app(
     def call_start(request: Request, body: StartIn):
         def fn(conn, key):
             tenant = services.tenants.for_number(body.dialed_number)
-            return lifecycle.start(
+            started = lifecycle.start(
                 conn,
                 tenant,
                 services.fsm[tenant.slug],
@@ -428,6 +428,9 @@ def create_app(
                 services.clock(),
                 record=services.bucket is not None,
             )
+            if body.flow and started.ok:
+                flow.set_mode(conn, body.call_id, body.flow)
+            return started
 
         response = run(services, request, "calls.start", body.call_id, body.model_dump(), fn)
         # The capacity find_slots will want, fetched off the request while the greeting plays.

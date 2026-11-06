@@ -590,3 +590,16 @@ def test_the_electrical_lines_reach_the_agent_now(client, retell):
     event(client, "transcript_updated", call_obj("abc", GREETING, sparked))
     assert len(retell.said) == 1
     assert "Please step away from the unit and turn it off" in retell.said[0][1]
+
+
+def test_the_socket_agents_calls_start_server_led_and_no_others(client, bridge, tool_app):
+    """docs/ai-process/briefs/socket-cutover.md: one tool server, the flow per call, chosen by the
+    agent that answered; pointing the number back at the single-prompt agent ends it."""
+    bridge.server_led_agents = {"agent_socket"}
+    for rid, agent in (("sock", "agent_socket"), ("plain", "agent_jackson")):
+        body = {"event": "call_inbound", "call_inbound": {
+            "call_id": rid, "agent_id": agent, "from_number": "+12125550999",
+            "to_number": "+16466240418"}}
+        assert signed(client, "/retell/inbound", body).status_code == 200
+    flows = rows(tool_app, "SELECT call_id, flow FROM call_flows")
+    assert flows == [{"call_id": "retell_sock", "flow": "server_led"}]

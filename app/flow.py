@@ -69,6 +69,20 @@ OUTCOME_TOOLS = (
 SAID_SHARE = 0.5
 
 
+def set_mode(conn, call_id: str, mode: str) -> None:
+    """The call's flow, once, at its start (the bridge sets it for the socket agent's calls)."""
+    with tx(conn):
+        conn.execute("INSERT OR IGNORE INTO call_flows (call_id, flow) VALUES (?, ?)",
+                     (call_id, mode))
+
+
+def server_led(conn, call_id: str) -> bool:
+    """Whether this call runs the server-led flow. A call that started without it never does, so a
+    single-prompt call on the same tool server never meets a gate."""
+    row = conn.execute("SELECT flow FROM call_flows WHERE call_id = ?", (call_id,)).fetchone()
+    return bool(row) and row["flow"] == "server_led"
+
+
 def guide(ctx, tool: str, args, handler: Callable) -> Result:
     try:
         _gate(ctx, tool, args)

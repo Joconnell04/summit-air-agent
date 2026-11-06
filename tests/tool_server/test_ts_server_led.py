@@ -315,3 +315,38 @@ def test_nobody_home_asks_once_how_the_technician_gets_in(led):
     led.say(call, refused["say"])
     led.turn(call, "The super has a key.")
     assert book(led, call, slot)["ok"]
+
+
+# ---- the flow per call, on one tool server (docs/ai-process/briefs/socket-cutover.md) -----------
+
+
+@pytest.fixture
+def live(tmp_path, clock, mock):
+    """A tool server as the live one runs: no SERVER_LED, so only a call that asks gets the flow."""
+    return Agent(make_server(tmp_path, clock, mock[0]), clock)
+
+
+def test_a_single_prompt_call_never_meets_a_gate_beside_a_socket_call(live):
+    plain = live.start()["data"]["call_id"]
+    led = live.start(flow="server_led")["data"]["call_id"]
+    for call in (plain, led):
+        live.turn(call, "Hi, I need a tune-up.")
+    plain_slots = live.tool("find_slots", plain, job_type="tune_up")
+    led_slots = live.tool("find_slots", led, job_type="tune_up")
+    # The socket call is held to a confirmed read-back first, with the next step; the single-prompt
+    # call on the same server answers as it always has.
+    assert plain_slots["ok"] and "next" not in plain_slots
+    assert led_slots["refused"] == "read_back_first" and led_slots["next"]
+
+
+def test_a_socket_call_gets_every_gate(live):
+    call = live.start(flow="server_led")["data"]["call_id"]
+    live.turn(call, "Hi, I need a tune-up.")
+    live.say(call, live.confirm_read_back(call, in_area_address())["say"])
+    live.turn(call, "Pat.")
+    found = live.tool("find_slots", call, job_type="tune_up")
+    assert found["ok"] and found["next"]
+    live.say(call, found["say"])
+    live.turn(call, "That works.")
+    refused = book(live, call, slot_of(found))
+    assert refused["refused"] == "visit_questions_first"

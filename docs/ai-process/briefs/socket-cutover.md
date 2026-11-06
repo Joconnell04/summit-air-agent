@@ -1,6 +1,6 @@
 # Brief: moving (646) onto the socket agent, with the live world
 
-Branch: from `joco/stripped` after the server lane's last push. Issue #176 (or its own issue at the coordinator's call). Plan only; nothing here is built yet.
+Branch: `joco/socket-buildout-176` (PR #179), which carries `joco/stripped`. Issue #176. Approved by the coordinator; built and tested on the branch (the per-call flow, the live socket process, its Caddy route, `push.py --live`), not deployed. The switch waits for the done bar.
 
 ## Why
 

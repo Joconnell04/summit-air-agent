@@ -78,3 +78,16 @@ def test_perceived_wait_and_hold_phrase_talk_over_from_word_timings():
     assert [t["hold"] for t in found] == [False, True, True]
     assert [t["talk_over"] for t in found] == [False, True, False]
     assert "line_wait_s" in found[2]
+
+
+def test_the_live_agent_uses_the_live_socket_and_points_no_number():
+    push = load("push")
+    body = push.agent_body({"voice_id": "cartesia-Brian"}, "key", push.LIVE_BASE_URL,
+                           push.LIVE_AGENT_NAME)
+    assert body["agent_name"] == "Summit Air (socket)"
+    assert body["response_engine"]["llm_websocket_url"].startswith(
+        "wss://45-77-105-247.sslip.io/retell-llm/")
+    assert body["voice_id"] == "cartesia-Brian" and body["enable_dnc_detection"] is False
+    source = (ROOT / "retell" / "arms" / "socket" / "push.py").read_text()
+    live_branch = source[source.index("    if live:"):source.index("    number = next")]
+    assert "update-phone-number" not in live_branch

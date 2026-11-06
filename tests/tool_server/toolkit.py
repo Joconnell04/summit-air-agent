@@ -60,11 +60,14 @@ class Agent:
         self.calls = 0
 
     def start(
-        self, caller_id: str = UNKNOWN, call_id: str | None = None, dialed: str = DIALED
+        self, caller_id: str = UNKNOWN, call_id: str | None = None, dialed: str = DIALED,
+        flow: str = "",
     ) -> dict:
         self.calls += 1
         call_id = call_id or f"call-{self.calls}"
         body = {"call_id": call_id, "caller_id": caller_id, "dialed_number": dialed}
+        if flow:
+            body["flow"] = flow
         response = self.client.post("/calls/start", json=body)
         assert response.status_code == 200
         return response.json()

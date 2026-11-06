@@ -804,3 +804,11 @@ CREATE TABLE IF NOT EXISTS dispatches (
     replaced_at TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_dispatches_call ON dispatches (call_id);
+
+-- The flow each call runs (app/flow.py), set at /calls/start: "server_led" for the socket agent's
+-- calls, so one tool server serves the single-prompt agent and the socket agent side by side.
+-- A table of its own so an existing database gains it without a migration.
+CREATE TABLE IF NOT EXISTS call_flows (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    flow TEXT NOT NULL
+);

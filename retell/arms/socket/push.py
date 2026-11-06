@@ -9,8 +9,14 @@ no webhook: the socket posts every line to the tool server and closes the call t
 it finds the agent by name and sends only what differs.
 
     uv run --env-file .env python retell/arms/socket/push.py
+    uv run --env-file .env python retell/arms/socket/push.py --live
+
+--live pushes the production agent instead, "Summit Air (socket)", on the live socket (deploy/retell
+`llm`, docs/ai-process/briefs/socket-cutover.md). It points no number anywhere: (646) is switched
+by hand at cut-over, and pointed back at Jackson's agent to roll back.
 """
 
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -26,6 +32,8 @@ from voice.retell_llm.rig_adapter import socket_url
 BASE_URL = "https://server-led.45-77-105-247.sslip.io"
 JACKSON_AGENT = "agent_a3e38e6aa3d4e75dfac12aafc8"
 AGENT_NAME = "Summit Air socket (test)"
+LIVE_BASE_URL = "https://45-77-105-247.sslip.io"
+LIVE_AGENT_NAME = "Summit Air (socket)"
 NUMBER = "+15162129051"
 INBOUND = f"{BASE_URL}/retell/inbound"
 # Retell ends the call after this much silence: the dead-air hang-up (DECISIONS.md 081, 8 minutes).
@@ -37,13 +45,14 @@ NOT_COPIED = {
 }
 
 
-def agent_body(jackson: dict, api_key: str) -> dict:
+def agent_body(jackson: dict, api_key: str, base_url: str = BASE_URL,
+               name: str = AGENT_NAME) -> dict:
     """Jackson's voice (cartesia-Brian), backchannels and check-ins (8 s, twice), on our socket."""
     copied = {k: v for k, v in jackson.items() if k not in NOT_COPIED and v is not None}
     return {
         **copied,
-        "agent_name": AGENT_NAME,
-        "response_engine": {"type": "custom-llm", "llm_websocket_url": socket_url(BASE_URL, api_key)},
+        "agent_name": name,
+        "response_engine": {"type": "custom-llm", "llm_websocket_url": socket_url(base_url, api_key)},
         # Retell's own do-not-call detection hangs up mid-call; mark_do_not_call on our server
         # handles the request instead (side-by-side lane, #169).
         "enable_dnc_detection": False,
@@ -60,11 +69,15 @@ def number_body(agent_id: str) -> dict:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--live", action="store_true")
+    live = parser.parse_args().live
     api_key = os.environ["RETELL_API_KEY"]
     retell = Retell(api_key)
     jackson = retell.request("GET", f"/get-agent/{JACKSON_AGENT}")
-    desired = agent_body(jackson, api_key)
-    listed = find_agent(retell, AGENT_NAME)
+    name = LIVE_AGENT_NAME if live else AGENT_NAME
+    desired = agent_body(jackson, api_key, LIVE_BASE_URL if live else BASE_URL, name)
+    listed = find_agent(retell, name)
     if listed is None:
         agent_id = retell.request("POST", "/create-agent", json=desired)["agent_id"]
         print(f"created agent {agent_id}")
@@ -75,6 +88,10 @@ def main() -> int:
         if diff:
             retell.request("PATCH", f"/update-agent/{agent_id}", json=diff)
         print(f"agent {agent_id}: {', '.join(sorted(diff)) or 'nothing to change'}")
+    if live:
+        print(f"set RETELL_SERVER_LED_AGENTS={agent_id} in ~/summit-air/retell.env, then restart "
+              "summit-retell@bridge")
+        return 0
     number = next(n for n in retell.list_all("GET", "/v2/list-phone-numbers")
                   if n["phone_number"] == NUMBER)
     diff = build.changes(number, number_body(agent_id))

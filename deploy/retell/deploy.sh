@@ -27,7 +27,7 @@ ssh "$HOST" 'set -e; cd ~/summit-air/retell; ~/.local/bin/uv sync -q
   printf "[Service]\nEnvironmentFile=/home/jackson/summit-air/retell.env\n" | \
     sudo tee "$DROPIN" >/dev/null
   sudo systemctl daemon-reload
-  for p in bridge eval-mock eval-tools eval-bridge eval-llm; do
+  for p in bridge eval-mock eval-tools eval-bridge eval-llm llm; do
     sudo systemctl enable -q "summit-retell@$p"; sudo systemctl restart "summit-retell@$p"
   done
   # A reload keeps the owner view and the other sites up; a restart is needed only the first time
