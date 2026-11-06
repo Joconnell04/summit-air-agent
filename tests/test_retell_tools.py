@@ -1,4 +1,4 @@
-"""Retell tool definitions come from the tool server's schemas (scripts/retell_tools.py), so no tool
+"""Retell tool definitions come from the tool server's schemas (voice/retell/tool_schemas.py), so no tool
 list can drift from what the server takes: read_back's job_type, callback_day's weekdays, facts.since
 and details.also_noted each went missing from a hand-made list, and the model couldn't send them."""
 
@@ -7,8 +7,8 @@ from pathlib import Path
 
 from app.tools import TOOLS
 from prompts.assemble import job_types, tool_specs
-from scripts import retell_tools
 from voice.retell import build
+from voice.retell import tool_schemas as retell_tools
 from voice.retell_llm.llm_socket import arm_tools
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,7 +25,7 @@ def test_every_server_tool_is_generated():
 def test_the_saved_retell_tool_lists_have_no_drift():
     for path in SAVED:
         found, _ = retell_tools.drift(json.loads(path.read_text())["general_tools"])
-        assert not found, f"{path.name}: {found}; run scripts.retell_tools sync"
+        assert not found, f"{path.name}: {found}; run python -m voice.retell.tool_schemas sync"
 
 
 def test_the_socket_uses_the_servers_own_specs():

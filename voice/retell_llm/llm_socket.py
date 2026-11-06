@@ -61,7 +61,7 @@ def arm_tools(path: Path, specs: list[dict]) -> list[dict]:
     """The tool server's own specs (names, parameters, write flags, prompts/tools.yaml
     descriptions), with the arm's description for the few tools whose steps its flow runs
     (retell/arms/socket/tools.yaml). Parameters always come from the server, so an argument it
-    adds (read_back's job_type) reaches the model, and nothing drifts (scripts/retell_tools.py)."""
+    adds (read_back's job_type) reaches the model, and nothing drifts (voice/retell/tool_schemas.py)."""
     overrides = yaml.safe_load(path.read_text()) or {}
     names = {s["name"] for s in specs}
     unknown = sorted(set(overrides) - names)

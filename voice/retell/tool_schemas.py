@@ -1,10 +1,10 @@
 """Retell tool definitions built from the tool server's own schemas, and drift against them.
 
-    uv run python -m scripts.retell_tools build [--base URL]     print the definitions as JSON
-    uv run python -m scripts.retell_tools diff <tools.json>      drift of a saved tool list
-    uv run python -m scripts.retell_tools sync <tools.json>      its parameters from the server,
+    uv run python -m voice.retell.tool_schemas build [--base URL]     print the definitions as JSON
+    uv run python -m voice.retell.tool_schemas diff <tools.json>      drift of a saved tool list
+    uv run python -m voice.retell.tool_schemas sync <tools.json>      its parameters from the server,
                                                                  keeping its descriptions
-    uv run --env-file .env python -m scripts.retell_tools check  drift of the live Retell agents
+    uv run --env-file .env python -m voice.retell.tool_schemas check  drift of the live Retell agents
 
 The definitions come from `prompts.assemble.tool_specs` (app/schemas.py `TOOLS`: names, parameters,
 nested objects, enums, required fields, and the descriptions in prompts/tools.yaml) through
@@ -27,7 +27,7 @@ from pathlib import Path
 from prompts.assemble import job_types, tool_specs
 from voice.retell import build
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TENANT = ROOT / "tenants" / "summit-air"
 BASE_URL = "https://45-77-105-247.sslip.io"
 # The live agents whose tools must match: Jackson's hosted agent's LLM.

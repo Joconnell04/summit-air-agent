@@ -203,6 +203,6 @@ retell-deploy:
 retell-report:
 	uv run python -m voice.retell.report $(if $(DB),--db $(DB))
 
-# The live Retell agents' tools against the tool server's own schemas (scripts/retell_tools.py).
+# The live Retell agents' tools against the tool server's own schemas (voice/retell/tool_schemas.py).
 retell-tools-check:
-	uv run --env-file .env python -m scripts.retell_tools check
+	uv run --env-file .env python -m voice.retell.tool_schemas check
