@@ -8,6 +8,7 @@ as it is in the eval rounds, so it doesn't color what the listener hears.
 
 For the person building the agent, on their own laptop; not part of the owner view.
 """
+
 import argparse
 import html
 import json
@@ -24,8 +25,9 @@ def batches(root: Path = SIM_DIR) -> list[str]:
     """Batch folders that have a manifest, newest first (their names start with the time)."""
     if not root.is_dir():
         return []
-    names = [p.name for p in root.iterdir()
-             if BATCH_NAME.match(p.name) and (p / MANIFEST).is_file()]
+    names = [
+        p.name for p in root.iterdir() if BATCH_NAME.match(p.name) and (p / MANIFEST).is_file()
+    ]
     return sorted(names, reverse=True)
 
 
@@ -37,8 +39,13 @@ def listing(root: Path, name: str) -> dict:
     for entry in manifest.get("calls", []):
         path = folder / entry["transcript"]
         transcript = json.loads(path.read_text()) if path.is_file() else {"lines": []}
-        calls.append({**entry, "persona": transcript.get("persona", ""),
-                      "lines": transcript.get("lines", [])})
+        calls.append(
+            {
+                **entry,
+                "persona": transcript.get("persona", ""),
+                "lines": transcript.get("lines", []),
+            }
+        )
     return {**manifest, "calls": calls}
 
 
@@ -57,8 +64,11 @@ def render(batch: dict, others: list[str]) -> str:
     for call in batch["calls"]:
         rows = []
         for line in call["lines"]:
-            pause = (f'<span class="pause">{line["reply_delay_ms"] / 1000:.1f} s</span>'
-                     if "reply_delay_ms" in line else "")
+            pause = (
+                f'<span class="pause">{line["reply_delay_ms"] / 1000:.1f} s</span>'
+                if "reply_delay_ms" in line
+                else ""
+            )
             rows.append(
                 f'<li data-t="{line["t"]}" class="{e(line["speaker"])}">'
                 f'<span class="n">{line["n"]}</span>'
@@ -66,24 +76,27 @@ def render(batch: dict, others: list[str]) -> str:
                 f'<span class="who">{e(line["speaker"].title())}</span>'
                 f'<span class="text">{e(line["text"])}{pause}</span></li>'
             )
-        src = f'/audio/{e(batch["batch"])}/{e(call["audio"])}'
+        src = f"/audio/{e(batch['batch'])}/{e(call['audio'])}"
         sections.append(
             f'<section id="{e(call["code"])}"><header><div class="code">{e(call["code"])}</div>'
             f'<div><div class="scenario">{e(call["scenario_id"])}'
-            f'{" (sample " + str(call["sample"]) + ")" if call.get("sample", 1) > 1 else ""}</div>'
+            f"{' (sample ' + str(call['sample']) + ')' if call.get('sample', 1) > 1 else ''}</div>"
             f'<div class="persona">{e(call.get("persona", ""))}</div></div>'
             f'<div class="length">{clock(call.get("duration_s", 0))}</div></header>'
             f'<audio controls preload="metadata" src="{src}"></audio>'
-            f'<ol>{"".join(rows)}</ol></section>'
+            f"<ol>{''.join(rows)}</ol></section>"
         )
     body = "".join(sections) or "<p>No calls in this batch yet.</p>"
-    return PAGE.format(title=e(batch["batch"]), picker=picker, body=body,
-                       count=len(batch["calls"]))
+    return PAGE.format(title=e(batch["batch"]), picker=picker, body=body, count=len(batch["calls"]))
 
 
 def empty_page() -> str:
-    return PAGE.format(title="No batches", picker="", count=0,
-                       body="<p>No simulated calls yet. Run <code>make sim CALLS=...</code>.</p>")
+    return PAGE.format(
+        title="No batches",
+        picker="",
+        count=0,
+        body="<p>No simulated calls yet. Run <code>make sim CALLS=...</code>.</p>",
+    )
 
 
 PAGE = """<!doctype html>

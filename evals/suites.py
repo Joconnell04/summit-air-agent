@@ -1,4 +1,5 @@
 """Pick scenarios by suite name or by a TAGS filter such as flow:safety,difficulty:rigorous."""
+
 from pathlib import Path
 
 import yaml
@@ -30,7 +31,9 @@ def matches(scenario_tags: set[str], wanted: list[str]) -> bool:
 
 
 def select(
-    scenarios: list[Scenario], suite: str | None = None, tags: list[str] | None = None,
+    scenarios: list[Scenario],
+    suite: str | None = None,
+    tags: list[str] | None = None,
     suites: dict | None = None,
 ) -> tuple[list[Scenario], int]:
     """The scenarios a run covers and how many samples of each."""

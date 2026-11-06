@@ -1,0 +1,99 @@
+{
+ "window": [
+  "2026-11-06T02:32:13Z",
+  "2026-11-06T02:36:21Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_6fadca65bda8e685505803eaf13",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16466240418",
+    "direction": "inbound",
+    "started_at": "2026-11-06T02:32:25Z",
+    "ended_at": "2026-11-06T02:36:15Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "callback",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 67,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": "{\"street\": \"199 East 4th Street\", \"unit\": \"2\", \"city\": \"Manhattan\", \"zip\": \"10009\", \"spelled\": \"\", \"phone\": \"6466240418\", \"phone_for\": \"\", \"sentence\": \"So that's one ninety-nine East Fourth Street, unit two, and the number you're calling from, ending in zero four one eight. That's all correct, right?\"}",
+    "readback_asked_seq": 27,
+    "readback_confirmed_at": "2026-11-06T02:33:56Z"
+   },
+   "bookings": [],
+   "booking_names": [
+    {
+     "call_id": "retell_call_6fadca65bda8e685505803eaf13",
+     "name": "Jordan Lee",
+     "at": "2026-11-06T02:33:56Z"
+    }
+   ],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 50,
+     "call_id": "retell_call_6fadca65bda8e685505803eaf13",
+     "kind": "person",
+     "reason": "No-heat visit, heat completely out since last night, 85-year-old mom staying at the home. Booking requested for tomorrow 8 to 8:30 AM at 199 East 4th Street, Unit 2. Caller can approve repairs and will be home.",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T02:34:58Z"
+    },
+    {
+     "id": 51,
+     "call_id": "retell_call_6fadca65bda8e685505803eaf13",
+     "kind": "person",
+     "reason": "Caller has a question about a bill. Wants a callback tomorrow afternoon.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T02:35:24Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 19,
+     "call_id": "retell_call_6fadca65bda8e685505803eaf13",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T02:39:58Z",
+     "owner": "on_call",
+     "reason": "No-heat visit, heat completely out since last night, 85-year-old mom staying at the home. Booking requested for tomorrow 8 to 8:30 AM at 199 East 4th Street, Unit 2. Caller can approve repairs and will be home.",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T02:34:58Z",
+     "updated_at": "2026-11-06T02:35:56Z"
+    },
+    {
+     "id": 20,
+     "call_id": "retell_call_6fadca65bda8e685505803eaf13",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Caller has a question about a bill. Wants a callback tomorrow afternoon. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T02:35:24Z",
+     "updated_at": "2026-11-06T02:35:56Z"
+    }
+   ],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T02:36:32Z"
+}

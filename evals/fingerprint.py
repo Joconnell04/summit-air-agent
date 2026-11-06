@@ -3,6 +3,7 @@ the model profiles and, for an eval gate run, the owner's draft it tested (app/r
 
 The ratchet recomputes it offline, so a committed run goes stale the moment any of these change.
 """
+
 import hashlib
 import json
 from pathlib import Path
@@ -22,7 +23,8 @@ TENANT_SUFFIXES = {".yaml", ".md", ".py"}
 
 def tenant_files(tenants_dir: Path = TENANTS_DIR) -> list[Path]:
     return sorted(
-        p for p in tenants_dir.rglob("*")
+        p
+        for p in tenants_dir.rglob("*")
         if p.is_file() and p.suffix in TENANT_SUFFIXES and "__pycache__" not in p.parts
     )
 

@@ -23,6 +23,7 @@ The adapter tells the listener what it hears: `audio(pcm, rate, live)` for agent
 the platform says the agent is listening again, `hung_up()` when the line drops, and `said(text)`
 for the platform's own text of what the agent says, when it reports one.
 """
+
 import asyncio
 import time
 from dataclasses import dataclass, field
@@ -118,7 +119,7 @@ class Listener:
         its reply."""
         if self._onset is None and self.playout.pcm:
             skip = self.playout.sample_at(self._after) if self._after is not None else 0
-            onset = self.vad.onset(bytes(self.playout.pcm[skip * 2:]), self.playout.rate)
+            onset = self.vad.onset(bytes(self.playout.pcm[skip * 2 :]), self.playout.rate)
             if onset is not None:
                 self._onset = self.playout.heard_at(skip + onset)
         return self._onset
@@ -157,5 +158,11 @@ class Listener:
             if now - since > TURN_CAP_S or (self._hung_up and self.first_sound() is None):
                 break
             await asyncio.sleep(POLL_S)
-        return HeardTurn(bytes(self.playout.pcm), self.playout.rate, self.first_sound(),
-                         list(self._said), self._hung_up, self.over_caller())
+        return HeardTurn(
+            bytes(self.playout.pcm),
+            self.playout.rate,
+            self.first_sound(),
+            list(self._said),
+            self._hung_up,
+            self.over_caller(),
+        )

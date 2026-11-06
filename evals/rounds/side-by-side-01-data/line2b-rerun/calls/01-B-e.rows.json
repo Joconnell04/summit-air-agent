@@ -1,0 +1,102 @@
+{
+ "window": [
+  "2026-11-06T02:30:08Z",
+  "2026-11-06T02:33:26Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_daecc57ee95de4ca98a4dd9a6db",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T02:30:21Z",
+    "ended_at": "2026-11-06T02:33:19Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "callback",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 50,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 348,
+     "call_id": "retell_call_daecc57ee95de4ca98a4dd9a6db",
+     "kind": "limit",
+     "reason": "Per-call limit reached: find_address",
+     "priority": "High",
+     "status": "open",
+     "created_at": "2026-11-06T02:31:30Z"
+    },
+    {
+     "id": 349,
+     "call_id": "retell_call_daecc57ee95de4ca98a4dd9a6db",
+     "kind": "person",
+     "reason": "No heat at 199 East 4th Street, Unit 2 (Jordan Lee). Address lookup failed on the call, so could not book. Caller says it's freezing and wants a callback today.",
+     "priority": "Urgent",
+     "status": "open",
+     "created_at": "2026-11-06T02:31:47Z"
+    },
+    {
+     "id": 350,
+     "call_id": "retell_call_daecc57ee95de4ca98a4dd9a6db",
+     "kind": "person",
+     "reason": "Caller has a question about a bill and wants a callback.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T02:32:26Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 89,
+     "call_id": "retell_call_daecc57ee95de4ca98a4dd9a6db",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T02:46:47Z",
+     "owner": "on_call",
+     "reason": "No heat at 199 East 4th Street, Unit 2 (Jordan Lee). Address lookup failed on the call, so could not book. Caller says it's freezing and wants a callback today.",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T02:31:47Z",
+     "updated_at": "2026-11-06T02:33:01Z"
+    },
+    {
+     "id": 90,
+     "call_id": "retell_call_daecc57ee95de4ca98a4dd9a6db",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Caller has a question about a bill and wants a callback. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T02:32:26Z",
+     "updated_at": "2026-11-06T02:33:01Z"
+    }
+   ],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T02:33:37Z"
+}

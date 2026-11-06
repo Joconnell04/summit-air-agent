@@ -1,0 +1,95 @@
+{
+ "window": [
+  "2026-11-06T01:22:03Z",
+  "2026-11-06T01:25:03Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_8df5ad10287f0d52fa5a8f50a65",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16466240418",
+    "direction": "inbound",
+    "started_at": "2026-11-06T01:22:15Z",
+    "ended_at": "2026-11-06T01:24:59Z",
+    "end_reason": "dropped",
+    "end_requested": 0,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "changed_booking",
+    "commercial": 0,
+    "summary_status": "pending",
+    "turn_seq": 43,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [
+    {
+     "id": 36,
+     "call_id": "retell_call_8df5ad10287f0d52fa5a8f50a65",
+     "kind": "reschedule",
+     "status": "done",
+     "fsm_key": "retell_call_8df5ad10287f0d52fa5a8f50a65:reschedule:bedc26a62cc8119141b593c363bfa4fc2a3467d1",
+     "request_json": "{\"call_id\": \"retell_call_8df5ad10287f0d52fa5a8f50a65\", \"booking_id\": 548, \"slot\": {\"date\": \"2026-11-06\", \"window\": \"0800-0830\"}, \"reason\": \"Caller asked to move visit to a different time\"}",
+     "fsm_job_id": 548,
+     "fsm_appointment_id": null,
+     "customer_id": 301,
+     "window_start": "2026-11-06T13:00:00Z",
+     "window_end": "2026-11-06T13:30:00Z",
+     "job_type": "no_heat",
+     "priority": null,
+     "priority_reasons": "",
+     "safety_override": 0,
+     "seek_earlier": 0,
+     "reason": "Caller asked to move visit to a different time",
+     "attempts": 0,
+     "last_error": null,
+     "turn_seq": 14,
+     "created_at": "2026-11-06T01:23:06Z",
+     "updated_at": "2026-11-06T01:23:06Z"
+    }
+   ],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 30,
+     "call_id": "retell_call_8df5ad10287f0d52fa5a8f50a65",
+     "kind": "person",
+     "reason": "Caller has a question about a bill and asked for a callback.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T01:24:26Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 10,
+     "call_id": "retell_call_8df5ad10287f0d52fa5a8f50a65",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Caller has a question about a bill and asked for a callback. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T01:24:26Z",
+     "updated_at": "2026-11-06T01:24:26Z"
+    }
+   ],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T01:25:14Z"
+}

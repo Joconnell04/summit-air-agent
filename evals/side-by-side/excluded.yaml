@@ -1,0 +1,7 @@
+# Calls left out of the per-arm numbers by hand, each with the reason, so a reader can check it.
+# Calls the checks themselves mark invalid (the caller breaking its role or reading its script)
+# are not listed here.
+call_8fd9ff40c7f8d9bc587cf5d189c: >-
+  A-k: the scripted caller answered "Is that in Manhattan or Brooklyn?" with its goodbye line
+  ("No, that's it. Thanks. Bye.") in the middle of intake, so the call could not reach a booking.
+  D-k met the same slip and recovered; that difference is noted in the round doc.

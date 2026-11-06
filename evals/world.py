@@ -5,6 +5,7 @@ Each scenario gets its own call id and its own databases, so nothing one call do
 gate in the next (the earlier practice agent shared one call id and an early case passed a later
 gate).
 """
+
 import shutil
 import threading
 import time
@@ -60,9 +61,11 @@ def seeded_db(cache_dir: Path) -> tuple[Path, dict]:
         if not path.exists():
             cache_dir.mkdir(parents=True, exist_ok=True)
             build_world(path, TENANT_DIR, SEED_START)
-    scenarios = TestClient(create_mock(path, TENANT_DIR, cache_dir / "seed.log")).get(
-        "/debug/scenarios"
-    ).json()
+    scenarios = (
+        TestClient(create_mock(path, TENANT_DIR, cache_dir / "seed.log"))
+        .get("/debug/scenarios")
+        .json()
+    )
     return path, scenarios
 
 
@@ -129,8 +132,9 @@ class FsmDown:
             self.mode == "all" or (method.upper() != "GET" and "/dispatch/" not in path)
         )
         if failing:
-            return httpx.Response(503, json={"title": "Service Unavailable"},
-                                  request=httpx.Request(method, path))
+            return httpx.Response(
+                503, json={"title": "Service Unavailable"}, request=httpx.Request(method, path)
+            )
         return self.client.request(method, url, **kwargs)
 
     def __getattr__(self, name):
@@ -138,9 +142,16 @@ class FsmDown:
 
 
 class World:
-    def __init__(self, workdir: Path, seed: tuple[Path, dict], start: datetime,
-                 overlay: dict | None = None, fsm_down: str | None = None,
-                 transfer: bool = False, weather=None):
+    def __init__(
+        self,
+        workdir: Path,
+        seed: tuple[Path, dict],
+        start: datetime,
+        overlay: dict | None = None,
+        fsm_down: str | None = None,
+        transfer: bool = False,
+        weather=None,
+    ):
         workdir.mkdir(parents=True, exist_ok=True)
         st_db = workdir / "servicetitan.db"
         shutil.copy(seed[0], st_db)
@@ -197,7 +208,7 @@ class World:
         try:
             self.server.start(call_id, caller_id)
             for turn in earlier.turns:
-                (speaker, text), = turn.items()
+                ((speaker, text),) = turn.items()
                 self.server.turn(call_id, speaker, text)
             self.server.end(call_id, getattr(earlier, "end_reason", "dropped"))
         finally:

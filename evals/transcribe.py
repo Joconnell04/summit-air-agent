@@ -5,14 +5,29 @@ harder ones lose punctuation and casing and have digit strings spelled out ("one
 while short numbers, ages and temperatures stay as numbers, as phone speech-to-text writes them;
 the transcription-errors trait also swaps sound-alike words and drops the odd word.
 """
+
 import random
 import re
 
 DIGITS = ["oh", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 SOUND_ALIKES = {
-    "for": "four", "to": "two", "two": "to", "four": "for", "there": "their", "their": "there",
-    "right": "write", "here": "hear", "no": "know", "eight": "ate", "by": "buy", "street": "st",
-    "heat": "heats", "an": "and", "it's": "its", "you're": "your", "the": "a",
+    "for": "four",
+    "to": "two",
+    "two": "to",
+    "four": "for",
+    "there": "their",
+    "their": "there",
+    "right": "write",
+    "here": "hear",
+    "no": "know",
+    "eight": "ate",
+    "by": "buy",
+    "street": "st",
+    "heat": "heats",
+    "an": "and",
+    "it's": "its",
+    "you're": "your",
+    "the": "a",
 }
 FILLERS = {"um", "uh", "like", "so"}
 

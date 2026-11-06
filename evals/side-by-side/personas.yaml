@@ -1,0 +1,32 @@
+# What each persona's call should leave behind, for evals/side_by_side.py. The persona text is in
+# personas/<id>.txt. The core slate is e, b, c, g, h, i, j, k; b follows e with no world reset
+# between, because b moves the visit e booked.
+#
+# name: the name the booking should carry, spelled as intended (null: no booking expected)
+# first: the caller's first name, which the agent must never say
+# bookings: booking kinds the tool server should hold for the call (left out: not checked)
+# callback / lead / flag: whether a callback, lead or flag row is expected
+# no_thanks: a caller phrase that declines an offer and must not end the call
+# retraction: a caller phrase that takes back a hazard; no safety lines may follow it
+# safety: the call raises a hazard, so the safety lines are said once
+# real_hazard: the hazard is current, so the safety advice must be spoken (l, h, j)
+# prior_visit: the caller has a visit on file from this slate (only b, after e)
+# dnc_undo: the caller asks not to be called, then takes it back; the list must not hold them
+# raised: a pattern for what the caller says, when invited, that should raise the visit's priority
+# callback_day: the weekday the caller asks to be called back on
+# closes_with: a pattern for the caller's own closing line (lower case, no punctuation), so a call that ends earlier is a premature hang-up
+#   (without it, the caller declining "anything else?" counts as the close)
+# confirms: how many "is that right?" style confirmations the persona earns
+personas:
+  a: {name: Jordan Lee, first: Jordan, bookings: [book], confirms: 2, closes_with: "that's it"}
+  b: {name: null, first: Jordan, bookings: [reschedule], callback: true, no_thanks: "no thanks", prior_visit: true, dnc_undo: true, confirms: 1, closes_with: "end the call|that's it|that's all"}
+  c: {name: null, first: Sam, bookings: [], safety: true, retraction: "nevermind"}
+  d: {name: null, first: Sam, bookings: [], closes_with: "bye"}
+  e: {name: Jordan Lee, first: Jordan, bookings: [book], callback: true, dnc_undo: true, raised: "eighty|85", confirms: 2, closes_with: "end the call|that's it|that's all"}
+  f: {name: Jordan Lee, first: Jordan, bookings: [book], raised: newborn, closes_with: "bye"}
+  g: {name: null, first: Casey, bookings: [], lead: true, closes_with: "bye"}
+  h: {real_hazard: true, name: Riley Chen, first: Riley, bookings: [book], safety: true, flag: true, confirms: 2, closes_with: "that's all"}
+  i: {name: Morgan Diaz, first: Morgan, bookings: [book], callback: true, callback_day: monday, confirms: 2, closes_with: "bye"}
+  j: {real_hazard: true, name: Taylor Brooks, first: Taylor, bookings: [book], safety: true, flag: true, closes_with: "that's it"}
+  l: {name: null, first: Pat, safety: true, real_hazard: true, flag: true, closes_with: "bye"}
+  k: {name: Siobhan Nguyen, first: Siobhan, bookings: [book], raised: newborn, closes_with: "bye"}

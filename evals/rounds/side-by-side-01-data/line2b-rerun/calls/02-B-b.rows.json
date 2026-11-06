@@ -1,0 +1,93 @@
+{
+ "window": [
+  "2026-11-06T02:33:53Z",
+  "2026-11-06T02:37:44Z"
+ ],
+ "calls": [
+  {
+   "call": {
+    "id": "retell_call_9bc643de3f76efe9946512b19f0",
+    "tenant": "summit-air",
+    "caller_id": "+16466240418",
+    "caller_key": "6466240418",
+    "dialed_number": "+16783366730",
+    "direction": "inbound",
+    "started_at": "2026-11-06T02:34:05Z",
+    "ended_at": "2026-11-06T02:37:37Z",
+    "end_reason": "agent_end",
+    "end_requested": 1,
+    "after_hours": 1,
+    "linked_call_id": null,
+    "outcome": "callback",
+    "commercial": 0,
+    "summary_status": "skipped",
+    "turn_seq": 50,
+    "safety_state": "none",
+    "safety_kind": null,
+    "safety_signal_at": null,
+    "safety_lines_at": null,
+    "safety_flag_id": null,
+    "safety_variant": 0,
+    "readback_json": null,
+    "readback_asked_seq": null,
+    "readback_confirmed_at": null
+   },
+   "bookings": [],
+   "booking_names": [],
+   "call_names": [],
+   "flags": [
+    {
+     "id": 355,
+     "call_id": "retell_call_9bc643de3f76efe9946512b19f0",
+     "kind": "person",
+     "reason": "Caller wants to move an appointment to tomorrow 8-8:30 AM (Fri Nov 6) but no account or booking found by phone +16466240418 or address 199 East 4th Street, 10009. Caller says booked earlier today. Please look into it and call back.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T02:35:42Z"
+    },
+    {
+     "id": 356,
+     "call_id": "retell_call_9bc643de3f76efe9946512b19f0",
+     "kind": "person",
+     "reason": "Caller has a question about a bill and wants a call back.",
+     "priority": "Normal",
+     "status": "open",
+     "created_at": "2026-11-06T02:36:46Z"
+    }
+   ],
+   "callbacks": [
+    {
+     "id": 91,
+     "call_id": "retell_call_9bc643de3f76efe9946512b19f0",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Caller wants to move an appointment to tomorrow 8-8:30 AM (Fri Nov 6) but no account or booking found by phone +16466240418 or address 199 East 4th Street, 10009. Caller says booked earlier today. Please look into it and call back. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T02:35:42Z",
+     "updated_at": "2026-11-06T02:37:18Z"
+    },
+    {
+     "id": 92,
+     "call_id": "retell_call_9bc643de3f76efe9946512b19f0",
+     "phone": "+16466240418",
+     "phone_key": "6466240418",
+     "due_at": "2026-11-06T22:00:00Z",
+     "owner": "office",
+     "reason": "Caller has a question about a bill and wants a call back. (caller asked: tomorrow between 12 PM and 5 PM)",
+     "status": "pending",
+     "attempts": 0,
+     "last_attempt_at": null,
+     "created_at": "2026-11-06T02:36:46Z",
+     "updated_at": "2026-11-06T02:37:18Z"
+    }
+   ],
+   "leads": []
+  }
+ ],
+ "do_not_call": [],
+ "dumped_at": "2026-11-06T02:37:55Z"
+}
