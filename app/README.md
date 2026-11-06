@@ -36,6 +36,7 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | empty, `587` | The mail server for on-call alerts. With no host, alerts are held and shown on the owner view, not sent |
 | `REPORTS_GITHUB_TOKEN`, `REPORTS_GITHUB_REPO` | empty | Where owner reports are filed as issues (`owner/repo`). Without them reports are held and shown on the owner view |
 | `TRANSFER_OFFICE_NUMBER`, `TRANSFER_ON_CALL_NUMBER` | empty | The numbers a call is put through to, named by role in the tenant's `transfer` section. Empty keeps the flag and named callback (`transfer.py`), for the warm transfer and the cold handoff alike |
+| `TRANSFER_HOLD_NUMBER` | empty | The hold line. With the owner's Hold line switch on (Settings page), every transfer rings this number instead of a person's; empty leaves transfers as they are |
 | `RECORDING_S3_BUCKET`, `RECORDING_S3_ENDPOINT`, `RECORDING_S3_REGION`, `RECORDING_S3_ACCESS_KEY`, `RECORDING_S3_SECRET` | empty | The S3-compatible bucket LiveKit uploads call audio to; the jobs loop copies each file here and deletes it there. No bucket, no recording (`recordings.py`) |
 | `RECORDINGS_DIR` | `recordings` beside `TOOL_DB` | Where call audio is kept on the server |
 | `FIXED_NOW` | empty | Development only: serve every request as if it were this moment (ISO with offset). `make owner-demo` sets it |

@@ -54,6 +54,7 @@ def test_the_defaults_are_consent_off_and_everything_else_as_the_tenant_is_set_u
         "two_party_consent": False,
         "call_recordings": True,
         "warm_transfer": True,
+        "hold_line": False,
         "technician_summaries": True,
         "on_call_alerts": True,
     }
@@ -297,6 +298,56 @@ def test_warm_transfer_on_still_rings_the_office(agent, numbers):
     call = asks_for_a_person(agent)
     flagged = flag(agent, call)
     assert ask(agent, call, flagged)["data"]["transfer"]["role"] == "office"
+
+
+HOLD = "+12125550177"
+
+
+@pytest.fixture
+def hold(numbers, monkeypatch):
+    monkeypatch.setenv("TRANSFER_HOLD_NUMBER", HOLD)
+
+
+def test_with_the_hold_line_on_a_caller_asking_for_a_person_rings_the_hold_line(agent, hold):
+    set_to(agent, hold_line=True)
+    call = asks_for_a_person(agent)
+    plan = ask(agent, call, flag(agent, call))["data"]["transfer"]
+    assert plan["role"] == "office" and plan["phone"] == HOLD
+
+
+def test_with_the_hold_line_on_after_hours_on_call_is_the_hold_line_too(agent, clock, hold):
+    set_to(agent, hold_line=True)
+    clock.now = EVENING
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "The heat's out and my mother is 88.")
+    no_heat_tonight(agent, call, "My mother, she's 88")
+    plan = ask(agent, call, flag(agent, call, priority="Urgent"))["data"]["transfer"]
+    assert plan["role"] == "on_call" and plan["phone"] == HOLD
+
+
+def test_with_the_hold_line_off_the_office_is_rung(agent, hold):
+    call = asks_for_a_person(agent)
+    plan = ask(agent, call, flag(agent, call))["data"]["transfer"]
+    assert plan["phone"] == "+12125550100"
+
+
+def test_the_hold_line_with_no_hold_number_still_rings_the_office(agent, numbers):
+    set_to(agent, hold_line=True)
+    call = asks_for_a_person(agent)
+    plan = ask(agent, call, flag(agent, call))["data"]["transfer"]
+    assert plan["phone"] == "+12125550100"
+
+
+def test_flipping_the_hold_line_mid_call_leaves_that_call_as_it_started(agent, hold):
+    call = asks_for_a_person(agent)
+    set_to(agent, hold_line=True)
+    plan = ask(agent, call, flag(agent, call))["data"]["transfer"]
+    assert plan["phone"] == "+12125550100"
+
+
+def test_the_hold_line_is_on_the_settings_page_beside_the_warm_transfer(agent):
+    shown = [s.key for s in owner_settings.shown(tenant(agent))]
+    assert shown.index("hold_line") == shown.index("warm_transfer") + 1
 
 
 # ---- technician summaries ----------------------------------------------------------------------

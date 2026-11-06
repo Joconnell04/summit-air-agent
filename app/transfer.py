@@ -230,6 +230,20 @@ def number(tenant: Tenant, role: str, environ: Mapping[str, str] = os.environ) -
     return environ.get(name, "").strip() if name else ""
 
 
+HOLD_NUMBER = "TRANSFER_HOLD_NUMBER"
+
+
+def held(tenant: Tenant, environ: Mapping[str, str]) -> Mapping[str, str]:
+    """The numbers with every role pointed at the hold line, for a call started while the owner's
+    hold line switch was on. With no hold number set, the numbers are left as they are, so the
+    switch can never send a caller nowhere."""
+    hold = environ.get(HOLD_NUMBER, "").strip()
+    if not hold:
+        return environ
+    names = (tenant.transfer or {}).get("targets", {}).values()
+    return {**environ, **{name: hold for name in names}}
+
+
 def role_for(
     conn: sqlite3.Connection,
     tenant: Tenant,

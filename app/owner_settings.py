@@ -49,6 +49,12 @@ SETTINGS = (
         "app/transfer.py role_for",
     ),
     Setting(
+        "hold_line",
+        "Hold line",
+        "Transfers ring the hold line instead of a person.",
+        "app/main.py _ctx (transfer.held)",
+    ),
+    Setting(
         "technician_summaries",
         "Technician summaries",
         "Write a job note for the technician after each booking.",
@@ -76,6 +82,7 @@ def defaults(tenant: Tenant) -> dict[str, bool]:
         "two_party_consent": False,
         "call_recordings": bool(tenant.retention.get("record_calls")),
         "warm_transfer": bool(tenant.transfer),
+        "hold_line": False,
         "technician_summaries": True,
         "on_call_alerts": True,
     }
@@ -86,7 +93,7 @@ def shown(tenant: Tenant) -> tuple[Setting, ...]:
     and call recordings only where the tenant's config allows recording at all."""
     hidden = set()
     if not tenant.transfer:
-        hidden.add("warm_transfer")
+        hidden.update(("warm_transfer", "hold_line"))
     if not tenant.retention.get("record_calls"):
         hidden.add("call_recordings")
     return tuple(s for s in SETTINGS if s.key not in hidden)

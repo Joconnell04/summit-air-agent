@@ -38,6 +38,7 @@ from . import (
     lifecycle,
     logs,
     outbound,
+    owner_settings,
     owner_view,
     recordings,
     records,
@@ -275,6 +276,8 @@ def _ctx(services: Services, conn, call_id: str, key: str | None) -> Ctx:
     numbers = services.settings.transfer_numbers
     if numbers is None:
         numbers = os.environ
+    if owner_settings.for_call(conn, tenant, call_id)["hold_line"]:
+        numbers = transfer.held(tenant, numbers)
     return Ctx(
         conn,
         call,
