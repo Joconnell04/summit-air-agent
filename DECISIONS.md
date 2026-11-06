@@ -95,7 +95,7 @@ Decided: the agent stays on a Retell-hosted Claude model. We don't post-train an
 Why: we considered it only as a possible latency gain. One RTX 5090 serving an 8B model at about 150 tokens a second would cost about $50 for three days (ASSUMED, from RunPod list prices and memory-bandwidth estimates), and a cached system prompt could bring time to first token under 200 ms (ASSUMED). But the failures on live and scripted calls are instruction-following, not speed: Haiku 5.5's median end-to-end turn latency on Retell is already about 1 s (MEASURED, Retell call latency, call_926427e1d1f2a80cb78dc6a4e04), and an 8B model follows instructions worse than Haiku. It would also need a dataset of good calls we don't have, a custom-LLM bridge to Retell, and a GPU server to run, which is the layering DECISIONS 112 moved away from.
 Considered: serving the adapter separately in vLLM (slower than merging it); a 32B model on two H100s (about $390 for three days, ASSUMED, and still a weaker instruction follower).
 Would change if: there are thousands of real calls to distill from and latency, not behavior, is the limit.
-Discussion: docs/later.md C-79
+Discussion: docs/later.md C-85
 Issue: none
 ## 115. Each call stands alone: no cut-off greeting, no safety carried over, do-not-call after a yes
 
