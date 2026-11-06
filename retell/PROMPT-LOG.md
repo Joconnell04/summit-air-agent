@@ -139,6 +139,10 @@ From my 12:02 AM call. The goodbye had three things stacked ("Thanks so much for
 
 The combined access question made me answer "yes, and no" (yes someone's home, no code). I picked a version where a single yes covers the usual case: "Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know." I came to it from a call on the socket line, but it applies everywhere, so it's on my agent, the server and both arms. Not tested on a call yet.
 
+### Change set 27 (06:35)
+
+"Thanks for calling Summit Air." sounded like a question again on the socket line. The version I liked earlier had "today" after the brand, and that's what kept the line falling. So the goodbye is "Thanks for calling Summit Air today." plus one nicety, and it never repeats the booking. The socket lane is checking candidate closings for a falling pitch so this stays fixed.
+
 ## Side-by-side arms (issue #169)
 
 Four versions of the agent on the real phone line, scripted callers, scored by our checks, an Opus 5.5 judge and Retell's own latency and cost. One call per arm and persona, so judge means within about half a point are noise. Source for every number in this section unless it says otherwise: `evals/rounds/side-by-side-01.md` on joco/side-by-side-014a4c, MEASURED from `side-by-side-01-data/results.json`.

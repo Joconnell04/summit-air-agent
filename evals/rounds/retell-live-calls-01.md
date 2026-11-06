@@ -74,3 +74,25 @@ Jackson's words, verbatim:
 Findings (MEASURED, Retell): e2e p50 1,410 ms, p90 2,345 ms. The hold phrase came before almost every answer. The goodbye played twice because the socket's code closing and the model's closing both spoke. The socket world was still on its daytime test clock ("today, 1:30 to 2" at 12:25 AM, with "Friday, November 6" added), and its greeting was the old wording. All four went back to the socket lane.
 
 Access question (Jackson picked from three options): "Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know." It's now on his agent (change set 25), the server and both arms.
+
+## Call call_046f37112cac691a50019893717 (Jackson, 1:14 AM, socket test agent on (516) 212-9051)
+
+Jackson's words, verbatim:
+
+> just called, feedback to investigate and fix:
+> didn't show empathy when i said it was actively leaking
+> self interupted
+> told me no account on phone but wasn't poractive about next steps
+> it cut out but maybe it was the sessions kicking in
+> hello? i said and then it randomly picked back up....very confused
+> confused why it didn't hear me but whatever
+> i said did you hear me but it didn't
+> i tried repeatedly to spell it but it was so bad, just check the logs. how did it not understand this. and check if it ever even got it right? figure out why it was so bad at figuring that out.
+> and it asked me if it was completely out or just not keeping up? but i already said it's leaking so would be good to lead in with that like "you mentioned it's leaking, anything else?" you know what i mean...something better, but im flexible on the approach but got to be good and conversational
+> then it says no worries and offers no proactive advice, very confused
+> in the question, you said furnace or something....should be a more contextualized question because if im talking about the air conditioning, then obi it's not the furnace
+> and it does a few extra "just a moment" with a seemingly instant response....so unnecessarily
+> it asked me if it was leaking but i already said that
+> and the "thanks for calling summir air" sounded like a question so figure out a fix for that and keep it permanent because even if the whole call is good, if that line sucks, then it leaves a sour taste in the mouth
+
+What the trace shows (MEASURED, Retell): e2e p50 1,727 ms, p90 3,114 ms. No caller line in three long gaps (30 to 70 s, 84 to 116 s, 152 to 172 s) while the agent asked "Are you still there?"; the socket lane is checking the recording for speech in those gaps. The spelling came through as "E. Or Street" and "E-A-S. See you. And number 4."; the flow then asked for the ZIP, and the read-back said "one ninety-nine Fourth Street" with no East. The opening turn spoke the model's question and the flow's no-account line together ("...somewhere else? Actually, let's get you booked."). Routed to the socket lane: East or West for numbered streets instead of spelling, never the ZIP, one voice per turn, empathy, a proactive no-account line, questions built from what the caller already said, the hold phrase only on real waits, and a goodbye that keeps "today" so it falls, pinned by a pitch check.
