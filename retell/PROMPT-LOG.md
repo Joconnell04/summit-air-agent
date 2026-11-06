@@ -147,6 +147,10 @@ The combined access question made me answer "yes, and no" (yes someone's home, n
 
 Not a prompt change, a tools change, but it explains a bug I kept hearing. After the socket turned out to be using an old copy of the tool definitions, we diffed my agent's tools against the server's. The callback day only allowed "today" or "tomorrow", so "Monday morning" could never be stored as Monday. The model had no way to say it. Two newer fields were missing too (when the problem started, and my answer to the catch-all question). All synced, 0 drift now, and a drift test is coming so the tools can't fall behind the server again.
 
+### Candidate reorganization (issue #183, not live)
+
+`prompt-candidate.md` is change set 24 sorted into Identity, Personality and Tone, Response Guidelines, Task, Tools, Safety and Ending. Every rule and every line I chose stays. Narration, which was said five ways, became one line. Two contradictions came out: the commercial line was said twice, and a card line fought the server's. Rules the server already does were dropped. That took it from 2,696 to 1,542 words (MEASURED, `wc -w`). Arm C was the warning here, so this is a reorganization, not a rewrite. It never ran: I picked the socket as the demo path before the text pre-screen finished, so the single prompt is the fallback and this is parked. It lacks change sets 25 to 28. The fallback I'd actually switch to is change set 28, in `archive/prompt-cs28.md` with a Retell backup. Where each rule went is in `prompt-candidate-NOTES.md`.
+
 ## Side-by-side arms (issue #169)
 
 Four versions of the agent on the real phone line, scripted callers, scored by our checks, an Opus 5.5 judge and Retell's own latency and cost. One call per arm and persona, so judge means within about half a point are noise. Source for every number in this section unless it says otherwise: `evals/rounds/side-by-side-01.md` on joco/side-by-side-014a4c, MEASURED from `side-by-side-01-data/results.json`.
@@ -199,44 +203,95 @@ On the phone: 1 clean call of 9, 19 gross errors, the best judge mean (4.67, ins
 
 ### Socket build (issue #176)
 
-The socket agent ("Summit Air socket (test)", agent_9e575b3fa1457c8d4331a3b80a) runs on our own custom-LLM socket, so this prompt isn't in Retell. It's `retell/arms/socket/prompt.md`, read by the socket on every call, with Claude Haiku 5.5 through the Anthropic API (config/models.yaml `fast`). The server speaks the read-back, the offers, the booking line, the visit questions, the safety lines, the greeting and the goodbye itself, so most of the rules that kept growing on my live agent aren't in this prompt at all.
+This became the demo path, so it has its own section below.
 
-| Version | Words | "never" | Commit |
-|---|---|---|---|
-| v1 | 813 | 15 | 468a331 |
-| v2 | 855 | 17 | 59052d8 |
-| v3 | 883 | 17 | b4b0368 |
-| v4 | 965 | 18 | ce89c64 |
-| v5 | 1,035 | 19 | a9e098c |
-| v6 | 1,098 | 20 | daaf602 |
-| v7 | 1,165 | 21 | 54b7f6a |
+## Socket build (issue #176), the demo path
 
-MEASURED: `wc -w` and `grep -oi never` on the file at each commit. Arm D's prompt, which v1 started from, was 828 words with 14.
+The socket agent ("Summit Air socket (test)", agent_9e575b3fa1457c8d4331a3b80a) runs on our own custom-LLM socket, so its prompt isn't in Retell. The prompt is `retell/arms/socket/prompt.md` on joco/socket-buildout-176, PR #179. The socket reads it on every call and runs Claude Haiku 5.5 through the Anthropic API (config/models.yaml `fast`). The server speaks most of the call itself: the read-back, the offers, the booking line, the visit questions, the safety lines, the greeting and the goodbye. That's why most of the rules that kept growing on my live agent aren't in this prompt at all. These entries fold in the socket lane's own log (`retell/arms/socket/PROMPT-LOG.md`, v1 to v5).
 
-#### v1 (468a331)
+| Version | Time | Words | "never" | Commit |
+|---|---|---|---|---|
+| v1 | 03:35 | 813 | 15 | 468a331 |
+| v2 | 03:55 | 855 | 17 | 59052d8 |
+| v3 | 04:08 | 883 | 17 | b4b0368 |
+| v4 | 05:10 | 965 | 18 | ce89c64 |
+| v5 | 06:02 | 1,035 | 19 | a9e098c |
+| v6 | 06:45 | 1,098 | 20 | daaf602 |
+| v7 | | 1,165 | 21 | 54b7f6a |
 
-Arm D's prompt with one section swapped. On Retell's LLM the model had to copy each tool result's `say` word for word, and it reworded about half of them (21 of 40 in arm D's rounds). On the socket the server says those sentences itself, so the model now sees them as `said_to_caller`, already heard, and only does what `next` says. Kept. On every socket phone call since, the server's sentences went out word for word (MEASURED, socket-buildout-01).
+MEASURED: `wc -w` and `grep -oi never` on the file at each commit; times are the commits'. v1 started from arm D's prompt, which had 828 words and 14 "never".
 
-#### v2 (59052d8)
+### v1 (03:35)
 
-The gas test in text runs had the model giving its own safety talk ("Once the gas smell has been checked", "I'm not going to treat this as fine just yet"). I added my own rules from my live agent: never repeat the advice, never talk about whether the smell is dangerous, take a false alarm at its word, go on with booking if they want a visit. Kept, with one line I made up for when they ask if it's dangerous ("I can't say from here, but I can get a technician out."). Not checked on a call yet.
+Arm D's prompt with one section swapped. On Retell's LLM the model had to copy each tool result's `say` word for word, and it reworded about half of them (21 of 40 in arm D's rounds). On the socket the server says those sentences itself. The model now sees them as `said_to_caller`, already heard, and only does what `next` says. Kept. On every socket phone call since, the server's sentences went out word for word (MEASURED, `evals/rounds/socket-buildout-01.md`).
 
-#### v3 (b4b0368)
+### v2 (03:55)
 
-My change set 18 from call call_2fb4e053ba8b76b57c348845990: "And this is for your home, right?" instead of the residential question, a quote books an estimate visit, and callbacks only for billing, complaints, prices or when nothing can be booked. The visit questions moved out of the prompt into the server, which asks them itself. Kept.
+On the gas test in text runs, the model gave its own safety talk ("Once the gas smell has been checked", "I'm not going to treat this as fine just yet"). So I brought over my own rules from my live agent:
+- never repeat the advice;
+- never talk about whether the smell is dangerous;
+- take a false alarm at its word;
+- go on with booking if they want a visit.
 
-#### v4 (ce89c64)
+I added one line of my own for when they ask if it's dangerous: "I can't say from here, but I can get a technician out." Kept. The smoke call ran on this version (call_c2e0ba8b6c3f42de6de512dc62d).
 
-Change sets 19 to 22. The assistant is Brian. Most questions open with a short connector that changes each time. The name question depends on what the caller ID matched before hello. Never ask for the ZIP. The goodbye came out of the prompt because the socket says it. Mostly kept. The model still asked for a ZIP once and asked for the system type after I'd said air conditioning (call_046f37112cac691a50019893717).
+### v3 (04:08)
 
-#### v5 (a9e098c)
+My change set 18, from call_2fb4e053ba8b76b57c348845990:
+- "And this is for your home, right?" replaces the residential question;
+- a quote books an estimate visit;
+- callbacks only for billing, complaints, prices, or when nothing can be booked.
 
-Change sets 24 and 25, plus the prompt lane's review (#183): never thank them for waiting, one ask to repeat when a reply can't be made out, "Bye." or "You too." after the goodbye, a request to end the call ends it, "$199" is the house number 199, membership answers yes or no first, the renter 311 line, sparks get an Urgent flag, and no card line of its own because the server says the card stop. The two narration rules became one. On call_046f37112cac691a50019893717, "$199" worked. The model still opened with two questions and some narration ("Actually, let's get you booked."), which the socket now cuts in code instead (6c585f3). Being measured in the done-bar runs.
+The visit questions moved out of the prompt and into the server, which asks them itself. Round 1's scripted batches ran on this version. Over 7 scored calls, the server's lines went out word for word every time, and no call said a name, narrated a step or asked two things at once. Arm D had failed those four checks on 6, 2, 1 and 1 of its 9 calls. But only 3 of the 7 passed their journey, the judge mean was 3.71, and it's slower than my agent (end-to-end p50 1,436 ms against 1,168). None of the failures were the prompt:
+- the socket dropped on a 4.2 s find_slots (call_9cae55b8f0de04239f783dacecd);
+- an "okay" got the which-window question eight times (call_b3c2819a65d2388faff9a716673);
+- a hold never ended (call_7db469c659f142130bc192143e2);
+- the lookup couldn't find Hylan Boulevard (call_1bcb4106a02dff87609d8e7fd8b).
 
-#### v6 (daaf602)
+Kept. The fixes went into the server and the socket.
 
-From my call call_046f37112cac691a50019893717 on 516. When I first say what's wrong, Brian opens with a short line in my words ("Oh no, sorry it's leaking."). The no-account line got "but no problem, I'll get you set up". "Wait" and "hold on" get "No worries, take your time." and the last question again when I'm back. Every question is built from what I already said, and never asks for something I told it (it asked me for the system type after I'd said air conditioning). The server's flow carries the matching question lines: how bad in my own words for a leak, a system type that fits heating or cooling (no furnace for an AC), and a catch-all that doesn't hand back my own example. Not measured yet; the done bar was stopped by the test line's Twilio account.
+### v4 (05:10)
 
-#### v7 (54b7f6a)
+Change sets 19 to 22:
+- the assistant is Brian;
+- most questions open with a short connector that changes each time;
+- the name question depends on what the caller ID matched before hello;
+- never ask for the ZIP.
+
+The goodbye came out of the prompt, because the socket says it now. Mostly kept. The model still asked for a ZIP once, and asked for the system type after I'd said air conditioning (call_046f37112cac691a50019893717).
+
+### v5 (06:02)
+
+Change sets 24 and 25, plus the prompt lane's review (issue #183):
+- never thank them for waiting;
+- one ask to repeat when a reply can't be made out;
+- "Bye." or "You too." after the goodbye;
+- a request to end the call ends it;
+- "$199" is house number 199;
+- membership answers yes or no first;
+- the renter 311 line;
+- sparks get an Urgent flag;
+- no card line of its own, because the server says the card stop.
+
+The two narration rules became one. On call_046f37112cac691a50019893717, "$199" worked. The model still opened with two questions and some narration ("Actually, let's get you booked."), which the socket now cuts in code (6c585f3). Being measured in the done-bar runs.
+
+### v6 (06:45)
+
+From call_046f37112cac691a50019893717:
+- It opens with a short line of sympathy in my words ("Oh no, sorry it's leaking.").
+- The no-account line adds "no problem, I'll get you set up".
+- "Wait" gets "No worries, take your time."
+
+In code, once a reply asks something, nothing more of that reply is said. The closing is "Thanks for calling Summit Air today." plus a nicety pinned to the ones measured to fall in Brian's voice: "Have a great day!" fell on 36 of 36 recorded calls, while "Have a good night!" rose on 3 of 3 (MEASURED, `retell/arms/socket/closing_pitch.py`). Not measured on the phone yet.
+
+### v7 (54b7f6a)
 
 From the done-bar spot-checks. On the CO false-alarm call (call_d101fce0cddb6792cb6214aaacb) Brian asked "since when" five times, said "What kind of job is this? A safety check?" and "To book the safety check, I need your name first". Two rules: ask for a detail at most twice, then take "not sure" or whatever they said and move on; never say a job type out loud or what the booking needs. The socket also cuts that second kind of line in code now, and the server stopped asking a safety check or tune-up about the fault in the first place. Not on a call yet.
+
+### Review (issue #183)
+
+I checked it against my change sets 18 to 28, with nothing the server does said twice. Two passes went to the socket lane (`socket-prompt-review-183.md` in the session notes). The first pass's items are in v5, except one. The second pass found only small things:
+- pets are still in the unused `ask_access` line and its patterns;
+- the prompt should make sure read_back gets `job_type` on no-heat and no-cooling calls, so the server can dispatch (change set 26).
+
+Change set 25's one-yes access question already works in the flow. The pinned closing goes further than change set 27, and the tools are built from the server's schemas (change set 28). Outcome pending.
