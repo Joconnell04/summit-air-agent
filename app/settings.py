@@ -37,7 +37,8 @@ class Settings:
     # 0 turns the slot cache off, as on the Retell eval instance, whose mock is reset between
     # scenarios and must never be answered from the previous world.
     slot_cache_seconds: float = field(
-        default_factory=lambda: float(os.environ.get("SLOT_CACHE_SECONDS", "60"))
+        # Longer than the jobs loop's minute, which refreshes it, so a read never finds it expired.
+        default_factory=lambda: float(os.environ.get("SLOT_CACHE_SECONDS", "90"))
     )
     # The Retell eval instance only: lets /debug/forget-calls age every recorded call, so scenarios
     # that reuse a caller ID never link to each other as repeat calls (voice/retell/eval_adapter.py).

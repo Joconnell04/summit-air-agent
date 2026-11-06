@@ -28,7 +28,7 @@ from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
 from .mail import Mailer
 from .settings import ALERT_MAX_ATTEMPTS, QUEUE_MAX_ATTEMPTS, STUCK_DIALING_MINUTES
 from .tenant import Tenant
-from .tools import open_windows, send_lead
+from .tools import open_windows, send_lead, warm_capacity
 
 log = logging.getLogger(__name__)
 
@@ -482,6 +482,8 @@ def run_once(services) -> dict:
             report[tenant.slug] = {
                 "queue": retry_queue(conn, tenant, fsm, cache, now),
                 "cache_refreshed": cache.refresh(),
+                # Every job type's capacity stays in memory, so find_slots reads it from there.
+                "cache_warmed": warm_capacity(tenant, fsm, cache, now),
                 "weather": (
                     weather.refresh(conn, tenant, services.weather[tenant.slug], now)
                     if services.weather.get(tenant.slug)

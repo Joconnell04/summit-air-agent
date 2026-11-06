@@ -189,13 +189,16 @@ class SideModel:
         if text.strip():
             self._future(question, text)
 
-    def score(self, question: str, text: str) -> float | None:
-        """The probability of yes, or None when it is not back within wait_s or failed."""
+    def score(self, question: str, text: str, wait_s: float | None = None) -> float | None:
+        """The probability of yes, or None when it is not back within wait_s (the model's own by
+        default) or failed."""
         if not text.strip():
             return None
         started = time.perf_counter()
         try:
-            value = self._future(question, text).result(timeout=self.wait_s)
+            value = self._future(question, text).result(
+                timeout=self.wait_s if wait_s is None else wait_s
+            )
         except FutureTimeout:
             log.info(json.dumps({"event": "side_model_late", "question": question}))
             return None
@@ -205,6 +208,18 @@ class SideModel:
         waited = round((time.perf_counter() - started) * 1000)
         log.info(json.dumps({"event": "side_model_answer", "question": question, "waited_ms": waited}))
         return value
+
+
+class NoWait:
+    """The side model's answer only if it is already in: find_slots doesn't wait on it (the gate's
+    400 ms came on top of the capacity call), and book_appointment, which waits, raises the
+    priority if the answer landed in between."""
+
+    def __init__(self, model: SideModel):
+        self.model = model
+
+    def score(self, question: str, text: str) -> float | None:
+        return self.model.score(question, text, wait_s=0)
 
 
 def stripped_profile(path: Path | None = None) -> bool:

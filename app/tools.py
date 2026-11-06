@@ -8,6 +8,7 @@ call's own state, and ownership is checked against the customers matched on this
 
 import hashlib
 import json
+import logging
 import os
 import re
 import sqlite3
@@ -31,6 +32,7 @@ from . import (
 )
 from . import capacity as capacity_rules
 from . import priority as prio
+from . import side_model as side_models
 from .db import iso, parse_iso, tx
 from .envelope import Refused, Result, ok
 from .fsm import FsmAdapter, FsmRejected, FsmUnavailable, SlotCache
@@ -87,6 +89,8 @@ from .text import (
 
 MAX_MATCHES = 5
 SHAPE_DAYS = 3
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -792,7 +796,9 @@ def _facts(ctx: Ctx, job_type: str, turns: list, temps: list[float], outside) ->
     )
 
 
-def _priority(ctx: Ctx, job_type: str, inside_temp_f: float | None) -> Decided:
+def _priority(
+    ctx: Ctx, job_type: str, inside_temp_f: float | None, wait: bool = True
+) -> Decided:
     """The server's priority from the caller's own lines on the thread and its readings (spec
     S-21, DECISIONS.md 072). What the model wrote in `issue` and `who_home` goes to the job notes
     and raises nothing; its inside temperature counts only when the caller said that number."""
@@ -802,7 +808,10 @@ def _priority(ctx: Ctx, job_type: str, inside_temp_f: float | None) -> Decided:
     facts = _facts(ctx, job_type, turns, temps, outside)
     # The side model's cache is keyed on the text the turn handler prefetched with.
     facts.caller_text = records.caller_text(ctx.conn, ctx.call["id"])
-    decided = prio.decide(facts, ctx.tenant.priority, ctx.side_model)
+    side = ctx.side_model
+    if not wait and isinstance(side, side_models.SideModel):
+        side = side_models.NoWait(side)
+    decided = prio.decide(facts, ctx.tenant.priority, side)
     wait = records.wait_named(ctx.conn, ctx.call["id"])
     if wait is None:
         return Decided(facts, decided)
@@ -878,6 +887,19 @@ def open_windows(
     both read the same cached capacity."""
     today = tenant.local(now).date()
     end_day = today + timedelta(days=BOOKING_DAYS_AHEAD)
+    frames = _frames(tenant, fsm, cache, now, job_type)
+    found = capacity_rules.open_windows(tenant, frames, level, today, end_day, minutes, start_at)
+    # A daytime window that starts this minute is no window to offer: there is no time to get
+    # there, and a call before it (an approval check) would have no room.
+    return [w for w in found if w["after_hours"] or parse_iso(w["start"]) > now]
+
+
+def _frames(
+    tenant: Tenant, fsm: FsmAdapter, cache: SlotCache, now: datetime, job_type: dict
+) -> list[dict]:
+    """ServiceTitan's capacity frames for the booking range, through the cache."""
+    today = tenant.local(now).date()
+    end_day = today + timedelta(days=BOOKING_DAYS_AHEAD)
     unit = job_type["businessUnitIds"][0]
     # Frames must end by the range's end; the last day's night window ends at 8 the next morning.
     range_end = datetime.combine(end_day + timedelta(days=1), time(8), tenant.tz)
@@ -885,11 +907,22 @@ def open_windows(
     def fetch():
         return fsm.capacity(now, range_end, unit, job_type["id"])
 
-    frames = cache.get((tenant.slug, job_type["code"], today), fetch)
-    found = capacity_rules.open_windows(tenant, frames, level, today, end_day, minutes, start_at)
-    # A daytime window that starts this minute is no window to offer: there is no time to get
-    # there, and a call before it (an approval check) would have no room.
-    return [w for w in found if w["after_hours"] or parse_iso(w["start"]) > now]
+    return cache.get((tenant.slug, job_type["code"], today), fetch)
+
+
+def warm_capacity(tenant: Tenant, fsm: FsmAdapter, cache: SlotCache, now: datetime) -> bool:
+    """Fetch every job type's capacity into the cache, so the call's first find_slots finds it
+    there instead of waiting on the FSM (it was the slowest tool, MEASURED). Run off the request,
+    at /calls/start; a failure only leaves find_slots to fetch it."""
+    if cache.ttl <= 0:
+        return False  # the cache is off (the eval instance): nothing to keep warm
+    for job_type in tenant.job_types.values():
+        try:
+            _frames(tenant, fsm, cache, now, job_type)
+        except Exception as exc:  # noqa: BLE001 - warming is best effort
+            log.info(json.dumps({"event": "warm_capacity_failed", "error": type(exc).__name__}))
+            return False
+    return True
 
 
 def _open_windows(
@@ -1874,7 +1907,7 @@ def _named_days(ctx: Ctx, args: FindSlotsIn) -> FindSlotsIn:
 def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
     args = _named_days(ctx, args)
     job_type = _job_type(ctx, args.job_type)
-    found = _priority(ctx, args.job_type, args.facts.inside_temp_f)
+    found = _priority(ctx, args.job_type, args.facts.inside_temp_f, wait=False)
     facts, decided = found.facts, found.priority
     length = args.window_minutes
     windows = _open_windows(ctx, job_type, decided.level, length)
