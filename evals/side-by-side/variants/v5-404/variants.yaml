@@ -21,6 +21,20 @@ log:
     one_second: false
     seed: 404
     unit: apartment one F
+  m404-01:
+    address: five hundred Ocean Avenue
+    borough: Brooklyn
+    correction: false
+    early: false
+    interrupt: false
+    journey: routine
+    name: Sam Ortiz
+    one_second: false
+    returning_after: r404-01
+    seed: 404
+    system: furnace
+    unit: ''
+    unit_volunteered: false
   o404-01:
     address: seven forty-two Nostrand Avenue
     borough: Brooklyn
@@ -177,6 +191,16 @@ personas:
     name: null
     real_hazard: true
     safety: true
+    unit_ask: false
+  m404-01:
+    bookings:
+    - book
+    closes_with: bye|that's it|that's all
+    confirms: 1
+    first: Sam
+    journey: routine
+    matched: true
+    name: Sam Ortiz
     unit_ask: false
   o404-01:
     bookings:

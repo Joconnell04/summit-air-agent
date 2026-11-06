@@ -428,3 +428,20 @@ def test_a_retraction_split_across_two_caller_lines_is_heard():
         user("No."),
     ]
     assert sbs.check_call(persona, call, rows())["retraction_honored"]["ok"]
+
+
+def test_a_matched_caller_is_not_asked_the_name_and_the_no_match_line_comes_once():
+    persona = {**PERSONA, "matched": True}
+    out = sbs.check_call(persona, good_call(), rows(["book"], name="Jordan Lee"))
+    assert not out["no_name_question_when_matched"]["ok"]
+    call = good_call()
+    call[2] = agent(
+        "I don't see an account under the number you're calling from. Can I get your name?"
+    )
+    call[6] = agent(
+        "I don't see an account under the number you're calling from. I have one ninety-nine East Fourth Street. Is that right?",
+        2,
+    )
+    assert not sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))[
+        "no_match_line_once"
+    ]["ok"]

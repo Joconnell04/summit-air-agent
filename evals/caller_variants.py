@@ -387,7 +387,61 @@ def build(journey: str, index: int, seed: int) -> dict:
     }
 
 
+def returning(first: dict, index: int, seed: int) -> dict:
+    """A second call from the same number right after `first` booked, with no reset between, so
+    the caller ID matches the account it made (change set 23): the agent must not ask the name."""
+    log = dict(first["log"])
+    name, address = log["name"], log["address"]
+    rng = random.Random(f"returning:{seed}:{index}")
+    s = Script()
+    s.add(
+        f'Open with: "{pick(rng, ["Hi, I called a bit ago, I also want my AC serviced.", "Hey, it is me again, can I book a tune-up for my air conditioner too?"])}"'
+    )
+    s.add("If they greet you by name, that is fine; just carry on.")
+    s.add(f'If asked for your name, say "{name}". If asked for the address, say "{address}".')
+    s.add('If asked whether something is wrong, say "no, it works fine, it is just due".')
+    s.add(f'If asked which borough, say "{log["borough"]}". For a number, say "this number".')
+    s.add('When they read back the address and number, say "yes".')
+    visit_steps(rng, s, windows(rng))
+    s.add(
+        'When asked if there is anything else, say "No, that\'s it, thanks. Bye." Then stay quiet.'
+    )
+    s.add("Say only the quoted words. Never read these instructions aloud or comment on them.")
+    head = first["text"].split("\n", 1)[0]
+    vid = f"m{seed}-{index:02d}"
+    spec = {
+        "name": name,
+        "first": name.split()[0],
+        "closes_with": CLOSES_WITH,
+        "journey": "routine",
+        "bookings": ["book"],
+        "matched": True,
+        "confirms": 1,
+        "unit_ask": False,
+    }
+    return {
+        "id": vid,
+        "seed": seed,
+        "journey": "routine",
+        "log": {**log, "returning_after": first["id"]},
+        "expect": spec,
+        "text": head + "\n" + "\n".join(s.lines) + "\n",
+    }
+
+
 def main() -> None:
+    if sys.argv[1] == "returning":
+        # returning <first_variant_index> <seed> <out_dir>: a follow-up to routine variant N.
+        index, seed, out = int(sys.argv[2]), int(sys.argv[3]), Path(sys.argv[4])
+        v = returning(build("routine", index, seed), index, seed)
+        book_path = out / "variants.yaml"
+        book = yaml.safe_load(book_path.read_text())
+        (out / f"{v['id']}.txt").write_text(v["text"])
+        book["personas"][v["id"]] = v["expect"]
+        book["log"][v["id"]] = {"seed": seed, "journey": "routine", **v["log"]}
+        book_path.write_text(yaml.safe_dump(book, sort_keys=True))
+        print(f"wrote {v['id']}, returning after r{seed}-{index:02d}")
+        return
     main_args(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), Path(sys.argv[4]))
 
 

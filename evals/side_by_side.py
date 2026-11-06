@@ -67,6 +67,10 @@ ASKED_SPELLING = r"\bspell\b"
 ASKED_FULL_NAME = r"\b(first and last|full name|last name)\b"
 
 
+NAME_QUESTION = (
+    r"\b(can i (get|have)|what'?s|what is|may i (get|have)) your (full |first and last )?name\b"
+)
+NO_MATCH = r"i don'?t see an account under the number"
 CATCH_ALL = r"anything else the technician should know"
 PROBLEM_JOBS = ("no_heat", "no_cooling", "repair", "airflow")
 CONNECTORS = (
@@ -349,6 +353,14 @@ def check_call(
         put("catch_all_once", catch_alls == 1, f"{job}: the catch-all asked {catch_alls} times")
     elif job in ("tune_up", "estimate"):
         put("catch_all_once", catch_alls == 0, f"{job}: the catch-all asked {catch_alls} times")
+
+    # Change set 23: caller ID first. A matched caller is never asked for a name; the no-match
+    # line is said at most once.
+    if persona.get("matched"):
+        asked = [t["text"] for t in agents if re.search(NAME_QUESTION, t["text"], re.IGNORECASE)]
+        put("no_name_question_when_matched", not asked, "; ".join(a[:80] for a in asked[:1]))
+    no_match = sum(1 for t in agents if re.search(NO_MATCH, t["text"], re.IGNORECASE))
+    put("no_match_line_once", no_match <= 1, f"the no-match line said {no_match} times")
 
     dated = [t["text"] for t in agents if re.search(DATED_DAY, t["text"], re.IGNORECASE)]
     put("no_date_with_today_or_tomorrow", not dated, "; ".join(d[:100] for d in dated[:2]))
