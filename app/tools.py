@@ -733,7 +733,7 @@ def _job_type(ctx: Ctx, code: str) -> dict:
     if not job_type:
         raise Refused(
             "invalid_arguments",
-            "Let me check what kind of visit that is.",
+            "",
             errors={"job_type": f"one of {', '.join(ctx.tenant.job_types)}"},
         )
     return job_type
@@ -958,8 +958,9 @@ def _slot_bounds(ctx: Ctx, slot: Slot, level: str) -> tuple[datetime, datetime]:
     if window is None or not today <= slot.date <= today + timedelta(days=BOOKING_DAYS_AHEAD):
         raise Refused(
             "invalid_slot",
-            "Let me look at the open times again.",
+            "",
             errors={"slot": "not a window the company offers in the booking range"},
+            need="call find_slots for that day and book one of its windows",
         )
     if window.after_hours and level != "Urgent":
         raise Refused(
@@ -2493,10 +2494,10 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     ]
     _limit(ctx, "book", len(existing))
     if not ctx.call["readback_confirmed_at"]:
+        # No narration ("Before I book it, let me read back..."): read_back's own sentence is what
+        # the caller hears next (the side-by-side).
         raise Refused(
-            "gate_read_back",
-            "Before I book it, let me read back the address and number.",
-            need="read_back",
+            "gate_read_back", "", need="call read_back now; its sentence is spoken for you"
         )
     readback = records.readback(ctx.call)
     try:
@@ -2537,8 +2538,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         details["name"] = _booking_name(ctx)
     found = _priority(ctx, args.job_type, details["inside_temp_f"])
     facts, decided = found.facts, found.priority
-    if not override:
-        _on_call_first(ctx, facts, decided)
+    on_call_said = "" if override else _on_call_first(ctx, facts, decided, details)
     window_start, window_end = _slot_bounds(ctx, args.slot, decided.level)
     if _window_over(ctx, args.slot.window, window_start, window_end):
         ctx.cache.invalidate()
@@ -2695,7 +2695,11 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     )
     # An Urgent call booked without find_slots first still hears the line once, here.
     urgent_line = ctx.tenant.line("urgent_priority")
-    if decided.level == "Urgent" and _hand_out_once(ctx, urgent_line):
+    if on_call_said:
+        # The on-call sentence already says the call is top priority.
+        _hand_out_once(ctx, urgent_line)
+        say = f"{on_call_said} {say}"
+    elif decided.level == "Urgent" and _hand_out_once(ctx, urgent_line):
         say = f"{urgent_line} {say}"
     # A visit booked on a safety call goes ahead only once the problem is shut off (eval round 2).
     if override and ctx.tenant.safety.get("booking_note"):
@@ -2806,29 +2810,35 @@ def _unit_not_booked(ctx: Ctx) -> str | None:
     return None
 
 
-def _on_call_first(ctx: Ctx, facts: prio.Facts, decided: prio.Priority) -> None:
+def _on_call_first(
+    ctx: Ctx, facts: prio.Facts, decided: prio.Priority, details: dict
+) -> str:
     """After hours, a no-heat or no-cooling call that needs the on-call technician tonight (journey
     11) books only once an urgent person flag has alerted them. The morning visit is then the
-    fallback if the technician can't come."""
+    fallback if the technician can't come. The server raises that flag itself when the agent
+    hasn't, and returns its sentence to say before the booking's: refused with on_call_first, the
+    side-by-side's models stalled (Sonnet never booked or flagged). Empty when nothing is needed."""
     cutoffs = ctx.tenant.after_hours_cutoffs
     if not ctx.call["after_hours"] or facts.job_type not in (
         cutoffs["heating_job_types"] + cutoffs["cooling_job_types"]
     ):
-        return
+        return ""
     if prio.after_hours_outcome(facts, decided, cutoffs, False) != "tonight_if_on_call_agrees":
-        return
+        return ""
     thread = records.thread(ctx.conn, ctx.call["id"])
     alerted = ctx.conn.execute(
         f"SELECT 1 FROM flags WHERE kind = 'person' AND priority = 'Urgent' "
         f"AND call_id IN ({','.join('?' * len(thread))})",
         thread,
     ).fetchone()
-    if not alerted:
-        raise Refused(
-            "on_call_first",
-            "Let me get this to our on-call technician first.",
-            need="flag_person with priority Urgent",
-        )
+    if alerted:
+        return ""
+    reason = (
+        f"After hours, needs the on-call technician tonight: {details.get('issue') or facts.job_type}"
+        f" ({'; '.join(decided.reasons)})"
+    )
+    flagged = flag_person(ctx, FlagIn(call_id=ctx.call["id"], reason=reason, priority="Urgent"))
+    return flagged.say
 
 
 def needs_on_call_tonight(ctx: Ctx) -> bool:
@@ -3361,8 +3371,9 @@ def record_move(ctx: Ctx, args: MoveIn) -> Result:
     if not ctx.call["readback_confirmed_at"]:
         raise Refused(
             "gate_read_back",
-            "Let me read back the new address.",
-            need="read_back with the new address, then record_move again",
+            "",
+            need="call read_back with the new address now (its sentence is spoken for you), then "
+            "record_move again",
         )
     new = records.readback(ctx.call)
     if any(booking.same_address(loc, new) for loc in old):
@@ -3679,9 +3690,71 @@ def _as_the_caller_said_it(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
     )
 
 
-def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
-    """The callback time and the words for it. The words always come from here, never the model."""
+CALLBACK_DAY_LINES = 3  # the caller's recent lines a callback's day and part of day are read from
+PARTS_OF_DAY = {
+    "morning": (None, time(12, 0)),
+    "afternoon": (time(12, 0), time(17, 0)),
+    "evening": (time(17, 0), None),
+}
+
+
+def _callback_day_said(ctx: Ctx, asked: CallbackTime) -> CallbackTime:
+    """The day and part of day the caller named for the callback, over what the model passed: on
+    every Haiku arm, "Monday morning" went in as callback_day "tomorrow" and was confirmed as
+    "tomorrow before 12 PM" (Retell calls call_5b998cf4ab209eb48c2ae5e9a0b and
+    call_fc470f8ddd2d56cf55be68fc119). Read from the caller's last few lines, newest first."""
+    rows = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller' ORDER BY seq DESC LIMIT ?",
+        (ctx.call["id"], CALLBACK_DAY_LINES),
+    ).fetchall()
+    update: dict = {}
+    for row in rows:
+        said = words(row["text"])
+        if "callback_day" not in update:
+            day = next(
+                (d for d in ("tomorrow", *WEEKDAY_NAMES) if f" {d} " in said),
+                "today" if (" today " in said or " tonight " in said) else None,
+            )
+            if day and day != asked.callback_day:
+                update["callback_day"] = day
+        if "part" not in update:
+            part = next((p for p in PARTS_OF_DAY if f" {p} " in said), None)
+            if part:
+                update["part"] = part
+    part = update.pop("part", None)
+    if part and not asked.callback_in_minutes and not _fits_part(asked, part):
+        start, end = PARTS_OF_DAY[part]
+        update |= {
+            "callback_time": None,
+            "callback_after": _clock_said(start) if start else None,
+            "callback_before": _clock_said(end) if end else None,
+        }
+    return asked.model_copy(update=update) if update else asked
+
+
+def _fits_part(asked: CallbackTime, part: str) -> bool:
+    """Whether the times the model passed sit inside the part of day the caller named."""
+    start, end = PARTS_OF_DAY[part]
+    times = []
+    for value in (asked.callback_time, asked.callback_after, asked.callback_before):
+        if not value:
+            continue
+        try:
+            times.append(clock_time(value))
+        except ValueError:
+            return True  # an ISO time or something we can't read: left as it is
+    return bool(times) and all(
+        (start is None or t >= start) and (end is None or t <= end) for t in times
+    )
+
+
+def _callback_due(ctx: Ctx, asked: CallbackTime, read_caller: bool = True) -> CallbackWhen:
+    """The callback time and the words for it. The words always come from here, never the model.
+    read_caller is False once the day was moved here (a time gone today is tomorrow), so the
+    caller's "today" doesn't move it back."""
     tenant, now = ctx.tenant, ctx.now
+    if read_caller:
+        asked = _callback_day_said(ctx, asked)
     asked = _local_iso(tenant, _as_the_caller_said_it(ctx, asked))
     days = _days_ahead(tenant, now, asked.callback_day)
     try:
@@ -3711,7 +3784,9 @@ def _callback_due(ctx: Ctx, asked: CallbackTime) -> CallbackWhen:
             # model ended the call with no callback). A bare time is that time tomorrow; "after"
             # or "before" a time already gone is the soonest callback.
             if asked.callback_time and not (asked.callback_after or asked.callback_before):
-                return _callback_due(ctx, asked.model_copy(update={"callback_day": "tomorrow"}))
+                return _callback_due(
+                    ctx, asked.model_copy(update={"callback_day": "tomorrow"}), read_caller=False
+                )
             return _soonest_callback(tenant, now)
         if reason == "outside callback hours":
             opens, closes = (

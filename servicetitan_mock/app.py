@@ -6,7 +6,7 @@ import secrets
 import sqlite3
 import time
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Form, Header, Request
@@ -23,6 +23,19 @@ from .seed import reseed
 TOKEN_SECONDS = 900  # ServiceTitan tokens last 15 minutes
 
 
+SHIFTABLE_WORLDS = ("eval", "server-led")
+
+
+def shifted() -> Callable[[], datetime] | None:
+    """The tool server's shifted clock (app/clock.py), read from the same variables: the mock
+    must agree with it on the time. Never on the live world."""
+    raw = os.environ.get("SUMMIT_CLOCK_OFFSET_H", "").strip()
+    if not raw or os.environ.get("SUMMIT_WORLD", "").strip() not in SHIFTABLE_WORLDS:
+        return None
+    offset = timedelta(hours=float(raw))
+    return lambda: datetime.now(UTC) + offset
+
+
 def create_app(
     db_path: str | Path | None = None,
     tenant_dir: str | Path | None = None,
@@ -32,13 +45,14 @@ def create_app(
     reset_token: str | None = None,
 ) -> FastAPI:
     """Defaults come from ST_MOCK_DB, ST_MOCK_TENANT and ST_MOCK_NOW (an ISO time with an offset that
-    freezes the clock, for repeatable evals). POST /debug/reset exists only when ST_MOCK_ALLOW_RESET
+    freezes the clock, for repeatable evals). SUMMIT_CLOCK_OFFSET_H shifts it on the eval and
+    server-led worlds only (shifted, below; app/clock.py reads the same). POST /debug/reset exists only when ST_MOCK_ALLOW_RESET
     is 1; ST_MOCK_RESET_TOKEN, if set, must come in the X-Debug-Token header."""
     db_path = Path(db_path or os.environ.get("ST_MOCK_DB", "data/servicetitan_mock.db"))
     tenant_dir = tenant_dir or os.environ.get("ST_MOCK_TENANT", DEFAULT_TENANT_DIR)
     if clock is None:
         frozen = os.environ.get("ST_MOCK_NOW")
-        clock = (lambda: parse_dt(frozen)) if frozen else (lambda: datetime.now(UTC))
+        clock = (lambda: parse_dt(frozen)) if frozen else (shifted() or (lambda: datetime.now(UTC)))
 
     add_missing_tables(db_path)
     app = FastAPI(title="ServiceTitan mock", version="0.1.0")

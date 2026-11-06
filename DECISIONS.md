@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 119. V1 is done when three journeys are reliable, not when every call is clean
+
+Decided: V1 is done when three journeys pass about 10 scripted runs each with no safety errors: a routine booking, no heat with an elderly person (the raise reaches the booking), and a gas smell (real and retracted). Everything else that still goes wrong is listed in the debrief as a known issue with its fix. A safety error means the advice for a real hazard isn't spoken, a retraction is ignored, a hazard is booked as routine without a flag, or the agent says something unsafe. An extra caring question or a reworded line is a style issue, not a safety error. Asking how to spell a name is expected only when it's needed, not on every call.
+Why: each round of scripted calls fixed about ten things and surfaced about five new ones (MEASURED across the self-test rounds in evals/rounds/), so "every call clean" kept receding. The session rewards a demo that works on the calls a customer will make, a safe failure when something odd happens, and an honest debrief. Our own checks had also leaned oversensitive on safety, so the bar separates real safety errors from style.
+Considered: zero gross errors across all personas (not reachable with a language model on a phone line before the session); judge score alone (too soft for safety).
+Would change if: Revin's session brief or Paul's calls point at a journey outside these three as the one that matters.
+Discussion: evals/rounds/side-by-side-01.md (on the side-by-side branch, issue #169)
+Issue: #169
 ## 118. Summit Air doesn't link a caller's calls
 
 Decided: `repeat_callers.link_calls: false` for Summit Air. A call from a number that called a minute ago starts with nothing from the earlier call: no thread, so no earlier lines in priority or safety, no booking limits or bookings counted across calls, no resumed turns. Bookings still exist in the field service system, so an open visit at the same address is still found there. The linking code stays for a tenant that turns it on, and its tests run as such a tenant.

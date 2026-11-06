@@ -47,6 +47,7 @@ from . import (
     transfer,
     weather,
 )
+from . import clock as clock_shift
 from . import side_model as side_models
 from .envelope import Refused, Result
 from .fsm import FsmUnavailable, SlotCache, make_adapter
@@ -76,7 +77,9 @@ log = logging.getLogger("app")
 # Template fallbacks, said when nothing more specific applies. Company lines are in agent.yaml.
 SAY_RETRY = "Sorry, give me just a moment."
 SAY_FSM_DOWN = "I can't pull that up right now."
-SAY_BAD_INPUT = "Let me check that again."
+# Nothing to say to the caller: "Let me check that again." narrated the agent's own steps (the
+# side-by-side). The errors tell the model what to fix.
+SAY_BAD_INPUT = ""
 
 
 class Services:
@@ -102,7 +105,7 @@ class Services:
             if fixed.tzinfo is None:
                 raise ValueError("FIXED_NOW needs a UTC offset, such as 2026-11-03T17:20:00-05:00")
             clock = lambda: fixed
-        self.clock = clock or (lambda: datetime.now(UTC))
+        self.clock = clock or clock_shift.shifted() or (lambda: datetime.now(UTC))
         db.init(settings.db_path)
         self.tenants = Tenants.load(settings.tenants_dir, settings.default_tenant, settings.trades_dir)
         clients = fsm_clients or {}

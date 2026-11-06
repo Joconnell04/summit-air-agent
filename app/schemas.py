@@ -53,6 +53,11 @@ class StartIn(CallRef):
 class TurnIn(Body):
     speaker: Literal["caller", "agent"]
     text: str = Field(max_length=4000)
+    replaces_last: bool = Field(
+        False,
+        description="A caller line the voice layer already sent in part, now whole: it replaces "
+        "the call's last caller line instead of adding one",
+    )
     timings: dict[str, float] = Field(
         default_factory=dict, description="Stage timings in ms, docs/latency.md"
     )

@@ -440,14 +440,33 @@ def test_after_hours_a_cold_house_alerts_the_on_call_technician_before_booking(a
     agent.turn(call, "It's 48 in here and dropping. Just two healthy adults at home.")
     found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 48})
     assert found["data"]["after_hours_outcome"] == "tonight_if_on_call_agrees"
-    refused = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
-    assert refused["refused"] == "on_call_first"
+    # The server alerts the on-call technician itself and books in the same call: refused with
+    # on_call_first, the side-by-side's models stalled and never booked or flagged.
+    booked = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
+    assert booked["ok"], booked
+    assert booked["say"].startswith(
+        "I've let our on-call team know this call is top priority, and someone will call you"
+    )
+    assert "Okay, I've booked it" in booked["say"]
+    assert booked["say"].count("top priority") == 1
+    flag = agent.db().execute(
+        "SELECT kind, priority FROM flags WHERE kind = 'person'"
+    ).fetchone()
+    assert tuple(flag) == ("person", "Urgent")
     # No time to ask for: the on-call technician calls back within the tenant's set minutes.
+    due = agent.db().execute("SELECT due_at FROM callbacks").fetchone()[0]
+    assert due == iso(clock() + timedelta(minutes=20))
+
+
+def test_after_hours_an_alert_the_agent_raised_first_isnt_raised_twice(agent, clock):
+    clock.advance(**AFTER_HOURS)
+    call = ready_to_book(agent)
+    agent.turn(call, "It's 48 in here and dropping.")
     flagged = agent.tool("flag_person", call, reason="On-call: 48 F inside", priority="Urgent")
     assert flagged["ok"], flagged
-    assert flagged["data"]["callback_at"] == iso(clock() + timedelta(minutes=20))
-    assert "on-call team know this call is top priority" in flagged["say"]
-    assert book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)["ok"]
+    booked = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
+    assert booked["ok"] and "on-call team" not in booked["say"]
+    assert agent.db().execute("SELECT COUNT(*) FROM flags WHERE kind = 'person'").fetchone()[0] == 1
 
 
 def test_after_hours_a_house_holding_warm_books_the_morning_without_a_flag(agent, clock):
@@ -468,10 +487,8 @@ def test_after_hours_a_hot_house_alerts_the_on_call_technician_before_booking(ag
     clock.advance(**AFTER_HOURS)
     call = ready_to_book(agent)
     agent.turn(call, "The AC died and it's 88 in here.")
-    refused = book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)
-    assert refused["refused"] == "on_call_first"
-    agent.tool("flag_person", call, reason="On-call: 88 F inside, no AC", priority="Urgent")
-    assert book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)["ok"]
+    booked = book(agent, call, TOMORROW_MORNING, job_type="no_cooling", inside_temp_f=88)
+    assert booked["ok"] and booked["say"].startswith("I've let our on-call team know")
 
 
 def test_after_hours_a_safety_override_booking_skips_the_on_call_alert(agent, clock):

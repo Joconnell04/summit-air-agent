@@ -525,8 +525,10 @@ def test_the_confirm_question_is_asked_once_per_call():
                 "no nothing like that it was just dusty like burning dust you know the way a "
                 "heater smells the first time it runs nothing like eggs it's gone now"
             ),
-            "ask_check",
+            "cleared",
         ),
+        # Retell call call_b608687ce923e70a8318a6a6f0e: a no that names another smell is a no.
+        ("No, it's not like rotten eggs, it's more like burning plastic.", "cleared"),
         ("it smells like eggs", "speak_lines"),
         ("Actually it does, a bit like eggs", "speak_lines"),
         ("No, it smells like rotten eggs", "speak_lines"),
@@ -536,13 +538,14 @@ def test_the_confirm_question_is_asked_once_per_call():
         ("Right, and my head hurts", "speak_lines"),
         ("Right, we feel sick", "speak_lines"),
         ("Yeah I smell something strong", "speak_lines"),
-        ("Yeah, but the kids were coughing", "ask_check"),
+        # Unclear: no second question; the next line is read as the answer.
+        ("Yeah, but the kids were coughing", "none"),
     ],
 )
 def test_the_confirm_question_is_asked_the_negative_way_so_yeah_clears_it(answer, result):
     """Eval round 2: "it doesn't smell like sulfur or rotten eggs, right?" is answered "yeah"
     when it doesn't. The smell named again, "it does", symptoms or an unsure answer bring the lines;
-    an answer with more than agreement in it is unclear, so the plain gas question is asked."""
+    an answer with more than agreement in it is unclear and waits for the next line."""
     action = safety.check_caller_turn(answer, "checking", "gas", 0, CFG, answering_confirm=True)
     assert action.action == result
 
@@ -617,18 +620,16 @@ def test_a_plain_call_that_ends_after_the_read_back_gets_no_safety_flag(agent):
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'person'") == 0
 
 
-def test_an_unclear_confirm_answer_gets_the_plain_question_and_its_answer_is_read_plainly(agent):
-    """PR #74 eval run: after an unclear answer, a later "yeah" was read against the negative
-    question and fired the lines on a burning-dust call."""
+def test_the_gas_check_is_asked_once_and_an_unclear_answer_waits_for_the_next_line(agent):
+    """Retell call call_b608687ce923e70a8318a6a6f0e: while the caller was still answering the
+    confirm question, the plain gas question was asked too. Jackson: less repetitive."""
     call = ready_to_book(agent)
     agent.turn(call, "It smelled like burning dust for a minute when the heat came on.")
     agent.say(call, CONFIRM)
     unclear = agent.turn(call, "Right, but the dog has been acting strange")
-    plain = CFG["vague"]["gas"]["question"]
-    assert unclear["data"]["safety"]["action"] == "ask_check"
-    assert unclear["data"]["safety"]["text"] == plain
-    agent.say(call, plain)
-    assert agent.turn(call, "No, no gas at all.")["data"]["safety"]["action"] == "cleared"
+    assert unclear["data"]["safety"] is None and unclear["say"] == ""
+    partial = agent.turn(call, "No,")
+    assert partial["data"]["safety"]["action"] == "cleared"
     later = agent.turn(call, "Yeah, it's a house, the one bedroom upstairs is cold.")
     assert later["data"]["safety"] is None
 
@@ -933,8 +934,9 @@ def test_the_lines_count_as_said_once_the_agent_has_spoken_even_in_pieces(agent)
     matched and the caller's next line ("No, I mean...") was handed them again."""
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "Well, it smells a little like gas, like near the boiler. Is that normal?")
-    agent.say(call, "Please ")
-    agent.say(call, "get ")
+    # The lines reach the server in two pieces, neither of them whole.
+    agent.say(call, "If you're smelling gas, the safest thing is to get everyone outside")
+    agent.say(call, "and call 9-1-1 or the gas company from there.")
     nxt = agent.turn(call, "Um, I just want you to schedule a technician.")
     assert nxt["say"] == "" and nxt["data"]["safety"] is None
     state = agent.db().execute("SELECT safety_state FROM calls WHERE id = ?", (call,)).fetchone()[0]

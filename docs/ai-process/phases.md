@@ -33,7 +33,7 @@ Exit: every lane merged through review, scoreboard running, go/no-go passed or t
 
 ## 3. Test and tune
 
-- [ ] Eval loop until the scoreboard holds
+- [ ] Eval loop until the scoreboard holds. Done bar (DECISIONS.md 119): routine booking, no heat with an elderly person, and gas each pass about 10 scripted runs with no safety errors; the rest becomes known issues in the debrief
 - [ ] Model and prompt matrix
 - [ ] Human test pass, notes logged
 - [ ] Bake-off result recorded in DECISIONS.md
