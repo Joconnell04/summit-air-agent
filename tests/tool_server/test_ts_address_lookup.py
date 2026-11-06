@@ -781,6 +781,15 @@ def test_an_unknown_unit_count_asks_for_the_unit(located, answers):
     assert found["ok"] and found["data"]["needs_unit"] is True
 
 
+def test_a_caller_who_said_its_a_house_isnt_flagged_for_a_unit(located, answers):
+    """Phone check t2 gas-now, 6 November: "40 Fulton Street, Manhattan. It's a house" came back
+    needs_unit, and the model asked "Is there a unit number?" anyway."""
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 248 Duffield St, Brooklyn. It's a house, someone will be home.")
+    found = located.tool("find_address", call, street="248 Duffield St")
+    assert found["ok"] and found["data"]["needs_unit"] is False
+
+
 def test_the_units_come_from_the_lot_in_the_city_directory():
     features = [{"properties": {"housenumber": "199", "street": "EAST 4 STREET",
                                 "postalcode": "10009", "borough": "Manhattan",

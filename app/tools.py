@@ -20,6 +20,7 @@ from itertools import pairwise
 
 from . import (
     booking,
+    flow,
     geocode,
     heads_up,
     knowledge_search,
@@ -1928,9 +1929,18 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
         area=area,
         # A building with more than one home: ask for the apartment or unit if not given yet.
         # Unknown counts as maybe: most NYC homes are in buildings, and a caller in a house says so
-        # (Jackson's call call_9e278a30dcdb1ff084f39a279c8 at 109 East 4th wasn't asked).
-        needs_unit=not units or units > 1,
+        # (Jackson's call call_9e278a30dcdb1ff084f39a279c8 at 109 East 4th wasn't asked). A caller
+        # who already said it's a house isn't asked: the model followed this flag over the flow's
+        # next step (phone check t2 gas-now, 6 November, "It's a house" then "Is there a unit?").
+        # A count of several homes still asks: the city directory outweighs a passing word.
+        needs_unit=bool(units and units > 1) or (not units and not _said_no_unit(ctx)),
     )
+
+
+def _said_no_unit(ctx: Ctx) -> bool:
+    if getattr(ctx, "call", None) is None:
+        return False
+    return unit_settled([records.caller_text(ctx.conn, ctx.call["id"])]) == "none"
 
 
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
@@ -3153,11 +3163,23 @@ def _wait_said(minutes: int) -> str:
 
 
 def _after_dispatch(ctx: Ctx) -> str:
+    # Getting in is asked only for what the caller hasn't said yet: phone check t2 gas-now (6
+    # November) heard "Someone will be home, no gate code" with the address, then was asked again.
+    missing = [k for k in flow.visit_questions_missing(ctx) if k != "ask_approval"]
+    if missing:
+        ask = (
+            f'Then ask only "{flow.question_line(ctx, missing)}" A plain yes means someone is home '
+            "and there is no code; if no one will be home, ask how the technician can get in. Save "
+            "what they say with add_note (attach_to job), then say "
+        )
+    else:
+        ask = (
+            "They already said how the technician gets in, so don't ask. Save it with add_note "
+            "(attach_to job), then say "
+        )
     return (
-        "Wait for the caller. A yes, or no answer, confirms it. Then ask only "
-        f'"{ctx.tenant.arrival_question}" A plain yes means someone is home and there is no '
-        "code; if no one will be home, ask how the technician can get in. Save what they say with "
-        'add_note (attach_to job), then say "Okay, you\'re all set. Anything else I can help with?". '
+        f"Wait for the caller. A yes, or no answer, confirms it. {ask}"
+        '"Okay, you\'re all set. Anything else I can help with?". '
         "If they correct the unit or the number, call read_back with the "
         "corrected details and the job type: the visit moves with them and its sentence is said "
         "for you. Don't offer times, read back again or ask who approves the work."

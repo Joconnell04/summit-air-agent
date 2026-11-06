@@ -91,3 +91,22 @@ def test_other_job_types_on_a_safety_call_are_never_dispatched_as_safety(agent):
     agent.turn(call, "Also the heat's out.")
     sent = read_back(agent, call, job_type="tune_up")
     assert not sent["data"].get("dispatched"), sent
+
+
+def test_after_a_dispatch_getting_in_isnt_asked_when_the_caller_already_said(agent):
+    """Phone check t2 gas-now, 6 November: "Someone will be home, and there's no gate code" came
+    with the address, and after the dispatch Brian asked "Will someone be home?" again."""
+    call = gas_call(agent)
+    agent.turn(call, "We're outside. Please send someone out right away.")
+    agent.turn(call, "Someone will be home, and there's no gate code.")
+    sent = read_back(agent, call)
+    assert sent["data"]["dispatched"], sent
+    assert "don't ask" in sent["data"]["next"] and "Will someone be home" not in sent["data"]["next"]
+
+
+def test_after_a_dispatch_getting_in_is_asked_when_it_wasnt_said(agent):
+    call = gas_call(agent)
+    agent.turn(call, "We're outside. Please send someone out right away.")
+    sent = read_back(agent, call)
+    assert sent["data"]["dispatched"], sent
+    assert agent.start(UNKNOWN)["data"]["tenant"]["arrival_question"] in sent["data"]["next"]
