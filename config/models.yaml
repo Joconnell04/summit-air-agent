@@ -125,6 +125,26 @@ voice:
   # The pause after the goodbye before the line drops; a caller who speaks in it keeps the call
   # open (Jackson: "a 1 or 2 second wait", issue #149; 1.5 s is the middle, ASSUMED).
   end_call_grace_s: 1.5
+  # SONNET_HANDOFF=1 on the socket: the reply written right after a lookup_hvac_info that found
+  # facts comes from the `quality` profile instead of the live one, at most max_per_call times a
+  # call. If its first token isn't there after first_token_timeout_s, the live profile writes the
+  # reply instead. The timeout is ASSUMED, about the extra wait a caller will take for a better answer.
+  sonnet_handoff: {profile: quality, max_per_call: 2, first_token_timeout_s: 2.5}
+
+# The search behind lookup_hvac_info (app/knowledge_search.py). Passages are embedded once by
+# scripts/build_knowledge_index.py and the caller's question at query time. 256 dimensions keeps the
+# committed index small; the model supports it (SOURCE: https://platform.openai.com/docs/guides/
+# embeddings). timeout_s: past it the keyword search answers instead. min_cosine, close_cosine and
+# keyword_weight are set from the 10 questions in evals/rounds/knowledge-rag-01.md (MEASURED).
+knowledge:
+  provider: openai
+  model: text-embedding-3-small
+  dimensions: 256
+  timeout_s: 1.5
+  min_cosine: 0.50
+  close_cosine: 0.06
+  keyword_weight: 0.1
+  max_passages: 3
 
 # Off the live path: nobody is waiting, so thinking is on where quality matters.
 offline:

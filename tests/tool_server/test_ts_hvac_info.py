@@ -7,6 +7,7 @@ from app import hvac_info
 from app.tenant import Tenant
 
 DOCUMENT = (TENANT_DIR / "knowledge" / "hvac-basics.md").read_text()
+PAGES = {p.stem: p.read_text() for p in (TENANT_DIR / "knowledge").glob("*.md") if p.stem in Tenant.load(TENANT_DIR).lookup_knowledge}
 
 
 def ask(agent, question: str) -> dict:
@@ -19,8 +20,8 @@ def test_a_banging_radiator_gets_the_steam_pipes_fact(agent):
     found = ask(agent, "Why is my radiator banging?")
     assert found["ok"] and found["say"] == ""
     facts = found["data"]["facts"]
-    assert len(facts) in (1, 2)
-    assert facts[0].startswith("Common sounds and symptoms, in plain words: Banging, knocking")
+    assert 1 <= len(facts) <= 3
+    assert facts[0].startswith("Steam boilers and radiators: Banging, knocking")
 
 
 def test_short_cycling_gets_its_fact(agent):
@@ -32,7 +33,7 @@ def test_short_cycling_gets_its_fact(agent):
 
 def test_a_filter_change_gets_the_filter_fact(agent):
     facts = ask(agent, "How often should I change my filter?")["data"]["facts"]
-    assert facts[0].startswith("Filters and thermostats: Furnace and central-air systems have an air filter")
+    assert any("changed every one to three months" in fact for fact in facts)
 
 
 @pytest.mark.parametrize("question", [
@@ -57,11 +58,12 @@ def test_callers_words_for_the_same_thing_find_it(question, starts):
 
 
 def test_the_document_has_no_repair_steps_or_prices():
-    """The tool never returns how to fix anything or what it costs; the document holds neither."""
-    lowered = DOCUMENT.lower()
-    assert "$" not in DOCUMENT
-    for word in ("price", "cost", "relight", "reset the", "bleed", "step 1", "unscrew"):
-        assert word not in lowered, word
+    """The tool never returns how to fix anything or what it costs; the pages hold neither."""
+    for name, page in PAGES.items():
+        lowered = " ".join(text for _, text in hvac_info.passages(page)).lower()
+        assert "$" not in lowered, name
+        for word in ("price", "cost", "relight", "reset the", "bleed", "step 1", "unscrew"):
+            assert word not in lowered, (name, word)
 
 
 def test_the_lookup_document_stays_out_of_the_prompt_knowledge():

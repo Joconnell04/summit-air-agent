@@ -372,6 +372,10 @@ lines:
   zip_mismatch: I have {street} in {where} as {found}, not {said}. Which one is right?
 lookup_knowledge:
 - hvac-basics
+- heating
+- cooling
+- air-and-ventilation
+- thermostats-and-symptoms
 lookup_synonyms:
   a c: ac
   air conditioner: ac
@@ -1629,6 +1633,7 @@ voice:
     can I help?
   greeting_unknown: Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can
     I help?
+  lookup_filler: Good question, let me check on that.
   hold_phrases:
   - One sec.
   - Okay, one moment.

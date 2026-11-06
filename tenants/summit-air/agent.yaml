@@ -628,6 +628,8 @@ voice:
   # rose on 5 of 5 and "Have a good night!" on 3 of 3. Add one here only after it measures falling.
   closing_niceties: [Have a great day!]
   are_you_there: Are you still there?
+  # Said once before the Sonnet hand-off writes a lookup answer (SONNET_HANDOFF=1, voice/retell_llm).
+  lookup_filler: Good question, let me check on that.
   hold_phrases:
     - One sec.
     - Okay, one moment.
@@ -691,9 +693,11 @@ visit_questions:
 
 # Documents in knowledge/ that only lookup_hvac_info reads (app/hvac_info.py): kept out of the prompt,
 # and searched when the caller asks how equipment works, what a sound means, or about maintenance.
-# The source is Jackson's Retell knowledge base (retell/summit-air-jackson/kb-source on
-# joco/retell-agent). It holds no repair steps or prices.
-lookup_knowledge: [hvac-basics]
+# hvac-basics is Jackson's Retell knowledge base (retell/summit-air-jackson/kb-source on
+# joco/retell-agent); the other pages were written from the sources listed at the bottom of each.
+# None holds repair steps, prices or brand error codes. After editing a page, run
+# scripts/build_knowledge_index.py to rebuild knowledge/lookup-index.json.
+lookup_knowledge: [hvac-basics, heating, cooling, air-and-ventilation, thermostats-and-symptoms]
 
 # Owner edits (app/rules.py). A wording line whose default says this must keep it, so an owner can't
 # reword away the line that tells callers they're talking to an AI.

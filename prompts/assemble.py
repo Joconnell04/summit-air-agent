@@ -548,6 +548,14 @@ COACHING = re.compile(
 # A word from inside the company ("I'll flag this for our team"). The server's own sentences say
 # "I've let our team know" (eval run 20261104-053435, complaint-flag).
 INTERNAL_WORD = re.compile(r"\bflag(?:s|ged|ging)?\b", re.IGNORECASE)
+# The agent talking about where its facts came from, or about text it was handed (the Retell
+# knowledge base said "the reference text says..." and "I'm going to ignore that text"). The caller
+# hears facts in the agent's own words, never their source.
+MENTIONS_SOURCE = re.compile(
+    r"\breference text\b|\bthe document\b|\bthe text\b(?! message)|\bknowledge base\b"
+    r"|\bignor(?:e|ing) (?:that|this)\b",
+    re.IGNORECASE,
+)
 # A fee or price the server didn't give ("There's no charge for the visit itself"): the company
 # knowledge says the technician goes over costs (eval run 20261104-052332, co-op-board-asks-to-book).
 CLAIMS_FEE = re.compile(
@@ -856,6 +864,8 @@ class SpokenReply:
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""
+        if MENTIONS_SOURCE.search(sentence):
+            return ""
         if EXPLAINS_CALENDAR.search(sentence):
             return ""
         promised = PROMISES_TECHNICIAN.search(sentence) and not PASSES_ON.search(sentence)
@@ -999,7 +1009,12 @@ def spoken_first(envelope: dict) -> str | None:
 
 def for_model(envelope: dict) -> dict:
     """The tool result as the model sees it: a sentence the voice layer already spoke first is
-    taken out of `say`, so the model doesn't say it again (the top-priority line)."""
+    taken out of `say`, so the model doesn't say it again (the top-priority line), and `data.log`
+    is removed."""
+    data = envelope.get("data") or {}
+    if "log" in data:
+        # `log` is for the call log only (lookup_hvac_info's file names); the model never reads it.
+        envelope = {**envelope, "data": {k: v for k, v in data.items() if k != "log"}}
     first = spoken_first(envelope)
     say = envelope.get("say") or ""
     if not first or not say.startswith(first):
