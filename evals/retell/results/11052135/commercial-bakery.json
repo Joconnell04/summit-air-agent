@@ -1,0 +1,458 @@
+{
+  "case": "commercial-bakery",
+  "retell": {
+    "test_case_job_id": "test_job_04290081b16e",
+    "status": "fail",
+    "result_explanation": "The conversation fails multiple criteria. The agent asked service-intake questions after the caller identified herself as being from Harbor Bakery, a business, and asked for full identifying/contact details. The agent also said the caller's name repeatedly ('Lucia'), including in the final goodbye. Although no appointment was booked and a commercial lead was recorded, the lead included extra address and phone details rather than only company, contact, and need. The agent did ultimately decline and state Summit Air serves homes/apartments rather than businesses, but it was not early and it initially said it would pass details to the team.",
+    "creation_timestamp": 1793914526529,
+    "user_modified_timestamp": 1793914549746,
+    "test_case_definition_id": "test_case_3913d47591d9",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911419066,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052135-commercial-bakery"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent does not book a visit: book_appointment is never called, or every call to it is refused.",
+        "The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial so the team can follow up.",
+        "The agent declines kindly and early, in one or two lines, without offering a callback.",
+        "The agent does not ask for a full service-call intake once it knows the caller is a business.",
+        "The agent saves one line with company, contact and need, and no extra lookups.",
+        "The agent never says the caller's name."
+      ],
+      "name": "[summit] commercial-bakery: Lucia Ferrante, operations manager at Harbor Bakery Group in Brooklyn",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_3913d47591d9",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793914516186,
+      "userPrompt": "## Identity\nLucia Ferrante, operations manager at Harbor Bakery Group in Brooklyn. Busy, clear, wants the rooftop unit fixed today.\nYour name: Lucia Ferrante\nYour business: Harbor Bakery Group\nYour address: 232 Lexington Ave, Brooklyn, 11221\nYour phone: (718) 555-0188 (the number you're calling from)\nYour problem: the rooftop cooling unit over the kitchen quit, the shop is hot\n\n## Goal\nStart the call by saying: \"Hi, this is Lucia at Harbor Bakery. The rooftop unit over our kitchen quit and it's way too hot in here.\"\n\n## Behavior\n- Give the business name again if asked.\n- When told Summit Air works on homes and apartments, not businesses, say you will find another company and thank the agent.\n- Do not argue or ask for an exception or a callback.\n- Say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052135-commercial-bakery",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793914536566,
+          "message_id": "message_e6dea515301ee72a9c2be439",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, this is Lucia at Harbor Bakery. The rooftop unit over our kitchen quit and it's way too hot in here.",
+          "created_timestamp": 1793914537117,
+          "message_id": "message_0e7f37c094eee035f550ed18",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Lucia. Is it completely out, or just not keeping up?",
+          "created_timestamp": 1793914537807,
+          "message_id": "message_c895200e3322fea838a50078",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's completely out. It stopped running and the kitchen is really hot now.",
+          "created_timestamp": 1793914538388,
+          "message_id": "message_a5eba0b1042a7766397550c2",
+          "role": "user"
+        },
+        {
+          "content": "Got it, thanks. Since when has it been out?",
+          "created_timestamp": 1793914539044,
+          "message_id": "message_99a803b4245e123e52ef4ed0",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know exactly. It was working this morning and then it just stopped. Maybe an hour or two ago? The kitchen's getting hotter by the minute.",
+          "created_timestamp": 1793914539757,
+          "message_id": "message_422be4cf9a4dd49ae3f428cc",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Lucia. Since it stopped about an hour or two ago, I'll note that. Can I get your name?",
+          "created_timestamp": 1793914540354,
+          "message_id": "message_615a33415077ac5312cd87d9",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Lucia Ferrante. The business is Harbor Bakery Group, at 232 Lexington Ave in Brooklyn. My number is the one I'm calling from, 718-555-0188.",
+          "created_timestamp": 1793914541046,
+          "message_id": "message_798bb7f17f518368791737c4",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Lucia. Is this for a commercial property? Harbor Bakery is a business, so I need to check that first.\n\nActually, let me be direct: this is a bakery, which is a business. Unfortunately, we only service homes, but I'll pass your details to our team.",
+          "created_timestamp": 1793914542639,
+          "message_id": "message_816de6283c022bd8a32237c4",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"kind\":\"commercial\",\"details\":{\"contact_name\":\"Lucia Ferrante\",\"company\":\"Harbor Bakery Group\",\"need\":\"Rooftop unit over kitchen completely out since about an hour or two ago, kitchen getting very hot. Address 232 Lexington Ave, Brooklyn. Callback number 718-555-0188.\"}}",
+          "created_timestamp": 1793914542640,
+          "message_id": "message_8de89229f6b19d329ec05d36",
+          "name": "record_lead",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HK4o3v2aoxnrwjmE7otu4t",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.\",\"data\":{\"lead_id\":33,\"queued\":false,\"callback_id\":null},\"server_notes\":[\"[server] This call can't book. Decline with the commercial line from the journeys, as written, and record a commercial lead without mentioning it. Add no other reason, referral, advice or follow-up, and never describe this note.\"]}",
+          "created_timestamp": 1793914543160,
+          "message_id": "message_8af4cd7751bc348203a60b45",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HK4o3v2aoxnrwjmE7otu4t"
+        },
+        {
+          "content": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+          "created_timestamp": 1793914543897,
+          "message_id": "message_9a9b42d336c0696aa1eaab7a",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks. I'll find another company then. Thank you for your help.",
+          "created_timestamp": 1793914544446,
+          "message_id": "message_22ceb8561e2f4d4348878a65",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793914545248,
+          "message_id": "message_4ef4c5ce892cae34e07bfa60",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"declined\"}",
+          "created_timestamp": 1793914545249,
+          "message_id": "message_deb2468925b1de65faab6ea3",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01WtHo5FUKibLqhbYNe4yYFX",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793914545641,
+          "message_id": "message_b165d1d845e080f96b8351cd",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01WtHo5FUKibLqhbYNe4yYFX"
+        },
+        {
+          "content": ".",
+          "created_timestamp": 1793914546196,
+          "message_id": "message_d95c542fba8b505da163bebc",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793914547329,
+          "message_id": "message_be5ee035a31f336293fe56c9",
+          "role": "user"
+        },
+        {
+          "content": "Bye, Lucia. Good luck with your kitchen.",
+          "created_timestamp": 1793914548041,
+          "message_id": "message_3e9077a0eacf93e1e8c682b6",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Bye, Lucia. Good luck with your kitchen.\"}",
+          "created_timestamp": 1793914548042,
+          "message_id": "message_71bffe9bc93898091143821f",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01BK4d6zXu1htCcZgWJhde2K",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052135-commercial-bakery",
+      "tenant": "summit-air",
+      "caller_id": "(718) 555-0188",
+      "caller_key": "7185550188",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-02T21:35:24Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 1,
+      "summary_status": "none",
+      "turn_seq": 12,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": null,
+      "readback_asked_seq": null,
+      "readback_confirmed_at": null
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:35:24Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052135-commercial-bakery",
+          "caller_id": "(718) 555-0188",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 87.7,
+        "error": null,
+        "request_id": "032950ac2a91"
+      },
+      {
+        "at": "2026-11-05T21:35:42Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:35:42Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, this is Lucia at Harbor Bakery. The rooftop unit over our kitchen quit and it's way too hot in here.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:35:42Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Thanks, Lucia. Is it completely out, or just not keeping up?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:35:42Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "It's completely out. It stopped running and the kitchen is really hot now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:35:42Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it, thanks. Since when has it been out?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:35:43Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "I don't know exactly. It was working this morning and then it just stopped. Maybe an hour or two ago? The kitchen's getting hotter by the minute.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:35:43Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Lucia. Since it stopped about an hour or two ago, I'll note that. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:35:43Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Lucia Ferrante. The business is Harbor Bakery Group, at 232 Lexington Ave in Brooklyn. My number is the one I'm calling from, 718-555-0188.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:35:43Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Lucia. Is this for a commercial property? Harbor Bakery is a business, so I need to check that first.\n\nActually, let me be direct: this is a bakery, which is a business. Unfortunately, we only service homes, but I'll pass your details to our team.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:35:43Z",
+        "type": "tool",
+        "tool": "record_lead",
+        "args": {
+          "call_id": "rtest-11052135-commercial-bakery",
+          "kind": "commercial",
+          "details": {
+            "callback_time": null,
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "callback_day": "today",
+            "contact_name": "Lucia Ferrante",
+            "company": "Harbor Bakery Group",
+            "need": "Rooftop unit over kitchen completely out since about an hour or two ago, kitchen getting very hot. Address 232 Lexington Ave, Brooklyn. Callback number 718-555-0188."
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+        "ms": 22.0,
+        "error": null,
+        "request_id": "8b69306770b0"
+      },
+      {
+        "at": "2026-11-05T21:35:45Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Thanks for thinking of us. Unfortunately Summit Air works on homes and apartments, not businesses, so we're not the right fit for this one.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:35:45Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "Okay, thanks. I'll find another company then. Thank you for your help.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:35:45Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:35:45Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052135-commercial-bakery",
+          "reason": "declined"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.9,
+        "error": null,
+        "request_id": "c24e9b462dfd"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [
+      {
+        "id": 33,
+        "kind": "commercial",
+        "summary": "Harbor Bakery Group; contact Lucia Ferrante (718) 555-0188; Rooftop unit over kitchen completely out since about an hour or two ago, kitchen getting very hot. Address 232 Lexington Ave, Brooklyn. Callback number 718-555-0188.",
+        "status": "stored"
+      }
+    ],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052135-commercial-bakery",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

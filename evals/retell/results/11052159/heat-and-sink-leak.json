@@ -1,0 +1,1049 @@
+{
+  "case": "heat-and-sink-leak",
+  "retell": {
+    "test_case_job_id": "test_job_fafbce9d421c",
+    "status": "fail",
+    "result_explanation": "The agent met the booking, plumbing, and read-back requirements: it booked exactly one no-heat visit, did not call record_lead, confirmed the read-back before booking, and did not include the sink in the heating appointment. However, it violated criterion 6 by saying the caller's name aloud twice: \u201cThanks, Grace\u201d and \u201cTake care, Grace.\u201d",
+    "creation_timestamp": 1793916045625,
+    "user_modified_timestamp": 1793916094137,
+    "test_case_definition_id": "test_case_40efbf1b408e",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911573515,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052159-heat-and-sink-leak"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books 1 separate visit(s) with book_appointment, one for each problem or unit the caller needs seen.",
+        "The agent does not call record_lead.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent says once, plainly, that Summit Air doesn't do plumbing and suggests a plumber, then books the heat without fuss.",
+        "The agent doesn't put the sink on the heating visit.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] heat-and-sink-leak: Grace Okafor, a homeowner in Flatbush, Brooklyn, having a bad morning",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_40efbf1b408e",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915948102,
+      "userPrompt": "## Identity\nGrace Okafor, a homeowner in Flatbush, Brooklyn, having a bad morning. Mentions two problems in one breath and wants both sorted.\nYour name: Grace Okafor\nYour address: 1120 Ocean Ave, Brooklyn, 11230\nYour phone: (917) 555-0111 (the number you're calling from)\nYour problem: no heat since last night, gas boiler, about 64 inside; also the kitchen sink is leaking under the cabinet\nYour home: Grace, all day\nYour approver: Grace, she owns the house\n\n## Goal\nStart the call by saying: \"My heat is out and my kitchen sink is leaking too, can you help with both?\"\n\n## Behavior\n- When told Summit Air doesn't do plumbing, say okay, you'll call a plumber, and carry on with the heat.\n- Take the first time offered for the heat, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052159-heat-and-sink-leak",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+          "created_timestamp": 1793916055675,
+          "message_id": "message_45c1d984235980e64abc44df",
+          "role": "agent"
+        },
+        {
+          "content": "My heat is out and my kitchen sink is leaking too, can you help with both?",
+          "created_timestamp": 1793916056235,
+          "message_id": "message_6be0d3142747b374a9d61820",
+          "role": "user"
+        },
+        {
+          "content": "I can help with the heat. A leaking sink isn't something we service, so for that you'd want a plumber. Let's get your heat taken care of first. Is it completely out, or just not keeping up?",
+          "created_timestamp": 1793916057092,
+          "message_id": "message_b267a900e0f5d83bcc8cabf3",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Completely out. No heat since last night. It's about 64 in the house right now.",
+          "created_timestamp": 1793916057792,
+          "message_id": "message_20ada1a192325dc9a36a6790",
+          "role": "user"
+        },
+        {
+          "content": "Got it. What's the street address for the home?",
+          "created_timestamp": 1793916058348,
+          "message_id": "message_2d911692c1818ebfc9abc331",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "1120 Ocean Ave, Brooklyn, 11230.",
+          "created_timestamp": 1793916058945,
+          "message_id": "message_1f17fdb5fa29e9b7b5459fff",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"1120 Ocean Ave\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793916059800,
+          "message_id": "message_a25397c9f6d16b23708e5884",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01RQN7UC51sgKjYCtBF6EWGY",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11230\",\"street\":\"1120 Ocean Ave\",\"from_caller\":true,\"in_area\":true,\"area\":\"Brooklyn South\",\"note\":\"The lookup couldn't confirm the street; the caller's ZIP stands. Go on to the read-back, which confirms it with them.\"},\"server_notes\":[\"[server] The caller asked for work the company doesn't do. Say this once, as written: \\\"Unfortunately we don't do plumbing, so a plumber would be the right call for that.\\\" Book nothing for that work and add no other referral. If they also have a heating or cooling problem, carry on with that as usual.\"]}",
+          "created_timestamp": 1793916060400,
+          "message_id": "message_306c3755e5cfc50dacb1164b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01RQN7UC51sgKjYCtBF6EWGY"
+        },
+        {
+          "arguments": "{\"zip\":\"11230\"}",
+          "created_timestamp": 1793916060401,
+          "message_id": "message_4eba0e5132ec3e645087d0c8",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01FR1hYZmPSpnxarzZg8FbqE",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11230\",\"in_area\":true,\"area\":\"Brooklyn South\"}}",
+          "created_timestamp": 1793916060629,
+          "message_id": "message_2e9108c54aade8549a4e0d3c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01FR1hYZmPSpnxarzZg8FbqE"
+        },
+        {
+          "content": "Unfortunately we don't do plumbing, so a plumber would be the right call for that.\n\nCan I get your name?",
+          "created_timestamp": 1793916061289,
+          "message_id": "message_db9f6412aa724744a02c562b",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, I'll call a plumber for the sink. My name is Grace Okafor. Can you get someone out here for the heat today?",
+          "created_timestamp": 1793916063746,
+          "message_id": "message_3237d571c75b046e62c989a1",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Grace. Is this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793916064303,
+          "message_id": "message_71e9c4bdcdf83af7e1dde22e",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's my house. It's a single-family home.",
+          "created_timestamp": 1793916066446,
+          "message_id": "message_37283a27e1f5cc55bb01e39b",
+          "role": "user"
+        },
+        {
+          "content": "What's the best phone number to reach you?",
+          "created_timestamp": 1793916067093,
+          "message_id": "message_cc5ef3810f649148dfe0e65d",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(917) 555-0111. That's the number I'm calling from.",
+          "created_timestamp": 1793916067683,
+          "message_id": "message_f16e9d0f7548fc18803415c0",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1120 Ocean Ave\",\"zip\":\"11230\",\"unit\":null,\"city\":\"Brooklyn\"},\"phone\":\"(917) 555-0111\"}",
+          "created_timestamp": 1793916068602,
+          "message_id": "message_c78e4f8b4f5cd2ae970c3d41",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011kMVnjvuGsjzMWBWuveT65",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"address.unit\":\"Input should be a valid string\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793916069077,
+          "message_id": "message_27da5ca3e80e470a7023d72e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011kMVnjvuGsjzMWBWuveT65"
+        },
+        {
+          "arguments": "{\"phone\":\"(917) 555-0111\",\"address\":{\"street\":\"1120 Ocean Ave\",\"zip\":\"11230\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793916069987,
+          "message_id": "message_77e83781e9787d3930af36d6",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_018RYY534tLiFoy83gsYUrEs",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793916070306,
+          "message_id": "message_ee11142b4a0f6707a09d49bf",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_018RYY534tLiFoy83gsYUrEs"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1120 Ocean Ave\",\"zip\":\"11230\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"name\":\"Grace Okafor\"}",
+          "created_timestamp": 1793916071185,
+          "message_id": "message_e10081a5aee33bfef0a04717",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01SaP5M5C8MfuCsA4EnKZ3Mz",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 1120 Ocean Ave, Brooklyn, ZIP code one one two three zero, and the best number is nine one seven, five five five, zero one one one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 1120 Ocean Ave, Brooklyn, ZIP code one one two three zero, and the best number is nine one seven, five five five, zero one one one. That's all correct, right?\"}}",
+          "created_timestamp": 1793916071487,
+          "message_id": "message_dda0bf538341a478ac182837",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01SaP5M5C8MfuCsA4EnKZ3Mz"
+        },
+        {
+          "content": "I have your home at 1120 Ocean Ave, Brooklyn, ZIP code 11230, and the best number is 917-555-0111. That's all correct, right?",
+          "created_timestamp": 1793916072233,
+          "message_id": "message_784f0c92ac554e8653961ccf",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Can you get someone out today? It's cold in here.",
+          "created_timestamp": 1793916073757,
+          "message_id": "message_1bdd923eae5f3d518eaf9727",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"1120 Ocean Ave\",\"zip\":\"11230\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"name\":\"Grace Okafor\",\"confirmed\":true}",
+          "created_timestamp": 1793916074686,
+          "message_id": "message_7d72e5e78cb4dcf2fdaf4761",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JZjWmZ47MAn3XEBUKsz6pF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"1120 Ocean Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11230\",\"spelled\":\"\"},\"phone\":\"9175550111\"}}",
+          "created_timestamp": 1793916075029,
+          "message_id": "message_63dd1c246245afa80ee6a571",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JZjWmZ47MAn3XEBUKsz6pF"
+        },
+        {
+          "content": "If anything makes this more urgent for you, just let me know. Now, let me check today's openings.",
+          "created_timestamp": 1793916076092,
+          "message_id": "message_291c8cb95f0580d6656994db",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"No heat since last night, completely out\",\"since\":null,\"inside_temp_f\":64,\"who_home\":\"not provided\",\"temp_falling_fast\":false}}",
+          "created_timestamp": 1793916076093,
+          "message_id": "message_525c307fd9b65f35a6478a5a",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01BkAXHsjkNdRDKyfJP9JEwM",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Input should be a valid string\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793916076418,
+          "message_id": "message_a50f5216fadf89a442800feb",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01BkAXHsjkNdRDKyfJP9JEwM"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"day\":\"today\",\"facts\":{\"issue\":\"No heat since last night, completely out\",\"since\":\"since last night\",\"inside_temp_f\":64,\"who_home\":\"not provided\"}}",
+          "created_timestamp": 1793916077505,
+          "message_id": "message_066b2ba82a7a019267f6a6a9",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011se5qU2M6JD1mbxiBtVSP9",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Today I have 5:30 to 7:30.\",\"data\":{\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Completely out. No heat since last night. It's about 64 in the house right now\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"windows\":[{\"date\":\"2026-11-05\",\"window\":\"1730-1930\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5:30 to 7:30\",\"part\":\"evening\",\"after_hours\":false}]}}",
+          "created_timestamp": 1793916079551,
+          "message_id": "message_81f0e2b8dc16daf27aa97014",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011se5qU2M6JD1mbxiBtVSP9"
+        },
+        {
+          "content": "Today I have an arrival window of 5:30 to 7:30 PM. Would that work for you?",
+          "created_timestamp": 1793916080227,
+          "message_id": "message_97023444144508ad710b2c46",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, 5:30 to 7:30 works. Please book that one. Thank you.",
+          "created_timestamp": 1793916080795,
+          "message_id": "message_bb199ed14673453bd52a07e6",
+          "role": "user"
+        },
+        {
+          "content": "Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793916081297,
+          "message_id": "message_234e6fa39061c2edbe6c99a4",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'm the homeowner, so I can approve the repair work. Just call me at this number if they need anything.",
+          "created_timestamp": 1793916083564,
+          "message_id": "message_2192e117f07fa3c5ea2f1b3d",
+          "role": "user"
+        },
+        {
+          "content": "Will someone be home to let the technician in?",
+          "created_timestamp": 1793916084104,
+          "message_id": "message_2dc009cb4007751b59821e84",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home all day. Just knock on the front door.",
+          "created_timestamp": 1793916084748,
+          "message_id": "message_dd67ed01e0aebd034fe5bf99",
+          "role": "user"
+        },
+        {
+          "content": "Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793916085293,
+          "message_id": "message_63f6bc1516f85b826a5347cd",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No gate, no pets. Just the front door. I don't know of any buzzer, so just knock.",
+          "created_timestamp": 1793916086045,
+          "message_id": "message_88e16d3e1f570f0f5eb7b098",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Grace Okafor\",\"issue\":\"No heat, completely out since last night; inside about 64 F\",\"since\":\"since last night\",\"tried\":\"Caller has not tried anything yet\",\"who_home\":\"Homeowner home all day\",\"name\":\"Grace Okafor\",\"inside_temp_f\":64,\"arrival_notes\":\"No gate, no pets. Front door, knock; no buzzer.\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1730-1930\"}}",
+          "created_timestamp": 1793916087709,
+          "message_id": "message_2acba539d5a8f20710aeaadb",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01EabdMTynT4rvggq78cBpzQ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 5:30 and 7:30. Anything else?\",\"data\":{\"booking_id\":549,\"appointment_id\":549,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1730-1930\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5:30 to 7:30\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"High\",\"reasons\":[\"below 65 F inside, caller said \\\"Completely out. No heat since last night. It's about 64 in the house right now\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793916088674,
+          "message_id": "message_20a71993569395ed5d190d0b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01EabdMTynT4rvggq78cBpzQ"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 5:30 and 7:30 PM. Anything else I can help with?",
+          "created_timestamp": 1793916090075,
+          "message_id": "message_f3752c79c07765dce243fa3f",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, that's everything for the heat. Thank you, Brooke. Bye.",
+          "created_timestamp": 1793916091077,
+          "message_id": "message_3249eeab0744a66258a9fbec",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793916091718,
+          "message_id": "message_fa8c2d96b9793c8984542805",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793916091719,
+          "message_id": "message_2e0ef1bd0f7b70853df95177",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01TcHgApdQPj1b3f7P4aNUuB",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793916092239,
+          "message_id": "message_ffcc0af0713831f4dad6e44b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01TcHgApdQPj1b3f7P4aNUuB"
+        },
+        {
+          "content": "Take care, Grace.",
+          "created_timestamp": 1793916092927,
+          "message_id": "message_175b60e1ec59337084767f0a",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Take care, Grace.\"}",
+          "created_timestamp": 1793916092928,
+          "message_id": "message_7f5750043c82983454ce904c",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Um3x51etRBGyZwDFLK1c6V",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052159-heat-and-sink-leak",
+      "tenant": "summit-air",
+      "caller_id": "(917) 555-0111",
+      "caller_key": "9175550111",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-16T22:00:42Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 26,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"1120 Ocean Ave\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11230\", \"spelled\": \"\", \"phone\": \"9175550111\", \"phone_for\": \"\", \"sentence\": \"I have your home at 1120 Ocean Ave, Brooklyn, ZIP code one one two three zero, and the best number is nine one seven, five five five, zero one one one. That's all correct, right?\"}",
+      "readback_asked_seq": 12,
+      "readback_confirmed_at": "2026-11-05T22:01:14Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T22:00:42Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "caller_id": "(917) 555-0111",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.9,
+        "error": null,
+        "request_id": "6856f49bf24a"
+      },
+      {
+        "at": "2026-11-05T22:01:00Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:00Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "My heat is out and my kitchen sink is leaking too, can you help with both?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:00Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "I can help with the heat. A leaking sink isn't something we service, so for that you'd want a plumber. Let's get your heat taken care of first. Is it completely out, or just not keeping up?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:00Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Completely out. No heat since last night. It's about 64 in the house right now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:00Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it. What's the street address for the home?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:00Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "1120 Ocean Ave, Brooklyn, 11230.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:00Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "street": "1120 Ocean Ave",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 20.5,
+        "error": null,
+        "request_id": "15625410febb"
+      },
+      {
+        "at": "2026-11-05T22:01:00Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "zip": "11230"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 2.7,
+        "error": null,
+        "request_id": "c5db56263690"
+      },
+      {
+        "at": "2026-11-05T22:01:08Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Unfortunately we don't do plumbing, so a plumber would be the right call for that.\n\nCan I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:08Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Okay, I'll call a plumber for the sink. My name is Grace Okafor. Can you get someone out here for the heat today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:08Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Grace. Is this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:08Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Yes, it's my house. It's a single-family home.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:08Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:08Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "(917) 555-0111. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:09Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "address": {
+            "street": "1120 Ocean Ave",
+            "zip": "11230",
+            "unit": null,
+            "city": "Brooklyn"
+          },
+          "phone": "(917) 555-0111",
+          "call_id": "rtest-11052159-heat-and-sink-leak"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "9349956b2b2b"
+      },
+      {
+        "at": "2026-11-05T22:01:10Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "phone": "(917) 555-0111",
+          "address": {
+            "street": "1120 Ocean Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11230",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 21.7,
+        "error": null,
+        "request_id": "77ad9b495e2a"
+      },
+      {
+        "at": "2026-11-05T22:01:11Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "address": {
+            "street": "1120 Ocean Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11230",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Grace Okafor",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 1120 Ocean Ave, Brooklyn, ZIP code one one two three zero, and the best number is nine one seven, five five five, zero one one one. That's all correct, right?",
+        "ms": 6.6,
+        "error": null,
+        "request_id": "5c0429961e73"
+      },
+      {
+        "at": "2026-11-05T22:01:14Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I have your home at 1120 Ocean Ave, Brooklyn, ZIP code 11230, and the best number is 917-555-0111. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 7000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:14Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Can you get someone out today? It's cold in here.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:14Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "address": {
+            "street": "1120 Ocean Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11230",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Grace Okafor",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.7,
+        "error": null,
+        "request_id": "d0e1a67292c3"
+      },
+      {
+        "at": "2026-11-05T22:01:16Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "If anything makes this more urgent for you, just let me know. Now, let me check today's openings.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:16Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "day": "today",
+          "facts": {
+            "issue": "No heat since last night, completely out",
+            "since": null,
+            "inside_temp_f": 64,
+            "who_home": "not provided",
+            "temp_falling_fast": false
+          },
+          "call_id": "rtest-11052159-heat-and-sink-leak"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "555d2349f85f"
+      },
+      {
+        "at": "2026-11-05T22:01:19Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": "today",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "No heat since last night, completely out",
+            "since": "since last night",
+            "who_home": "not provided",
+            "inside_temp_f": 64.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Today I have 5:30 to 7:30.",
+        "ms": 1752.3,
+        "error": null,
+        "request_id": "b6f6a04c7c6f"
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "Today I have an arrival window of 5:30 to 7:30 PM. Would that work for you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "Yes, 5:30 to 7:30 works. Please book that one. Thank you.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Yes, I'm the homeowner, so I can approve the repair work. Just call me at this number if they need anything.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "Yes, I'll be home all day. Just knock on the front door.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "No gate, no pets. Just the front door. I don't know of any buzzer, so just knock.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:28Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1730-1930"
+          },
+          "details": {
+            "issue": "No heat, completely out since last night; inside about 64 F",
+            "since": "since last night",
+            "tried": "Caller has not tried anything yet",
+            "who_home": "Homeowner home all day",
+            "approver": "Grace Okafor",
+            "system_type": "",
+            "arrival_notes": "No gate, no pets. Front door, knock; no buzzer.",
+            "name": "Grace Okafor",
+            "inside_temp_f": 64.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 5:30 and 7:30. Anything else?",
+        "ms": 420.2,
+        "error": null,
+        "request_id": "2b002540f4d4"
+      },
+      {
+        "at": "2026-11-05T22:01:32Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 5:30 and 7:30 PM. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:32Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "caller",
+        "text": "No, that's everything for the heat. Thank you, Brooke. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:32Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air, and have a great day.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:32Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052159-heat-and-sink-leak",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.1,
+        "error": null,
+        "request_id": "5681d23882a5"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 224,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 549,
+        "window_start": "2026-11-05T22:30:00Z",
+        "window_end": "2026-11-06T00:30:00Z",
+        "priority": "High",
+        "priority_reasons": "below 65 F inside, caller said \"Completely out. No heat since last night. It's about 64 in the house right now\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:cool_inside\"]",
+        "priority_reason_list": "[\"below 65 F inside, caller said \\\"Completely out. No heat since last night. It's about 64 in the house right now\\\"\"]",
+        "who_home": "Homeowner home all day",
+        "job_type": "no_heat",
+        "street": "1120 Ocean Ave",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [
+      {
+        "id": 39,
+        "kind": "not_offered",
+        "summary": "Asked for plumbing, which we don't do; suggested a plumber",
+        "status": "stored"
+      }
+    ],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052159-heat-and-sink-leak",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "1120",
+        "street": "ocean ave",
+        "hint": "Brooklyn",
+        "status": "none",
+        "zips_json": "[]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

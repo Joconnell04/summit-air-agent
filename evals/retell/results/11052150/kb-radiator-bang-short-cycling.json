@@ -1,0 +1,958 @@
+{
+  "case": "kb-radiator-bang-short-cycling",
+  "retell": {
+    "test_case_job_id": "test_job_c033e491473d",
+    "status": "error",
+    "result_explanation": "Ending the conversation early as there might be a loop.",
+    "creation_timestamp": 1793915406227,
+    "user_modified_timestamp": 1793915453566,
+    "test_case_definition_id": "test_case_4a59eace3ea1",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793915402510,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052150-kb-radiator-bang-short-cycling"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent never refers to text, reference material, a knowledge base or context, never says it is ignoring, setting aside or repeating anything, and never speaks of \"the caller\" in the third person.",
+        "The agent answers each question in one or two plain sentences, gives no repair steps, and moves on to booking when asked.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books exactly one visit with book_appointment.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] kb-radiator-bang-short-cycling: Caller who asks two equipment questions, then books",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_4a59eace3ea1",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915402510,
+      "userPrompt": "## Identity\nJamie Ortiz, a homeowner in Astoria. Curious, friendly.\nYour name: Jamie Ortiz\nYour address: 25-30 30th Rd, Astoria, 11102\nYour phone: 678 555 0272 (the number you're calling from)\nYour problem: the radiators bang loudly when the heat comes on and the boiler turns on and off a lot; the heat still works, about 68 inside, nobody at risk; you can approve repairs, you'll be home, no gate code or pets\n\n## Goal\nStart the call by saying: \"Hi, quick question first, why does my radiator bang?\"\n\n## Behavior\n- After the agent answers, ask \"what's short cycling?\"\n- After that answer, say you'd like someone to come look at it, and answer the booking questions plainly.\n- Confirm a correct read-back. Take the first window offered.\n- When your business is done, say bye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793915416263,
+          "message_id": "message_194e55976c49dd3f96f1a145",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, quick question first, why does my radiator bang?",
+          "created_timestamp": 1793915416875,
+          "message_id": "message_4f9737c7280a598d0eccee21",
+          "role": "user"
+        },
+        {
+          "content": "Banging radiators usually happen when water condenses and gets pushed through the pipes as the heat comes on, or when the pipes expand and rub against brackets. It's common in older steam or hot-water systems. If it's happening often, or it's loud or getting worse, a technician can take a look and tell you what's going on. Would you like me to set up a visit?",
+          "created_timestamp": 1793915418346,
+          "message_id": "message_c6f7876195fd323bafca5960",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, that makes sense. Before I book anything, what's short cycling? The boiler keeps turning on and off a lot, and I'm wondering if that's related.",
+          "created_timestamp": 1793915419049,
+          "message_id": "message_d7951d9e4e657b2ff018d2fd",
+          "role": "user"
+        },
+        {
+          "content": "Short cycling means the boiler or furnace turns on and off in quick bursts instead of running steady cycles to heat the home. It can come from a dirty filter, a sensor problem, an oversized unit, or low airflow or water pressure. It isn't the same as banging pipes, though it can make the system work harder and wear out sooner. A technician can find the actual cause. Would you like to set up a visit?",
+          "created_timestamp": 1793915420404,
+          "message_id": "message_c8c80d6bf81dea995d251aae",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Okay, that helps. Yes, I'd like someone to come take a look. Do you have anything available this week? I'm home most of the day, and I can approve repairs if they're needed. There's no gate code or pets, so the tech can come right in.",
+          "created_timestamp": 1793915421424,
+          "message_id": "message_7f63167a12ea5e1b3deec27e",
+          "role": "user"
+        },
+        {
+          "content": "I can set that up. Can I get your name?",
+          "created_timestamp": 1793915422323,
+          "message_id": "message_67d9b8f14ae1866758017074",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Jamie Ortiz.",
+          "created_timestamp": 1793915422848,
+          "message_id": "message_f59ec3ca2cb1ceea5df31ad4",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793915423532,
+          "message_id": "message_a0fa2a93ebda660601a96e58",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a house in Astoria. 25-30 30th Rd, Astoria, 11102. I'm calling from 678 555 0272.",
+          "created_timestamp": 1793915424220,
+          "message_id": "message_735961a49f98beb007814539",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"25-30 30th Rd\",\"borough\":\"Astoria\"}",
+          "created_timestamp": 1793915425143,
+          "message_id": "message_ec1d86af024f983c0b6be69e",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_018GuNeo8qWGTicGRyhFQoJz",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"25-30 30th Road\",\"zip\":\"11102\",\"borough\":\"Queens\",\"neighborhood\":\"Astoria\",\"in_area\":true,\"area\":\"Queens West\"}}",
+          "created_timestamp": 1793915425898,
+          "message_id": "message_ec8f463e4b0411a1a024b542",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_018GuNeo8qWGTicGRyhFQoJz"
+        },
+        {
+          "arguments": "{\"phone\":\"678 555 0272\"}",
+          "created_timestamp": 1793915425899,
+          "message_id": "message_0e73a0d85d517d8590a7c22a",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015aHnwM6QXeSxqu1PG93pPZ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793915426203,
+          "message_id": "message_58f3c0fb9af13f09f1d2aad5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015aHnwM6QXeSxqu1PG93pPZ"
+        },
+        {
+          "content": "Thanks. Is it completely out, or just not keeping up? And since when?",
+          "created_timestamp": 1793915426865,
+          "message_id": "message_f2ef05b11684fab4710fc745",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Heat's still working, it's just noisy and the boiler keeps switching on and off. It's been like this for a few days, maybe a week. The house is about 68 inside, so nobody's at risk, I just want it looked at.",
+          "created_timestamp": 1793915427727,
+          "message_id": "message_31857c97b2802932b5825279",
+          "role": "user"
+        },
+        {
+          "content": "Got it. What's the best phone number to reach you?",
+          "created_timestamp": 1793915428374,
+          "message_id": "message_923157b74c6b2e0921b017a0",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "678 555 0272. That's the number I'm calling from.",
+          "created_timestamp": 1793915429502,
+          "message_id": "message_6c13754e2dbbf171d4ad3530",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"25-30 30th Road\",\"city\":\"Astoria\",\"zip\":\"11102\"},\"phone\":\"caller_id\",\"name\":\"Jamie Ortiz\"}",
+          "created_timestamp": 1793915430399,
+          "message_id": "message_85f039351d33d2ac188fb0e2",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015wirzNDcHarQQhKzvARBe6",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 25-30 30th Road, Astoria, ZIP code one one one zero two, and the best number is six seven eight, five five five, zero two seven two. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 25-30 30th Road, Astoria, ZIP code one one one zero two, and the best number is six seven eight, five five five, zero two seven two. That's all correct, right?\"}}",
+          "created_timestamp": 1793915430792,
+          "message_id": "message_916c3dc9c8cb706e802f01c7",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015wirzNDcHarQQhKzvARBe6"
+        },
+        {
+          "content": "I have your home at 25-30 30th Road, Astoria, ZIP code 11102, and the best number is 678-555-0272. That's all correct, right?",
+          "created_timestamp": 1793915431586,
+          "message_id": "message_8ddf3e5f757fa160d065bfc7",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. And just to confirm, can you read me back the first appointment window you have this week?",
+          "created_timestamp": 1793915432251,
+          "message_id": "message_4e7c21721270edb99bde6279",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"25-30 30th Road\",\"city\":\"Astoria\",\"zip\":\"11102\"},\"phone\":\"caller_id\",\"name\":\"Jamie Ortiz\",\"confirmed\":true}",
+          "created_timestamp": 1793915433738,
+          "message_id": "message_e243a45b4daae5bdab442b29",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01DWD1CLp8jnTPoTDSzP152r",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"25-30 30th Road\",\"unit\":\"\",\"city\":\"Astoria\",\"zip\":\"11102\",\"spelled\":\"\"},\"phone\":\"6785550272\"}}",
+          "created_timestamp": 1793915434151,
+          "message_id": "message_32af1396cb49de79fb39d2b8",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01DWD1CLp8jnTPoTDSzP152r"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Boiler short cycling and noisy for a few days, maybe a week; heat still working\",\"who_home\":\"Caller home most of the day; approves repairs; no gate code or pets\"},\"preferred_days\":[\"this week\"]}",
+          "created_timestamp": 1793915434152,
+          "message_id": "message_803b16dbdb08045dd5115dba",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AZtVNMoA5o4HdWKS5zwzrz",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I don't have This week open in the next two weeks. The soonest I have is today, 5 to 7. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[\"warm inside and a mild day\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1700-1900\"],\"labels\":[\"5 to 7\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793915435726,
+          "message_id": "message_872c95eecf90fe37e748bf8c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AZtVNMoA5o4HdWKS5zwzrz"
+        },
+        {
+          "content": "The soonest opening I have is today, Thursday, November 5, between 5 and 7 PM. Does that work for you?",
+          "created_timestamp": 1793915436408,
+          "message_id": "message_adfadd5335bd5ee7f9b4737a",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that works. Today between 5 and 7 sounds good. Thanks for setting that up!",
+          "created_timestamp": 1793915437577,
+          "message_id": "message_7ac3549c612c5a72187f0d11",
+          "role": "user"
+        },
+        {
+          "content": "Great. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793915438396,
+          "message_id": "message_640fee31cb3d936dfd079cdb",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I can approve repairs as long as the tech explains what needs fixing and what it'll cost. I'll be home, and there's no gate code or pets, so they can come right in.",
+          "created_timestamp": 1793915439076,
+          "message_id": "message_a84489f03f8a4bc8b43b240f",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Jamie Ortiz\",\"issue\":\"Boiler short cycling and noisy for a few days, maybe a week; heat still working\",\"since\":\"A few days, maybe a week\",\"tried\":\"Not provided\",\"who_home\":\"Caller home most of the day\",\"arrival_notes\":\"No gate code or pets; technician can come right in\",\"inside_temp_f\":68},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\"}}",
+          "created_timestamp": 1793915440392,
+          "message_id": "message_68f23295c996abeefc278a0a",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01TvbCVFqfiysuxvKYGQvXJ5",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?\",\"data\":{\"booking_id\":549,\"appointment_id\":549,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[\"warm inside and a mild day\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793915441327,
+          "message_id": "message_b53269cd68af186c50695126",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01TvbCVFqfiysuxvKYGQvXJ5"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else I can help with?",
+          "created_timestamp": 1793915442039,
+          "message_id": "message_e464186bf53eca5f748dc70e",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, that's everything. Thanks so much for your help, bye!",
+          "created_timestamp": 1793915442755,
+          "message_id": "message_1e9c41200dd3af7999664312",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793915443518,
+          "message_id": "message_3e019385b8c939d63f42f5e9",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793915443519,
+          "message_id": "message_791154c19f36a342fb88d558",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01F1ZZ6udGm1DrZRKhN4VL5q",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793915443983,
+          "message_id": "message_1e4be27cbaf20f95c358ec68",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01F1ZZ6udGm1DrZRKhN4VL5q"
+        },
+        {
+          "content": "Thanks so much, bye!",
+          "created_timestamp": 1793915445160,
+          "message_id": "message_979dab2fbeb2fce291da98be",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915445749,
+          "message_id": "message_8dd9b715972c2f618f7fb666",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793915446807,
+          "message_id": "message_b888f9b9712655f7b9761257",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915447418,
+          "message_id": "message_81192d15562f7cee9e00e689",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793915448015,
+          "message_id": "message_f7f3781fefd05791fa6a6c5f",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915448600,
+          "message_id": "message_1c28ffa2a161614956cb0c8b",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793915449087,
+          "message_id": "message_6202ed7f4c064316bf74bd90",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915449645,
+          "message_id": "message_145b8e3332b1f0b8f69c2e2d",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I've already said bye and got your appointment, so I'm done. Thanks again!",
+          "created_timestamp": 1793915450289,
+          "message_id": "message_a071c19792099cea31d7b8d4",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915450908,
+          "message_id": "message_6530a676dff7178426ac0c93",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Thanks, bye!",
+          "created_timestamp": 1793915451493,
+          "message_id": "message_102c9270114a35df4dfc80cb",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915452060,
+          "message_id": "message_c74762404c2de5a36b958eac",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye, thanks!",
+          "created_timestamp": 1793915452615,
+          "message_id": "message_77abb0dd3ceb82fe2230fccf",
+          "role": "user"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793915453174,
+          "message_id": "message_3c0bdc5ddb8571919301423b",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052150-kb-radiator-bang-short-cycling",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0272",
+      "caller_key": "6785550272",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-11-01T21:50:05Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 23,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"25-30 30th Road\", \"unit\": \"\", \"city\": \"Astoria\", \"zip\": \"11102\", \"spelled\": \"\", \"phone\": \"6785550272\", \"phone_for\": \"\", \"sentence\": \"I have your home at 25-30 30th Road, Astoria, ZIP code one one one zero two, and the best number is six seven eight, five five five, zero two seven two. That's all correct, right?\"}",
+      "readback_asked_seq": 14,
+      "readback_confirmed_at": "2026-11-05T21:50:34Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T21:50:05Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+          "caller_id": "(678) 555-0272",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 18.3,
+        "error": null,
+        "request_id": "dcc0c1372f07"
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, quick question first, why does my radiator bang?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Banging radiators usually happen when water condenses and gets pushed through the pipes as the heat comes on, or when the pipes expand and rub against brackets. It's common in older steam or hot-water systems. If it's happening often, or it's loud or getting worse, a technician can take a look and tell you what's going on. Would you like me to set up a visit?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Okay, that makes sense. Before I book anything, what's short cycling? The boiler keeps turning on and off a lot, and I'm wondering if that's related.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Short cycling means the boiler or furnace turns on and off in quick bursts instead of running steady cycles to heat the home. It can come from a dirty filter, a sensor problem, an oversized unit, or low airflow or water pressure. It isn't the same as banging pipes, though it can make the system work harder and wear out sooner. A technician can find the actual cause. Would you like to set up a visit?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Okay, that helps. Yes, I'd like someone to come take a look. Do you have anything available this week? I'm home most of the day, and I can approve repairs if they're needed. There's no gate code or pets, so the tech can come right in.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "I can set that up. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Jamie Ortiz.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Yes, it's a house in Astoria. 25-30 30th Rd, Astoria, 11102. I'm calling from 678 555 0272.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:25Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+          "street": "25-30 30th Rd",
+          "borough": "Astoria",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 169.9,
+        "error": null,
+        "request_id": "4ee8e863f16d"
+      },
+      {
+        "at": "2026-11-05T21:50:26Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+          "phone": "678 555 0272",
+          "address": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 13.0,
+        "error": null,
+        "request_id": "36910beff41e"
+      },
+      {
+        "at": "2026-11-05T21:50:30Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Thanks. Is it completely out, or just not keeping up? And since when?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:30Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Heat's still working, it's just noisy and the boiler keeps switching on and off. It's been like this for a few days, maybe a week. The house is about 68 inside, so nobody's at risk, I just want it looked at.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:30Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Got it. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:30Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "678 555 0272. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:30Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+          "address": {
+            "street": "25-30 30th Road",
+            "unit": "",
+            "city": "Astoria",
+            "zip": "11102",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Jamie Ortiz",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 25-30 30th Road, Astoria, ZIP code one one one zero two, and the best number is six seven eight, five five five, zero two seven two. That's all correct, right?",
+        "ms": 6.2,
+        "error": null,
+        "request_id": "82fdb77fa55a"
+      },
+      {
+        "at": "2026-11-05T21:50:34Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "I have your home at 25-30 30th Road, Astoria, ZIP code 11102, and the best number is 678-555-0272. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:34Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. And just to confirm, can you read me back the first appointment window you have this week?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:34Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+          "address": {
+            "street": "25-30 30th Road",
+            "unit": "",
+            "city": "Astoria",
+            "zip": "11102",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "name": "Jamie Ortiz",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 8.6,
+        "error": null,
+        "request_id": "cd485dbdb6a1"
+      },
+      {
+        "at": "2026-11-05T21:50:35Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [
+            "this week"
+          ],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Boiler short cycling and noisy for a few days, maybe a week; heat still working",
+            "since": "",
+            "who_home": "Caller home most of the day; approves repairs; no gate code or pets",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I don't have This week open in the next two weeks. The soonest I have is today, 5 to 7. Does that work?",
+        "ms": 1220.6,
+        "error": null,
+        "request_id": "f32114a85a59"
+      },
+      {
+        "at": "2026-11-05T21:50:40Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "The soonest opening I have is today, Thursday, November 5, between 5 and 7 PM. Does that work for you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:40Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Yes, that works. Today between 5 and 7 sounds good. Thanks for setting that up!",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:40Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Great. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:40Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Yes, I can approve repairs as long as the tech explains what needs fixing and what it'll cost. I'll be home, and there's no gate code or pets, so they can come right in.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:41Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1700-1900"
+          },
+          "details": {
+            "issue": "Boiler short cycling and noisy for a few days, maybe a week; heat still working",
+            "since": "A few days, maybe a week",
+            "tried": "Not provided",
+            "who_home": "Caller home most of the day",
+            "approver": "Jamie Ortiz",
+            "system_type": "",
+            "arrival_notes": "No gate code or pets; technician can come right in",
+            "name": "",
+            "inside_temp_f": 68.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else?",
+        "ms": 476.1,
+        "error": null,
+        "request_id": "e43d6023b1fa"
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 5 and 7. Anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "No, that's everything. Thanks so much for your help, bye!",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air, and have a great day.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:50:43Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 11.5,
+        "error": null,
+        "request_id": "4e148721e981"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 217,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 549,
+        "window_start": "2026-11-05T22:00:00Z",
+        "window_end": "2026-11-06T00:00:00Z",
+        "priority": "Normal",
+        "priority_reasons": "warm inside and a mild day",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:mild\"]",
+        "priority_reason_list": "[\"warm inside and a mild day\"]",
+        "who_home": "Caller home most of the day",
+        "job_type": "no_heat",
+        "street": "25-30 30th Road",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052150-kb-radiator-bang-short-cycling",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "2530",
+        "street": "30 rd",
+        "hint": "Astoria",
+        "status": "one",
+        "zips_json": "[\"11102\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

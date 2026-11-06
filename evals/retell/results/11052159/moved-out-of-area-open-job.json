@@ -1,0 +1,825 @@
+{
+  "case": "moved-out-of-area-open-job",
+  "retell": {
+    "test_case_job_id": "test_job_f85358a44999",
+    "status": "pass",
+    "result_explanation": "record_move was ultimately called and succeeded, recording the move and cancelling the old-address visit. The agent clearly stated that Hoboken/ZIP 07030 is outside the service area, did not book or promise a visit at the new address, never called book_appointment, confirmed nobody would go to the old house, and never spoke the caller's name aloud.",
+    "creation_timestamp": 1793916045679,
+    "user_modified_timestamp": 1793916083419,
+    "test_case_definition_id": "test_case_33f026f05f26",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911574463,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052159-moved-out-of-area-open-job"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent calls record_move and it succeeds.",
+        "The agent records the move with record_move.",
+        "The agent tells the caller that ZIP 07030 is outside the service area and does not book a visit there.",
+        "The agent never calls book_appointment.",
+        "The agent tells the caller plainly that Hoboken is outside the area and that the visit at the old house is cancelled, so nobody goes there.",
+        "The agent doesn't promise a visit or suggest a booking at the new address.",
+        "The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as booking details, doesn't count."
+      ],
+      "name": "[summit] moved-out-of-area-open-job: Maria Delgado, who has a no-heat visit booked for today at her old Brooklyn house but move",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_33f026f05f26",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793915949311,
+      "userPrompt": "## Identity\nMaria Delgado, who has a no-heat visit booked for today at her old Brooklyn house but moved to Hoboken, New Jersey last week. Friendly, says um.\nYour name: Maria Delgado\nYour old address: 620 Bedford Ave, Brooklyn, 11235, where the visit is booked; nobody lives there now\nYour new address: 71 Hudson Street, Hoboken, New Jersey, 07030\nYour phone: (718) 555-0142 (the number you're calling from)\nYour wants: to know whether the company can come to the new place; if not, nobody should go to the old house\n\n## Goal\nStart the call by saying: \"Hi, um, I've got a technician coming today, but we moved to Hoboken last week. Can you still come out?\"\n\n## Behavior\n- Give the new address with the ZIP when asked.\n- Answer yes to a correct read-back of the new address and your number.\n- If the agent says it can't come to Hoboken, accept it politely.\n- Say goodbye once the agent says what happened to the visit.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": true,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052159-moved-out-of-area-open-job",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+          "created_timestamp": 1793916055716,
+          "message_id": "message_05c579105fa3a6a2ed7fab60",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, um, I've got a technician coming today, but we moved to Hoboken last week. Can you still come out?",
+          "created_timestamp": 1793916058396,
+          "message_id": "message_609c358357140d6c64fd1bfc",
+          "role": "user"
+        },
+        {
+          "content": "Hoboken is in New Jersey, and we only service the five boroughs of New York City, so unfortunately we can't send a technician there. I'm sorry for the trouble with your move.\n\nIs the visit you have today at your old address in the city? If so, I can help you with that visit.",
+          "created_timestamp": 1793916059410,
+          "message_id": "message_e7d505b5154b20687647067f",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Oh, okay. Um, yes, the visit is at our old place, 620 Bedford Ave in Brooklyn. But nobody lives there now, so nobody needs to go out there. Can you cancel it for me?",
+          "created_timestamp": 1793916060219,
+          "message_id": "message_614b2cc4c6eed46bb1b0a1d0",
+          "role": "user"
+        },
+        {
+          "content": "I can help with that. To find your account, could you tell me the phone number you have on file?",
+          "created_timestamp": 1793916060969,
+          "message_id": "message_426e7e794bdc82c41246d599",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(718) 555-0142. That's the number I'm calling from.",
+          "created_timestamp": 1793916061898,
+          "message_id": "message_7241434baf5bd43a12d71f3f",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"phone\":\"(718) 555-0142\"}",
+          "created_timestamp": 1793916062508,
+          "message_id": "message_dac90789b3232b9a3429b781",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01DHCcAhhTFAiY8N43wsc7s3",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":1,\"name\":\"Maria Delgado\",\"type\":\"Residential\",\"residential\":true,\"phones\":[{\"number\":\"(718) 555-0142\",\"ending\":\"0142\",\"memo\":\"Owner: Maria Delgado\"}],\"locations\":[{\"location_id\":1,\"street\":\"620 Bedford Ave\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11235\",\"in_service_area\":true}],\"membership\":null,\"open_jobs\":[{\"job_id\":1,\"job_type\":\"no_heat\",\"status\":\"Scheduled\",\"priority\":\"Urgent\",\"summary\":\"No heat since last night. Radiators cold, thermostat reads 58.\",\"location_id\":1,\"street\":\"620 Bedford Ave\",\"appointment_id\":1,\"appointment_status\":\"Scheduled\",\"window\":{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"label\":\"12 to 4\",\"passed\":true}}],\"last_service_date\":null,\"recent_calls\":[{\"at\":\"2026-11-05T13:47:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:31:00Z\",\"reason\":\"No heat\",\"call_type\":\"Booked\"},{\"at\":\"2026-11-05T13:12:00Z\",\"reason\":\"No heat\",\"call_type\":\"Unbooked\"}],\"notes\":[{\"text\":\"Side gate code is 4417. Friendly dog in the yard.\",\"at\":\"2026-01-23T14:00:00Z\",\"by\":\"staff\"}],\"equipment\":[{\"system\":\"boiler\",\"brand\":\"Slant/Fin\",\"install_year\":2001},{\"system\":\"central AC\",\"brand\":\"Lennox\",\"install_year\":2025}]}],\"needs_unit\":false}}",
+          "created_timestamp": 1793916063214,
+          "message_id": "message_4e0747634d8eb5a56b837b4e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01DHCcAhhTFAiY8N43wsc7s3"
+        },
+        {
+          "content": "I found your account and the visit at 620 Bedford Ave. Since you've moved out, I can cancel it. Shall I go ahead and cancel that visit?",
+          "created_timestamp": 1793916063993,
+          "message_id": "message_ea77d21db3c83f49275cdb02",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, please cancel it. Nobody's there anymore, so nobody should go out.",
+          "created_timestamp": 1793916064688,
+          "message_id": "message_b4aac4e192f477804b1a6abb",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"booking_id\":1,\"reason\":\"Customer moved out of 620 Bedford Ave; no one is living at the address, so the visit is no longer needed.\"}",
+          "created_timestamp": 1793916065558,
+          "message_id": "message_dcfd2358528fef9099730b01",
+          "name": "cancel_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01XNJQ3Hy99LymotmpBPGYK6",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"data\":{\"need\":\"the caller moved: ask for the new address, read it back, then call record_move; it moves this visit there or, outside the area, cancels it\"},\"refused\":\"move_first\"}",
+          "created_timestamp": 1793916065941,
+          "message_id": "message_9f22d06d4f814d8930bfaa7c",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01XNJQ3Hy99LymotmpBPGYK6"
+        },
+        {
+          "content": "Since you've moved, I'll need your new address first so I can update your account. What's the street address in Hoboken?",
+          "created_timestamp": 1793916066722,
+          "message_id": "message_5ae0b71fb9fc66067375236b",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, sure. It's 71 Hudson Street, Hoboken, New Jersey, 07030.",
+          "created_timestamp": 1793916067457,
+          "message_id": "message_3d97da43dff961f2bcfe4367",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Hoboken is outside our service area, so I'll record the move and cancel the visit at the old address.",
+          "created_timestamp": 1793916069562,
+          "message_id": "message_a40def60d2cc51b935bca1cc",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"71 Hudson Street\",\"city\":\"Hoboken\",\"zip\":\"07030\"},\"phone\":\"(718) 555-0142\",\"name\":\"Maria Delgado\"}",
+          "created_timestamp": 1793916069563,
+          "message_id": "message_c6c8577f8143a56f68d98dd9",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HJ71atzCjZJJ7VFfp9KKVF",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I have 71 Hudson Street in Tribeca as one zero zero one three, not zero seven zero three zero. Which one is right?\",\"data\":{\"need\":\"the ZIP the caller gave doesn't match the street; use the ZIP they pick\",\"found_zip\":\"10013\",\"said_zip\":\"07030\",\"street\":\"71 Hudson Street\"},\"refused\":\"zip_mismatch\"}",
+          "created_timestamp": 1793916070031,
+          "message_id": "message_20974a5425177a07b78a1b34",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HJ71atzCjZJJ7VFfp9KKVF"
+        },
+        {
+          "content": "I have 71 Hudson Street in Tribeca, Manhattan, with ZIP 10013, not 07030. Which one is right: the Hoboken address you gave, or the Tribeca one?",
+          "created_timestamp": 1793916071002,
+          "message_id": "message_f2fb48db22b83e5158f44050",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, the Hoboken one is right. It's 71 Hudson Street, Hoboken, New Jersey, 07030. I don't know anything about a Tribeca address. We don't live in Manhattan.",
+          "created_timestamp": 1793916072139,
+          "message_id": "message_cf8d8592e009617521b41665",
+          "role": "user"
+        },
+        {
+          "content": "Understood, thanks for clarifying. Since 71 Hudson Street, Hoboken is outside our service area, I'll go ahead and record the move, which will cancel the visit at Bedford Avenue.",
+          "created_timestamp": 1793916073240,
+          "message_id": "message_b418c8234c5652dc50b01935",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{}",
+          "created_timestamp": 1793916073241,
+          "message_id": "message_a0009a81c50bdfecfd496f99",
+          "name": "record_move",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_0138YeEGZUhY8tMbcyhW2268",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me read back the new address.\",\"data\":{\"need\":\"read_back with the new address, then record_move again\"},\"refused\":\"gate_read_back\"}",
+          "created_timestamp": 1793916073803,
+          "message_id": "message_a4bfaa44d74d522bad2e9a2a",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_0138YeEGZUhY8tMbcyhW2268"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"71 Hudson Street\",\"city\":\"Hoboken\",\"zip\":\"07030\"},\"phone\":\"(718) 555-0142\",\"name\":\"Maria Delgado\",\"confirmed\":false}",
+          "created_timestamp": 1793916074864,
+          "message_id": "message_ca3c947eb44ce9fe69905dc1",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01PnNho71i9e8DyECCC6hHZa",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 71 Hudson Street, Hoboken, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 71 Hudson Street, Hoboken, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?\"}}",
+          "created_timestamp": 1793916075417,
+          "message_id": "message_ccc92343640c54b0622540a1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01PnNho71i9e8DyECCC6hHZa"
+        },
+        {
+          "content": "I have your new home at 71 Hudson Street, Hoboken, ZIP 07030, and the best number is 718-555-0142. That's all correct, right?",
+          "created_timestamp": 1793916076164,
+          "message_id": "message_9b979d9b2addc679722367b2",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Um, thank you so much for your help.",
+          "created_timestamp": 1793916076718,
+          "message_id": "message_3d1a187a9c8d686fc3de6377",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"71 Hudson Street\",\"city\":\"Hoboken\",\"zip\":\"07030\"},\"phone\":\"(718) 555-0142\",\"name\":\"Maria Delgado\",\"confirmed\":true}",
+          "created_timestamp": 1793916077751,
+          "message_id": "message_2aef31b995f6cd3cec71eb70",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01TB43yzBdmZjMRPN1VUh9HJ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"71 Hudson Street\",\"unit\":\"\",\"city\":\"Hoboken\",\"zip\":\"07030\",\"spelled\":\"\"},\"phone\":\"7185550142\",\"need\":\"the caller moved: call record_move now, before anything else\"}}",
+          "created_timestamp": 1793916078203,
+          "message_id": "message_258c5ec4e11f101fedc17f44",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01TB43yzBdmZjMRPN1VUh9HJ"
+        },
+        {
+          "arguments": "{}",
+          "created_timestamp": 1793916078204,
+          "message_id": "message_221e67185ddb5d71a3d45551",
+          "name": "record_move",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UXyDrzpCsSva51oA9Vn1XR",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Thanks for letting us know. Unfortunately the new address is outside the area we cover, so we won't be able to come out there, and I've made a note on your account. I've also cancelled the visit you had at the old address, so nobody heads there. Anything else?\",\"data\":{\"customer_id\":1,\"in_area\":false,\"new_location_id\":null,\"location\":null,\"jobs_moved\":[],\"jobs_cancelled\":[1],\"jobs_for_person\":[]}}",
+          "created_timestamp": 1793916078935,
+          "message_id": "message_89b513b1736025f6191f88a8",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UXyDrzpCsSva51oA9Vn1XR"
+        },
+        {
+          "content": "Thanks for letting us know. Unfortunately the new address is outside the area we cover, so we won't be able to come out there, and I've made a note on your account. I've also cancelled the visit at the old address, so nobody will head there. Is there anything else I can help with?",
+          "created_timestamp": 1793916079671,
+          "message_id": "message_21a5a3c03acca2a3a7a994d0",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no, that's everything. Thank you so much, have a good day.",
+          "created_timestamp": 1793916080325,
+          "message_id": "message_2ea38ded8fe87c826acc8fb3",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air, and have a great day.",
+          "created_timestamp": 1793916081162,
+          "message_id": "message_b7d8291bb717e7c68e4ea90f",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793916081163,
+          "message_id": "message_1ae72926c2eecf8079198f3b",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01XPvUjpuVquunUjg9s5WSca",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793916081624,
+          "message_id": "message_6467b382d919b799e88c914a",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01XPvUjpuVquunUjg9s5WSca"
+        },
+        {
+          "content": "Take care.",
+          "created_timestamp": 1793916082525,
+          "message_id": "message_8eaeb67be0f8b864ea69f946",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"execution_message\":\"Take care.\"}",
+          "created_timestamp": 1793916082526,
+          "message_id": "message_56eda4c7b37dfb5dde2ffe31",
+          "name": "test_hang_up",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01WLQGWe7RvowqK9UVR6xx43",
+          "type": "end_call"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052159-moved-out-of-area-open-job",
+      "tenant": "summit-air",
+      "caller_id": "(718) 555-0142",
+      "caller_key": "7185550142",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-28T22:00:45Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 19,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"71 Hudson Street\", \"unit\": \"\", \"city\": \"Hoboken\", \"zip\": \"07030\", \"spelled\": \"\", \"phone\": \"7185550142\", \"phone_for\": \"\", \"sentence\": \"I have your home at 71 Hudson Street, Hoboken, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?\"}",
+      "readback_asked_seq": 14,
+      "readback_confirmed_at": "2026-11-05T22:01:18Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T22:00:45Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "caller_id": "(718) 555-0142",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 105.8,
+        "error": null,
+        "request_id": "1830eda58af4"
+      },
+      {
+        "at": "2026-11-05T22:01:02Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Hi, thanks for calling Summit Air! This is Brooke, the virtual assistant. How can I help?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:02Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, um, I've got a technician coming today, but we moved to Hoboken last week. Can you still come out?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:02Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Hoboken is in New Jersey, and we only service the five boroughs of New York City, so unfortunately we can't send a technician there. I'm sorry for the trouble with your move.\n\nIs the visit you have today at your old address in the city? If so, I can help you with that visit.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:02Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Oh, okay. Um, yes, the visit is at our old place, 620 Bedford Ave in Brooklyn. But nobody lives there now, so nobody needs to go out there. Can you cancel it for me?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:02Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "I can help with that. To find your account, could you tell me the phone number you have on file?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:02Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "(718) 555-0142. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:03Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "phone": "(718) 555-0142",
+          "address": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 139.6,
+        "error": null,
+        "request_id": "8b408a02ab79"
+      },
+      {
+        "at": "2026-11-05T22:01:05Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "I found your account and the visit at 620 Bedford Ave. Since you've moved out, I can cancel it. Shall I go ahead and cancel that visit?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:05Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Yes, please cancel it. Nobody's there anymore, so nobody should go out.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:05Z",
+        "type": "tool",
+        "tool": "cancel_appointment",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "booking_id": 1,
+          "reason": "Customer moved out of 620 Bedford Ave; no one is living at the address, so the visit is no longer needed."
+        },
+        "ok": false,
+        "refused": "move_first",
+        "gate": "move_first",
+        "say": "",
+        "ms": 12.5,
+        "error": null,
+        "request_id": "046445624c3a"
+      },
+      {
+        "at": "2026-11-05T22:01:09Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Since you've moved, I'll need your new address first so I can update your account. What's the street address in Hoboken?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:09Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Um, sure. It's 71 Hudson Street, Hoboken, New Jersey, 07030.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:09Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Thanks. Hoboken is outside our service area, so I'll record the move and cancel the visit at the old address.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:09Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "address": {
+            "street": "71 Hudson Street",
+            "unit": "",
+            "city": "Hoboken",
+            "zip": "07030",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0142",
+          "phone_for": "",
+          "name": "Maria Delgado",
+          "confirmed": false
+        },
+        "ok": false,
+        "refused": "zip_mismatch",
+        "gate": "zip_mismatch",
+        "say": "I have 71 Hudson Street in Tribeca as one zero zero one three, not zero seven zero three zero. Which one is right?",
+        "ms": 103.8,
+        "error": null,
+        "request_id": "f116b60f0b01"
+      },
+      {
+        "at": "2026-11-05T22:01:13Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "I have 71 Hudson Street in Tribeca, Manhattan, with ZIP 10013, not 07030. Which one is right: the Hoboken address you gave, or the Tribeca one?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:13Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "Um, the Hoboken one is right. It's 71 Hudson Street, Hoboken, New Jersey, 07030. I don't know anything about a Tribeca address. We don't live in Manhattan.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:13Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Understood, thanks for clarifying. Since 71 Hudson Street, Hoboken is outside our service area, I'll go ahead and record the move, which will cancel the visit at Bedford Avenue.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:13Z",
+        "type": "tool",
+        "tool": "record_move",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "customer_id": null,
+          "from_location_id": null
+        },
+        "ok": false,
+        "refused": "gate_read_back",
+        "gate": "gate_read_back",
+        "say": "Let me read back the new address.",
+        "ms": 169.7,
+        "error": null,
+        "request_id": "767052e49718"
+      },
+      {
+        "at": "2026-11-05T22:01:15Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "address": {
+            "street": "71 Hudson Street",
+            "unit": "",
+            "city": "Hoboken",
+            "zip": "07030",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0142",
+          "phone_for": "",
+          "name": "Maria Delgado",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 71 Hudson Street, Hoboken, ZIP code zero seven zero three zero, and the best number is seven one eight, five five five, zero one four two. That's all correct, right?",
+        "ms": 265.6,
+        "error": null,
+        "request_id": "8e165195441b"
+      },
+      {
+        "at": "2026-11-05T22:01:18Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "I have your new home at 71 Hudson Street, Hoboken, ZIP 07030, and the best number is 718-555-0142. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:18Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Um, thank you so much for your help.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:18Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "address": {
+            "street": "71 Hudson Street",
+            "unit": "",
+            "city": "Hoboken",
+            "zip": "07030",
+            "spelled": ""
+          },
+          "phone": "(718) 555-0142",
+          "phone_for": "",
+          "name": "Maria Delgado",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 43.9,
+        "error": null,
+        "request_id": "492ca200c1fb"
+      },
+      {
+        "at": "2026-11-05T22:01:18Z",
+        "type": "tool",
+        "tool": "record_move",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "customer_id": null,
+          "from_location_id": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Thanks for letting us know. Unfortunately the new address is outside the area we cover, so we won't be able to come out there, and I've made a note on your account. I've also cancelled the visit you had at the old address, so nobody heads there. Anything else?",
+        "ms": 364.0,
+        "error": null,
+        "request_id": "db56cff18f22"
+      },
+      {
+        "at": "2026-11-05T22:01:21Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "Thanks for letting us know. Unfortunately the new address is outside the area we cover, so we won't be able to come out there, and I've made a note on your account. I've also cancelled the visit at the old address, so nobody will head there. Is there anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:21Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Um, no, that's everything. Thank you so much, have a good day.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T22:01:21Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air, and have a great day.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T22:01:21Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052159-moved-out-of-area-open-job",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 4.3,
+        "error": null,
+        "request_id": "d7e8916079f0"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [
+      {
+        "zip": "07030",
+        "at": "2026-11-05T22:01:18Z"
+      }
+    ],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052159-moved-out-of-area-open-job",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "71",
+        "street": "hudson st",
+        "hint": "Hoboken",
+        "status": "one",
+        "zips_json": "[\"10013\"]",
+        "source": "check"
+      }
+    ],
+    "address_checks": [
+      {
+        "call_id": "rtest-11052159-moved-out-of-area-open-job",
+        "house": "71",
+        "street": "hudson st",
+        "said_zip": "07030",
+        "found_zip": "10013",
+        "asked_seq": 11,
+        "asks": 1,
+        "settled_at": "2026-11-05T22:01:15Z",
+        "at": "2026-11-05T22:01:09Z"
+      }
+    ],
+    "names": [],
+    "address_moves": [
+      {
+        "id": 1,
+        "call_id": "rtest-11052159-moved-out-of-area-open-job",
+        "customer_id": 1,
+        "old_location_ids": "[1]",
+        "new_location_id": null,
+        "new_location_made": "",
+        "street": "71 Hudson Street",
+        "unit": "",
+        "zip": "07030",
+        "in_area": 0,
+        "jobs_moved": "[]",
+        "jobs_cancelled": "[1]",
+        "jobs_for_person": "[]",
+        "at": "2026-11-05T22:01:18Z"
+      }
+    ],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

@@ -1,0 +1,1179 @@
+{
+  "case": "retell-call-out-of-area-then-new-address",
+  "retell": {
+    "test_case_job_id": "test_job_eeceb1df4198",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793912366810,
+    "user_modified_timestamp": 1793912427191,
+    "test_case_definition_id": "test_case_a19bca76e274",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911575798,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052057-retell-call-out-of-area-then-new-address"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent tells the caller that ZIP 07302 is outside the service area and does not book a visit there.",
+        "The agent books exactly one visit with book_appointment at ZIP 10009.",
+        "The agent never hangs up right after saying the address is outside the area; waits for the caller's answer."
+      ],
+      "name": "[summit] retell-call-out-of-area-then-new-address: A caller who first gives their office in Jersey City, then, told it's outside the area, gi",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_a19bca76e274",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793912274125,
+      "userPrompt": "## Identity\nA caller who first gives their office in Jersey City, then, told it's outside the area, gives the apartment in Manhattan where the AC tune-up is actually needed.\nYour wrong address: 50 Hudson Street, Jersey City, 07302\nYour address: 199 East 4th Street, Manhattan, 10009\nYour phone: (678) 555-0201 (the number you're calling from)\nYour wants: an AC tune-up, any day\n\n## Goal\nStart the call by saying: \"Hi, I need an AC tune-up at 50 Hudson Street, Jersey City, 07302.\"\n\n## Behavior\n- When told it's outside the area, say \"Oh wait, sorry, it's actually my apartment at 199 East 4th Street, 10009.\"\n- Confirm a correct read-back, and say goodbye once booked.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793912376973,
+          "message_id": "message_b205fb976aac1bce01f9ca38",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, I need an AC tune-up at 50 Hudson Street, Jersey City, 07302.",
+          "created_timestamp": 1793912377725,
+          "message_id": "message_319a23f50e9a7a434bc46954",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Before I book, can I get your name?",
+          "created_timestamp": 1793912378367,
+          "message_id": "message_4783d82100af4c14b13937c8",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sure, it's Dana Whitfield.",
+          "created_timestamp": 1793912379120,
+          "message_id": "message_4b7757a8486466465e2b7b1b",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Dana. And this is for a residential property, right? Like a home or an apartment?",
+          "created_timestamp": 1793912379847,
+          "message_id": "message_78f558be43e0b1b21c457dbd",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's an apartment. Oh wait, sorry, it's actually my apartment at 199 East 4th Street, 10009. Hmm, the agent hasn't said it's outside the area yet, so I should answer the question about residential and then give the address. The agent asked about residential type, so I answer that, and I don't mention the Manhattan address yet unless told it's out of area. But the persona says the correction comes when told it's outside the area. So I just answer.\n\nYes, it's an apartment.",
+          "created_timestamp": 1793912381078,
+          "message_id": "message_0f4b7ee9d0ae7359c4c08a7e",
+          "role": "user"
+        },
+        {
+          "content": "Got it, thanks. You mentioned 50 Hudson Street, but then 199 East 4th Street. Which address should I use for the tune-up?",
+          "created_timestamp": 1793912382201,
+          "message_id": "message_e58e0dc42642a2e2f795cb78",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Sorry, the one in Manhattan. It's 199 East 4th Street, 10009.",
+          "created_timestamp": 1793912382924,
+          "message_id": "message_1e91280f7cd37ba8f62f70a2",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. I'll use 199 East 4th Street, 10009.",
+          "created_timestamp": 1793912384082,
+          "message_id": "message_895fcf31c3afa36045d74cb2",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"zip\":\"10009\"}",
+          "created_timestamp": 1793912384083,
+          "message_id": "message_19a0eb3d50b875de33178d0e",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01JgdAaRCiiVDNdj3z99Tw1r",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"10009\",\"in_area\":true,\"area\":\"Manhattan\"}}",
+          "created_timestamp": 1793912385137,
+          "message_id": "message_d6840e1ae33c7ae22df75d9d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01JgdAaRCiiVDNdj3z99Tw1r"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"199 East 4th Street\",\"zip\":\"10009\"}}",
+          "created_timestamp": 1793912385138,
+          "message_id": "message_379fd4953723ca996373249d",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_011WxACxUbq34XfFEmzSGakU",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793912385435,
+          "message_id": "message_0c0cb064c1a269a0c6a0f1ed",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_011WxACxUbq34XfFEmzSGakU"
+        },
+        {
+          "content": "Your ZIP is in our service area. Is there an apartment or unit number for that address?",
+          "created_timestamp": 1793912386176,
+          "message_id": "message_06006c9edc87629db963de4f",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, there's no apartment number. It's just the building.",
+          "created_timestamp": 1793912386778,
+          "message_id": "message_a1e3ffebdea18d3c7383ef3a",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Roughly how warm is it inside the apartment right now?",
+          "created_timestamp": 1793912387448,
+          "message_id": "message_c86535c478f7c40745e3b8c9",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm not sure, maybe around 80 degrees? It's not cooling down like it should.",
+          "created_timestamp": 1793912388132,
+          "message_id": "message_83bdb8437eedf1e77b49a32b",
+          "role": "user"
+        },
+        {
+          "content": "Got it, I'll note that for the technician. Next, what's the best phone number to reach you?",
+          "created_timestamp": 1793912388927,
+          "message_id": "message_0913938a9f01eee73695f054",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(678) 555-0201. That's the number I'm calling from.",
+          "created_timestamp": 1793912389566,
+          "message_id": "message_b54be65fb4035dcca0164f23",
+          "role": "user"
+        },
+        {
+          "content": "I can't see the number you're calling from. Could you read it out so I can log it?",
+          "created_timestamp": 1793912390391,
+          "message_id": "message_3dc7ce0ba4a436595e81b243",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(678) 555-0201. That's the number I'm calling from.",
+          "created_timestamp": 1793912390841,
+          "message_id": "message_2e8409810a7099edf0b2e2b3",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"199 East 4th Street\",\"zip\":\"10009\"},\"phone\":\"(678) 555-0201\"}",
+          "created_timestamp": 1793912391839,
+          "message_id": "message_842290eadb1987def3d1fb73",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01F3xLkxSrVwB6jyrBF2biks",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 199 East 4th Street, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero one. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 199 East 4th Street, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero one. That's all correct, right?\"}}",
+          "created_timestamp": 1793912392322,
+          "message_id": "message_cd0e4308f60941fbae9203e6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01F3xLkxSrVwB6jyrBF2biks"
+        },
+        {
+          "content": "I have your home at 199 East 4th Street, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero one. That's all correct, right?",
+          "created_timestamp": 1793912393176,
+          "message_id": "message_3dc2c9c76518e45152b8f65d",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Thanks.",
+          "created_timestamp": 1793912393914,
+          "message_id": "message_61b0f276a6791a46ceb0422c",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"199 East 4th Street\",\"zip\":\"10009\"},\"phone\":\"(678) 555-0201\",\"confirmed\":true}",
+          "created_timestamp": 1793912395257,
+          "message_id": "message_f67462f64afa6ba3203086a5",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01H7JbexnC9qrT89Jn7SqX6c",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"199 East 4th Street\",\"unit\":\"\",\"city\":\"\",\"zip\":\"10009\",\"spelled\":\"\"},\"phone\":\"6785550201\"}}",
+          "created_timestamp": 1793912395621,
+          "message_id": "message_c54258af0eb2e1ead119d6c1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01H7JbexnC9qrT89Jn7SqX6c"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"facts\":{\"issue\":\"AC not cooling down like it should; tune-up requested\",\"inside_temp_f\":80}}",
+          "created_timestamp": 1793912395622,
+          "message_id": "message_ebda4f1fe254d32585659423",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Bey3KKNtVagrmq5GEvmi46",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\"],\"labels\":[\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793912397309,
+          "message_id": "message_005187c9ed506dfe9f9e4a76",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Bey3KKNtVagrmq5GEvmi46"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, 4 to 6 in the afternoon. Does that work?",
+          "created_timestamp": 1793912398088,
+          "message_id": "message_29c0a94560279e7eb6af2024",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that works. Thanks.",
+          "created_timestamp": 1793912398666,
+          "message_id": "message_2a8bfb5929b39c549bc97b79",
+          "role": "user"
+        },
+        {
+          "content": "Great. Will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793912399501,
+          "message_id": "message_b1d2a81b7b707f7efad83a66",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, I'm not sure what kind of repair work. Can you tell me what it might be first?",
+          "created_timestamp": 1793912400207,
+          "message_id": "message_31dfe3728558902abf377a33",
+          "role": "user"
+        },
+        {
+          "content": "The technician will go over any costs with you before doing any work. Will you be able to approve any repair work they recommend?",
+          "created_timestamp": 1793912401024,
+          "message_id": "message_d7b87be7b9f7ad96d275609c",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know what kind of repairs it might be. Can you tell me what they usually cost first?",
+          "created_timestamp": 1793912403220,
+          "message_id": "message_c72621544a39378b60bdc9f9",
+          "role": "user"
+        },
+        {
+          "content": "I can't quote prices, but the technician will go over any costs with you before doing any work. Will you be able to approve any repair work they recommend?",
+          "created_timestamp": 1793912404150,
+          "message_id": "message_e6210d0b4fe0d9fb036cacbe",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know what it would cost. Can you just tell me if they'll call me before they do any work?",
+          "created_timestamp": 1793912405013,
+          "message_id": "message_7547b538b9965972189bb0a2",
+          "role": "user"
+        },
+        {
+          "content": "Yes, the technician will go over any costs with you before doing any work. Will you be able to approve any repair work they recommend?",
+          "created_timestamp": 1793912405719,
+          "message_id": "message_6e62d1e3e64e92fcbec6dc38",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I don't know what it would cost. You said they'll go over costs with me first, so I guess that's fine. Can you just confirm the appointment is booked?",
+          "created_timestamp": 1793912406601,
+          "message_id": "message_65ad86d0049356835f783120",
+          "role": "user"
+        },
+        {
+          "content": "I'll note that you'd like to hear about costs first. Will someone be home to let the technician in?",
+          "created_timestamp": 1793912407429,
+          "message_id": "message_d6ea20e0ebbc22c1c96c707d",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, I'll be home. Should be fine.",
+          "created_timestamp": 1793912408436,
+          "message_id": "message_9519a7992a7f5859607d0369",
+          "role": "user"
+        },
+        {
+          "content": "Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793912409230,
+          "message_id": "message_5536075f068e3a39a03599ae",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No gate code, I don't think. There's a buzzer, I guess, but I don't know the number for it. I don't have any pets.",
+          "created_timestamp": 1793912409834,
+          "message_id": "message_c9034c6356b902906d94c146",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Dana Whitfield\",\"arrival_notes\":\"Buzzer present, unit number unknown. No gate code. No pets. Caller wants costs reviewed before any work.\",\"inside_temp_f\":80,\"issue\":\"AC not cooling down like it should; tune-up requested\",\"name\":\"Dana Whitfield\",\"since\":\"not provided\",\"tried\":\"not provided\",\"who_home\":\"Caller will be home\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"}}",
+          "created_timestamp": 1793912411234,
+          "message_id": "message_1ec8145860d26a2e1fab3cce",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015U1AQ9UEG5Pb4PnheQctKN",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"That window just filled up.\",\"data\":{\"alternatives\":[{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}]},\"refused\":\"slot_taken\"}",
+          "created_timestamp": 1793912413202,
+          "message_id": "message_c5f0971934a48db9310e6867",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015U1AQ9UEG5Pb4PnheQctKN"
+        },
+        {
+          "content": "That window just filled up. Would you like 4:30 to 6:30, or 5 to 7 this evening instead?",
+          "created_timestamp": 1793912414035,
+          "message_id": "message_63781430339aa51b18b0cecb",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hmm, um, 4:30 to 6:30 is fine. Thanks.",
+          "created_timestamp": 1793912414765,
+          "message_id": "message_bf9b696002ecd37e8e8a589c",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Dana Whitfield\",\"arrival_notes\":\"Buzzer present, unit number unknown. No gate code. No pets. Caller wants costs reviewed before any work.\",\"inside_temp_f\":80,\"issue\":\"AC not cooling down like it should; tune-up requested\",\"name\":\"Dana Whitfield\",\"since\":\"not provided\",\"tried\":\"not provided\",\"who_home\":\"Caller will be home\"},\"job_type\":\"tune_up\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\"}}",
+          "created_timestamp": 1793912416154,
+          "message_id": "message_f30caeea19f2c526871610b7",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_015fSPEEgFyrhJ5SGQa6KXZs",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?\",\"data\":{\"booking_id\":553,\"appointment_id\":553,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793912417024,
+          "message_id": "message_719d7265b9223610b22ba855",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_015fSPEEgFyrhJ5SGQa6KXZs"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+          "created_timestamp": 1793912417846,
+          "message_id": "message_d06f4dd68ab59b1c3c86a3ce",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, that's all. Thanks, bye.",
+          "created_timestamp": 1793912418791,
+          "message_id": "message_1891a3a17d59c68e9b9eeefb",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793912419732,
+          "message_id": "message_f1773fd361f149d082fc6e95",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793912419733,
+          "message_id": "message_bcc0cb506dacd3abff3f2918",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01PQNSXZ4BkXocewkmZFNKqj",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793912420552,
+          "message_id": "message_f73a93b9a9e43956c41f1ba1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01PQNSXZ4BkXocewkmZFNKqj"
+        },
+        {
+          "content": "Bye, thanks.",
+          "created_timestamp": 1793912422544,
+          "message_id": "message_18d2a624346d467296b0ff94",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912424674,
+          "message_id": "message_1ea578c9cb4d96e6c5534c19",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912425968,
+          "message_id": "message_5d7175f272da18a0a4f7296b",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912427191,
+          "message_id": "message_95a65dcb9f5f7bfad0ed6d45",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0201",
+      "caller_key": "6785550201",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-26T20:59:24Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 38,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"199 East 4th Street\", \"unit\": \"\", \"city\": \"\", \"zip\": \"10009\", \"spelled\": \"\", \"phone\": \"6785550201\", \"phone_for\": \"\", \"sentence\": \"I have your home at 199 East 4th Street, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero one. That's all correct, right?\"}",
+      "readback_asked_seq": 17,
+      "readback_confirmed_at": "2026-11-05T20:59:55Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:59:24Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "caller_id": "(678) 555-0201",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 26.8,
+        "error": null,
+        "request_id": "4c5cdc59ac54"
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, I need an AC tune-up at 50 Hudson Street, Jersey City, 07302.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Thanks. Before I book, can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Sure, it's Dana Whitfield.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks, Dana. And this is for a residential property, right? Like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Yes, it's an apartment. Oh wait, sorry, it's actually my apartment at 199 East 4th Street, 10009. Hmm, the agent hasn't said it's outside the area yet, so I should answer the question about residential and then give the address. The agent asked about residential type, so I answer that, and I don't mention the Manhattan address yet unless told it's out of area. But the persona says the correction comes when told it's outside the area. So I just answer.\n\nYes, it's an apartment.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Got it, thanks. You mentioned 50 Hudson Street, but then 199 East 4th Street. Which address should I use for the tune-up?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Sorry, the one in Manhattan. It's 199 East 4th Street, 10009.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks. I'll use 199 East 4th Street, 10009.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:45Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "zip": "10009"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 3.9,
+        "error": null,
+        "request_id": "3e3a4ef308a2"
+      },
+      {
+        "at": "2026-11-05T20:59:45Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "phone": null,
+          "address": {
+            "street": "199 East 4th Street",
+            "unit": "",
+            "city": "",
+            "zip": "10009",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 12.6,
+        "error": null,
+        "request_id": "23a7faafe1a9"
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "agent",
+        "text": "Your ZIP is in our service area. Is there an apartment or unit number for that address?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "caller",
+        "text": "No, there's no apartment number. It's just the building.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Got it. Roughly how warm is it inside the apartment right now?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "I'm not sure, maybe around 80 degrees? It's not cooling down like it should.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Got it, I'll note that for the technician. Next, what's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "(678) 555-0201. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "I can't see the number you're calling from. Could you read it out so I can log it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "(678) 555-0201. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:52Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "address": {
+            "street": "199 East 4th Street",
+            "unit": "",
+            "city": "",
+            "zip": "10009",
+            "spelled": ""
+          },
+          "phone": "(678) 555-0201",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 199 East 4th Street, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero one. That's all correct, right?",
+        "ms": 5.4,
+        "error": null,
+        "request_id": "dbe9335fdf20"
+      },
+      {
+        "at": "2026-11-05T20:59:55Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "I have your home at 199 East 4th Street, ZIP code one zero zero zero nine, and the best number is six seven eight, five five five, zero two zero one. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:55Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Thanks.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:55Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "address": {
+            "street": "199 East 4th Street",
+            "unit": "",
+            "city": "",
+            "zip": "10009",
+            "spelled": ""
+          },
+          "phone": "(678) 555-0201",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.0,
+        "error": null,
+        "request_id": "3fba5ef98dad"
+      },
+      {
+        "at": "2026-11-05T20:59:57Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "AC not cooling down like it should; tune-up requested",
+            "who_home": "",
+            "inside_temp_f": 80.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 4 to 6. Does that work?",
+        "ms": 1362.7,
+        "error": null,
+        "request_id": "12bb85961ccb"
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, 4 to 6 in the afternoon. Does that work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "Yes, that works. Thanks.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Great. Will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "caller",
+        "text": "Um, I'm not sure what kind of repair work. Can you tell me what it might be first?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "agent",
+        "text": "The technician will go over any costs with you before doing any work. Will you be able to approve any repair work they recommend?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "caller",
+        "text": "I don't know what kind of repairs it might be. Can you tell me what they usually cost first?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "agent",
+        "text": "I can't quote prices, but the technician will go over any costs with you before doing any work. Will you be able to approve any repair work they recommend?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "caller",
+        "text": "I don't know what it would cost. Can you just tell me if they'll call me before they do any work?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "Yes, the technician will go over any costs with you before doing any work. Will you be able to approve any repair work they recommend?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "caller",
+        "text": "I don't know what it would cost. You said they'll go over costs with me first, so I guess that's fine. Can you just confirm the appointment is booked?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "agent",
+        "text": "I'll note that you'd like to hear about costs first. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:11Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "caller",
+        "text": "Yes, I'll be home. Should be fine.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:12Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "agent",
+        "text": "Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:12Z",
+        "type": "turn",
+        "seq": 33,
+        "speaker": "caller",
+        "text": "No gate code, I don't think. There's a buzzer, I guess, but I don't know the number for it. I don't have any pets.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:13Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "AC not cooling down like it should; tune-up requested",
+            "since": "not provided",
+            "tried": "not provided",
+            "who_home": "Caller will be home",
+            "approver": "Dana Whitfield",
+            "system_type": "",
+            "arrival_notes": "Buzzer present, unit number unknown. No gate code. No pets. Caller wants costs reviewed before any work.",
+            "name": "Dana Whitfield",
+            "inside_temp_f": 80.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "slot_taken",
+        "gate": "slot_taken",
+        "say": "That window just filled up.",
+        "ms": 1035.5,
+        "error": null,
+        "request_id": "9425b45ec00e"
+      },
+      {
+        "at": "2026-11-05T21:00:16Z",
+        "type": "turn",
+        "seq": 34,
+        "speaker": "agent",
+        "text": "That window just filled up. Would you like 4:30 to 6:30, or 5 to 7 this evening instead?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:16Z",
+        "type": "turn",
+        "seq": 35,
+        "speaker": "caller",
+        "text": "Hmm, um, 4:30 to 6:30 is fine. Thanks.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:16Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "job_type": "tune_up",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1630-1830"
+          },
+          "details": {
+            "issue": "AC not cooling down like it should; tune-up requested",
+            "since": "not provided",
+            "tried": "not provided",
+            "who_home": "Caller will be home",
+            "approver": "Dana Whitfield",
+            "system_type": "",
+            "arrival_notes": "Buzzer present, unit number unknown. No gate code. No pets. Caller wants costs reviewed before any work.",
+            "name": "Dana Whitfield",
+            "inside_temp_f": 80.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+        "ms": 295.5,
+        "error": null,
+        "request_id": "b9d802bc684a"
+      },
+      {
+        "at": "2026-11-05T21:00:20Z",
+        "type": "turn",
+        "seq": 36,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:20Z",
+        "type": "turn",
+        "seq": 37,
+        "speaker": "caller",
+        "text": "No, that's all. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:20Z",
+        "type": "turn",
+        "seq": 38,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:20Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 4.9,
+        "error": null,
+        "request_id": "4b164147b2ff"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 192,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 553,
+        "window_start": "2026-11-05T21:30:00Z",
+        "window_end": "2026-11-05T23:30:00Z",
+        "priority": "Normal",
+        "priority_reasons": "",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[]",
+        "priority_reason_list": "[]",
+        "who_home": "Caller will be home",
+        "job_type": "tune_up",
+        "street": "199 East 4th Street",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052057-retell-call-out-of-area-then-new-address",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

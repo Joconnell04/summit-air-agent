@@ -1,0 +1,1262 @@
+{
+  "case": "short-answers-yep-nah-this-one",
+  "retell": {
+    "test_case_job_id": "test_job_3f38f9572b22",
+    "status": "fail",
+    "result_explanation": "Criterion 2 is violated after the first booking attempt fails. The agent offers two alternatives (4:30\u20136:30 or 5\u20137), the caller says \u201cThis one works,\u201d and the agent asks \u201cShould I book that one?\u201d rather than treating the short acceptance as acceptance of the window just offered. Criterion 6 is also violated because book_appointment is invoked twice, even though only one invocation succeeds. The other criteria are met: \u201cyep\u201d/\u201cnah\u201d are handled correctly, no misunderstanding statements occur, questions are limited to one per turn, and the successful booking occurs after a confirmed read-back and affirmative caller response.",
+    "creation_timestamp": 1793912366845,
+    "user_modified_timestamp": 1793912427744,
+    "test_case_definition_id": "test_case_8680d9c6ee45",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911419328,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052057-short-answers-yep-nah-this-one"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent takes \"yep\" as yes and \"nah\" as no every time and never asks the same question again after a short answer.",
+        "The agent takes \"this one works\" as accepting the window it just offered and does not ask which window the caller means.",
+        "The agent never says it didn't understand a short answer.",
+        "The agent asks one question per turn.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent books exactly one visit with book_appointment and says the confirmation."
+      ],
+      "name": "[summit] short-answers-yep-nah-this-one: Caller who answers with yep, nah and this one",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_8680d9c6ee45",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793912274840,
+      "userPrompt": "## Identity\nJordan Bell, a homeowner in Park Slope. Friendly, says as little as possible.\nYour name: Jordan Bell\nYour address: 412 7th Ave, Brooklyn, 11215\nYour phone: 678 555 0260 (the number you're calling from)\nYour problem: the furnace makes a rattling noise but still heats, about 68 inside, nobody at risk at home\n\n## Goal\nStart the call by saying: \"Hi, my furnace is rattling, can someone take a look?\"\n\n## Behavior\n- Answer every yes or no question with only \"yep\" or \"nah\", nothing else.\n- When asked if it's a home or an apartment, or residential, say only \"yep, a house\".\n- When the agent offers an arrival window, say only \"this one works\".\n- Confirm a correct read-back with only \"yep\".\n- Give a detail only when the agent asks for it, in as few words as you can.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793912376891,
+          "message_id": "message_11dc9668cdc23aeb36a451ec",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, my furnace is rattling, can someone take a look?",
+          "created_timestamp": 1793912377764,
+          "message_id": "message_41b2f4f52bbd2bdcaa7f3f45",
+          "role": "user"
+        },
+        {
+          "content": "Sorry to hear the furnace is rattling. Is the furnace still running, or has it stopped working?",
+          "created_timestamp": 1793912378533,
+          "message_id": "message_295e164f606150ab9201623c",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's still heating, just rattling.",
+          "created_timestamp": 1793912379023,
+          "message_id": "message_3aeb17eabb15bfe76ad9b816",
+          "role": "user"
+        },
+        {
+          "content": "Got it. Since the furnace is still running, I'll set this up as a visit. Can I get your name?",
+          "created_timestamp": 1793912379824,
+          "message_id": "message_a6ab183e8f85c56686020cea",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Jordan Bell",
+          "created_timestamp": 1793912380369,
+          "message_id": "message_45e651b2748986a38a21aad9",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Jordan. Is this a residential property, like a home or an apartment?",
+          "created_timestamp": 1793912381056,
+          "message_id": "message_7d423c34b976333c8b5e18fb",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "yep, a house",
+          "created_timestamp": 1793912381556,
+          "message_id": "message_1897f4f31294ad076a0907aa",
+          "role": "user"
+        },
+        {
+          "content": "Got it, a house. What's the address, including the ZIP if you have it?",
+          "created_timestamp": 1793912382304,
+          "message_id": "message_e3938a8dfa3eeddc6b38d52c",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "412 7th Ave, Brooklyn, 11215",
+          "created_timestamp": 1793912382896,
+          "message_id": "message_04e985a7ea72423219e4ebc9",
+          "role": "user"
+        },
+        {
+          "content": "The address came through as 412 7th Ave, Brooklyn, 11215. Let me check that.",
+          "created_timestamp": 1793912384211,
+          "message_id": "message_1b5a607151ae684f5150890d",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"412 7th Ave\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793912384212,
+          "message_id": "message_251e7031599bd142e5a18896",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01SzhHgJkWAMZQZ1ASXSHnEW",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"412 7th Avenue\",\"zip\":\"11215\",\"borough\":\"Brooklyn\",\"neighborhood\":\"South Slope\",\"in_area\":true,\"area\":\"Brooklyn, rest of borough\"}}",
+          "created_timestamp": 1793912384965,
+          "message_id": "message_938de04c02d3cb987fb5f767",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01SzhHgJkWAMZQZ1ASXSHnEW"
+        },
+        {
+          "arguments": "{\"zip\":\"11215\"}",
+          "created_timestamp": 1793912384966,
+          "message_id": "message_2059826f139e6a414f521426",
+          "name": "check_service_area",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01YU3TYu1XAvgHtroUs2ArC8",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"zip\":\"11215\",\"in_area\":true,\"area\":\"Brooklyn, rest of borough\"}}",
+          "created_timestamp": 1793912385280,
+          "message_id": "message_7f43754f3927985f93d26be1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01YU3TYu1XAvgHtroUs2ArC8"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"412 7th Ave\",\"zip\":\"11215\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793912385281,
+          "message_id": "message_f99f60ae5a810b5d03bb6be2",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01Dy2ghreHhKdiRhv99wA6kw",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793912385584,
+          "message_id": "message_a4c9ffd17c9ee5fd15b933d4",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01Dy2ghreHhKdiRhv99wA6kw"
+        },
+        {
+          "content": "Thanks. Roughly how warm is it inside right now?",
+          "created_timestamp": 1793912386329,
+          "message_id": "message_7ed7cfa93f9002b6cf5225d1",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "About 68.",
+          "created_timestamp": 1793912386775,
+          "message_id": "message_25dd8b9d9194ab23ea3f3293",
+          "role": "user"
+        },
+        {
+          "content": "Got it, I'll note that for the technician. Is anyone at home who is especially sensitive to the cold?",
+          "created_timestamp": 1793912387483,
+          "message_id": "message_d27c1d6d843d7fa5aee6c204",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "nah",
+          "created_timestamp": 1793912388002,
+          "message_id": "message_458109cfdde3023e1f4b05ea",
+          "role": "user"
+        },
+        {
+          "content": "What's the best phone number to reach you?",
+          "created_timestamp": 1793912388845,
+          "message_id": "message_78ceeb34ad8f8bb0bcd22103",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "678 555 0260",
+          "created_timestamp": 1793912389430,
+          "message_id": "message_357ff2cf892bb897be9d6c87",
+          "role": "user"
+        },
+        {
+          "content": "The number you gave is 678-555-0260. Let me read that back for you.",
+          "created_timestamp": 1793912390622,
+          "message_id": "message_d327f5ef5eb534607662d26c",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"412 7th Avenue\",\"zip\":\"11215\",\"city\":\"Brooklyn\"},\"phone\":\"678 555 0260\"}",
+          "created_timestamp": 1793912390623,
+          "message_id": "message_0796ee9ee22da006fd3f6dac",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_014eHwTiwRDM2EmAN57U26Ui",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 412 7th Avenue, Brooklyn, ZIP code one one two one five, and the best number is six seven eight, five five five, zero two six zero. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 412 7th Avenue, Brooklyn, ZIP code one one two one five, and the best number is six seven eight, five five five, zero two six zero. That's all correct, right?\"}}",
+          "created_timestamp": 1793912391121,
+          "message_id": "message_09fb74a0969f7dbacd8452e6",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_014eHwTiwRDM2EmAN57U26Ui"
+        },
+        {
+          "content": "I have your home at 412 7th Avenue, Brooklyn, ZIP code one one two one five, and the best number is six seven eight, five five five, zero two six zero. That's all correct, right?",
+          "created_timestamp": 1793912392044,
+          "message_id": "message_0e6b849da3e699d25c06a9fc",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "yep",
+          "created_timestamp": 1793912392553,
+          "message_id": "message_5989cd184a087d14a03608f0",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"412 7th Avenue\",\"zip\":\"11215\",\"city\":\"Brooklyn\"},\"phone\":\"678 555 0260\",\"confirmed\":true}",
+          "created_timestamp": 1793912393591,
+          "message_id": "message_b16ca6dbad5ae21d7ebff089",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01LUtt6dUrj6Xf8iSP8yHG6e",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"412 7th Avenue\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11215\",\"spelled\":\"\"},\"phone\":\"6785550260\"}}",
+          "created_timestamp": 1793912393938,
+          "message_id": "message_52706e17b7f3d8e7d3bb9b2b",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01LUtt6dUrj6Xf8iSP8yHG6e"
+        },
+        {
+          "arguments": "{\"job_type\":\"repair\",\"facts\":{\"issue\":\"Furnace is rattling but still heating\",\"inside_temp_f\":68,\"who_home\":\"not provided\"}}",
+          "created_timestamp": 1793912394945,
+          "message_id": "message_5b19cc4b45bb2c1118000e8a",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01HuECNDx8nMJwQr7Y7EitNt",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check what kind of visit that is.\",\"data\":{\"errors\":{\"job_type\":\"one of no_heat, no_cooling, tune_up, safety_check, estimate\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793912395250,
+          "message_id": "message_ee5323f3b114f76ee9a9fd44",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01HuECNDx8nMJwQr7Y7EitNt"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Furnace is rattling but still heating\",\"inside_temp_f\":68,\"who_home\":\"not provided\"}}",
+          "created_timestamp": 1793912396265,
+          "message_id": "message_5ce17e518a2a068e0b684001",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AP7YfuHv2ioUDR87NxwcG7",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"The soonest I have is today, 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"Normal\",\"reasons\":[\"warm inside and a mild day\"],\"requested\":null,\"raised_after_wait\":false},\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\"],\"labels\":[\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]},{\"date\":\"2026-11-09\",\"weekday\":\"Monday\",\"day\":\"Monday\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793912398251,
+          "message_id": "message_57b385217167b49b01f05483",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AP7YfuHv2ioUDR87NxwcG7"
+        },
+        {
+          "content": "The soonest I have is today, Thursday, November 5, between 4 and 6. Does that work?",
+          "created_timestamp": 1793912398981,
+          "message_id": "message_f4b36c86e09a4411046169f8",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "this one works",
+          "created_timestamp": 1793912399524,
+          "message_id": "message_3c44a79a7f25cbfb79ba2399",
+          "role": "user"
+        },
+        {
+          "content": "Yes, the 4 to 6 window today works. Before I book it, will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793912400384,
+          "message_id": "message_6a8f6cde7085e235a8de8bdf",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yep",
+          "created_timestamp": 1793912400938,
+          "message_id": "message_cf0b30543a1bb63908df7681",
+          "role": "user"
+        },
+        {
+          "content": "Thanks. Will someone be home to let the technician in?",
+          "created_timestamp": 1793912401828,
+          "message_id": "message_b1c8ec8c3dac17f18713a9b5",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "yep",
+          "created_timestamp": 1793912402960,
+          "message_id": "message_714c22287565746135f20d43",
+          "role": "user"
+        },
+        {
+          "content": "Great. Is there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793912403867,
+          "message_id": "message_61b4dc3b7dc7ec91ee9a28b7",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "content": "nah",
+          "created_timestamp": 1793912404390,
+          "message_id": "message_e58ac2d1579a021e0a1fa884",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Jordan Bell\",\"issue\":\"Furnace is rattling but still heating\",\"since\":\"not provided\",\"tried\":\"Not provided\",\"who_home\":\"Yes, someone will be home\",\"inside_temp_f\":68,\"name\":\"Jordan Bell\",\"arrival_notes\":\"No gate code, buzzer, or pets.\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"}}",
+          "created_timestamp": 1793912405733,
+          "message_id": "message_b5bdcb38db4bccd206c45e4f",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01GvZsAfBjDqV8HdArA1nxHR",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"That window just filled up.\",\"data\":{\"alternatives\":[{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false},{\"date\":\"2026-11-05\",\"window\":\"1700-1900\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"5 to 7\",\"part\":\"evening\",\"after_hours\":false}]},\"refused\":\"slot_taken\"}",
+          "created_timestamp": 1793912407271,
+          "message_id": "message_76d1b38719e7d461eceecbb3",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01GvZsAfBjDqV8HdArA1nxHR"
+        },
+        {
+          "content": "That window just filled up. The next options today are 4:30 to 6:30 or 5 to 7. Which would you like?",
+          "created_timestamp": 1793912408113,
+          "message_id": "message_7073f602eca3bb8d26628b49",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "content": "This one works.",
+          "created_timestamp": 1793912408712,
+          "message_id": "message_ecbfd1121a5080bb0ca2c55e",
+          "role": "user"
+        },
+        {
+          "content": "The 4:30 to 6:30 window today is still open. Should I book that one?",
+          "created_timestamp": 1793912409518,
+          "message_id": "message_f78eeac49b4e8df8d5a7907b",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "yep",
+          "created_timestamp": 1793912410739,
+          "message_id": "message_9bfbfd31a090e6271fc70db5",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"details\":{\"approver\":\"Jordan Bell\",\"issue\":\"Furnace is rattling but still heating\",\"since\":\"not provided\",\"tried\":\"Not provided\",\"who_home\":\"Yes, someone will be home\",\"inside_temp_f\":68,\"name\":\"Jordan Bell\",\"arrival_notes\":\"No gate code, buzzer, or pets.\"},\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\"}}",
+          "created_timestamp": 1793912411979,
+          "message_id": "message_ca02793b37fa6ee26cc06d0c",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_016dXCLkjN6dqfriocrVhXUZ",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?\",\"data\":{\"booking_id\":549,\"appointment_id\":549,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1630-1830\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4:30 to 6:30\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"Normal\",\"reasons\":[\"warm inside and a mild day\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793912412800,
+          "message_id": "message_06ddfcfdf6bc081c8d4ac6c1",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_016dXCLkjN6dqfriocrVhXUZ"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+          "created_timestamp": 1793912413585,
+          "message_id": "message_cb423006aa6786cd200e21fc",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Nah, that's all. Thanks.",
+          "created_timestamp": 1793912414093,
+          "message_id": "message_0009e493c9a592bc4e5c8886",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793912415081,
+          "message_id": "message_f2724c1eeee6c04573ecc613",
+          "metadata": {
+            "response_id": 18
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793912415082,
+          "message_id": "message_0549d4dfa8b9f42fdb9df524",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01E8XRj5p3FQjJr78Xbq1mTc",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793912415515,
+          "message_id": "message_58626f8e26965daf4b5a90ce",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01E8XRj5p3FQjJr78Xbq1mTc"
+        },
+        {
+          "content": "Thanks, bye.",
+          "created_timestamp": 1793912416687,
+          "message_id": "message_79c57e8aea05267e81753a19",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793912417330,
+          "message_id": "message_a2ca375f0f5f2aaadb956948",
+          "metadata": {
+            "response_id": 19
+          },
+          "role": "agent"
+        },
+        {
+          "content": "The conversation has already reached its end: the booking is confirmed, the agent said goodbye, and I said thanks and bye. The scripted user's business is done, so there is no further line to produce.",
+          "created_timestamp": 1793912418636,
+          "message_id": "message_d33efe76469632f2c38f2bc0",
+          "role": "user"
+        },
+        {
+          "content": "I'm sorry, I can't produce a further line for this user because the conversation has already ended. The booking is confirmed and the goodbye has been exchanged. If you want, I can write a new opening line or simulate a different scenario.",
+          "created_timestamp": 1793912420059,
+          "message_id": "message_b2c6cece3f16cf022eca7849",
+          "role": "user"
+        },
+        {
+          "content": "It looks like this call has already ended, so there's nothing more to add. Your technician visit is booked for today, Thursday, November 5, between 4:30 and 6:30.",
+          "created_timestamp": 1793912421010,
+          "message_id": "message_5af5ed0af7d86b2e2d7650e1",
+          "metadata": {
+            "response_id": 20
+          },
+          "role": "agent"
+        },
+        {
+          "content": "I'm sorry, I can't continue this simulation. The call has already ended, and I'm not going to produce another line from the user's side.",
+          "created_timestamp": 1793912421764,
+          "message_id": "message_9d8d005e2fe4c06f4231f0c4",
+          "role": "user"
+        },
+        {
+          "content": "Understood. The call has ended and your visit is booked for today, November 5, between 4:30 and 6:30. Take care.",
+          "created_timestamp": 1793912422639,
+          "message_id": "message_372784e53c3efbe9f5e97721",
+          "metadata": {
+            "response_id": 21
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793912423715,
+          "message_id": "message_87132a551d71bc346a95b87d",
+          "role": "user"
+        },
+        {
+          "content": "Goodbye.",
+          "created_timestamp": 1793912424318,
+          "message_id": "message_50dedef065a1f0295953d696",
+          "metadata": {
+            "response_id": 22
+          },
+          "role": "agent"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052057-short-answers-yep-nah-this-one",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0260",
+      "caller_key": "6785550260",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-11-05T20:59:26Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 35,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"412 7th Avenue\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11215\", \"spelled\": \"\", \"phone\": \"6785550260\", \"phone_for\": \"\", \"sentence\": \"I have your home at 412 7th Avenue, Brooklyn, ZIP code one one two one five, and the best number is six seven eight, five five five, zero two six zero. That's all correct, right?\"}",
+      "readback_asked_seq": 18,
+      "readback_confirmed_at": "2026-11-05T20:59:53Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:59:26Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "caller_id": "(678) 555-0260",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 25.4,
+        "error": null,
+        "request_id": "8201082eea91"
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, my furnace is rattling, can someone take a look?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "Sorry to hear the furnace is rattling. Is the furnace still running, or has it stopped working?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "It's still heating, just rattling.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Got it. Since the furnace is still running, I'll set this up as a visit. Can I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Jordan Bell",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Jordan. Is this a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "yep, a house",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Got it, a house. What's the address, including the ZIP if you have it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "412 7th Ave, Brooklyn, 11215",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "The address came through as 412 7th Ave, Brooklyn, 11215. Let me check that.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:44Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "street": "412 7th Ave",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 13.4,
+        "error": null,
+        "request_id": "b3ea67c30070"
+      },
+      {
+        "at": "2026-11-05T20:59:45Z",
+        "type": "tool",
+        "tool": "check_service_area",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "zip": "11215"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 4.2,
+        "error": null,
+        "request_id": "21e92a5b3189"
+      },
+      {
+        "at": "2026-11-05T20:59:45Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "phone": null,
+          "address": {
+            "street": "412 7th Ave",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11215",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 11.3,
+        "error": null,
+        "request_id": "92d7a85ddee6"
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "agent",
+        "text": "Thanks. Roughly how warm is it inside right now?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "caller",
+        "text": "About 68.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "Got it, I'll note that for the technician. Is anyone at home who is especially sensitive to the cold?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:50Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "caller",
+        "text": "nah",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:51Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "agent",
+        "text": "What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:51Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "caller",
+        "text": "678 555 0260",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:51Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "The number you gave is 678-555-0260. Let me read that back for you.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:59:51Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "address": {
+            "street": "412 7th Avenue",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11215",
+            "spelled": ""
+          },
+          "phone": "678 555 0260",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 412 7th Avenue, Brooklyn, ZIP code one one two one five, and the best number is six seven eight, five five five, zero two six zero. That's all correct, right?",
+        "ms": 4.4,
+        "error": null,
+        "request_id": "e76b390bdda7"
+      },
+      {
+        "at": "2026-11-05T20:59:53Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "I have your home at 412 7th Avenue, Brooklyn, ZIP code one one two one five, and the best number is six seven eight, five five five, zero two six zero. That's all correct, right?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:53Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "yep",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:59:53Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "address": {
+            "street": "412 7th Avenue",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11215",
+            "spelled": ""
+          },
+          "phone": "678 555 0260",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 7.4,
+        "error": null,
+        "request_id": "259044ebfabe"
+      },
+      {
+        "at": "2026-11-05T20:59:55Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "job_type": "repair",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Furnace is rattling but still heating",
+            "who_home": "not provided",
+            "inside_temp_f": 68.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": "invalid_arguments",
+        "say": "Let me check what kind of visit that is.",
+        "ms": 2.5,
+        "error": null,
+        "request_id": "91b2e869b1eb"
+      },
+      {
+        "at": "2026-11-05T20:59:58Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Furnace is rattling but still heating",
+            "who_home": "not provided",
+            "inside_temp_f": 68.0,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "The soonest I have is today, 4 to 6. Does that work?",
+        "ms": 1684.1,
+        "error": null,
+        "request_id": "f1257d69fa34"
+      },
+      {
+        "at": "2026-11-05T21:00:05Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "The soonest I have is today, Thursday, November 5, between 4 and 6. Does that work?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 7000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:06Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "this one works",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:06Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Yes, the 4 to 6 window today works. Before I book it, will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:06Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Yep",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:06Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "Thanks. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:06Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "yep",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:06Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "Great. Is there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:06Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "caller",
+        "text": "nah",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:07Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "Furnace is rattling but still heating",
+            "since": "not provided",
+            "tried": "Not provided",
+            "who_home": "Yes, someone will be home",
+            "approver": "Jordan Bell",
+            "system_type": "",
+            "arrival_notes": "No gate code, buzzer, or pets.",
+            "name": "Jordan Bell",
+            "inside_temp_f": 68.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": false,
+        "refused": "slot_taken",
+        "gate": "slot_taken",
+        "say": "That window just filled up.",
+        "ms": 1072.2,
+        "error": null,
+        "request_id": "9edfcce08f6d"
+      },
+      {
+        "at": "2026-11-05T21:00:12Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "That window just filled up. The next options today are 4:30 to 6:30 or 5 to 7. Which would you like?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:12Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "caller",
+        "text": "This one works.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:12Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "agent",
+        "text": "The 4:30 to 6:30 window today is still open. Should I book that one?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:12Z",
+        "type": "turn",
+        "seq": 32,
+        "speaker": "caller",
+        "text": "yep",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:12Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1630-1830"
+          },
+          "details": {
+            "issue": "Furnace is rattling but still heating",
+            "since": "not provided",
+            "tried": "Not provided",
+            "who_home": "Yes, someone will be home",
+            "approver": "Jordan Bell",
+            "system_type": "",
+            "arrival_notes": "No gate code, buzzer, or pets.",
+            "name": "Jordan Bell",
+            "inside_temp_f": 68.0
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+        "ms": 377.1,
+        "error": null,
+        "request_id": "61323e20acde"
+      },
+      {
+        "at": "2026-11-05T21:00:15Z",
+        "type": "turn",
+        "seq": 33,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 4:30 and 6:30. Anything else?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:15Z",
+        "type": "turn",
+        "seq": 34,
+        "speaker": "caller",
+        "text": "Nah, that's all. Thanks.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T21:00:15Z",
+        "type": "turn",
+        "seq": 35,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T21:00:15Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 4.4,
+        "error": null,
+        "request_id": "460b6488bad3"
+      }
+    ],
+    "flags": [],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 188,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 549,
+        "window_start": "2026-11-05T21:30:00Z",
+        "window_end": "2026-11-05T23:30:00Z",
+        "priority": "Normal",
+        "priority_reasons": "warm inside and a mild day",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:mild\"]",
+        "priority_reason_list": "[\"warm inside and a mild day\"]",
+        "who_home": "Yes, someone will be home",
+        "job_type": "no_heat",
+        "street": "412 7th Avenue",
+        "unit": "",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052057-short-answers-yep-nah-this-one",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "412",
+        "street": "7 ave",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11215\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

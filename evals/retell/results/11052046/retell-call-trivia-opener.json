@@ -1,0 +1,852 @@
+{
+  "case": "retell-call-trivia-opener",
+  "retell": {
+    "test_case_job_id": "test_job_df4c7c9805ce",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793911605900,
+    "user_modified_timestamp": 1793911689377,
+    "test_case_definition_id": "test_case_3fc9b0f8457f",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911576235,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052046-retell-call-trivia-opener"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent books exactly one visit with book_appointment at ZIP 11201.",
+        "The agent answers the trivia correctly in one short line, spelling the word first, then steers back to heating and cooling."
+      ],
+      "name": "[summit] retell-call-trivia-opener: Jackson testing the Retell number (call_ca9bfcec0b968db42ac2f428bea)",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_3fc9b0f8457f",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793911576235,
+      "userPrompt": "## Identity\nJackson testing the Retell number (call_ca9bfcec0b968db42ac2f428bea). Opens with a trivia question, then books a tune-up once steered back. Playful, short answers.\nYour address: 248 Duffield Street, Brooklyn, 11201\nYour phone: (678) 555-0205 (the number you're calling from)\nYour wants: a furnace tune-up, any morning\n\n## Goal\nStart the call by saying: \"How many e's are in seventeen?\"\n\n## Behavior\n- If the agent answers the question, say \"Huh. Okay.\" and move on to the tune-up.\n- Then ask for a furnace tune-up; give the address and confirm a correct read-back.\n- Say goodbye once booked.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052046-retell-call-trivia-opener",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793911655949,
+          "message_id": "message_cec41e689759e7f27fd51d53",
+          "role": "agent"
+        },
+        {
+          "content": "How many e's are in seventeen?",
+          "created_timestamp": 1793911656477,
+          "message_id": "message_f733d2a46eb408954fe34575",
+          "role": "user"
+        },
+        {
+          "content": "There are three e's in \"seventeen.\"",
+          "created_timestamp": 1793911657015,
+          "message_id": "message_0b4ffce5f96e1fbc8e1c60e5",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Huh. Okay. I'd like to book a furnace tune-up, any morning this week if you have it.",
+          "created_timestamp": 1793911657536,
+          "message_id": "message_e323154a70e5bc78e84ebe65",
+          "role": "user"
+        },
+        {
+          "content": "I can set that up. What's your name?",
+          "created_timestamp": 1793911658173,
+          "message_id": "message_47087d051e1804587368c493",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Jackson.",
+          "created_timestamp": 1793911658706,
+          "message_id": "message_a7d30edc8b7fd54383342f1e",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Jackson. Is this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793911659330,
+          "message_id": "message_3841fe505099e3cb38e72cf6",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yeah, it's a home. Brooklyn.",
+          "created_timestamp": 1793911659898,
+          "message_id": "message_ce75aa4f6419187751e40690",
+          "role": "user"
+        },
+        {
+          "content": "Got it. What's the street address, including the house number and ZIP if you have it?",
+          "created_timestamp": 1793911660623,
+          "message_id": "message_cf15a40b476519a501ac73e6",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "248 Duffield Street, Brooklyn, 11201.",
+          "created_timestamp": 1793911661194,
+          "message_id": "message_d914d7413d79502b72034d01",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"street\":\"248 Duffield Street\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793911662201,
+          "message_id": "message_837dc24e2a0b31238154ede0",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01N1NKSquxwNzKuRbrd19NCr",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"248 Duffield Street\",\"zip\":\"11201\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Downtown Brooklyn\",\"in_area\":true,\"area\":\"Brooklyn North\"}}",
+          "created_timestamp": 1793911662934,
+          "message_id": "message_a1924b112941703b8a6292cd",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01N1NKSquxwNzKuRbrd19NCr"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"248 Duffield Street\",\"zip\":\"11201\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793911662935,
+          "message_id": "message_ba1f6177d0e684f015db2214",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01EPc14o21tF5zimtEUTSwi6",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[{\"customer_id\":302,\"name\":\"\",\"type\":\"Residential\",\"residential\":true,\"phones\":[],\"locations\":[{\"location_id\":302,\"street\":\"248 Duffield Street\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11201\",\"in_service_area\":true}],\"membership\":null,\"open_jobs\":[{\"job_id\":549,\"job_type\":\"no_cooling\",\"status\":\"Scheduled\",\"priority\":\"High\",\"summary\":\"\",\"location_id\":302,\"street\":\"248 Duffield Street\",\"appointment_id\":549,\"appointment_status\":\"Scheduled\",\"window\":null}],\"last_service_date\":null,\"recent_calls\":[],\"notes\":[],\"equipment\":[],\"withheld\":\"the numbers, notes and what the visit is about are not shown, and the name only once the caller gives it, until the server's name and address check passes; a change asks for them first\"}],\"needs_unit\":false}}",
+          "created_timestamp": 1793911663494,
+          "message_id": "message_72f7784665652ac1c8a72846",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01EPc14o21tF5zimtEUTSwi6"
+        },
+        {
+          "content": "Thanks. Is there an apartment or unit number, or is it a whole house?",
+          "created_timestamp": 1793911664187,
+          "message_id": "message_42f8e9877066e5ccdbe8161a",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "It's a whole house. No apartment number.",
+          "created_timestamp": 1793911664712,
+          "message_id": "message_d5cb8e700170d44c9b763364",
+          "role": "user"
+        },
+        {
+          "content": "Got it. What's the best phone number to reach you?",
+          "created_timestamp": 1793911665438,
+          "message_id": "message_167bcf2c0caf6f5c7f4302ac",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "content": "(678) 555-0205. That's the number I'm calling from.",
+          "created_timestamp": 1793911666427,
+          "message_id": "message_616f1b858824fff92e750d08",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"248 Duffield Street\",\"zip\":\"11201\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\"}",
+          "created_timestamp": 1793911667457,
+          "message_id": "message_beff92c0ec244f5e1318b486",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01EgvYAXJoivLGBkHGYCPMLy",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero five. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero five. That's all correct, right?\"}}",
+          "created_timestamp": 1793911668564,
+          "message_id": "message_bed17f254807ee9539a50689",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01EgvYAXJoivLGBkHGYCPMLy"
+        },
+        {
+          "content": "I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero five. That's all correct, right?",
+          "created_timestamp": 1793911669488,
+          "message_id": "message_e9ea964e77e7b7a9091a5ba2",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yep, that's all correct. Do you have anything open Tuesday or Wednesday morning?",
+          "created_timestamp": 1793911670245,
+          "message_id": "message_49de282512f718afba68cd0e",
+          "role": "user"
+        },
+        {
+          "content": "The address and phone are confirmed. Let me check Tuesday morning.",
+          "created_timestamp": 1793911671707,
+          "message_id": "message_fe303d7a181c7629cd2fd388",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"248 Duffield Street\",\"zip\":\"11201\",\"city\":\"Brooklyn\"},\"phone\":\"caller_id\",\"confirmed\":true}",
+          "created_timestamp": 1793911671708,
+          "message_id": "message_339f09bf00ac865dfdb6b566",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UgXrMY4hfCXcGXmaEcyrkk",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"248 Duffield Street\",\"unit\":\"\",\"city\":\"Brooklyn\",\"zip\":\"11201\",\"spelled\":\"\"},\"phone\":\"6785550205\"}}",
+          "created_timestamp": 1793911672762,
+          "message_id": "message_62c703eebfe9a0cfbcfd9026",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UgXrMY4hfCXcGXmaEcyrkk"
+        },
+        {
+          "arguments": "{\"job_type\":\"tune_up\",\"day\":\"Tuesday\",\"time_of_day\":\"morning\",\"preferred_days\":[\"Tuesday\",\"Wednesday\"]}",
+          "created_timestamp": 1793911672763,
+          "message_id": "message_c463670b7fac5409d9e16ea3",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01692RYZYnk3bwWMSwakiwy3",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"I can't pull that up right now.\",\"refused\":\"fsm_unavailable\"}",
+          "created_timestamp": 1793911677197,
+          "message_id": "message_deff2a791b962d036ec2952e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01692RYZYnk3bwWMSwakiwy3"
+        },
+        {
+          "content": "I'm sorry, I can't pull up the schedule right now. Would you like me to have the office call you back to set up a morning visit?",
+          "created_timestamp": 1793911678164,
+          "message_id": "message_c83ef2708b3254adb1950a15",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Hmm, okay. Yeah, a callback works. Just make sure it's a morning slot if you can.",
+          "created_timestamp": 1793911678771,
+          "message_id": "message_bea27432163170f4d69b05da",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"reason\":\"Furnace tune-up requested for 248 Duffield Street, Brooklyn 11201. Caller Jackson wants a morning visit Tuesday or Wednesday. Scheduling system was unavailable during the call.\",\"priority\":\"Normal\",\"system_calls_back\":false,\"callback_day\":\"tomorrow\",\"callback_before\":\"12 PM\"}",
+          "created_timestamp": 1793911680203,
+          "message_id": "message_7ea6688421eae1d325225249",
+          "name": "flag_person",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01ExfK4DhYdFYtaqoYwv6jNq",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've let our team know, and someone will call you tomorrow before 12 PM.\",\"data\":{\"flag_id\":216,\"callback_id\":58,\"callback_at\":\"2026-11-06T17:00:00Z\",\"callback_spoken\":\"tomorrow before 12 PM\"}}",
+          "created_timestamp": 1793911680752,
+          "message_id": "message_bd25171c3fe621cea9906587",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01ExfK4DhYdFYtaqoYwv6jNq"
+        },
+        {
+          "content": "I've let our team know, and someone will call you tomorrow before 12 PM to set up a morning tune-up. Is there anything else I can help with?",
+          "created_timestamp": 1793911681617,
+          "message_id": "message_94c98d53d5a1889ef88b5d81",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, that's it. Thanks, bye.",
+          "created_timestamp": 1793911682255,
+          "message_id": "message_6c4491bccd40ebf34abc456f",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793911682990,
+          "message_id": "message_3dd562556aa1ff2939c5a398",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793911682991,
+          "message_id": "message_1c2c9b5b9fb0f064b2c1c70c",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01UD4XU7Ls16mS2oougCYryN",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793911683556,
+          "message_id": "message_d1a540a2462ba6bc23af70b5",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01UD4XU7Ls16mS2oougCYryN"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793911684813,
+          "message_id": "message_381c6efa93140dd7eda03712",
+          "role": "user"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793911686188,
+          "message_id": "message_15856af7c89403c7a61e1581",
+          "role": "user"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793911687867,
+          "message_id": "message_d2a125d9b863c182e76e556d",
+          "role": "user"
+        },
+        {
+          "content": "Bye.",
+          "created_timestamp": 1793911689376,
+          "message_id": "message_d223d70191ecd46fcee71368",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052046-retell-call-trivia-opener",
+      "tenant": "summit-air",
+      "caller_id": "(678) 555-0205",
+      "caller_key": "6785550205",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-09-06T20:46:39Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 22,
+      "safety_state": "none",
+      "safety_kind": null,
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"248 Duffield Street\", \"unit\": \"\", \"city\": \"Brooklyn\", \"zip\": \"11201\", \"spelled\": \"\", \"phone\": \"6785550205\", \"phone_for\": \"\", \"sentence\": \"I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero five. That's all correct, right?\"}",
+      "readback_asked_seq": 14,
+      "readback_confirmed_at": "2026-11-05T20:47:52Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:46:39Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-trivia-opener",
+          "caller_id": "(678) 555-0205",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 17.1,
+        "error": null,
+        "request_id": "8f4f988d8b26"
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "How many e's are in seventeen?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "There are three e's in \"seventeen.\"",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "Huh. Okay. I'd like to book a furnace tune-up, any morning this week if you have it.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "I can set that up. What's your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "Jackson.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "Thanks, Jackson. Is this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Yeah, it's a home. Brooklyn.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Got it. What's the street address, including the house number and ZIP if you have it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "248 Duffield Street, Brooklyn, 11201.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:42Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-trivia-opener",
+          "street": "248 Duffield Street",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 16.0,
+        "error": null,
+        "request_id": "f5a67243726a"
+      },
+      {
+        "at": "2026-11-05T20:47:43Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-trivia-opener",
+          "phone": null,
+          "address": {
+            "street": "248 Duffield Street",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11201",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 251.3,
+        "error": null,
+        "request_id": "f6a9826e4ec5"
+      },
+      {
+        "at": "2026-11-05T20:47:47Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Thanks. Is there an apartment or unit number, or is it a whole house?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 5000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:47Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "It's a whole house. No apartment number.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:47Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "Got it. What's the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "caller",
+        "text": "(678) 555-0205. That's the number I'm calling from.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:48Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-trivia-opener",
+          "address": {
+            "street": "248 Duffield Street",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11201",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero five. That's all correct, right?",
+        "ms": 87.4,
+        "error": null,
+        "request_id": "a6a570d0ee5d"
+      },
+      {
+        "at": "2026-11-05T20:47:51Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "I have your home at 248 Duffield Street, Brooklyn, ZIP code one one two zero one, and the best number is six seven eight, five five five, zero two zero five. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yep, that's all correct. Do you have anything open Tuesday or Wednesday morning?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "The address and phone are confirmed. Let me check Tuesday morning.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:47:52Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-trivia-opener",
+          "address": {
+            "street": "248 Duffield Street",
+            "unit": "",
+            "city": "Brooklyn",
+            "zip": "11201",
+            "spelled": ""
+          },
+          "phone": "caller_id",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 206.1,
+        "error": null,
+        "request_id": "dc1458392f06"
+      },
+      {
+        "at": "2026-11-05T20:47:57Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-trivia-opener",
+          "job_type": "tune_up",
+          "priority": null,
+          "preferred_days": [
+            "Tuesday",
+            "Wednesday"
+          ],
+          "time_of_day": "morning",
+          "window_minutes": null,
+          "day": "Tuesday",
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": false,
+        "refused": "fsm_unavailable",
+        "gate": null,
+        "say": "I can't pull that up right now.",
+        "ms": 4111.6,
+        "error": "fsm_unavailable: capacity: ReadTimeout",
+        "request_id": "99c026223916"
+      },
+      {
+        "at": "2026-11-05T20:48:00Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "agent",
+        "text": "I'm sorry, I can't pull up the schedule right now. Would you like me to have the office call you back to set up a morning visit?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:00Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "caller",
+        "text": "Hmm, okay. Yeah, a callback works. Just make sure it's a morning slot if you can.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:00Z",
+        "type": "tool",
+        "tool": "flag_person",
+        "args": {
+          "callback_time": null,
+          "callback_in_minutes": null,
+          "callback_after": null,
+          "callback_before": "12 PM",
+          "callback_day": "tomorrow",
+          "call_id": "rtest-11052046-retell-call-trivia-opener",
+          "reason": "Furnace tune-up requested for 248 Duffield Street, Brooklyn 11201. Caller Jackson wants a morning visit Tuesday or Wednesday. Scheduling system was unavailable during the call.",
+          "priority": "Normal",
+          "system_calls_back": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've let our team know, and someone will call you tomorrow before 12 PM.",
+        "ms": 5.3,
+        "error": null,
+        "request_id": "56254ae9e27f"
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "agent",
+        "text": "I've let our team know, and someone will call you tomorrow before 12 PM to set up a morning tune-up. Is there anything else I can help with?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "caller",
+        "text": "No, that's it. Thanks, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:48:03Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052046-retell-call-trivia-opener",
+          "reason": "resolved"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 8.2,
+        "error": null,
+        "request_id": "a6d8d34b874f"
+      }
+    ],
+    "flags": [
+      {
+        "id": 216,
+        "call_id": "rtest-11052046-retell-call-trivia-opener",
+        "kind": "person",
+        "reason": "Furnace tune-up requested for 248 Duffield Street, Brooklyn 11201. Caller Jackson wants a morning visit Tuesday or Wednesday. Scheduling system was unavailable during the call.",
+        "priority": "Normal",
+        "status": "open",
+        "created_at": "2026-11-05T20:48:00Z"
+      }
+    ],
+    "callbacks": [
+      {
+        "id": 58,
+        "call_id": "rtest-11052046-retell-call-trivia-opener",
+        "phone": "(678) 555-0205",
+        "phone_key": "6785550205",
+        "due_at": "2026-11-06T17:00:00Z",
+        "owner": "office",
+        "reason": "Furnace tune-up requested for 248 Duffield Street, Brooklyn 11201. Caller Jackson wants a morning visit Tuesday or Wednesday. Scheduling system was unavailable during the call. (caller asked: tomorrow before 12 PM)",
+        "status": "pending",
+        "attempts": 0,
+        "last_attempt_at": null,
+        "created_at": "2026-11-05T20:48:00Z",
+        "updated_at": "2026-11-05T20:48:00Z"
+      }
+    ],
+    "bookings": [],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052046-retell-call-trivia-opener",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "248",
+        "street": "duffield st",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11201\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

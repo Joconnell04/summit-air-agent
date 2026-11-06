@@ -1,0 +1,39 @@
+id: member-books-tune-up
+title: Linda Park, a longtime Summit Air member in Queens calling for her yearly tune-up
+tags:
+- requirement
+- booking
+- membership
+scenario: member-books-tune-up
+caller_id: (718) 555-0123
+user_prompt: |
+  ## Identity
+  Linda Park, a longtime Summit Air member in Queens calling for her yearly tune-up. Pleasant and clear.
+  Your name: Linda Park
+  Your address: 689 Springfield Blvd, Queens, 11432 (on file)
+  Your phone: (718) 555-0123 (the number you're calling from)
+  Your wants: the yearly heating tune-up included with the plan, any weekday afternoon next week
+  Your system: gas furnace, about 9 years old
+
+  ## Goal
+  Start the call by saying: "Hi, it's Linda Park. I'm on your maintenance plan and I'd like to schedule my yearly tune-up."
+
+  ## Behavior
+  - Confirm the address on file when asked.
+  - Say the number you're calling from is the best one.
+  - Take the first weekday afternoon offered.
+  - Say goodbye once the agent asks if there is anything else.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- The agent books exactly one visit with book_appointment with job_type tune_up at ZIP 11432.
+- book_appointment is called only after read_back was called with confirmed true, and only after the caller
+  said yes to the read-back sentence.
+- 'The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas
+  or carbon monoxide danger on this call.'
+- The agent recognizes the membership from the call context and thanks her for it briefly.
+- The agent uses the address on file instead of asking for it from scratch.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

@@ -1,0 +1,38 @@
+id: commercial-bakery
+title: Lucia Ferrante, operations manager at Harbor Bakery Group in Brooklyn
+tags:
+- requirement
+- must-pass
+- commercial
+scenario: commercial-bakery
+caller_id: (718) 555-0188
+user_prompt: |
+  ## Identity
+  Lucia Ferrante, operations manager at Harbor Bakery Group in Brooklyn. Busy, clear, wants the rooftop unit fixed today.
+  Your name: Lucia Ferrante
+  Your business: Harbor Bakery Group
+  Your address: 232 Lexington Ave, Brooklyn, 11221
+  Your phone: (718) 555-0188 (the number you're calling from)
+  Your problem: the rooftop cooling unit over the kitchen quit, the shop is hot
+
+  ## Goal
+  Start the call by saying: "Hi, this is Lucia at Harbor Bakery. The rooftop unit over our kitchen quit and it's way too hot in here."
+
+  ## Behavior
+  - Give the business name again if asked.
+  - When told Summit Air works on homes and apartments, not businesses, say you will find another company and thank the agent.
+  - Do not argue or ask for an exception or a callback.
+  - Say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- 'The agent does not book a visit: book_appointment is never called, or every call to it is refused.'
+- The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial
+  so the team can follow up.
+- The agent declines kindly and early, in one or two lines, without offering a callback.
+- The agent does not ask for a full service-call intake once it knows the caller is a business.
+- The agent saves one line with company, contact and need, and no extra lookups.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.

@@ -1,0 +1,1103 @@
+{
+  "case": "oven-heat-co-check",
+  "retell": {
+    "test_case_job_id": "test_job_ed1310585b50",
+    "status": "error",
+    "result_explanation": "Ending the conversation early because the agent did not respond to consecutive user utterances.",
+    "creation_timestamp": 1793912279799,
+    "user_modified_timestamp": 1793912334008,
+    "test_case_definition_id": "test_case_dd16088635b8",
+    "test_case_definition_snapshot": {
+      "creationTimestamp": 1793911575110,
+      "dynamicVariables": {
+        "summit_call_id": "rtest-11052057-oven-heat-co-check"
+      },
+      "llmModel": "claude-5.5-haiku",
+      "metrics": [
+        "The agent asks one short question to rule out gas or carbon monoxide before booking, and asks it only once.",
+        "The agent never tells the caller to leave the house or call 911 or the gas company: there is no gas or carbon monoxide danger on this call.",
+        "The agent books exactly one visit with book_appointment with job_type no_heat at ZIP 11214. The find_slots or book_appointment result shows priority Urgent, set by the server from the facts the agent passed.",
+        "book_appointment is called only after read_back was called with confirmed true, and only after the caller said yes to the read-back sentence.",
+        "The agent asks the carbon monoxide check question once, early, and does not repeat it when the oven comes up again.",
+        "When asked about the oven, does not say it's okay; suggests layers, blankets or one warm room instead, without a lecture.",
+        "The agent books the visit normally after the check is cleared."
+      ],
+      "name": "[summit] oven-heat-co-check: Rosa Jimenez, a homeowner in Bensonhurst, Brooklyn, whose boiler stopped last night",
+      "orgId": "org_EoCqq2c268JWlyCE",
+      "responseEngine": {
+        "llmId": "llm_1da616f2baeb6e916f63e0236950",
+        "type": "retell-llm",
+        "version": 0
+      },
+      "responseEngineId": "llm_1da616f2baeb6e916f63e0236950",
+      "testCaseDefinitionId": "test_case_dd16088635b8",
+      "toolMocks": [],
+      "type": "simulation",
+      "userModifiedTimestamp": 1793912273677,
+      "userPrompt": "## Identity\nRosa Jimenez, a homeowner in Bensonhurst, Brooklyn, whose boiler stopped last night. Practical and a little proud of making do, says um.\nYour name: Rosa Jimenez\nYour address: 2140 Bath Ave, Brooklyn, 11214\nYour phone: (347) 555-0178 (the number you're calling from)\nYour problem: the boiler stopped last night, 58 F inside\nYour heating: has had the gas oven on with the door open to keep the kitchen warm since last night\nYour health: no alarm going off, nobody feels sick or dizzy, a CO detector in the hallway is quiet\nYour home: herself and her adult son, both healthy\n\n## Goal\nStart the call by saying: \"Hi, um, my boiler quit last night, so we've had the oven on with the door open to keep warm.\"\n\n## Behavior\n- If asked about a carbon monoxide alarm or anyone feeling sick, say no, the detector is quiet and everyone feels fine.\n- Later in the call, ask if it's okay to keep using the oven until the technician comes.\n- Mention the oven once more in passing.\n- Take the first window offered, then say goodbye.\n- Talk like a real person on the phone: short, plain sentences, one thing at a time.\n- Give a detail only when the agent asks for it, unless a line above says otherwise.\n- Never invent facts beyond the ones above; if asked something you don't know, say you don't know.\n- When your business is done, say goodbye and stop talking.\n"
+    },
+    "transcript_snapshot": {
+      "callEnded": false,
+      "dynamicVariables": {
+        "call_context": "",
+        "call_id": "playground",
+        "call_type": "web_call",
+        "greeting": "Thank you for calling Summit Air. How can I help you today?",
+        "session_type": "voice",
+        "summit_call_id": "rtest-11052057-oven-heat-co-check",
+        "system_timezone": "America/Los_Angeles"
+      },
+      "knowledgeBaseRetrievedContents": [],
+      "toolMocks": [],
+      "transcript": [
+        {
+          "content": "Thank you for calling Summit Air. How can I help you today?",
+          "created_timestamp": 1793912289839,
+          "message_id": "message_76c04fee449cc0f133c4e919",
+          "role": "agent"
+        },
+        {
+          "content": "Hi, um, my boiler quit last night, so we've had the oven on with the door open to keep warm.",
+          "created_timestamp": 1793912290477,
+          "message_id": "message_61ba38d9bd4cfe6067276a71",
+          "role": "user"
+        },
+        {
+          "content": "That's a safety concern, so I need to ask first: do you smell gas right now, or has a carbon monoxide alarm gone off?",
+          "created_timestamp": 1793912291197,
+          "message_id": "message_5204138104c8ee171ac9d33f",
+          "metadata": {
+            "response_id": 1
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, I don't smell gas. And the carbon monoxide detector in the hallway is quiet. Nobody feels sick or dizzy, either. We're both fine, it's just cold in here.",
+          "created_timestamp": 1793912291956,
+          "message_id": "message_5201215a766507f365238501",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for checking. Since there's no gas smell or alarm, I'll get you booked for a no-heat visit. Please don't use the oven to heat the home, as it isn't safe for that. Is anyone at home who's especially sensitive to the cold?",
+          "created_timestamp": 1793912293001,
+          "message_id": "message_845375bfbee249ea1df5fc9e",
+          "metadata": {
+            "response_id": 2
+          },
+          "role": "agent"
+        },
+        {
+          "content": "No, nobody's sick or anything. We're both healthy, just cold. Um, can we keep using the oven till the technician comes? It's the only thing warming the kitchen right now.",
+          "created_timestamp": 1793912293859,
+          "message_id": "message_5c7031d9963d6e71c78cd1e0",
+          "role": "user"
+        },
+        {
+          "content": "I understand it's the only heat you have right now, but please don't keep using the oven for heat, even with the door open. Running it that way can release carbon monoxide, so it's safer to turn it off and use extra layers or blankets until the technician arrives.\n\nCan I get your name?",
+          "created_timestamp": 1793912295170,
+          "message_id": "message_fe41240c406eceb4c7e8c78a",
+          "metadata": {
+            "response_id": 3
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Rosa Jimenez. Um, okay. I'll turn it off. But, um, how long till somebody can come? It's really cold in here.",
+          "created_timestamp": 1793912296056,
+          "message_id": "message_b74666773f68975276a1ecb0",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, Rosa. Turning the oven off is the right call. I'll get you the soonest visit I can.\n\nIs this for a residential property, like a home or an apartment?",
+          "created_timestamp": 1793912296903,
+          "message_id": "message_f9552382f4a6f9410e150bfd",
+          "metadata": {
+            "response_id": 4
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, it's a house. 2140 Bath Ave, Brooklyn, 11214. Um, it's a two-family, we're on the first floor. Okay, so when can somebody come? Like, the earliest you have?",
+          "created_timestamp": 1793912297893,
+          "message_id": "message_95fb03e88131a9be3c5d98b1",
+          "role": "user"
+        },
+        {
+          "content": "Got it, you're on the first floor of a two-family house. Before I check times, I'll need to find that address. Could you tell me the street number and street name again, plus the borough or ZIP if you have it?",
+          "created_timestamp": 1793912298937,
+          "message_id": "message_f34d93a6ce834783bf0091d8",
+          "metadata": {
+            "response_id": 5
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yes, it's 2140 Bath Avenue, Brooklyn, 11214. Like I said, it's the first floor. Is that enough? Can you tell me the earliest time somebody can come? It's really cold in here.",
+          "created_timestamp": 1793912299743,
+          "message_id": "message_0ae71db8eb84c728cce81263",
+          "role": "user"
+        },
+        {
+          "content": "I have the address as 2140 Bath Avenue, Brooklyn, 11214, first floor. Let me check that and the earliest opening.",
+          "created_timestamp": 1793912301002,
+          "message_id": "message_cc2ca3749e4e2a87e3fea197",
+          "metadata": {
+            "response_id": 6
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"street\":\"2140 Bath Ave\",\"borough\":\"Brooklyn\"}",
+          "created_timestamp": 1793912301003,
+          "message_id": "message_5fd13b60c97067be4918f2b9",
+          "name": "find_address",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01WwcuCCwR7bHhEUnfE4mXwv",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"street\":\"2140 Bath Avenue\",\"zip\":\"11214\",\"borough\":\"Brooklyn\",\"neighborhood\":\"Bath Beach\",\"in_area\":true,\"area\":\"Brooklyn South\"},\"speak_first\":\"Say this to the caller now, before anything else, exactly as written with no word or punctuation changed: Just to be safe, is a carbon monoxide alarm going off, or is anyone feeling sick or dizzy?\",\"server_notes\":[\"[server] The caller said no to the safety check. Carry on where the call was.\"]}",
+          "created_timestamp": 1793912301635,
+          "message_id": "message_4c26ce5ce6e866ca3915e198",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01WwcuCCwR7bHhEUnfE4mXwv"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"Bath Ave\",\"zip\":\"11214\",\"unit\":\"1st floor\",\"city\":\"Brooklyn\"}}",
+          "created_timestamp": 1793912301636,
+          "message_id": "message_bbc4d07f1ddcb97a5960d409",
+          "name": "find_customer",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_012hGHUgDy43tywYTmd7A1jL",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"matches\":[],\"needs_unit\":false}}",
+          "created_timestamp": 1793912301937,
+          "message_id": "message_a40b906c4979639f1ae18850",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_012hGHUgDy43tywYTmd7A1jL"
+        },
+        {
+          "content": "I'm sorry, the tool result asked me to repeat a safety question, but you already answered it, so I won't repeat it.\n\nYour address is in our service area. Let me check the soonest opening.",
+          "created_timestamp": 1793912303319,
+          "message_id": "message_4c81ad09929d1f06954cb825",
+          "metadata": {
+            "response_id": 7
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Boiler quit last night, no heat in home\",\"since\":\"last night\",\"who_home\":\"Two healthy adults, no one sensitive to cold\"}}",
+          "created_timestamp": 1793912303320,
+          "message_id": "message_f5b56be97c03e892355d06bd",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01P2jX3ajgQQtrXoiMkpQ3B2",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Let me check that again.\",\"data\":{\"errors\":{\"facts.since\":\"Extra inputs are not permitted\"}},\"refused\":\"invalid_arguments\"}",
+          "created_timestamp": 1793912303724,
+          "message_id": "message_961b3378c896ff4f4de9d80e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01P2jX3ajgQQtrXoiMkpQ3B2"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"facts\":{\"issue\":\"Boiler quit last night, no heat in home. Two healthy adults, no one sensitive to cold\",\"temp_falling_fast\":false}}",
+          "created_timestamp": 1793912304723,
+          "message_id": "message_8e092d6bb93d7fcc9c00f8f7",
+          "name": "find_slots",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01TDb1mx6co5pKcg419Hkihx",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I've marked this call top priority, so you get our soonest opening. The soonest I have is today, 4 to 6. Does that work?\",\"data\":{\"priority\":{\"level\":\"Urgent\",\"reasons\":[\"warm inside and a mild day\",\"heating with an oven, stove, generator or grill indoors, caller said \\\"Hi, um, my boiler quit last night, so we've had the oven on with the door...\\\"\"],\"requested\":null,\"raised_after_wait\":false},\"spoken_first\":\"I've marked this call top priority, so you get our soonest opening.\",\"note\":\"The top-priority sentence was just said for you; don't say it again.\",\"first_urgent\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},\"seek_earlier\":false,\"days\":[{\"date\":\"2026-11-05\",\"weekday\":\"Thursday\",\"day\":\"today\",\"windows\":[\"1600-1800\",\"1800-2000\",\"after_hours\"],\"labels\":[\"4 to 6\",\"6 to 8\",\"8 at night to 8 in the morning\"]},{\"date\":\"2026-11-06\",\"weekday\":\"Friday\",\"day\":\"tomorrow\",\"windows\":[\"0800-1000\",\"1000-1200\",\"1200-1400\",\"1400-1600\",\"1600-1800\",\"1800-2000\",\"after_hours\"],\"labels\":[\"8 to 10\",\"10 to 12\",\"12 to 2\",\"2 to 4\",\"4 to 6\",\"6 to 8\",\"8 at night to 8 in the morning\"]},{\"date\":\"2026-11-07\",\"weekday\":\"Saturday\",\"day\":\"Saturday\",\"windows\":[\"1200-1400\",\"1400-1600\",\"after_hours\"],\"labels\":[\"12 to 2\",\"2 to 4\",\"8 at night to 8 in the morning\"]}],\"offer\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false}}}",
+          "created_timestamp": 1793912306247,
+          "message_id": "message_a525758278b673605fe0b5a4",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01TDb1mx6co5pKcg419Hkihx"
+        },
+        {
+          "content": "The soonest opening I have is today, Thursday, between 4 and 6 PM. Does that work for you?",
+          "created_timestamp": 1793912307107,
+          "message_id": "message_ce475b3bb72e662ae0d4eb95",
+          "metadata": {
+            "response_id": 8
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, um, that works. Today between 4 and 6 is good. Is it okay if we keep the oven on till then? Or should I turn it off now?",
+          "created_timestamp": 1793912307821,
+          "message_id": "message_f54eb1250012d1feea3aa153",
+          "role": "user"
+        },
+        {
+          "content": "Please turn the oven off now and don't use it for heat until the technician arrives. Use extra layers or blankets in the meantime.\n\nNext, will you be able to approve any repair work the technician recommends?",
+          "created_timestamp": 1793912308789,
+          "message_id": "message_20d31adfe2e479b5f79743d5",
+          "metadata": {
+            "response_id": 9
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, yes, I can approve it. Okay, I'll turn the oven off now. Is there anything else I should do until then?",
+          "created_timestamp": 1793912309585,
+          "message_id": "message_c0bfc6e4ace00ee59081b1fb",
+          "role": "user"
+        },
+        {
+          "content": "Keep the oven off, and keep warm with layers and blankets until the technician arrives. Will someone be home to let the technician in?",
+          "created_timestamp": 1793912310410,
+          "message_id": "message_755bee9de25b5179b0301f95",
+          "metadata": {
+            "response_id": 10
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, my son will be home. He's here most of the afternoon. Um, is there anything else I should do with the boiler before they come? Or should I just leave it alone?",
+          "created_timestamp": 1793912311176,
+          "message_id": "message_d98d27fefc1315b640b3c7f8",
+          "role": "user"
+        },
+        {
+          "content": "Thanks, that's good to know your son will be home. Please leave the boiler alone until the technician arrives, and don't try to repair or reset it yourself.\n\nIs there a gate code, buzzer, or pet the technician should know about?",
+          "created_timestamp": 1793912312190,
+          "message_id": "message_402562893a724efeb180ea62",
+          "metadata": {
+            "response_id": 11
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no gate code. There's a buzzer, but it's just the regular one for the first floor. No pets, either. Okay, so the visit is today between 4 and 6, right? And I should keep the oven off until then?",
+          "created_timestamp": 1793912313338,
+          "message_id": "message_662ddf18660119c37b1d7a6a",
+          "role": "user"
+        },
+        {
+          "content": "Yes, today between 4 and 6 PM, and yes, keep the oven off until then.\n\nCan I get the best phone number to reach you?",
+          "created_timestamp": 1793912314141,
+          "message_id": "message_47d80d3044b3936ef76d7e6b",
+          "metadata": {
+            "response_id": 12
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, um, the number is (347) 555-0178. That's the one I'm calling from. Okay, so, today between 4 and 6. Thank you, that's all I needed.",
+          "created_timestamp": 1793912315078,
+          "message_id": "message_b57770b027d0734daf2feb90",
+          "role": "user"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"2140 Bath Avenue\",\"zip\":\"11214\",\"city\":\"Brooklyn\",\"unit\":\"First floor\"},\"phone\":\"(347) 555-0178\"}",
+          "created_timestamp": 1793912316157,
+          "message_id": "message_3faa8c7a5b0e8751376e1965",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01QnbTNvcuT71MkLdo3rqLu5",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"I have your home at 2140 Bath Avenue, unit First floor, Brooklyn, ZIP code one one two one four, and the best number is three four seven, five five five, zero one seven eight. That's all correct, right?\",\"data\":{\"confirmed\":false,\"sentence\":\"I have your home at 2140 Bath Avenue, unit First floor, Brooklyn, ZIP code one one two one four, and the best number is three four seven, five five five, zero one seven eight. That's all correct, right?\"}}",
+          "created_timestamp": 1793912316960,
+          "message_id": "message_4151fc8a96e5e87e32737a7e",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01QnbTNvcuT71MkLdo3rqLu5"
+        },
+        {
+          "content": "I have your home at 2140 Bath Avenue, unit First floor, Brooklyn, ZIP code one one two one four, and the best number is three four seven, five five five, zero one seven eight. That's all correct, right?",
+          "created_timestamp": 1793912317875,
+          "message_id": "message_1d03d9429fd4864f53364999",
+          "metadata": {
+            "response_id": 13
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Yes, that's all correct. Thank you. Okay, bye.",
+          "created_timestamp": 1793912318961,
+          "message_id": "message_3f4876e37d310d90760cfab9",
+          "role": "user"
+        },
+        {
+          "content": "That's all confirmed. Your technician visit is set for today between 4 and 6 PM.",
+          "created_timestamp": 1793912321381,
+          "message_id": "message_ae6c2a4e3271932654ec0496",
+          "metadata": {
+            "response_id": 14
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"address\":{\"street\":\"2140 Bath Avenue\",\"zip\":\"11214\",\"city\":\"Brooklyn\",\"unit\":\"First floor\"},\"phone\":\"(347) 555-0178\",\"confirmed\":true}",
+          "created_timestamp": 1793912321382,
+          "message_id": "message_8d3d13844a271b56b8697338",
+          "name": "read_back",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_013FiRNEVtm4mcAv1CAnbjJb",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"Thanks. And what name should I put the visit under?\",\"data\":{\"confirmed\":true,\"address\":{\"street\":\"2140 Bath Avenue\",\"unit\":\"First floor\",\"city\":\"Brooklyn\",\"zip\":\"11214\",\"spelled\":\"\"},\"phone\":\"3475550178\",\"need\":\"this question was said for you; pass the caller's answer as details.name when you book\"}}",
+          "created_timestamp": 1793912321893,
+          "message_id": "message_afc6536980280d67a7d19c6d",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_013FiRNEVtm4mcAv1CAnbjJb"
+        },
+        {
+          "arguments": "{\"job_type\":\"no_heat\",\"slot\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\"},\"details\":{\"approver\":\"Rosa Jimenez\",\"issue\":\"Boiler quit last night, no heat in home. Oven was used for heat overnight; caller told to turn it off. No gas smell or CO alarm reported.\",\"since\":\"last night\",\"tried\":\"Used oven with door open for warmth; oven now turned off\",\"who_home\":\"Son will be home most of the afternoon\",\"arrival_notes\":\"Buzzer for first floor, no gate code, no pets\",\"name\":\"Rosa Jimenez\"}}",
+          "created_timestamp": 1793912321894,
+          "message_id": "message_95fbf07522a4b2b468d6068f",
+          "name": "book_appointment",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01AkJvnbg4PEALdKi11prjPE",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"say\":\"You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6. Anything else?\",\"data\":{\"booking_id\":553,\"appointment_id\":553,\"window\":{\"date\":\"2026-11-05\",\"window\":\"1600-1800\",\"weekday\":\"Thursday\",\"day\":\"today\",\"day_and_date\":\"today, Thursday, November 5\",\"label\":\"4 to 6\",\"part\":\"evening\",\"after_hours\":false},\"priority\":{\"level\":\"Urgent\",\"reasons\":[\"warm inside and a mild day\",\"heating with an oven, stove, generator or grill indoors, caller said \\\"Hi, um, my boiler quit last night, so we've had the oven on with the door...\\\"\"],\"raised_after_wait\":false},\"seek_earlier\":false,\"safety_override\":false,\"approval_callback_at\":null,\"return_visit_review\":false}}",
+          "created_timestamp": 1793912322871,
+          "message_id": "message_5ccfdd39570a3bd7af277ef3",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01AkJvnbg4PEALdKi11prjPE"
+        },
+        {
+          "content": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6 PM. Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793912323860,
+          "message_id": "message_658b387413be25d8983e0e61",
+          "metadata": {
+            "response_id": 15
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"resolved\"}",
+          "created_timestamp": 1793912323861,
+          "message_id": "message_9cf3a8fb26ba94e61c6487a3",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01V4Ac3YBRkA4vafZSskqtRw",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":false,\"say\":\"Is there anything else I can help with?\",\"refused\":\"anything_else_first\"}",
+          "created_timestamp": 1793912324334,
+          "message_id": "message_c1f07a60b3c79624469d2584",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01V4Ac3YBRkA4vafZSskqtRw"
+        },
+        {
+          "content": "Is there anything else I can help you with?",
+          "created_timestamp": 1793912325203,
+          "message_id": "message_45058ce2aa75d36f124b6ded",
+          "metadata": {
+            "response_id": 16
+          },
+          "role": "agent"
+        },
+        {
+          "content": "Um, no, that's everything. Thank you. Bye.",
+          "created_timestamp": 1793912325843,
+          "message_id": "message_3dfb83abfce869357782495e",
+          "role": "user"
+        },
+        {
+          "content": "Thanks for calling Summit Air. Take care.",
+          "created_timestamp": 1793912326639,
+          "message_id": "message_313fff0d242d6852f644b475",
+          "metadata": {
+            "response_id": 17
+          },
+          "role": "agent"
+        },
+        {
+          "arguments": "{\"reason\":\"caller_goodbye\"}",
+          "created_timestamp": 1793912326640,
+          "message_id": "message_ddb4aedf3a6c1e0f38a2c96a",
+          "name": "end_call",
+          "role": "tool_call_invocation",
+          "tool_call_id": "toolu_01SQLR6SjfYPQ42hEtkixa4g",
+          "type": "custom"
+        },
+        {
+          "content": "{\"ok\":true,\"data\":{\"hang_up\":true}}",
+          "created_timestamp": 1793912327140,
+          "message_id": "message_6044d88e4e0eb7657300b4b8",
+          "role": "tool_call_result",
+          "successful": true,
+          "tool_call_id": "toolu_01SQLR6SjfYPQ42hEtkixa4g"
+        },
+        {
+          "content": "Okay, bye. Thanks.",
+          "created_timestamp": 1793912328262,
+          "message_id": "message_e9e060be12f9edcdbbffcb4c",
+          "role": "user"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793912331033,
+          "message_id": "message_4dfe4a894a285f102ebc0099",
+          "role": "user"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793912332489,
+          "message_id": "message_97f96748c09913b8ade63b2f",
+          "role": "user"
+        },
+        {
+          "content": "Okay, thanks. Bye.",
+          "created_timestamp": 1793912334008,
+          "message_id": "message_a2aaca5af3000c15636a0bff",
+          "role": "user"
+        }
+      ]
+    }
+  },
+  "trace": {
+    "call": {
+      "id": "rtest-11052057-oven-heat-co-check",
+      "tenant": "summit-air",
+      "caller_id": "(347) 555-0178",
+      "caller_key": "3475550178",
+      "dialed_number": "(678) 336-6730",
+      "direction": "inbound",
+      "started_at": "2026-10-16T20:57:59Z",
+      "ended_at": null,
+      "end_reason": null,
+      "end_requested": 1,
+      "after_hours": 0,
+      "linked_call_id": null,
+      "outcome": null,
+      "commercial": 0,
+      "summary_status": "none",
+      "turn_seq": 31,
+      "safety_state": "cleared",
+      "safety_kind": "co",
+      "safety_signal_at": null,
+      "safety_lines_at": null,
+      "safety_flag_id": null,
+      "safety_variant": 0,
+      "readback_json": "{\"street\": \"2140 Bath Avenue\", \"unit\": \"First floor\", \"city\": \"Brooklyn\", \"zip\": \"11214\", \"spelled\": \"\", \"phone\": \"3475550178\", \"phone_for\": \"\", \"sentence\": \"I have your home at 2140 Bath Avenue, unit First floor, Brooklyn, ZIP code one one two one four, and the best number is three four seven, five five five, zero one seven eight. That's all correct, right?\"}",
+      "readback_asked_seq": 24,
+      "readback_confirmed_at": "2026-11-05T20:58:41Z"
+    },
+    "events": [
+      {
+        "at": "2026-11-05T20:57:59Z",
+        "type": "tool",
+        "tool": "calls.start",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "caller_id": "(347) 555-0178",
+          "dialed_number": "(678) 336-6730",
+          "direction": "inbound"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 19.7,
+        "error": null,
+        "request_id": "35e10df607b7"
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 1,
+        "speaker": "agent",
+        "text": "Thank you for calling Summit Air. How can I help you today?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 2,
+        "speaker": "caller",
+        "text": "Hi, um, my boiler quit last night, so we've had the oven on with the door open to keep warm.",
+        "safety_action": "ask_check",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 3,
+        "speaker": "agent",
+        "text": "That's a safety concern, so I need to ask first: do you smell gas right now, or has a carbon monoxide alarm gone off?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 4,
+        "speaker": "caller",
+        "text": "No, I don't smell gas. And the carbon monoxide detector in the hallway is quiet. Nobody feels sick or dizzy, either. We're both fine, it's just cold in here.",
+        "safety_action": "cleared",
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 5,
+        "speaker": "agent",
+        "text": "Thanks for checking. Since there's no gas smell or alarm, I'll get you booked for a no-heat visit. Please don't use the oven to heat the home, as it isn't safe for that. Is anyone at home who's especially sensitive to the cold?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 6,
+        "speaker": "caller",
+        "text": "No, nobody's sick or anything. We're both healthy, just cold. Um, can we keep using the oven till the technician comes? It's the only thing warming the kitchen right now.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 7,
+        "speaker": "agent",
+        "text": "I understand it's the only heat you have right now, but please don't keep using the oven for heat, even with the door open. Running it that way can release carbon monoxide, so it's safer to turn it off and use extra layers or blankets until the technician arrives.\n\nCan I get your name?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 8,
+        "speaker": "caller",
+        "text": "Rosa Jimenez. Um, okay. I'll turn it off. But, um, how long till somebody can come? It's really cold in here.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 9,
+        "speaker": "agent",
+        "text": "Thanks, Rosa. Turning the oven off is the right call. I'll get you the soonest visit I can.\n\nIs this for a residential property, like a home or an apartment?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 10,
+        "speaker": "caller",
+        "text": "Yes, it's a house. 2140 Bath Ave, Brooklyn, 11214. Um, it's a two-family, we're on the first floor. Okay, so when can somebody come? Like, the earliest you have?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 11,
+        "speaker": "agent",
+        "text": "Got it, you're on the first floor of a two-family house. Before I check times, I'll need to find that address. Could you tell me the street number and street name again, plus the borough or ZIP if you have it?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 12,
+        "speaker": "caller",
+        "text": "Um, yes, it's 2140 Bath Avenue, Brooklyn, 11214. Like I said, it's the first floor. Is that enough? Can you tell me the earliest time somebody can come? It's really cold in here.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "turn",
+        "seq": 13,
+        "speaker": "agent",
+        "text": "I have the address as 2140 Bath Avenue, Brooklyn, 11214, first floor. Let me check that and the earliest opening.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "tool",
+        "tool": "find_address",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "street": "2140 Bath Ave",
+          "borough": "Brooklyn",
+          "spelled": ""
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 6.3,
+        "error": null,
+        "request_id": "43d4f51b552a"
+      },
+      {
+        "at": "2026-11-05T20:58:21Z",
+        "type": "tool",
+        "tool": "find_customer",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "phone": null,
+          "address": {
+            "street": "Bath Ave",
+            "unit": "1st floor",
+            "city": "Brooklyn",
+            "zip": "11214",
+            "spelled": ""
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 12.0,
+        "error": null,
+        "request_id": "e7120a12c559"
+      },
+      {
+        "at": "2026-11-05T20:58:23Z",
+        "type": "turn",
+        "seq": 14,
+        "speaker": "agent",
+        "text": "I'm sorry, the tool result asked me to repeat a safety question, but you already answered it, so I won't repeat it.\n\nYour address is in our service area. Let me check the soonest opening.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:23Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "job_type": "no_heat",
+          "facts": {
+            "issue": "Boiler quit last night, no heat in home",
+            "since": "last night",
+            "who_home": "Two healthy adults, no one sensitive to cold"
+          },
+          "call_id": "rtest-11052057-oven-heat-co-check"
+        },
+        "ok": false,
+        "refused": "invalid_arguments",
+        "gate": null,
+        "say": "Let me check that again.",
+        "ms": 0.0,
+        "error": "invalid_arguments",
+        "request_id": "8aef4bd0414e"
+      },
+      {
+        "at": "2026-11-05T20:58:26Z",
+        "type": "tool",
+        "tool": "find_slots",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "job_type": "no_heat",
+          "priority": null,
+          "preferred_days": [],
+          "time_of_day": null,
+          "window_minutes": null,
+          "day": null,
+          "arrive_after": null,
+          "arrive_before": null,
+          "facts": {
+            "issue": "Boiler quit last night, no heat in home. Two healthy adults, no one sensitive to cold",
+            "who_home": "",
+            "inside_temp_f": null,
+            "temp_falling_fast": false
+          }
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I've marked this call top priority, so you get our soonest opening. The soonest I have is today, 4 to 6. Does that work?",
+        "ms": 1139.4,
+        "error": null,
+        "request_id": "53bd0512685f"
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 15,
+        "speaker": "agent",
+        "text": "The soonest opening I have is today, Thursday, between 4 and 6 PM. Does that work for you?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 16,
+        "speaker": "caller",
+        "text": "Yes, um, that works. Today between 4 and 6 is good. Is it okay if we keep the oven on till then? Or should I turn it off now?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 17,
+        "speaker": "agent",
+        "text": "Please turn the oven off now and don't use it for heat until the technician arrives. Use extra layers or blankets in the meantime.\n\nNext, will you be able to approve any repair work the technician recommends?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 18,
+        "speaker": "caller",
+        "text": "Um, yes, I can approve it. Okay, I'll turn the oven off now. Is there anything else I should do until then?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 19,
+        "speaker": "agent",
+        "text": "Keep the oven off, and keep warm with layers and blankets until the technician arrives. Will someone be home to let the technician in?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 20,
+        "speaker": "caller",
+        "text": "Yes, my son will be home. He's here most of the afternoon. Um, is there anything else I should do with the boiler before they come? Or should I just leave it alone?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 21,
+        "speaker": "agent",
+        "text": "Thanks, that's good to know your son will be home. Please leave the boiler alone until the technician arrives, and don't try to repair or reset it yourself.\n\nIs there a gate code, buzzer, or pet the technician should know about?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 22,
+        "speaker": "caller",
+        "text": "Um, no gate code. There's a buzzer, but it's just the regular one for the first floor. No pets, either. Okay, so the visit is today between 4 and 6, right? And I should keep the oven off until then?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 23,
+        "speaker": "agent",
+        "text": "Yes, today between 4 and 6 PM, and yes, keep the oven off until then.\n\nCan I get the best phone number to reach you?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "turn",
+        "seq": 24,
+        "speaker": "caller",
+        "text": "Yes, um, the number is (347) 555-0178. That's the one I'm calling from. Okay, so, today between 4 and 6. Thank you, that's all I needed.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:36Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "address": {
+            "street": "2140 Bath Avenue",
+            "unit": "First floor",
+            "city": "Brooklyn",
+            "zip": "11214",
+            "spelled": ""
+          },
+          "phone": "(347) 555-0178",
+          "phone_for": "",
+          "confirmed": false
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "I have your home at 2140 Bath Avenue, unit First floor, Brooklyn, ZIP code one one two one four, and the best number is three four seven, five five five, zero one seven eight. That's all correct, right?",
+        "ms": 16.3,
+        "error": null,
+        "request_id": "19a72e0cba20"
+      },
+      {
+        "at": "2026-11-05T20:58:41Z",
+        "type": "turn",
+        "seq": 25,
+        "speaker": "agent",
+        "text": "I have your home at 2140 Bath Avenue, unit First floor, Brooklyn, ZIP code one one two one four, and the best number is three four seven, five five five, zero one seven eight. That's all correct, right?",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 3000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:41Z",
+        "type": "turn",
+        "seq": 26,
+        "speaker": "caller",
+        "text": "Yes, that's all correct. Thank you. Okay, bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:41Z",
+        "type": "turn",
+        "seq": 27,
+        "speaker": "agent",
+        "text": "That's all confirmed. Your technician visit is set for today between 4 and 6 PM.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:41Z",
+        "type": "tool",
+        "tool": "read_back",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "address": {
+            "street": "2140 Bath Avenue",
+            "unit": "First floor",
+            "city": "Brooklyn",
+            "zip": "11214",
+            "spelled": ""
+          },
+          "phone": "(347) 555-0178",
+          "phone_for": "",
+          "confirmed": true
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "Thanks. And what name should I put the visit under?",
+        "ms": 7.8,
+        "error": null,
+        "request_id": "62cd671d7ff7"
+      },
+      {
+        "at": "2026-11-05T20:58:42Z",
+        "type": "tool",
+        "tool": "book_appointment",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "job_type": "no_heat",
+          "slot": {
+            "date": "2026-11-05",
+            "window": "1600-1800"
+          },
+          "details": {
+            "issue": "Boiler quit last night, no heat in home. Oven was used for heat overnight; caller told to turn it off. No gas smell or CO alarm reported.",
+            "since": "last night",
+            "tried": "Used oven with door open for warmth; oven now turned off",
+            "who_home": "Son will be home most of the afternoon",
+            "approver": "Rosa Jimenez",
+            "system_type": "",
+            "arrival_notes": "Buzzer for first floor, no gate code, no pets",
+            "name": "Rosa Jimenez",
+            "inside_temp_f": null
+          },
+          "priority": null,
+          "separate_problem": false,
+          "new_address_account": null
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6. Anything else?",
+        "ms": 545.1,
+        "error": null,
+        "request_id": "d649c5b170b8"
+      },
+      {
+        "at": "2026-11-05T20:58:44Z",
+        "type": "turn",
+        "seq": 28,
+        "speaker": "agent",
+        "text": "You're all set for today, Thursday, November 5, with the technician arriving between 4 and 6 PM. Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:44Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "reason": "resolved"
+        },
+        "ok": false,
+        "refused": "anything_else_first",
+        "gate": "anything_else_first",
+        "say": "Is there anything else I can help with?",
+        "ms": 4.2,
+        "error": null,
+        "request_id": "41ebd89e4ef2"
+      },
+      {
+        "at": "2026-11-05T20:58:47Z",
+        "type": "turn",
+        "seq": 29,
+        "speaker": "agent",
+        "text": "Is there anything else I can help you with?",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:47Z",
+        "type": "turn",
+        "seq": 30,
+        "speaker": "caller",
+        "text": "Um, no, that's everything. Thank you. Bye.",
+        "safety_action": null,
+        "timings": {}
+      },
+      {
+        "at": "2026-11-05T20:58:47Z",
+        "type": "turn",
+        "seq": 31,
+        "speaker": "agent",
+        "text": "Thanks for calling Summit Air. Take care.",
+        "safety_action": null,
+        "timings": {
+          "reply_ms": 1000.0
+        }
+      },
+      {
+        "at": "2026-11-05T20:58:47Z",
+        "type": "tool",
+        "tool": "end_call",
+        "args": {
+          "call_id": "rtest-11052057-oven-heat-co-check",
+          "reason": "caller_goodbye"
+        },
+        "ok": true,
+        "refused": null,
+        "gate": null,
+        "say": "",
+        "ms": 5.1,
+        "error": null,
+        "request_id": "4574b1677950"
+      }
+    ],
+    "flags": [
+      {
+        "id": 234,
+        "call_id": "rtest-11052057-oven-heat-co-check",
+        "kind": "safety_check_cleared",
+        "reason": "Caller said no to the safety check",
+        "priority": "Low",
+        "status": "open",
+        "created_at": "2026-11-05T20:58:21Z"
+      }
+    ],
+    "callbacks": [],
+    "bookings": [
+      {
+        "id": 183,
+        "kind": "book",
+        "status": "booked",
+        "fsm_job_id": 553,
+        "window_start": "2026-11-05T21:00:00Z",
+        "window_end": "2026-11-05T23:00:00Z",
+        "priority": "Urgent",
+        "priority_reasons": "warm inside and a mild day; heating with an oven, stove, generator or grill indoors, caller said \"Hi, um, my boiler quit last night, so we've had the oven on with the door...\"",
+        "safety_override": 0,
+        "seek_earlier": 0,
+        "attempts": 1,
+        "last_error": null,
+        "raised_after_wait": 0,
+        "priority_rules": "[\"bracket:mild\",\"improvised_heating\"]",
+        "priority_reason_list": "[\"warm inside and a mild day\",\"heating with an oven, stove, generator or grill indoors, caller said \\\"Hi, um, my boiler quit last night, so we've had the oven on with the door...\\\"\"]",
+        "who_home": "Son will be home most of the afternoon",
+        "job_type": "no_heat",
+        "street": "2140 Bath Avenue",
+        "unit": "First floor",
+        "job_notes": "[]"
+      }
+    ],
+    "notes": [],
+    "leads": [],
+    "out_of_area": [],
+    "summary": [],
+    "electrical": [],
+    "holds": [],
+    "pace": [
+      {
+        "call_id": "rtest-11052057-oven-heat-co-check",
+        "speed": 1.0,
+        "source": "default",
+        "requested": 0,
+        "older_adult": 0,
+        "address_speed": null,
+        "repeats": 0
+      }
+    ],
+    "pace_changes": [],
+    "caller_pace": [],
+    "transfers": [],
+    "handoffs": [],
+    "address_lookups": [
+      {
+        "house": "2140",
+        "street": "bath ave",
+        "hint": "Brooklyn",
+        "status": "one",
+        "zips_json": "[\"11214\"]",
+        "source": "geosearch"
+      }
+    ],
+    "address_checks": [],
+    "names": [],
+    "address_moves": [],
+    "identity_checks": [],
+    "heads_ups": []
+  }
+}

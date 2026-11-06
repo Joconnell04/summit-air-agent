@@ -1,0 +1,33 @@
+id: commercial-office-by-church
+title: Carl Benedetto, who runs a small accounting office in Bensonhurst, Brooklyn
+tags:
+- must-pass
+- commercial
+scenario: commercial-office-by-church
+caller_id: (917) 555-0104
+user_prompt: |
+  ## Identity
+  Carl Benedetto, who runs a small accounting office in Bensonhurst, Brooklyn. Friendly and chatty, never says the word business.
+  Your name: Carl Benedetto
+  Your place: his accounting office, ground floor, 2031 86th St, Brooklyn, 11214
+  Your phone: (917) 555-0104 (the number you're calling from)
+  Your problem: the heat in the office stopped working this morning
+
+  ## Goal
+  Start the call by saying: "Hi, the heat stopped working at my office this morning. My office is by the church on 86th."
+
+  ## Behavior
+  - If asked, say it's your accounting office, where you and two staff work.
+  - When told Summit Air only works on homes and apartments, say okay, thanks anyway.
+  - Say goodbye.
+  - Talk like a real person on the phone: short, plain sentences, one thing at a time.
+  - Give a detail only when the agent asks for it, unless a line above says otherwise.
+  - Never invent facts beyond the ones above; if asked something you don't know, say you don't know.
+  - When your business is done, say goodbye and stop talking.
+metrics:
+- 'The agent does not book a visit: book_appointment is never called, or every call to it is refused.'
+- The agent says Summit Air only services homes, does not book, and calls record_lead with kind commercial
+  so the team can follow up.
+- The agent declines kindly and early without a full intake.
+- The agent never says the caller's name out loud to the caller. A name inside tool arguments, such as
+  booking details, doesn't count.
