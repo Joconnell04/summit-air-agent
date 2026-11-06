@@ -390,3 +390,18 @@ def test_a_buzzer_code_is_not_a_unit_change(agent):
     booked = book(agent, call, first_open(agent, call), name="Pat Rivera",
                   arrival_notes="Buzzer 2B")
     assert booked["ok"], booked
+
+
+def test_the_assistants_name_is_one_tenant_setting():
+    """Jackson renamed the assistant to Brian with Cartesia's Brian voice; the greetings take the
+    name from assistant_name, so a rename is one edit."""
+    from pathlib import Path
+
+    from app.tenant import load_agent, voice_lines
+
+    raw = (TENANT_DIR / "agent.yaml").read_text()
+    assert "I'm {assistant_name}" in raw and "I'm Brian" not in raw and "Brooke" not in raw
+    voice = voice_lines(TENANT_DIR)
+    assert "I'm Brian, the virtual assistant" in voice["greeting_unknown"]
+    assert "I'm Brian, the virtual assistant" in voice["greeting_known"]
+    assert load_agent(Path(TENANT_DIR))[0]["voice"]["greeting_unknown"] == voice["greeting_unknown"]

@@ -548,8 +548,8 @@ lines:
 voice:
   # Summit Air never ends a sentence, so the voice doesn't lift on it (Jackson, call
   # call_7727509d3289c4434b27efdad5b).
-  greeting_known: Hi {first_name}, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant. How can I help?
-  greeting_unknown: Hi there, thanks so much for calling Summit Air today! I'm Brooke, the virtual assistant. How can I help?
+  greeting_known: Hi {first_name}, thanks so much for calling Summit Air today! I'm {assistant_name}, the virtual assistant. How can I help?
+  greeting_unknown: Hi there, thanks so much for calling Summit Air today! I'm {assistant_name}, the virtual assistant. How can I help?
   # Two-party consent (the owner's Settings page, app/owner_settings.py): said just before the
   # greeting, and by the worker when a caller objects and the recording stops. Off by default:
   # New York needs only one party's consent to record.
@@ -601,6 +601,10 @@ voice:
 # system, where nothing broke and nobody approves (Jackson, call_2fb4e053ba8b76b57c348845990).
 intake:
   skip_for: [estimate]
+
+# The assistant's name, said in the greetings ({assistant_name} in a line). Jackson's agent uses
+# Cartesia's Brian voice.
+assistant_name: Brian
 
 # The open question before booking (prompts/spine.md): a gate code or buzzer, and pets only when
 # true. Jackson, call_2fb4e053ba8b76b57c348845990: "drop pets".

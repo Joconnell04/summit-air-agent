@@ -823,3 +823,35 @@ def test_with_no_borough_the_caller_is_asked_for_it_before_the_zip(located, answ
     second = located.tool("find_address", call, street="410 Highland Boulevard",
                           spelled="H, I, G, H, L, A, N, D")
     assert second["say"] == "And which borough is that in?"
+
+
+HYLAN = Place("1250", "HYLAN BOULEVARD", "10305", "Staten Island", "Rosebank")
+
+
+def test_a_street_heard_wrong_and_spelled_by_the_caller_is_looked_up_as_spelled(located, answers):
+    """Socket-arm trace: speech-to-text heard "Hylan" as "Highland", the caller spelled it, and the
+    model passed spelled "H, Y, L, A, N, Highland Boulevard". find_address still said not found,
+    and an estimate became a callback."""
+    answers.book[("1250", geocode.street_match_key("Hylan Boulevard"))] = [HYLAN]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 1250 Highland Boulevard in Staten Island.")
+    first = located.tool("find_address", call, street="1250 Highland Boulevard",
+                         borough="Staten Island")
+    assert first["refused"] == "address_not_found"
+    located.say(call, first["say"])
+    located.turn(call, "H, Y, L, A, N. Hylan.")
+    found = located.tool("find_address", call, street="1250 Highland Boulevard",
+                         borough="Staten Island", spelled="H, Y, L, A, N, Highland Boulevard")
+    assert found["ok"], found
+    assert found["data"]["zip"] == "10305" and found["data"]["street"] == "1250 Hylan Boulevard"
+    assert found["data"].get("verified", True) is True
+
+
+def test_a_surname_the_caller_spelled_doesnt_replace_a_street_they_said(located, answers):
+    from test_ts_address_lookup import DUFFIELD
+
+    answers.book[("248", geocode.street_match_key("Duffield Street"))] = [DUFFIELD]
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "It's 248 Duffield Street. My name is Park, P, A, R, K.")
+    found = located.tool("find_address", call, street="248 Duffield Street", spelled="P, A, R, K")
+    assert found["ok"] and found["data"]["street"].startswith("248 Duffield"), found

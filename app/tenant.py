@@ -105,8 +105,33 @@ def _rank(level: str) -> int:
     return LEVELS.index(level) if level in LEVELS else -1
 
 
+def with_assistant_name(agent: dict) -> dict:
+    """The tenant's `assistant_name` put into every line that says {assistant_name}, so renaming
+    the assistant is one edit (Brooke to Brian, when Jackson's agent changed voice)."""
+    name = agent.get("assistant_name")
+    if not name:
+        return agent
+    for section in ("voice", "lines"):
+        lines = agent.get(section) or {}
+        for key, value in lines.items():
+            if isinstance(value, str) and "{assistant_name}" in value:
+                lines[key] = value.replace("{assistant_name}", name)
+    return agent
+
+
+def voice_lines(folder: Path) -> dict:
+    """The tenant's `voice` lines (greetings and the rest the voice layer says itself), with the
+    assistant's name in them."""
+    return with_assistant_name(yaml.safe_load((Path(folder) / "agent.yaml").read_text()))["voice"]
+
+
 def load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str | None]:
     """A tenant's agent.yaml merged over its trade's, and the trade's name (None without one)."""
+    agent, trade = _load_agent(folder, trades_dir)
+    return with_assistant_name(agent), trade
+
+
+def _load_agent(folder: Path, trades_dir: Path = TRADES_DIR) -> tuple[dict, str | None]:
     agent = yaml.safe_load((Path(folder) / "agent.yaml").read_text())
     trade = agent.pop("extends", None)
     if trade is None:

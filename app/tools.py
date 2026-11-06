@@ -6,6 +6,7 @@ only after the server returned the sentence and a caller line followed, the safe
 call's own state, and ownership is checked against the customers matched on this call.
 """
 
+import difflib
 import hashlib
 import json
 import logging
@@ -455,9 +456,24 @@ def _with_spelling(ctx: Ctx, street: str, spelled: str) -> str:
     if not spelled_by_caller:
         return street
     split = geocode.split_address(street)
-    if split and _address_said(ctx, split[0], split[1], lines):
+    if split and _address_said(ctx, split[0], split[1], lines) and not _misheard(split[1], word):
         return street
     return with_spelled_name(street, spelled)
+
+
+def _misheard(street: str, spelled: str) -> bool:
+    """The caller spelled a name close to one in the street they were heard to say: speech-to-text
+    heard "Hylan" as "Highland", the caller spelled H, Y, L, A, N, and the spelling must win
+    (socket-arm call; an estimate ended in a callback). A spelling unlike any word of it (a
+    surname, say) leaves the street alone."""
+    return any(
+        difflib.SequenceMatcher(None, w.lower(), spelled.lower()).ratio() >= MISHEARD_RATIO
+        and w.lower() != spelled.lower()
+        for w in geocode.street_name_words(street)
+    )
+
+
+MISHEARD_RATIO = 0.5
 
 
 def _street_in(line: str, names: list[str]) -> bool:
