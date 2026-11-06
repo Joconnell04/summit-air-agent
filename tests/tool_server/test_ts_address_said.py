@@ -84,3 +84,30 @@ def test_a_floor_is_said_as_a_floor(unit, said):
     """Retell call call_bbfbed1552e4f96e41400b1897f read "2nd floor" as "two n d f l o o r"."""
     assert unit_said(unit) == said
     assert address_said("55 Water Street", unit) == f"fifty-five Water Street, {said}"
+
+
+def test_a_street_the_caller_never_said_is_replaced_by_the_one_they_did(agent):
+    """Retell calls call_f8a3ad3177fa2c62fc9db00dcfa and call_f916fac3014142085f3e5e93fab: the
+    caller said "199 East 4th Street, Unit 2. Zip is 10009." and the model read back and booked
+    "199 Eastthstreet Street"."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "One")
+    agent.turn(call, "199 East 4th Street, Unit 2, 10009.")
+    agent.turn(call, "199 East 4th Street, Unit 2. Zip is 10009.")
+    address = {"street": "199 Eastthstreet Street", "unit": "2", "city": "", "zip": "10009"}
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    assert asked["ok"], asked
+    assert asked["say"].startswith("So that's one ninety-nine East Fourth Street, unit two")
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes, that's right.")
+    confirmed = agent.tool("read_back", call, address=address, phone="caller_id", confirmed=True)
+    assert confirmed["ok"], confirmed
+    assert confirmed["data"]["address"]["street"] == "199 East 4th Street"
+
+
+def test_a_street_the_caller_said_is_kept_as_the_model_wrote_it(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "It's 101 Union St, 11231.")
+    address = {"street": "101 Union Street", "unit": "", "city": "", "zip": "11231"}
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    assert asked["say"].startswith("So that's one oh one Union Street")

@@ -218,10 +218,14 @@ class Tenant:
         # The one open question before booking (prompts/spine.md). Pets only when the tenant asks
         # about them; Summit Air doesn't (Jackson, call_2fb4e053ba8b76b57c348845990).
         pets = agent.get("visit_questions", {}).get("pets", False)
+        # One question for getting in: someone home and a code (Jackson, call
+        # call_549de89ecc2428e409b64072e34), so the caller isn't asked twice.
         self.arrival_question = (
-            "Anything the tech should know when they get there, like a gate code, a buzzer or a pet?"
+            "Will someone be home to let the technician in, and is there a gate code, a buzzer or "
+            "a pet they should know about?"
             if pets
-            else "Is there a gate code or buzzer the technician should know about?"
+            else "Will someone be home to let the technician in, and is there a gate code or "
+            "buzzer they should know about?"
         )
         self.fsm_tenant_id: int = company["tenant_id"]
         self.name: str = company["company"]["name"]

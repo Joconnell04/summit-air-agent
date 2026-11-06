@@ -330,3 +330,42 @@ def test_a_repair_visit_still_needs_its_intake(agent):
     assert refused["refused"] == "invalid_arguments"
     assert set(refused["data"]["errors"]) == {"since", "tried", "who_home", "approver"}
     assert refused["say"] == ""
+
+
+def test_getting_in_is_one_question(agent):
+    """Jackson's call call_549de89ecc2428e409b64072e34 asked "someone home" and "gate code or
+    buzzer" as two questions."""
+    from prompts import assemble
+
+    start = agent.start(UNKNOWN)["data"]
+    question = ("Will someone be home to let the technician in, and is there a gate code or "
+                "buzzer they should know about?")
+    assert start["tenant"]["arrival_question"] == question
+    assert question in assemble.instructions(start)
+
+
+def test_today_and_tomorrow_are_said_without_the_weekday_or_date(agent, mock):
+    """Jackson's call call_549de89ecc2428e409b64072e34: today and tomorrow are "today" and
+    "tomorrow", in find_slots, book_appointment and reschedule_appointment alike. The clock is
+    Monday, November 2, 9 AM."""
+    call = ready_to_book(agent)
+    found = agent.tool("find_slots", call, job_type="tune_up")
+    assert found["data"]["offer"]["day"] in ("today", "tomorrow")
+    for said in (found["say"],):
+        assert "Monday" not in said and "Tuesday" not in said and "November" not in said, said
+    today = agent.tool("find_slots", call, job_type="tune_up", day="today")
+    assert today["say"].startswith("Today I have"), today["say"]
+    slot = {"date": today["data"]["windows"][0]["date"], "window": today["data"]["windows"][0]["window"]}
+    booked = book(agent, call, slot, name="Pat Rivera")
+    assert booked["ok"], booked
+    assert "arrive today between" in booked["say"] and "Monday" not in booked["say"]
+    agent.say(call, booked["say"])
+    agent.turn(call, "Actually, can we move it to tomorrow?")
+    tomorrow = agent.tool("find_slots", call, job_type="tune_up", day="tomorrow")
+    window = tomorrow["data"]["windows"][0]
+    moved = agent.tool("reschedule_appointment", call, booking_id=booked["data"]["booking_id"],
+                       slot={"date": window["date"], "window": window["window"]},
+                       reason="caller asked")
+    assert moved["ok"], moved
+    assert moved["say"].startswith("Done, I've moved it to tomorrow, between "), moved["say"]
+    assert "Tuesday" not in moved["say"] and "November" not in moved["say"]

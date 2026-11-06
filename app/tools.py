@@ -2355,6 +2355,28 @@ def _repair_intake(ctx: Ctx, job_type: str, details: dict) -> None:
         )
 
 
+def _street_the_caller_said(ctx: Ctx, street: str) -> str:
+    """The street as the caller said it, when the model's isn't one they said but they did say one
+    with the same house number: the model sent "199 Eastthstreet Street" for the caller's "199 East
+    4th Street", and that went on the booking a technician would drive to (Retell calls
+    call_f8a3ad3177fa2c62fc9db00dcfa and call_f916fac3014142085f3e5e93fab). A street said once
+    with that number is taken; none, or two different ones, leave the model's as it was."""
+    split = geocode.split_address(street)
+    if not split:
+        return street
+    house, name = split
+    if _address_said(ctx, house, name):
+        return street
+    said: dict[str, str] = {}
+    for row in _caller_lines(ctx):
+        for h, s in geocode.addresses_in(_house_marks_dropped(row["text"])):
+            if geocode.house_key(h) == geocode.house_key(house):
+                said.setdefault(geocode.street_match_key(s), s)
+    if len(said) != 1:
+        return street
+    return f"{house} {next(iter(said.values()))}"
+
+
 def _unit_for_building(ctx: Ctx, address: dict) -> None:
     """A building find_address found with more than one home in it, read back with no unit: the
     caller is asked once for it (Jackson's call call_2fb4e053ba8b76b57c348845990, 199 East 4th
@@ -2421,7 +2443,9 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
             errors={"unit": "one unit"},
         )
     _zip_known(ctx, args.address.zip)
-    spelled_street = _with_spelling(ctx, args.address.street, args.address.spelled)
+    spelled_street = _street_the_caller_said(
+        ctx, _with_spelling(ctx, args.address.street, args.address.spelled)
+    )
     _zip_mismatch(ctx, args.address.zip, spelled_street, args.address.city)
     address = args.address.model_dump()
     address["street"] = spelled_street
@@ -3292,8 +3316,11 @@ def reschedule_appointment(ctx: Ctx, args: RescheduleIn) -> Result:
         },
     )
     between = when["label"].replace(" to ", " and ")
+    # Today and tomorrow are said as such, as the booking says them (Jackson's call
+    # call_549de89ecc2428e409b64072e34); a later day keeps its date, so a wrong day is caught.
+    day = when["day"] if when["day"] in ("today", "tomorrow") else when["day_and_date"]
     return ok(
-        f"Done, I've moved it to {when['day_and_date']}, between {between}. "
+        f"Done, I've moved it to {day}, between {between}. "
         + ctx.tenant.line("after_confirmation"),
         booking_id=job["id"],
         window=when,
