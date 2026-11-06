@@ -9,6 +9,7 @@ from . import (
     address_as,
     asks,
     cards,
+    consistency,
     dead_air,
     labels,
     lookup,
@@ -1103,6 +1104,13 @@ def end(
             )
         transfer.close_open_handoff(conn, call["id"], args.reason, now)
         transfer.close_open_transfer(conn, call["id"], args.reason, now)
+        mismatches = consistency.booking_mismatches(conn, call)
+        if mismatches:
+            records.add_flag(
+                conn, call["id"], "person",
+                f"{consistency.FLAG_PREFIX}: {'; '.join(mismatches)}. Check the job before dispatch.",
+                now, "Urgent",
+            )
         outcome = outcome_of(conn, call)
         labels.settle(conn, tenant, call, outcome, now)
         records.update_call(
