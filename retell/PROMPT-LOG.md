@@ -170,7 +170,7 @@ My agent on change set 16, unchanged. The baseline for the others. Warm and quic
 
 ### Arm B, Sonnet 5.5
 
-agent_871ef6fafe2636244c4bbaca67, llm_dae2724433a06cf424b622d2bea9 (`claude-5.5-sonnet`). Version history from `retell/arms/sonnet/NOTES.md` on joco/sonnet-buildout.
+agent_871ef6fafe2636244c4bbaca67, llm_dae2724433a06cf424b622d2bea9 (`claude-5.5-sonnet`). Version history from `retell/archive/sonnet/NOTES.md` on joco/sonnet-buildout.
 
 v0 (01:17). My prompt as it was, only the model changed. Best arm on the round: fewest gross errors, no safety style issues, never said a name, best on the retracted gas call (judge 8). But it narrates its tools in a way Haiku doesn't: "I used the placeholder ZIP there by mistake", "The Record underscore Lead tool only accepts today or tomorrow as the callback day". Slowest (1087 ms LLM p50) and 3.5 times A's cost a minute.
 
@@ -189,13 +189,13 @@ v6 (06:29:28). A fresh copy of my agent through change set 27, with B's three li
 
 ### Arm C, behavioral Haiku
 
-`retell/arms/haiku-behavioral/prompt.md`, PR #172. Same model, tools and server as A; only the prompt changed. I rewrote the prompt around a person and her habits instead of a list of rules: Brooke as an experienced New York front-desk person, seven "How you talk" habits standing in for the 19 "never" and "don't" lines in How to Speak, and one rule for server text (a `say` is the whole turn, every sentence, once). 1,093 words against 2,254, 2 "never" against 41 (MEASURED, `wc` and `grep`). The idea came from call_6890b248561157d61f2ace3be4b, where the "never mention reference text" lines seemed to prime the very phrase they banned.
+`retell/archive/haiku-behavioral/prompt.md`, PR #172. Same model, tools and server as A; only the prompt changed. I rewrote the prompt around a person and her habits instead of a list of rules: Brooke as an experienced New York front-desk person, seven "How you talk" habits standing in for the 19 "never" and "don't" lines in How to Speak, and one rule for server text (a `say` is the whole turn, every sentence, once). 1,093 words against 2,254, 2 "never" against 41 (MEASURED, `wc` and `grep`). The idea came from call_6890b248561157d61f2ace3be4b, where the "never mention reference text" lines seemed to prime the very phrase they banned.
 
 Dropped. Worst on every measure: 34 gross errors over 9 calls and a 3.44 judge mean. It said the caller's name on 7 calls, even "Thanks, BioPond" for Siobhan Nguyen (C-k, call_6930525bbbd0de20271b03ad9a3). It narrated on 5 and ended 4 calls early. On the b rerun (call_b8641369a8b7e72f85cfaecc267) it said "We won't call you" and hung up in the same breath, so the do-not-call undo never happened. My read: a shorter prompt that describes a person left Haiku more room to improvise, and every habit I wrote it for came back.
 
 ### Arm D, server-led
 
-`retell/arms/server-led/prompt.md`, PR #173. agent_e758054f5009c5106edd882d81, Haiku 5.5 at temperature 0, on its own tool server with `SERVER_LED=1`. The booking order moved out of the prompt and into code: every result carries `next`, find_slots refuses before a confirmed read-back, book_appointment refuses until the visit questions are answered, end_call waits for the outcome sentence. The prompt shrank to 828 words (37% of 2,254, MEASURED with `wc -w`).
+`retell/archive/server-led/prompt.md`, PR #173. agent_e758054f5009c5106edd882d81, Haiku 5.5 at temperature 0, on its own tool server with `SERVER_LED=1`. The booking order moved out of the prompt and into code: every result carries `next`, find_slots refuses before a confirmed read-back, book_appointment refuses until the visit questions are answered, end_call waits for the outcome sentence. The prompt shrank to 828 words (37% of 2,254, MEASURED with `wc -w`).
 
 Five text rounds through Retell chat before any phone call (`evals/rounds/server-led-01.md` on joco/server-led-flow-979e54). Round 3 put the open-door line before the offer's closing question, since it got dropped after it every time, and added known-caller and echo lines. Round 4 went to temperature 0 and took out a commercial line that contradicted the server. Round 5 used my sharper wording for names, the address on file, narration and gas advice. Over rounds 4 and 5 (12 calls) it still reworded 21 of 40 server sentences, narrated on 8 calls and said a name on 3 (MEASURED, `gross.py`). Prompt wording stopped moving those numbers after round 2, and temperature 0 didn't change the rewording.
 
@@ -207,7 +207,7 @@ This became the demo path, so it has its own section below.
 
 ## Socket build (issue #176), the demo path
 
-The socket agent ("Summit Air socket (test)", agent_9e575b3fa1457c8d4331a3b80a) runs on our own custom-LLM socket, so its prompt isn't in Retell. The prompt is `retell/arms/socket/prompt.md` on joco/socket-buildout-176, PR #179. The socket reads it on every call and runs Claude Haiku 5.5 through the Anthropic API (config/models.yaml `fast`). The server speaks most of the call itself: the read-back, the offers, the booking line, the visit questions, the safety lines, the greeting and the goodbye. That's why most of the rules that kept growing on my live agent aren't in this prompt at all. These entries fold in the socket lane's own log (`retell/arms/socket/PROMPT-LOG.md`, v1 to v5).
+The socket agent ("Summit Air socket (test)", agent_9e575b3fa1457c8d4331a3b80a) runs on our own custom-LLM socket, so its prompt isn't in Retell. The prompt is `retell/socket/prompt.md` on joco/socket-buildout-176, PR #179. The socket reads it on every call and runs Claude Haiku 5.5 through the Anthropic API (config/models.yaml `fast`). The server speaks most of the call itself: the read-back, the offers, the booking line, the visit questions, the safety lines, the greeting and the goodbye. That's why most of the rules that kept growing on my live agent aren't in this prompt at all. These entries fold in the socket lane's own log (`retell/socket/PROMPT-LOG.md`, v1 to v5).
 
 | Version | Time | Words | "never" | Commit |
 |---|---|---|---|---|
@@ -282,7 +282,7 @@ From call_046f37112cac691a50019893717:
 - The no-account line adds "no problem, I'll get you set up".
 - "Wait" gets "No worries, take your time."
 
-In code, once a reply asks something, nothing more of that reply is said. The closing is "Thanks for calling Summit Air today." plus a nicety pinned to the ones measured to fall in Brian's voice: "Have a great day!" fell on 36 of 36 recorded calls, while "Have a good night!" rose on 3 of 3 (MEASURED, `retell/arms/socket/closing_pitch.py`). Not measured on the phone yet.
+In code, once a reply asks something, nothing more of that reply is said. The closing is "Thanks for calling Summit Air today." plus a nicety pinned to the ones measured to fall in Brian's voice: "Have a great day!" fell on 36 of 36 recorded calls, while "Have a good night!" rose on 3 of 3 (MEASURED, `retell/socket/closing_pitch.py`). Not measured on the phone yet.
 
 ### v7 (54b7f6a)
 

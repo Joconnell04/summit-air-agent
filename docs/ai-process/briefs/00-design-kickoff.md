@@ -8,7 +8,7 @@ You are running the design phase of the Summit Air agent with Jackson. He talks,
 2. docs/assignment.md (verbatim; reread before any scope call)
 3. docs/ai-process/phases.md (the route; you keep its boxes current)
 4. docs/considerations.md
-5. from-other-projects/README.md (lessons already learned; don't relearn them)
+5. docs/history/from-other-projects/README.md (lessons already learned; don't relearn them)
 6. DECISIONS.md and the open issues (`/next`)
 
 ## How to run it

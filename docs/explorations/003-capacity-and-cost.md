@@ -86,6 +86,6 @@ Changes if: Paul's volume is far from 150 a day; the load test passes at 5 on 2 
 - Vultr plans (API) https://api.vultr.com/v2/plans ; resize https://docs.vultr.com/products/compute/cloud-compute/management/resize-instance
 - Ubuntu updates https://ubuntu.com/server/docs/how-to/software/automatic-updates/ ; lingering (secondary) https://linux.codidact.com/posts/292897 ; monitoring (secondary) https://freetier.co/compare/healthchecksio-vs-uptimerobot
 - Volume (vendor, weak) https://ainora.lt/blog/hvac-service-call-statistics-2026 and https://vida.io/blog/hvac-call-answering-service (Jun 8, 2026) ; surge claims https://www.fusioncx.com/blog/home-improvement/hvac/avoid-missed-calls-with-answering-services-for-hvac-contractors/
-- Local: 001, decisions 04 and 05, `from-other-projects/bobert/architecture.md`.
+- Local: 001, decisions 04 and 05, `docs/history/from-other-projects/bobert/architecture.md`.
 
 Tools: built-in search and fetch, curl (Vultr API), read-only ssh to `vultr-personal`. No Exa or Firecrawl calls, no paid calls.

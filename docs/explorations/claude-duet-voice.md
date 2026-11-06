@@ -27,7 +27,7 @@ What Claude voice does, and what we can do about it. "Set" means already in `SPE
 | Early or speculative replies | None on Retell; fast fallback is a backup model that bills both | Not set | [13] |
 | Voice prompt style rules | Prompt text | Anthropic published none; its Haiku 5.5 system prompt has one product line on voice (SOURCE [5]). Retell says "a longer prompt is not a better prompt" | [14] |
 
-Two cautions. The Handbook's conversational preset includes "internal colloquial rewrite behavior" (SOURCE [6]), and Retell's model already rewords about half of our fixed lines (SOURCE retell-exact-speech.md), so a rewrite could hit the gas and read-back lines. A filler line at tool start once made the real reply wait 7 to 10 s (MEASURED, Bobert, an earlier personal practice voice agent, not a person; see [from-other-projects/bobert](../../from-other-projects/bobert)).
+Two cautions. The Handbook's conversational preset includes "internal colloquial rewrite behavior" (SOURCE [6]), and Retell's model already rewords about half of our fixed lines (SOURCE retell-exact-speech.md), so a rewrite could hit the gas and read-back lines. A filler line at tool start once made the real reply wait 7 to 10 s (MEASURED, Bobert, an earlier personal practice voice agent, not a person; see [docs/history/from-other-projects/bobert](../history/from-other-projects/bobert)).
 
 ## 4. Recommendation
 

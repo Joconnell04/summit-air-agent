@@ -15,7 +15,7 @@ RETELL_MODELS = {
     "claude-haiku-4-5-20251001": "claude-4.5-haiku",
     "claude-sonnet-5-5": "claude-5.5-sonnet",
 }
-# The LiveKit worker's temperature for every provider (voice/livekit/worker.py).
+# The LiveKit worker's temperature for every provider (voice/archive/livekit/worker.py).
 TEMPERATURE = 0.3
 
 AGENT_NAME = "Summit Air (Retell baseline)"

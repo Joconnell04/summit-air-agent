@@ -19,6 +19,6 @@ if ! running "servicetitan_mock.app.*--port 8101"; then
   launch mock.log uvicorn servicetitan_mock.app:create_app --factory --host 127.0.0.1 --port 8101
 fi
 running "app.main.*--port 8100" || launch tool-server.log uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8100
-running "voice.livekit.worker start" || launch worker.log python -m voice.livekit.worker start
-running "voice.livekit.outbound" || launch outbound.log python -m voice.livekit.outbound
+running "voice.archive.livekit.worker start" || launch worker.log python -m voice.archive.livekit.worker start
+running "voice.archive.livekit.outbound" || launch outbound.log python -m voice.archive.livekit.outbound
 exit 0

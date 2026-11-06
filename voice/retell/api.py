@@ -25,7 +25,7 @@ ALLOWED = (
     # The audio rig's web calls (voice/retell/rig_adapter.py).
     ("POST", r"/v3/create-web-call"),
     # The socket arm's scripted caller: a Retell agent dialing one of our Retell numbers from
-    # another (retell/arms/socket/retell_caller.py).
+    # another (retell/socket/retell_caller.py).
     ("POST", r"/v2/create-phone-call"),
     ("GET", r"/get-agent/[\w-]+"),
     ("PATCH", r"/update-agent/[\w-]+"),
@@ -35,7 +35,7 @@ ALLOWED = (
     ("PATCH", r"/update-phone-number/\+\d+"),
     ("GET", r"/v2/get-call/[\w-]+"),
     # The side-by-side eval (evals/side_by_side.py) finds each scripted call by time window, and
-    # the socket arm checks a line is idle before a run (retell/arms/socket/line.py).
+    # the socket arm checks a line is idle before a run (retell/socket/line.py).
     ("POST", r"/v3/list-calls"),
     ("PATCH", r"/v2/update-live-call/[\w-]+"),
     ("POST", r"/v2/stop-call/[\w-]+"),
@@ -51,7 +51,7 @@ ALLOWED = (
     ("PATCH", r"/update-conversation-flow/[\w-]+"),
     ("GET", r"/list-voices"),
     ("POST", r"/add-community-voice"),
-    # The native agent's knowledge base (voice/retell_native/push.py), found by its content name.
+    # The native agent's knowledge base (voice/archive/retell_native/push.py), found by its content name.
     ("GET", r"/list-knowledge-bases"),
     ("POST", r"/create-knowledge-base"),
     ("GET", r"/get-knowledge-base/[\w-]+"),

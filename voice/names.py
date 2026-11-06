@@ -19,7 +19,7 @@ import yaml
 FILE = "names.yaml"
 CARTESIA_URL = "https://api.cartesia.ai/pronunciation-dicts/"
 # The dictionary endpoints take only this version (SOURCE: Cartesia API reference, create and
-# update). Speech requests may send another; voice/livekit/README.md says which works.
+# update). Speech requests may send another; voice/archive/livekit/README.md says which works.
 CARTESIA_DICT_VERSION = "2026-08-14"
 # Deepgram keyterm limits for Nova-3 (SOURCE: developers.deepgram.com/docs/keyterm).
 MAX_KEYTERMS = 100

@@ -1,4 +1,4 @@
-"""Recording each call with LiveKit egress (voice/livekit/recording.py): one audio-only room
+"""Recording each call with LiveKit egress (voice/archive/livekit/recording.py): one audio-only room
 recording to the bucket under the name the server gave, reported back to the server, and stopped
 when the agent leaves. A recorder that refuses never stops the call."""
 
@@ -7,8 +7,8 @@ import asyncio
 from livekit import api
 
 from tests.tool_server.toolkit import UNKNOWN
-from voice.livekit import recording
-from voice.livekit.settings import Settings
+from voice.archive.livekit import recording
+from voice.archive.livekit.settings import Settings
 
 BUCKET = Settings(
     recording_bucket="summit-calls",

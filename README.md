@@ -37,7 +37,7 @@ Every rule that must happen lives in server code, never only in the prompt; a fl
 - The agent's prompt and every version of it, with a note on why each change was made and whether it held: [retell/PROMPT-LOG.md](retell/PROMPT-LOG.md).
 - The hosted fallback's prompt, tools and settings, snapshotted after every change: [retell/summit-air-jackson/](retell/summit-air-jackson/).
 - The lines the server speaks itself, word for word: `tenants/summit-air/agent.yaml`.
-- The socket agent's prompt: [retell/arms/socket/prompt.md](retell/arms/socket/prompt.md).
+- The socket agent's prompt: [retell/socket/prompt.md](retell/socket/prompt.md).
 
 ## Debug a call
 
@@ -88,23 +88,29 @@ Every rule that must happen lives in server code, never only in the prompt; a fl
 
 **How it was built with AI**
 - [docs/ai-process/](docs/ai-process/README.md): lanes, briefs, the co-authoring log, phases and transcripts
-- [from-other-projects/](from-other-projects/README.md): lessons carried in from earlier builds; "Bobert" there is an earlier personal practice project, not a person
+- [docs/history/from-other-projects/](docs/history/from-other-projects/README.md): lessons carried in from earlier builds; "Bobert" there is an earlier personal practice project, not a person
 
 ## Code
 
+The agent first, then the server it calls, then how it's tested and run. Anything retired is kept in an `archive/` folder beside what replaced it, so nothing was deleted.
+
 | Folder | What it is |
 |---|---|
-| [app/](app/README.md) | The tool server every call talks to: gates, priority, safety, booking, the owner view and the debug bench |
-| `retell/summit-air-jackson/` | The live agent as Retell holds it, snapshotted into the repo after every change |
-| [voice/retell/](voice/retell/README.md) | The bridge between Retell and the tool server: greeting and call context before hello, the safety lines, server notes, the hang-up |
-| [voice/livekit/](voice/livekit/README.md) and the other `voice/` folders | The custom stack and the bake-off entrants, kept as the reference (DECISIONS.md 112) |
+| **The agent** | |
+| [retell/socket/](retell/socket/) | The live agent's prompt, tools and push scripts: the socket agent on (516) |
+| [voice/retell_llm/](voice/retell_llm/README.md) | The custom-LLM socket Retell talks to: speaks the server's exact sentences, Haiku writes the rest |
+| [voice/retell/](voice/retell/README.md), `voice/retell_flow/` | The bridge between Retell and the tool server: caller ID and call context before hello, the call's start and end |
+| `retell/summit-air-jackson/` | The hosted single-prompt agent kept as the fallback, snapshotted after every change, with its prompt log in [retell/PROMPT-LOG.md](retell/PROMPT-LOG.md) |
+| `retell/archive/`, `voice/archive/` | Earlier agent arms (Sonnet, behavioral Haiku, server-led) and voice stacks (LiveKit, ElevenLabs, OpenAI Realtime, Gemini Live, Retell native), kept as the reference (DECISIONS.md 112, 121, 124) |
+| **The server** | |
+| [app/](app/README.md) | The tool server every call talks to: gates, priority, safety, booking, transfers, the owner view and the debug bench |
+| `tenants/summit-air/`, `trades/hvac/` | The company's own facts, area and wording, over the HVAC trade's rules |
+| [prompts/](prompts/README.md), `config/models.yaml` | The shared prompts split by job, and every model and voice setting by named profile (no model id is written anywhere else) |
 | [servicetitan_mock/](servicetitan_mock/README.md) | The mock ServiceTitan the integration layer talks to |
-| [prompts/](prompts/README.md) | The prompts, split by job |
-| `config/models.yaml` | Every model and voice setting, by named profile; no model id is written anywhere else |
-| `trades/hvac/`, `tenants/summit-air/` | Trade rules, then the company's own facts, area and wording |
-| [evals/](evals/README.md) | The eval harness, scenarios, checks, the audio rig and results |
+| **Tested and run** | |
+| [evals/](evals/README.md) | The eval harness, scenarios, checks, the audio rig, and each round's results |
+| `tests/`, `scripts/` | The test suite, the test-count ratchet, the world reset and the lanes page |
 | `deploy/` | The server, Caddy and service files |
-| `scripts/`, `tests/` | The test-count ratchet, the lanes page, and the test suite |
 
 ## Run
 

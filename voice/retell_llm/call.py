@@ -1,5 +1,5 @@
 """One call on Retell's custom-LLM socket. Retell hears the caller, takes turns and speaks; this
-class writes every reply the way the LiveKit worker does (voice/livekit/call.py and tools.py):
+class writes every reply the way the LiveKit worker does (voice/archive/livekit/call.py and tools.py):
 
 - each caller line goes to the tool server before the model sees it, and the safety lines, the
   card stop and the other server lines are sent as the server wrote them, uninterruptible;
@@ -28,7 +28,7 @@ from prompts.assemble import (
     spoken_by_server,
     spoken_first,
 )
-from voice.livekit.server import UNREACHABLE, ToolServer
+from voice.archive.livekit.server import UNREACHABLE, ToolServer
 
 from .model import Brain, Reply
 
@@ -65,7 +65,7 @@ Send = Callable[[dict], Awaitable[None]]
 
 
 def compact(result: dict) -> str:
-    """What the model reads: the envelope, without empty fields (voice/livekit/tools.py)."""
+    """What the model reads: the envelope, without empty fields (voice/archive/livekit/tools.py)."""
     return json.dumps({k: v for k, v in result.items() if v not in (None, "", {})}, default=str)
 
 
@@ -473,7 +473,7 @@ class LlmCall:
         self.stages.append({"spoken_from_code_ms": round((time.perf_counter() - self.began) * 1000, 1)})
 
     async def _hand_off(self, out: Response, text: str, say: str, handoff: dict) -> None:
-        """The caller demanded a person (voice/livekit/call.py). With nothing to send the call
+        """The caller demanded a person (voice/archive/livekit/call.py). With nothing to send the call
         through (a web call), the server is told at once and the stored callback line is said."""
         plan = handoff.get("transfer")
         if plan and not self.phone:

@@ -14,7 +14,7 @@ from voice.retell_llm.llm_socket import arm_tools
 ROOT = Path(__file__).resolve().parents[1]
 SAVED = (
     ROOT / "retell" / "summit-air-jackson" / "tools.json",
-    ROOT / "retell" / "arms" / "server-led" / "tools.json",
+    ROOT / "retell" / "archive" / "server-led" / "tools.json",
 )
 
 
@@ -30,7 +30,7 @@ def test_the_saved_retell_tool_lists_have_no_drift():
 
 def test_the_socket_uses_the_servers_own_specs():
     specs = tool_specs(job_types(ROOT / "tenants" / "summit-air"))
-    socket = arm_tools(ROOT / "retell" / "arms" / "socket" / "tools.yaml", specs)
+    socket = arm_tools(ROOT / "retell" / "socket" / "tools.yaml", specs)
     found, described = retell_tools.drift(build.custom_tools(socket, retell_tools.BASE_URL))
     assert not found
     # Its own descriptions only for the tools whose steps the flow runs.

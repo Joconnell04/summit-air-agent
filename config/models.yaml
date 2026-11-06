@@ -44,8 +44,8 @@ profiles:
     thinking: false
     price: {input: 0.30, output: 2.50}
 
-# The ears and the voice for live calls (voice/livekit). The turn-taking values are ASSUMED starting
-# points from the earlier practice agent (from-other-projects/bobert/latency-notes.md) until
+# The ears and the voice for live calls (voice/archive/livekit). The turn-taking values are ASSUMED starting
+# points from the earlier practice agent (docs/history/from-other-projects/bobert/latency-notes.md) until
 # measured on real phone audio (docs/latency.md).
 voice:
   # full: the assembled prompt, the speech filter, owner guidance, stage notes and the side model.
@@ -56,7 +56,7 @@ voice:
   # price_per_minute is streaming plus Deepgram's keyterm add-on, $0.0077 + $0.0013 (SOURCE:
   # https://deepgram.com/pricing, read 2026-11-04).
   stt: {provider: deepgram, model: nova-3, endpointing_ms: 100, price_per_minute: 0.0090}
-  # Other ears, measured against Nova-3 by the STT bench (voice/livekit/stt_bench.py, make
+  # Other ears, measured against Nova-3 by the STT bench (voice/archive/livekit/stt_bench.py, make
   # stt-bench). RIG_VOICE='{"stt": <one of these>}' puts one on the rig's worker; a Cartesia entry
   # also hands the end of turn to the STT's own turn detection, as LiveKit exposes it.
   # Ink-2: 3 credits per second of audio (SOURCE: https://cartesia.ai/pricing, read 2026-11-04) at
@@ -70,7 +70,7 @@ voice:
     flux: {provider: deepgram-flux, model: flux-general-en, price_per_minute: 0.0090}
   # Max ("Conversational Support", a warm, natural American male) from Cartesia's voice library,
   # chosen after live call 1 to replace Katie (f786b574-...), the plugin default (DECISIONS.md, issue
-  # #149). The pre-recorded clips (voice/livekit/clips.py) use the same voice.
+  # #149). The pre-recorded clips (voice/archive/livekit/clips.py) use the same voice.
   # min_sentence_chars: a sentence shorter than this waits to be sent to the voice with the next
   # one (LiveKit's default, 20).
   tts: {provider: cartesia, model: sonic-3, voice_id: 3945925b-9143-4b7d-9ab5-cc4878001106, name: Max,
@@ -145,7 +145,7 @@ offline:
 # Side models: one narrow question each, answered beside the live call (app/side_model.py,
 # DECISIONS.md 006). SIDE_MODEL=<name> turns one on for the tool server; empty is off. Compared in
 # evals/decision-models (make eval-decisions). Prices SOURCE: docs/decisions/05-pipeline-and-models.md;
-# OpenAI Decisions output is free (from-other-projects/bobert/decision-model-eval.md); Jev's output
+# OpenAI Decisions output is free (docs/history/from-other-projects/bobert/decision-model-eval.md); Jev's output
 # price is ASSUMED equal to its input price.
 side:
   haiku:
@@ -203,7 +203,7 @@ audio_rig:
   # add-on (SOURCE: voice.stt above) and Cartesia Sonic (ASSUMED from the Startup plan, docs/cost.md). Its Claude tokens are counted
   # from the call record.
   livekit: {stt_per_minute: 0.0090, tts_per_1k_chars: 0.031}
-  # The STT bench (voice/livekit/stt_bench.py): two caller voices so a result is not one
+  # The STT bench (voice/archive/livekit/stt_bench.py): two caller voices so a result is not one
   # speaker's, and the line noise under the silences, ASSUMED at about -60 dBFS.
   stt_bench:
     voices: [aura-2-thalia-en, aura-2-orion-en]

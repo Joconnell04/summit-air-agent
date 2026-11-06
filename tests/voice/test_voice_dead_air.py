@@ -137,8 +137,8 @@ def test_a_running_tool_is_counted_so_the_call_isnt_silent(agent, connect):
     from prompts import assemble
     from tests.tool_server.toolkit import in_area_address
     from tests.voice.test_voice_tools import JOB_TYPES, Hangups, Voice
-    from voice.livekit.bridge import Bridge
-    from voice.livekit.tools import ToolLog, build_tools
+    from voice.archive.livekit.bridge import Bridge
+    from voice.archive.livekit.tools import ToolLog, build_tools
 
     agent.start(call_id="call-1")
     log = ToolLog()

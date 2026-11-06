@@ -11,10 +11,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from tests.rig_kit import seeded, tool_app, tools_called, turns
-from voice.elevenlabs import rig_adapter as el
-from voice.elevenlabs.agent import agent_body
-from voice.elevenlabs.brain import Brain, build_app, call_id_of, caller_words
-from voice.elevenlabs.server import ToolServer
+from voice.archive.elevenlabs import rig_adapter as el
+from voice.archive.elevenlabs.agent import agent_body
+from voice.archive.elevenlabs.brain import Brain, build_app, call_id_of, caller_words
+from voice.archive.elevenlabs.server import ToolServer
 
 CALLER = "(212) 555-0999"
 TOKEN = "path-token"

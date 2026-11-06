@@ -18,7 +18,7 @@ from tests.rig_kit import (
     turns,
     world_for,
 )
-from voice.openai_realtime import rig_adapter as oai
+from voice.archive.openai_realtime import rig_adapter as oai
 
 CALLER = "(212) 555-0999"
 

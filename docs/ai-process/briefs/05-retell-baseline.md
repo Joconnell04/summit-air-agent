@@ -6,7 +6,7 @@ Branch: `build/voice-retell`. Depends on the tool server (brief 02). Not a token
 
 A Retell agent on the existing 678 number that runs the same conversation as our LiveKit stack, against the same tool server, with the same prompts and as close to the same models as Retell offers, measured the same way. The bake-off result should come down to the platform, not to setup differences.
 
-Read first: CLAUDE.md (Retell rule: versioned endpoints only), docs/tools.md, docs/bakeoffs.md (bake-off 1: hypothesis, scorecard, decision rule), docs/call-journeys.md, docs/latency.md, docs/explorations/004-call-control-and-numbers.md (what Retell can and can't gate), docs/decisions/04-voice-platform.md, from-other-projects/bobert/ (the earlier practice project ran on Retell: its architecture, push script and lessons).
+Read first: CLAUDE.md (Retell rule: versioned endpoints only), docs/tools.md, docs/bakeoffs.md (bake-off 1: hypothesis, scorecard, decision rule), docs/call-journeys.md, docs/latency.md, docs/explorations/004-call-control-and-numbers.md (what Retell can and can't gate), docs/decisions/04-voice-platform.md, docs/history/from-other-projects/bobert/ (the earlier practice project ran on Retell: its architecture, push script and lessons).
 
 ## Scope
 

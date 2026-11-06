@@ -141,7 +141,7 @@ make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
 |---|---|---|---|
 | `livekit` | `livekit-rig` | A scratch world per scenario, through the rig's router | The real worker runs locally under its own agent name; the rig joins each call's room as the SIP caller |
 | `retell` | `retell-rig` | The eval instance, reset before each call | A Retell web call (WebRTC) on a voice agent named as a rig test agent, using the eval LLM and bridge |
-| `elevenlabs` | `elevenlabs` | A scratch world, through the rig's router | ElevenLabs' conversation WebSocket; its model is our brain (`voice/elevenlabs/brain.py`) behind a temporary ngrok tunnel; the test agent is deleted after the run |
+| `elevenlabs` | `elevenlabs` | A scratch world, through the rig's router | ElevenLabs' conversation WebSocket; its model is our brain (`voice/archive/elevenlabs/brain.py`) behind a temporary ngrok tunnel; the test agent is deleted after the run |
 | `openai_realtime` | `openai-realtime` | A scratch world, in process | OpenAI's Realtime WebSocket; function calls forwarded to the tool server |
 | `gemini_live` | `gemini-live` | A scratch world, in process | Gemini's Live WebSocket; function calls forwarded to the tool server |
 

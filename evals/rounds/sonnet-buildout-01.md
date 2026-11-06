@@ -23,7 +23,7 @@ But the runs are spread over five prompt versions as Jackson's change sets lande
 | v5 | Rebased on change sets 19 to 23 (no date for today or tomorrow, one access question, Brian, connectors, the catch-all, caller ID first); "if a tool's say and its data disagree, say the say"; Brian's voice, backchannel 0.8, 8 s check-in | c458944 | after hours | 17 (13 journeys, 4 regression) | 404 |
 | v6 | Rebased on change set 24 (the goodbye, no "thanks for waiting", greeting, 16 s check-in); B's final configuration | | | none (no budget) | |
 
-Each prompt change and what prompted it is in `retell/arms/sonnet/NOTES.md`, and the live prompt in `retell/arms/sonnet/prompt.md`. Each run is held only to the rules its own prompt had: a check that came with a later change set doesn't count against an earlier version (`CHECK_SINCE` in `evals/side_by_side.py`).
+Each prompt change and what prompted it is in `retell/archive/sonnet/NOTES.md`, and the live prompt in `retell/archive/sonnet/prompt.md`. Each run is held only to the rules its own prompt had: a check that came with a later change set doesn't count against an earlier version (`CHECK_SINCE` in `evals/side_by_side.py`).
 
 **Varied callers.** `evals/caller_variants.py` writes a persona per variant from a seed:
 
@@ -128,7 +128,7 @@ Measured with `evals/turn_taking.py`. Latency is the median over calls of each c
 
 ## B's final configuration (v6)
 
-v6 went live at 06:29:28 UTC (last_modification_timestamp 1793946568239) as a fresh copy of Jackson's agent and LLM made by `make_arm.py`. It carries his prompt through change set 27 with none of his lines missing, his tools (including change set 26's emergency dispatch on `read_back`) and his settings: Brian's voice, the 16 s check-in up to twice, backchannel 0.8, `accurate`, dynamic responsiveness off, and Retell's do-not-call detection off. Only the model (`claude-5.5-sonnet`), the eval bridge URLs and B's three prompt lines differ (`retell/arms/sonnet/prompt.md`). No calls were run on v6: the lane's budget was spent.
+v6 went live at 06:29:28 UTC (last_modification_timestamp 1793946568239) as a fresh copy of Jackson's agent and LLM made by `make_arm.py`. It carries his prompt through change set 27 with none of his lines missing, his tools (including change set 26's emergency dispatch on `read_back`) and his settings: Brian's voice, the 16 s check-in up to twice, backchannel 0.8, `accurate`, dynamic responsiveness off, and Retell's do-not-call detection off. Only the model (`claude-5.5-sonnet`), the eval bridge URLs and B's three prompt lines differ (`retell/archive/sonnet/prompt.md`). No calls were run on v6: the lane's budget was spent.
 
 ## Method
 

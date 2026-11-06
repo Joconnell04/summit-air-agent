@@ -108,7 +108,7 @@ def test_an_agent_turn_carries_the_reply_delay_from_the_word_timings(tmp_path):
 
 
 def test_the_reply_delay_key_is_the_one_the_livekit_worker_writes():
-    from voice.livekit.turns import agent_timings
+    from voice.archive.livekit.turns import agent_timings
 
     livekit = agent_timings({"started_speaking_at": 12.0}, 11.2, 0.0, False)
     assert REPLY_DELAY in livekit

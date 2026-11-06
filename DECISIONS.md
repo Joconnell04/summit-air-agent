@@ -17,7 +17,7 @@ Issue: #N
 Decided: (516) 212-9051 is the demo number. It answers with the production socket agent, "Summit Air (socket)" (agent_f39c8c63d908deb1d0f822622d), on the live tool server, so its calls and bookings show on the owner view. (646) stays listed as the earlier line. Transfers ring Jackson's phone by default; the owner view's Hold line switch (Settings) sends them to a Retell hold agent on (678) 336-6730 instead, which repeats a hold message for about six minutes. Production noise cancellation is `no-denoise`, as on the test agent that passed the done bar.
 Why: Twilio suspended voice on the account that holds (646) (error 10005), and only (646) is on that account; (516) and (678) are numbers bought through Retell and kept working through the done bar (DECISIONS 126). The Twilio hold line was on the suspended account too. Jackson wants to flip during the demo between a transfer he answers and one that holds.
 Considered: waiting for Twilio to restore (646) (Jackson chose not to wait); buying a new Retell number so (516) stays a test line (not needed for the demo); a separate setting for the transfer number itself (a switch between two fixed numbers is all the demo needs, and a number field would let a typo send callers nowhere).
-Would change if: Twilio restores (646), which can then be pointed at the same agent with one number update; or a real call with background noise shows `no-denoise` lets noise interrupt Brian (switch with `retell/arms/socket/denoise.py noise-cancellation --live`).
+Would change if: Twilio restores (646), which can then be pointed at the same agent with one number update; or a real call with background noise shows `no-denoise` lets noise interrupt Brian (switch with `retell/socket/denoise.py noise-cancellation --live`).
 Discussion: this session, Jackson's answers on the demo number and the transfer switch
 Issue: #176
 
@@ -166,7 +166,7 @@ Decided: the Retell agents run `stt_mode` accurate with noise cancellation, `res
 Why: replaying Jackson's own replies from live call 3 into Retell (voice/retell/turn_probe.py): fast transcription missed his quiet "sure" 2 of 2 times and answered into his mid-sentence pause; accurate heard 12 of 12 and waited, median 1.70 s (MEASURED). The conversational personality split replies with a pause in 3 of 6, against 0 of 6 without it, at no speed cost (MEASURED). Retell puts knowledge-base text inside the caller's turn, and the model kept answering it aloud ("reference material", three times on one call); with the facts in the prompt, none (MEASURED, call_411b6aa0d8810886254f4d3e558). Retell's End Call hangs up 0.02 to 0.07 s after the goodbye, which Jackson found rushed, and skips the server's gate; ours waits 1.5 s.
 Considered: Retell's Code tool for letter questions (it takes no arguments, and the model narrated the extra step aloud), a stricter knowledge-base threshold (0.75 still leaked), the professional and conversational Handbook presets, sonic-3.6 (questions fell at the end), Expressive mode on Retell's own Max (closest to Jackson's "Max happy" pick, kept on the native copy).
 Would change if: a live call shows accurate transcription too slow on long answers, or Retell lets a knowledge base answer outside the caller's turn.
-Discussion: docs/retell-knobs.md, voice/retell_native/README.md, evals/results/retell-turn-probe/
+Discussion: docs/retell-knobs.md, voice/archive/retell_native/README.md, evals/results/retell-turn-probe/
 Issue: #154
 
 ## 108. Arrival windows are any run of 30-minute blocks, two hours unless the caller asks
@@ -245,7 +245,7 @@ Issue: #149
 Decided: the agent speaks with Cartesia's "Max" (voice id `3945925b-9143-4b7d-9ab5-cc4878001106`, listed by Cartesia as "Conversational Support", a warm, natural American male) on sonic-3, replacing Katie (`f786b574-daa5-4673-aa0c-cbe3e8534c02`), the LiveKit plugin's default. The bridge clips and the at-capacity message are re-recorded in it, and `voice.tts.name` carries the name for the Retell push.
 Why: Jackson after live call 1: "I didn't like the voice... Just choose any other one." Max is clearly different from Katie (a man's voice rather than a young woman's), and Cartesia describes it for customer service conversations (SOURCE: Cartesia's voice list, `GET /voices`, read 2026-11-04).
 Considered: Jameson ("easygoing support", male), Harlow ("warm support", female), Skylar ("friendly guide", female). Any of them would do; a woman's voice risked sounding like the same complaint.
-Would change if: Jackson or Paul prefers another after a listen; one line in config/models.yaml and `python -m voice.livekit.clips` change it.
+Would change if: Jackson or Paul prefers another after a listen; one line in config/models.yaml and `python -m voice.archive.livekit.clips` change it.
 Discussion: Jackson after live call 1, docs/ai-process/coauthoring.md
 Issue: #149
 

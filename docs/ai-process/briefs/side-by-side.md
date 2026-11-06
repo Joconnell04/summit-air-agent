@@ -14,7 +14,7 @@ This is not a call slate for Jackson. Jackson may call the same number at any ti
 | --- | --- | --- | --- |
 | A, as-is | Jackson's agent, unchanged (Claude Haiku 5.5) | agent_a3e38e6aa3d4e75dfac12aafc8 | (646) 624-0418, live |
 | B, Sonnet 5.5 | A copy of A's LLM and agent with only the model changed to `claude-5.5-sonnet` (Retell's id, accepted by create-retell-llm), and its tools and webhook on the eval bridge | agent_871ef6fafe2636244c4bbaca67 | (678) 336-6730, eval |
-| C, behavioral Haiku | A copy of A with only the general prompt replaced by `retell/arms/haiku-behavioral/prompt.md` (issue #170) | agent_d72df072302c81f75d1b7fadf4 | (646) 624-0418, live |
+| C, behavioral Haiku | A copy of A with only the general prompt replaced by `retell/archive/haiku-behavioral/prompt.md` (issue #170) | agent_d72df072302c81f75d1b7fadf4 | (646) 624-0418, live |
 | D, server-led big fix | Its own agent and server instance (issue #171) | from the big-fix lane | (678) 336-6730, server-led |
 
 B and C are made by `voice/retell/side_by_side/make_arm.py`, which copies every setting of A as it is at that moment and changes one thing; it runs again right before the slate so both copies are level with A.
@@ -26,7 +26,7 @@ Two calls at once never share a server world. Line 1 runs A and C interleaved pe
 ## How a run works
 
 - Personas: `evals/side-by-side/personas/` (the coordinator's `/tmp/qa` set a to j, plus k, Siobhan Nguyen, no heat with a newborn), their expected records in `evals/side-by-side/personas.yaml`. The core slate is e, b, c, g, h, i, j, k, one pass; b follows e with no reset, since it moves the visit e booked. The reruns add l, a real gas smell, for the DECISIONS 119 gas journey.
-- `voice/retell/side_by_side/run_slate.sh <slate> <out> <number>` runs on the summit-air server with `setsid -f`, from a folder holding that directory's files and the personas. Per slate line it waits until no call is live in that world, resets the world, points the number at the arm's agent and the world's inbound webhook (`PATCH /update-phone-number`), dials the persona with `voice.livekit.test_call` (`run_persona.py --to`), puts the number back right after the call and on any exit, and dumps the world's rows for the call before the next reset.
+- `voice/retell/side_by_side/run_slate.sh <slate> <out> <number>` runs on the summit-air server with `setsid -f`, from a folder holding that directory's files and the personas. Per slate line it waits until no call is live in that world, resets the world, points the number at the arm's agent and the world's inbound webhook (`PATCH /update-phone-number`), dials the persona with `voice.archive.livekit.test_call` (`run_persona.py --to`), puts the number back right after the call and on any exit, and dumps the world's rows for the call before the next reset.
 - `voice/retell/side_by_side/collect.py <run>` saves Retell's call data (`POST /v3/list-calls`, `GET /v2/get-call`); `evals/side_by_side.py judge | report <run>` adds the Opus 5.5 verdicts and the checks and per-arm table. The phone and Retell pieces sit under `voice/retell/` so nothing in `evals/` imports a voice layer.
 
 ## Measured per arm

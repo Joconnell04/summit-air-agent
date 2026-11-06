@@ -3,7 +3,7 @@ same rules hold when the text streams in small pieces."""
 
 import pytest
 
-from voice.elevenlabs.speakable import SpeakableStream, speakable
+from voice.archive.elevenlabs.speakable import SpeakableStream, speakable
 
 READ_BACK = ("Let me read that back: your home at 801 Fenimore St, Brooklyn, 11206, and the best "
              "number is 347, 555, 0162. Is that right?")

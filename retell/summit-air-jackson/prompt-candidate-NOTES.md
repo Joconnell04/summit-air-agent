@@ -56,7 +56,7 @@ Sections of cs24: Role, How to Speak (S), Booking a Visit (B), Reference Informa
 | B5: "Is it completely out, or just not keeping up?" then "Since when?" in its own turn | Step 5 | |
 | B5: never ask temperature or who lives there; never list urgency examples | Step 9 | Moved next to the open door, the only urgency question. |
 | B5: say nothing about an urgent mention; pass it in facts as said, who_home and issue; don't judge or follow up | Step 9 | |
-| B5: "not provided" for who_home | Dropped | `facts.who_home` is optional in find_slots' schema, and the call in which the server took facts without it is in `retell/arms/haiku-behavioral/NOTES.md` (call_feed25cb0e5d). |
+| B5: "not provided" for who_home | Dropped | `facts.who_home` is optional in find_slots' schema, and the call in which the server took facts without it is in `retell/archive/haiku-behavioral/NOTES.md` (call_feed25cb0e5d). |
 | B5: the catch-all with its three examples (change set 22) | Step 6 | Its own step now, word for word. |
 | B6: "What's the best phone number to reach you?" | Step 7 | |
 | B6: pass digits as said; "this one" passes caller_id | Step 8 ("the phone as they said it") | Server: read_back resolves "this one", "the number I'm calling from" and caller_id itself (`_resolve_phone`). |

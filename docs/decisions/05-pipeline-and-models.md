@@ -93,7 +93,7 @@ Suggested `models.yaml` profiles (not applied):
 Method: built-in search and fetch only; no Exa or Firecrawl calls were made. The `claude-api` skill was not loadable here, so model ids and prices come from Anthropic's docs directly.
 
 Numbers
-- First audio, cascaded: about 1.0 s plain turns with Haiku 4.5, 2.1 s with GPT-4.1 mini, tool turns about 2.3 s. MEASURED by Bobert (an earlier personal practice project: a voice agent for a made-up HVAC company, built before this assignment; the name is the project's, not a person's), one scripted run each, clean audio, not real phone audio (`from-other-projects/bobert/latency-notes.md`). Not yet measured with Haiku 5.5.
+- First audio, cascaded: about 1.0 s plain turns with Haiku 4.5, 2.1 s with GPT-4.1 mini, tool turns about 2.3 s. MEASURED by Bobert (an earlier personal practice project: a voice agent for a made-up HVAC company, built before this assignment; the name is the project's, not a person's), one scripted run each, clean audio, not real phone audio (`docs/history/from-other-projects/bobert/latency-notes.md`). Not yet measured with Haiku 5.5.
 - First audio, speech-to-speech: Gemini 3.1 Flash Live Minimal 0.96 s, GPT-Realtime-2 High 1.14 s. SOURCE, Artificial Analysis arena, human-run scenarios.
 - Tool task success in that arena: 74.6% (Gemini Minimal) to 94.7% (Grok); GPT-Realtime-2.1 Minimal 89.4%; one cascade (ElevenLabs Agents) 90.5%. Not like-for-like with ours. The article notes some failed conversations "sound as though the requested action was completed", the exact failure our booking gate exists for. A vendor-blog benchmark (JustCall) says speech-to-speech completed 26 to 38% of noisy simulated calls against 85% for text; methodology unverified.
 - Cost: Anthropic per million tokens, Haiku 5.5 $0.10 in / $0.50 out, Haiku 4.5 $1 / $5, Sonnet 5.5 $2 / $10, Opus 5.5 $4 / $20, Fable 5.1 $10 / $50 (SOURCE). Flux Multilingual $0.0078 per minute, Aura-2 TTS $0.030 per 1,000 characters (SOURCE). Cartesia about 750 to 800 credits per spoken minute, Scale plan about $0.037 per 1,000 credits, so about $0.03 per spoken minute (SOURCE, computed). Realtime: gpt-realtime-2.1 audio $32 in / $64 out per million tokens, mini $10 / $20 (SOURCE); Artificial Analysis puts input audio at $10.75 per hour for GPT-Realtime-2.1 High and $1.50 per hour for Gemini Minimal.
@@ -122,4 +122,4 @@ Sources
 - Jev vs OpenAI Decisions: https://www.firecrawl.dev/blog/openai-decisions-api-vs-jev; TypeSafe docs: https://docs.typesafe.ai
 - Laya: https://huggingface.co/convaiinnovations/laya-typed-decisions
 - JustCall speech-to-speech vs cascaded: https://justcall.io/blog/speech-to-speech-vs-cascaded-voice-agents.html
-- Local: `from-other-projects/bobert/latency-notes.md`, `decision-model-eval.md`, `docs/considerations.md` C-09, C-10, C-12, C-28, C-35
+- Local: `docs/history/from-other-projects/bobert/latency-notes.md`, `decision-model-eval.md`, `docs/considerations.md` C-09, C-10, C-12, C-28, C-35

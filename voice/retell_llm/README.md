@@ -1,6 +1,6 @@
 # Retell in custom-LLM mode
 
-Experiment 2 of issue #154: Retell does the ears, the turn-taking, interruptions and the voice, and our brain writes every reply. Retell opens a WebSocket to our server for each call and asks for a response whenever it thinks it is the agent's turn; the socket answers with the same model profile, prompt, tool server, speech filter and server-spoken lines as the LiveKit worker (`voice/livekit/`). It runs on the eval instance only, behind its own agent; the (678) number stays on the single-prompt agent (`voice/retell/`). Results: evals/rounds/retell-02.md.
+Experiment 2 of issue #154: Retell does the ears, the turn-taking, interruptions and the voice, and our brain writes every reply. Retell opens a WebSocket to our server for each call and asks for a response whenever it thinks it is the agent's turn; the socket answers with the same model profile, prompt, tool server, speech filter and server-spoken lines as the LiveKit worker (`voice/archive/livekit/`). It runs on the eval instance only, behind its own agent; the (678) number stays on the single-prompt agent (`voice/retell/`). Results: evals/rounds/retell-02.md.
 
 ## How a call flows
 

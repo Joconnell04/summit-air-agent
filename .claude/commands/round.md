@@ -5,7 +5,7 @@ argument-hint: <users|call-journeys|spec|...> [lock]
 
 Target doc: $ARGUMENTS
 
-1. If the doc has no content yet, write version 1 from docs/brief.md, earlier locked docs and from-other-projects/README.md, then stop and ask for feedback.
+1. If the doc has no content yet, write version 1 from docs/brief.md, earlier locked docs and docs/history/from-other-projects/README.md, then stop and ask for feedback.
 2. Otherwise take Jackson's latest message as feedback. Apply the CLAUDE.md glossary when interpreting it.
 3. Revise the doc. Change what the feedback asks for; don't rewrite parts it didn't touch.
 4. Append a round to docs/ai-process/coauthoring.md: the feedback verbatim (exactly as transcribed), a short list of what changed and why, status open.

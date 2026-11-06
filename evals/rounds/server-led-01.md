@@ -6,7 +6,7 @@ Issue #171, brief `docs/ai-process/briefs/server-led-flow.md`. Arm D of the agen
 
 ## 1. What ran
 
-- **Agents.** Voice `agent_e758054f5009c5106edd882d81` (LLM `llm_dfd71458b4bbb517fb13ea5463ef`), chat `agent_4fc47d4800adc7aa7b720abc46` (LLM `llm_756e438fff63e41dda13ca5bac46`), both "Summit Air server-led (test)". Claude Haiku 5.5 on Retell. Voice and listening settings are read from Jackson's agent (`retell/arms/server-led/push.py`).
+- **Agents.** Voice `agent_e758054f5009c5106edd882d81` (LLM `llm_dfd71458b4bbb517fb13ea5463ef`), chat `agent_4fc47d4800adc7aa7b720abc46` (LLM `llm_756e438fff63e41dda13ca5bac46`), both "Summit Air server-led (test)". Claude Haiku 5.5 on Retell. Voice and listening settings are read from Jackson's agent (`retell/archive/server-led/push.py`).
 - **Instance.** `https://server-led.45-77-105-247.sslip.io`: its own tool server with `SERVER_LED=1`, mock ServiceTitan and bridge (`deploy/server-led/`). The live services were not touched.
 - **Harness.** The text harness through Retell chat (`make eval STACKS=retell` with this arm's chat agent and instance, `voice/retell/eval_adapter.py`): our caller simulator, our code checks, our grader. Six scenarios a round: `no-heat-unknown-caller`, `tune-up-known-caller`, `elderly-no-heat`, `readback-yes-but-unit`, `gas-smell-in-passing`, `commercial-bakery` (four in round 2, one in round 1).
 - **Gross-error checks.** `server-led-01-data/gross.py`, patterns over the transcripts and the tool server's record of each call (`traces/`). Rough: it prints every line it flags so the counts can be checked by eye.

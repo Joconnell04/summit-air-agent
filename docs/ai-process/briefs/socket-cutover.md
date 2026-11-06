@@ -14,21 +14,21 @@ Jackson picked the socket version for the demo (Retell's ears and voice, our cod
    - The bridge's inbound webhook (`voice/retell/bridge.py` `inbound`) sends `flow: server_led` when the answering agent is in a new setting, `RETELL_SERVER_LED_AGENTS` (the `agent_id` in Retell's `call_inbound` event; to be confirmed against a recorded event first, with the dialed number as the fallback key). Every other call starts exactly as today.
    - Tests: a call started without `flow` gets no `next` and no gates on a live-configured server, and one started with it gets both, side by side on the same server.
 2. **The socket runs beside the live bridge.** A new process in `deploy/retell/run.sh`, `llm` on port 8114, with `TOOL_SERVER_URL=http://127.0.0.1:8100`, `RETELL_LLM_SERVER_LED=1` and the arm's prompt and tools (as `deploy/server-led/run.sh` `socket`). A Caddy route `/retell-llm/*` → 8114 on the main host. `deploy/retell/deploy.sh` starts it with the other `summit-retell@*` units.
-3. **A production socket agent.** "Summit Air (socket)", made by `retell/arms/socket/push.py` with a `--live` switch: the socket URL on the main host, Jackson's voice and listening settings copied from his agent as now, except noise cancellation: whichever `denoising_mode` wins the test on 516 (his call with `no-denoise` against his earlier one with `noise-cancellation`) is set on the production agent with `retell/arms/socket/denoise.py <mode> --live`. The test agent stays on the server-led instance and 516 for further runs.
+3. **A production socket agent.** "Summit Air (socket)", made by `retell/socket/push.py` with a `--live` switch: the socket URL on the main host, Jackson's voice and listening settings copied from his agent as now, except noise cancellation: whichever `denoising_mode` wins the test on 516 (his call with `no-denoise` against his earlier one with `noise-cancellation`) is set on the production agent with `retell/socket/denoise.py <mode> --live`. The test agent stays on the server-led instance and 516 for further runs.
 4. **No clock offset in the live world.** `app/clock.py` already ignores `SUMMIT_CLOCK_OFFSET_H` outside the eval and server-led worlds; a test pins that.
 
 ## Order
 
 1. The server lane lands its last push on `joco/stripped`; I merge it into the socket branch, run `make check` and the socket's text runs, and one call on 516.
 2. PR #173 (the server-led flow) and the socket PR merge into `joco/stripped`, with the per-call flow mode above. `make check` passes.
-3. Deploy the live services (`deploy/summit-air/deploy.sh`, `deploy/retell/deploy.sh`) at a time the coordinator picks, with no call live on 646 (`retell/arms/socket/line.py`'s busy check, pointed at 646). Nothing changes for callers yet: 646 still answers with Jackson's agent, whose calls start without `flow`.
+3. Deploy the live services (`deploy/summit-air/deploy.sh`, `deploy/retell/deploy.sh`) at a time the coordinator picks, with no call live on 646 (`retell/socket/line.py`'s busy check, pointed at 646). Nothing changes for callers yet: 646 still answers with Jackson's agent, whose calls start without `flow`.
 4. Push the production socket agent and set its noise cancellation. Set `RETELL_SERVER_LED_AGENTS` to its id in `~/summit-air/retell.env` and restart the live bridge. `make retell-tools-check` shows no drift on the hosted agent kept for rollback.
 5. Point 646 at the production socket agent, inbound webhook unchanged (`https://45-77-105-247.sslip.io/retell/inbound`).
 6. One check call on 646: the greeting, a booking, the booking on the owner view, the call's label, the socket's log line with its hold-phrase and drop counts.
 
 ## Rollback
 
-Point 646 back at `agent_a3e38e6aa3d4e75dfac12aafc8` with the same inbound webhook (one `PATCH /update-phone-number/+16466240418`, the body `retell/arms/socket/line.py` used to restore). Calls that start after that start without `flow`, so the server is as it was for them; nothing is restarted or redeployed. A call in progress on the socket finishes on the socket.
+Point 646 back at `agent_a3e38e6aa3d4e75dfac12aafc8` with the same inbound webhook (one `PATCH /update-phone-number/+16466240418`, the body `retell/socket/line.py` used to restore). Calls that start after that start without `flow`, so the server is as it was for them; nothing is restarted or redeployed. A call in progress on the socket finishes on the socket.
 
 ## Risks
 

@@ -1,4 +1,4 @@
-"""The socket arm's run tools (retell/arms/socket, issue #176): its own line, never Jackson's,
+"""The socket arm's run tools (retell/socket, issue #176): its own line, never Jackson's,
 and persona variants that are varied but can be made again."""
 
 import importlib.util
@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def load(name: str):
-    path = ROOT / "retell" / "arms" / "socket" / f"{name}.py"
+    path = ROOT / "retell" / "socket" / f"{name}.py"
     spec = importlib.util.spec_from_file_location(f"socket_arm_{name}", path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -20,7 +20,7 @@ def load(name: str):
 def test_the_arm_runs_on_its_own_line_and_never_repoints_a_number():
     line = load("line")
     assert line.NUMBER == "+15162129051"
-    slate = (ROOT / "retell" / "arms" / "socket" / "run_slate.sh").read_text()
+    slate = (ROOT / "retell" / "socket" / "run_slate.sh").read_text()
     # Jackson's (646) is never dialed or repointed.
     assert "6466240418" not in slate and "update-phone-number" not in slate
     assert "line.py busy" in slate and "line.py hangup" in slate
@@ -89,7 +89,7 @@ def test_the_live_agent_uses_the_live_socket_and_points_no_number():
     assert body["response_engine"]["llm_websocket_url"].startswith(
         "wss://45-77-105-247.sslip.io/retell-llm/")
     assert body["voice_id"] == "cartesia-Brian" and body["enable_dnc_detection"] is False
-    source = (ROOT / "retell" / "arms" / "socket" / "push.py").read_text()
+    source = (ROOT / "retell" / "socket" / "push.py").read_text()
     live_branch = source[source.index("    if live:"):source.index("    number = next")]
     assert "update-phone-number" not in live_branch
 

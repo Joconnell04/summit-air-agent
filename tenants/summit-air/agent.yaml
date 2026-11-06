@@ -587,7 +587,7 @@ lines:
   callback_opening: Hi, this is Summit Air calling back for {first_name}. Is that you?
   callback_opening_unknown: Hi, this is Summit Air calling you back, like we said we would.
 
-# What the voice worker says on its own, without the model (voice/livekit). {first_name} is the
+# What the voice worker says on its own, without the model (voice/archive/livekit). {first_name} is the
 # matched customer's first name; {phone} is our number, on outbound calls.
 voice:
   # Summit Air never ends a sentence, so the voice doesn't lift on it (Jackson, call
@@ -615,8 +615,8 @@ voice:
   # check-in after about 8 seconds of silence, at most twice; and the hold phrases said once when a
   # step's tool work outlasts config/models.yaml voice.hold_phrase_after_s, in turn.
   closing: Thanks for calling Summit Air today.
-  # Only niceties measured to end falling in Brian's voice (retell/arms/socket/closing_pitch.py on
-  # 41 recorded calls, retell/arms/socket/closing-pitch-01.json): "Have a great day!" fell on 36 of
+  # Only niceties measured to end falling in Brian's voice (retell/socket/closing_pitch.py on
+  # 41 recorded calls, retell/socket/closing-pitch-01.json): "Have a great day!" fell on 36 of
   # 36 (median -18 semitones a second over its last 400 ms), while "Thanks for calling Summit Air."
   # rose on 5 of 5 and "Have a good night!" on 3 of 3. Add one here only after it measures falling.
   closing_niceties: [Have a great day!]
@@ -645,7 +645,7 @@ voice:
     - Let me pull that up.
     - One moment.
   # Pre-recorded, so they need no voice stream (docs/scaling.md). Regenerate the clips after a change:
-  # uv run python -m voice.livekit.clips. Each bridge clip must stay under 1.6 seconds (voice/livekit/bridge.py).
+  # uv run python -m voice.archive.livekit.clips. Each bridge clip must stay under 1.6 seconds (voice/archive/livekit/bridge.py).
   clips:
     bridge_one_sec: Okay, just give me one second.
     bridge_pull_up: Sure, let me pull that up.

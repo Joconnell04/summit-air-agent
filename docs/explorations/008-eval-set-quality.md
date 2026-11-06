@@ -46,7 +46,7 @@ Does well:
 - Not trivially green: 3 of 8 smoke scenarios passed in both runs on the stand-in prompt. That says the suite can fail an agent; it says nothing about the real prompts yet.
 
 Gaps:
-1. No case comes from a real caller. Seeds are the spec, the journeys and Bobert's simulated logs (Bobert is an earlier personal practice project, see `from-other-projects/bobert`).
+1. No case comes from a real caller. Seeds are the spec, the journeys and Bobert's simulated logs (Bobert is an earlier personal practice project, see `docs/history/from-other-projects/bobert`).
 2. One model family at author, caller, agent and grader (see section 2).
 3. The caller is cooperative and has no rule to hold facts back. No scenario's difficulty comes from what the caller withholds or believes wrongly.
 4. The heavy speech-to-text roughening never runs: 0 of 46 scenarios carry `transcription-errors`, and the light level is lower-casing, spelled-out digits and a list of 17 sound-alike words (`evals/transcribe.py`).

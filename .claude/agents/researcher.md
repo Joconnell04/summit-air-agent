@@ -16,4 +16,4 @@ You research one idea for the Summit Air agent and write docs/explorations/NNN-<
 5. Open questions for Jackson
 6. Sources (links, with dates where known)
 
-Read CLAUDE.md, DECISIONS.md and from-other-projects/README.md first so you don't reopen settled choices or ignore earlier lessons. Label numbers SOURCE, MEASURED or ASSUMED. Keep it under two pages. Checkpoint partial findings to the file as you go. When done, comment the file path on the exploration issue with `gh issue comment`.
+Read CLAUDE.md, DECISIONS.md and docs/history/from-other-projects/README.md first so you don't reopen settled choices or ignore earlier lessons. Label numbers SOURCE, MEASURED or ASSUMED. Keep it under two pages. Checkpoint partial findings to the file as you go. When done, comment the file path on the exploration issue with `gh issue comment`.

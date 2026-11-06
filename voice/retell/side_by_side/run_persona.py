@@ -1,4 +1,4 @@
-"""One scripted call from a persona file: voice.livekit.test_call with its caller persona swapped.
+"""One scripted call from a persona file: voice.archive.livekit.test_call with its caller persona swapped.
 
     PYTHONPATH=~/summit-air/app uv run --env-file ../.env python run_persona.py <persona.txt> \
         [--to +16783366730] [--minutes 5.5]
@@ -12,7 +12,7 @@ import asyncio
 import os
 from pathlib import Path
 
-import voice.livekit.test_call as t
+import voice.archive.livekit.test_call as t
 
 parser = argparse.ArgumentParser()
 parser.add_argument("persona")

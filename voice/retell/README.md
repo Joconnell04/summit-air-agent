@@ -1,6 +1,6 @@
 # Retell baseline
 
-The Retell half of the voice-platform bake-off (DECISIONS.md 004, docs/bakeoffs.md bake-off 1): a Retell agent on (678) 336-6730 that runs the same conversation as our LiveKit stack (`voice/livekit/`) against the same tool server. If Retell wins, this folder becomes the product; if not, it is deleted in one step. It holds no rules: every fact and gate is the tool server's (docs/tools.md).
+The Retell half of the voice-platform bake-off (DECISIONS.md 004, docs/bakeoffs.md bake-off 1): a Retell agent on (678) 336-6730 that runs the same conversation as our LiveKit stack (`voice/archive/livekit/`) against the same tool server. If Retell wins, this folder becomes the product; if not, it is deleted in one step. It holds no rules: every fact and gate is the tool server's (docs/tools.md).
 
 ## How a call flows
 

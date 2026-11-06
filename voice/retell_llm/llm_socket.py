@@ -29,7 +29,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from app.tenant import voice_lines
 from prompts.assemble import job_types, tool_specs
-from voice.livekit.server import ToolServer
+from voice.archive.livekit.server import ToolServer
 
 from .call import LlmCall
 from .model import Brain
@@ -60,7 +60,7 @@ def arm_prompt(path: Path, variables: dict) -> str:
 def arm_tools(path: Path, specs: list[dict]) -> list[dict]:
     """The tool server's own specs (names, parameters, write flags, prompts/tools.yaml
     descriptions), with the arm's description for the few tools whose steps its flow runs
-    (retell/arms/socket/tools.yaml). Parameters always come from the server, so an argument it
+    (retell/socket/tools.yaml). Parameters always come from the server, so an argument it
     adds (read_back's job_type) reaches the model, and nothing drifts (voice/retell/tool_schemas.py)."""
     overrides = yaml.safe_load(path.read_text()) or {}
     names = {s["name"] for s in specs}

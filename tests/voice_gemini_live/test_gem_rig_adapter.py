@@ -10,7 +10,7 @@ import pytest
 
 from evals.models import load_config
 from tests.rig_kit import FakeListener, FakeSocket, seeded, tool_app, tools_called, turns, world_for
-from voice.gemini_live import rig_adapter as gem
+from voice.archive.gemini_live import rig_adapter as gem
 
 CALLER = "(212) 555-0999"
 AUDIO = {"serverContent": {"modelTurn": {"parts": [{"inlineData": {

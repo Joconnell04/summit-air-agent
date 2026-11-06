@@ -17,7 +17,7 @@ If someone asks why it works the way it does, these are the answers. Numbers are
 | Topic | What we decided | Entry |
 |---|---|---|
 | Platform | Our own LiveKit stack, with Retell as the baseline to beat; the audio bake-off kept ours (Retell paraphrased the gas lines on 5 of 6 calls) | 004, 038 |
-| The core rule | The model asks; the server decides. Booking, refusals, hang-ups, priority and safety lines are server code, and a flag the model can set is not a gate | spec, from-other-projects |
+| The core rule | The model asks; the server decides. Booking, refusals, hang-ups, priority and safety lines are server code, and a flag the model can set is not a gate | spec, docs/history/from-other-projects |
 | Live model | Haiku 5.5, thinking off; Sonnet for the technician summary; Opus grades the evals | 036, later.md C-57 |
 | Ears and voice | Deepgram Nova-3 hears; Cartesia sonic-3 speaks. Ink-2 measured 0.6 s slower a turn and worse on street names; Cartesia's hosted agents can't let our server own the safety lines | 068, 065 |
 | Safety posture | Escalate politely, don't coach; fixed safety lines spoken word for word by the server | 033, 060 |

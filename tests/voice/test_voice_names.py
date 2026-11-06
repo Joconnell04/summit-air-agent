@@ -11,8 +11,8 @@ from livekit.plugins import cartesia, deepgram
 
 from tests.tool_server.toolkit import TENANT_DIR
 from voice import names as local_names
-from voice.livekit.settings import load_voice
-from voice.livekit.worker import (
+from voice.archive.livekit.settings import load_voice
+from voice.archive.livekit.worker import (
     build_stt,
     check_names,
     stt_options,

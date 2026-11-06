@@ -9,7 +9,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SHARED = ["app", "prompts", "servicetitan_mock", "evals", "scripts", "tenants"]
-LAYERS = ["livekit", "retell", "elevenlabs", "openai_realtime", "gemini_live"]
+LAYERS = ["retell", "retell_llm", "retell_flow", "archive"]
 
 
 def import_pattern(layer: str) -> re.Pattern:

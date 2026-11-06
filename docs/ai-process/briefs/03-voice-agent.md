@@ -6,11 +6,11 @@ Branch: `build/voice-livekit`. Depends on the tool contract (docs/tools.md); cod
 
 The LiveKit worker that answers (646) 624-0418 and makes the few outbound calls in journey 12: Deepgram hears, Claude decides, Cartesia speaks, and every rule is the tool server's. Plus the prompts it runs and the phone wiring.
 
-Read first: CLAUDE.md, docs/call-journeys.md, docs/spec.md (Eval, grader and Live lines), docs/tools.md, docs/latency.md, docs/scaling.md, DECISIONS.md 004 to 006, config/models.yaml, from-other-projects/bobert/ (the earlier practice project's LiveKit worker, latency notes and prompt; learn from it, don't copy blindly).
+Read first: CLAUDE.md, docs/call-journeys.md, docs/spec.md (Eval, grader and Live lines), docs/tools.md, docs/latency.md, docs/scaling.md, DECISIONS.md 004 to 006, config/models.yaml, docs/history/from-other-projects/bobert/ (the earlier practice project's LiveKit worker, latency notes and prompt; learn from it, don't copy blindly).
 
 ## Scope
 
-- `voice/livekit/`: a LiveKit Agents worker (Python). Model and voice chosen by profile from config/models.yaml; Anthropic default, OpenAI and Gemini switchable. Thinking off.
+- `voice/archive/livekit/`: a LiveKit Agents worker (Python). Model and voice chosen by profile from config/models.yaml; Anthropic default, OpenAI and Gemini switchable. Thinking off.
 - Calls `/calls/start` before the greeting, `/calls/{id}/turn` on every final transcript and agent line, and the model tools in docs/tools.md. Our own end-call and transfer tools that ask the server first; no built-in end-call tool.
 - Safety lines spoken from the text the server returns, never generated.
 - Turn handling: adaptive interruptions, a minimum-words threshold so noise doesn't interrupt, resume after false interruptions, a longer end-of-turn wait right after asking for digits (docs/latency.md, C-48).

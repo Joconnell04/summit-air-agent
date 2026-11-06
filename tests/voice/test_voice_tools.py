@@ -11,9 +11,9 @@ from app.tools import TOOLS
 from prompts import assemble
 from tests.tool_server.toolkit import DIALED, TENANT_DIR, in_area_address
 from tests.voice.replies import no_reply
-from voice.livekit.bridge import Bridge
-from voice.livekit.server import UNREACHABLE, ToolServer, idempotency_key
-from voice.livekit.tools import ToolLog, build_tools
+from voice.archive.livekit.bridge import Bridge
+from voice.archive.livekit.server import UNREACHABLE, ToolServer, idempotency_key
+from voice.archive.livekit.tools import ToolLog, build_tools
 
 SAFETY = load_agent(TENANT_DIR)[0]["safety"]
 JOB_TYPES = ["no_heat", "no_cooling", "tune_up", "safety_check", "estimate"]

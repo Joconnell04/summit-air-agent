@@ -1,4 +1,4 @@
-"""The STT bench (voice/livekit/stt_bench.py): scoring, audio assembly and timing, offline."""
+"""The STT bench (voice/archive/livekit/stt_bench.py): scoring, audio assembly and timing, offline."""
 
 import asyncio
 import json
@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from evals.audio_rig.audio import samples
-from voice.livekit import stt_bench as bench
+from voice.archive.livekit import stt_bench as bench
 
 
 @pytest.mark.parametrize("heard, expected", [

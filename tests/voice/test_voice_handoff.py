@@ -1,4 +1,4 @@
-"""Cold handoff in the worker (voice/livekit/call.py and transfer.py), against the real tool server
+"""Cold handoff in the worker (voice/archive/livekit/call.py and transfer.py), against the real tool server
 and a fake LiveKit: the server decides on the caller's turn, the worker says its one line and sends
 the caller's own call leg to the number with a SIP transfer, with no consult room, summary or key
 press. A failed transfer brings the agent back with the callback time, never silence."""
@@ -12,11 +12,11 @@ from livekit.agents import StopResponse
 from livekit.agents.llm import ChatMessage
 
 from tests.tool_server.toolkit import UNKNOWN
-from voice.livekit.bridge import Bridge
-from voice.livekit.call import Call
-from voice.livekit.settings import load_voice
-from voice.livekit.tools import ToolLog
-from voice.livekit.transfer import Transfer
+from voice.archive.livekit.bridge import Bridge
+from voice.archive.livekit.call import Call
+from voice.archive.livekit.settings import load_voice
+from voice.archive.livekit.tools import ToolLog
+from voice.archive.livekit.transfer import Transfer
 
 OFFICE = "+12125550100"
 CALLER = "sip_caller"

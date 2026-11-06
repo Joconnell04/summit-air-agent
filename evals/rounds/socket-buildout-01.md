@@ -9,10 +9,10 @@ Issue #176, PR #179. Arm D (the server-led flow, #171) with our own code between
 | | |
 |---|---|
 | Agent | "Summit Air socket (test)", `agent_9e575b3fa1457c8d4331a3b80a`, on its own line, +1 516 212 9051. cartesia-Brian, listening settings copied from Jackson's agent, `enable_dnc_detection` off, no webhook, **denoising off** (`no-denoise`, set for the audio-gap test; Jackson's agent still has `noise-cancellation`) |
-| Socket | `voice/retell_llm` with `RETELL_LLM_SERVER_LED=1`, `retell/arms/socket/prompt.md` (v6, 1,098 words) and the tool overrides in `retell/arms/socket/tools.yaml`. Model: config/models.yaml `fast` (Claude Haiku 5.5) through the Anthropic API |
+| Socket | `voice/retell_llm` with `RETELL_LLM_SERVER_LED=1`, `retell/socket/prompt.md` (v6, 1,098 words) and the tool overrides in `retell/socket/tools.yaml`. Model: config/models.yaml `fast` (Claude Haiku 5.5) through the Anthropic API |
 | World | `~/summit-air/server-led-data` on the summit-air box, tool server with `SERVER_LED=1`. `SUMMIT_CLOCK_OFFSET_H` in `~/summit-air/server-led.env` sets the world's clock; it is back at 0 |
 | Callers | `evals.caller_variants` (pets-free), seed 176: routine (r), elderly (o), gas_real (g) and gas_retracted (x), in `variants3/`. The regression personas b, e, g, h, i and j are `regression2/`. Scored with `evals.side_by_side judge` and `report --personas variants3/variants.yaml` |
-| Caller harness | **Changed after the first call (r176-01).** Twilio disabled voice on the account (error 10005), so the scripted caller is now a Retell agent, "Summit Air test caller" (`agent_d6bf9d465ff9a7040cd876bdff`, cartesia-Cleo), dialing from +1 678 336 6730 with the persona as a dynamic variable (`retell/arms/socket/retell_caller.py`). It is real phone audio on Retell alone, and every call has two billed legs. A Haiku caller drifts from its script more than the old scripted one: persona j said "No that's it" to five questions in a row |
+| Caller harness | **Changed after the first call (r176-01).** Twilio disabled voice on the account (error 10005), so the scripted caller is now a Retell agent, "Summit Air test caller" (`agent_d6bf9d465ff9a7040cd876bdff`, cartesia-Cleo), dialing from +1 678 336 6730 with the persona as a dynamic variable (`retell/socket/retell_caller.py`). It is real phone audio on Retell alone, and every call has two billed legs. A Haiku caller drifts from its script more than the old scripted one: persona j said "No that's it" to five questions in a row |
 
 Batches, in the order run so the 6 could grow to 10 without rerunning anything:
 
@@ -136,7 +136,7 @@ The first round on (646), before the arm had its own number, scored 7 calls. 3 o
 
 ## 8. What moving the prompt out of Retell's dashboard means for tuning
 
-- **Where it lives.** The prompt is `retell/arms/socket/prompt.md` in the repo. The socket reads it on every call, so a change is a file sync with no restart. The model is a config/models.yaml profile.
+- **Where it lives.** The prompt is `retell/socket/prompt.md` in the repo. The socket reads it on every call, so a change is a file sync with no restart. The model is a config/models.yaml profile.
 - **What's lost.** Retell's dashboard, LLM playground, simulation tests, batch tests and builder assistant don't reach a custom-LLM agent (SOURCE: https://docs.retellai.com/integrate-llm/overview). Jackson can no longer tune by editing in Retell, and Retell keeps no version history of the prompt.
 - **What replaces it.** Git history is the version history. The text harness (`--stacks retell_llm`) runs scripted callers through the real socket at no Retell cost. The phone slate covers what only audio shows.
 - **Less to tune.** The rules Jackson tuned most (the visit questions, the access question, the read-back, the closing) are now server sentences and gates. Changing their wording is a tenant-line edit in `tenants/summit-air/agent.yaml`, not prompt work.

@@ -83,7 +83,7 @@ handoff_failed / transfer_failed (function: tell the server nobody answered)
 | Never end in the turn of the confirmation (S-30) | Unchanged: `end_call` refuses `anything_else_first` |
 | Transfers are the server's (051, 061, app/transfer.py) | Two routes, both from server values: a demand on a caller line (`/turn` returns `handoff` with a plan) at turn_check, a cold transfer; a calmer request through `flag_person`, after which the bridge asks `/calls/{id}/transfer` and returns `transfer` only when the server sends a plan with a number, a warm transfer. The transfer node dials `{{transfer_number}}` from that plan. A demand with no number set gets the stored callback line on firm_line, uninterruptible, as our worker says it |
 | Warm transfer only to a person who accepts (C-11) | Weaker than our stack. Our worker plays the person a press-1 prompt and gives a voicemail no caller details. Retell's warm transfer connects the caller only after its human detection says a person answered, and whispers the server's summary to whoever it judged a person; there is no press-1 step, so a voicemail Retell mistakes for a person hears the summary and the transfer is reported connected. Unmeasured here |
-| Server down mid-call | A caller line the tool server didn't take, or a turn check that failed outright, ends the call on the tenant's server-down line, as our worker does (`voice/livekit/call.py` `server_down`) |
+| Server down mid-call | A caller line the tool server didn't take, or a turn check that failed outright, ends the call on the tenant's server-down line, as our worker does (`voice/archive/livekit/call.py` `server_down`) |
 | Reschedule and cancel only the caller's own job, once each (S-31) | Unchanged in the tools |
 | Least privilege (S-39) | Unchanged: the flow has only our tools; Retell's built-in transfer, end-call, SMS and code tools are not attached |
 | Do-not-call on the caller's words (S-49) | The turn check marks it; the note goes to `{{notes}}`; `mark_do_not_call` returns the line, said through server_line |
@@ -186,4 +186,4 @@ Built as mapped, the flow held every server rule and said every fixed line exact
 
 - Retell docs as listed above, read 2026-11-04.
 - Retell community forum threads 947 and 3394, read 2026-11-04.
-- Repo: `docs/architecture.md` ("How rules are layered"), `app/README.md` ("Where each rule lives"), `app/lifecycle.py` `turn`, `app/tools.py`, `prompts/assemble.py` (`SpokenReply`, `spoken_by_server`), `voice/livekit/call.py`, `voice/retell/README.md`, exploration 016.
+- Repo: `docs/architecture.md` ("How rules are layered"), `app/README.md` ("Where each rule lives"), `app/lifecycle.py` `turn`, `app/tools.py`, `prompts/assemble.py` (`SpokenReply`, `spoken_by_server`), `voice/archive/livekit/call.py`, `voice/retell/README.md`, exploration 016.

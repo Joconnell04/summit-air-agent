@@ -1,4 +1,4 @@
-"""The native Retell agent (voice/retell_native): a one-page prompt with the safety lines word for
+"""The native Retell agent (voice/archive/retell_native): a one-page prompt with the safety lines word for
 word, facts in a knowledge base with no prices, scoped functions, and Retell's own End Call."""
 
 from pathlib import Path
@@ -7,7 +7,7 @@ import yaml
 
 from prompts import assemble
 from voice import names as local_names
-from voice.retell_native import build
+from voice.archive.retell_native import build
 
 TENANT = Path(__file__).resolve().parents[2] / "tenants" / "summit-air"
 BASE = "https://bridge.example.com"

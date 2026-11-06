@@ -1,4 +1,4 @@
-"""Warm transfer in the worker (voice/livekit/transfer.py), against the real tool server and a fake
+"""Warm transfer in the worker (voice/archive/livekit/transfer.py), against the real tool server and a fake
 LiveKit: the server decides, the worker dials the person into a room of their own, gives them the
 summary, and joins them to the caller only when they press 1. Nobody answering, or a voicemail,
 brings the agent back with the callback time."""
@@ -12,9 +12,9 @@ from livekit import api
 from prompts import assemble
 from tests.tool_server.toolkit import UNKNOWN
 from tests.voice.replies import no_reply
-from voice.livekit.bridge import Bridge
-from voice.livekit.tools import ToolLog, build_tools
-from voice.livekit.transfer import PERSON, Transfer
+from voice.archive.livekit.bridge import Bridge
+from voice.archive.livekit.tools import ToolLog, build_tools
+from voice.archive.livekit.transfer import PERSON, Transfer
 
 OFFICE = "+12125550100"
 TRUNK = "ST_outbound"

@@ -6,7 +6,7 @@ Branch: `build/eval-suite`. Depends on the tool contract; runs against the tool 
 
 The harness that tests the agent before anyone calls it, the same way for every stack and model profile, cheap by default. Design: evals/README.md and DECISIONS.md 002. Results go to LangSmith through the existing `evals/langsmith_sync.py`, using the existing schema in `evals/results.py`.
 
-Read first: CLAUDE.md, evals/README.md, evals/results.py, docs/spec.md, docs/call-journeys.md, docs/bakeoffs.md, .claude/agents/red-team-caller.md, from-other-projects/bobert/adversarial-triage-log.md.
+Read first: CLAUDE.md, evals/README.md, evals/results.py, docs/spec.md, docs/call-journeys.md, docs/bakeoffs.md, .claude/agents/red-team-caller.md, docs/history/from-other-projects/bobert/adversarial-triage-log.md.
 
 ## Scope
 

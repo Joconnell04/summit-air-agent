@@ -5,9 +5,9 @@ import time
 
 import yaml
 
-from voice.livekit import clips
-from voice.livekit.bridge import MAX_CLIP_SECONDS, Bridge
-from voice.livekit.settings import ROOT
+from voice.archive.livekit import clips
+from voice.archive.livekit.bridge import MAX_CLIP_SECONDS, Bridge
+from voice.archive.livekit.settings import ROOT
 
 CLIP_S = 0.2
 

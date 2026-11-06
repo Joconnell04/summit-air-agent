@@ -41,7 +41,7 @@ Things that hold for every option:
 - **One phone number.** A new NYC Twilio number (212, 646, 718, 347, 917...), $1.15 a month (SOURCE). The old 678 number lives inside Retell's own Twilio account and can't be moved or pointed at LiveKit (SOURCE: Retell staff, exploration 004), so it can only serve Retell; in a bake-off it is the Retell test line, and the NYC number goes to the winner. Booking texts from the NYC number need a one-time business texting registration (A2P 10DLC, about $20 and up to 5 business days, SOURCE), so it should start early.
 - **No $50 LiveKit plan for the demo.** That plan only keeps LiveKit-hosted agents awake; our program runs on our own always-on Vultr server, so the free plan works. Production would need it: the free plan's 1,000 phone minutes cover only about 285 calls a month (exploration 003). The Vultr server (2 CPUs, 2 GB memory) is short on memory for 5 calls at once; expect 2 to 3 (ASSUMED until load-tested). Moving it to 4 GB costs $20 a month, billed hourly (SOURCE: Vultr). It also reboots itself at 4:30 or 5:30 a.m. New York time for updates, so the program restarts on boot and a health check alerts if it doesn't. Call number 6 goes to a safety line and voicemail in the demo, and to a short hold with a callback offer in production (exploration 003).
 - **Backup.** Twilio can send calls to a second destination, but only if the first one's phone connection is completely dead (exploration 004). If our program crashes while LiveKit itself is up, calls won't fail over on their own; a health check has to flip the number to the backup. That check is part of the build.
-- **Tidy repo.** Both voice layers sit in `voice/livekit/` and `voice/retell/`, hold no rules or prompts, and the losing one is deleted in one step (docs/architecture.md).
+- **Tidy repo.** Both voice layers sit in `voice/archive/livekit/` and `voice/retell/`, hold no rules or prompts, and the losing one is deleted in one step (docs/architecture.md).
 
 ## Recommendation
 
@@ -67,10 +67,10 @@ Phone setup
 - Standby switch: the Twilio number dials LiveKit first and falls back to a Retell SIP endpoint if that dial fails (ASSUMED to work; prove it before #9).
 
 Latency
-- MEASURED in Bobert (laptop to Deepgram, Anthropic, Cartesia; clean TTS clips, one scripted run each): Haiku first audio about 1.0 s on plain turns, 2.3 s on tool turns; GPT-4.1 mini 2.1 s median; STT final 0.2 to 0.4 s after the harness bug was fixed (`from-other-projects/bobert/latency-notes.md`).
+- MEASURED in Bobert (laptop to Deepgram, Anthropic, Cartesia; clean TTS clips, one scripted run each): Haiku first audio about 1.0 s on plain turns, 2.3 s on tool turns; GPT-4.1 mini 2.1 s median; STT final 0.2 to 0.4 s after the harness bug was fixed (`docs/history/from-other-projects/bobert/latency-notes.md`).
 - Not measured: real 8 kHz phone audio, and Retell at all. Retell's about 600 ms is repeated across its own blog posts (180, 200 and 80 test calls, inconsistent) with no independent benchmark (SOURCE: [retellai.com](https://www.retellai.com/), unverified). Comparing 1.0 s with 600 ms is not apples to apples; #9 is the first fair test.
 
 Gaps
 - Telnyx current inbound rate: sources disagree ($0.0032 to $0.0075/min); check Telnyx's page if Telnyx is chosen.
-- Retell's call-transfer doc page returned 404; the transfer bypass comes from Bobert's architecture notes (`from-other-projects/bobert/architecture.md`), not a fresh read of Retell's docs.
+- Retell's call-transfer doc page returned 404; the transfer bypass comes from Bobert's architecture notes (`docs/history/from-other-projects/bobert/architecture.md`), not a fresh read of Retell's docs.
 - Effort estimates are ASSUMED. Tools used: built-in search and fetch only; no paid fallback calls.

@@ -17,7 +17,7 @@ Read first: CLAUDE.md, docs/assignment.md, DECISIONS.md, `app/envelope.py`, `app
   - `book_appointment` refuses until the three visit questions (approval, someone home, gate code or pets) were each said in an agent turn after the opening was offered and a caller line followed. The refusal's `say` is the first missing question, word for word.
   - `end_call` refuses while the latest `say` of another tool on the call was never said in an agent turn after that result. The refusal's `say` is that sentence. Once per sentence, so a transcript that never matches can't trap the call.
 - **The open-door line** ("If anything makes this more urgent for you, just let me know.") comes in `find_slots`' first offer on a `no_heat` or `no_cooling` call, once a call.
-- **The arm's prompt and tools** in `retell/arms/server-led/`: `prompt.md` at about a third of Jackson's (who Brooke is, how she talks, "say each result's `say` as written, then do its `next`", the few real rules), `tools.json` with the URLs of the test instance.
+- **The arm's prompt and tools** in `retell/archive/server-led/`: `prompt.md` at about a third of Jackson's (who Brooke is, how she talks, "say each result's `say` as written, then do its `next`", the few real rules), `tools.json` with the URLs of the test instance.
 - **A test instance** on the summit-air box, `deploy/server-led/`: its own folder (`~/summit-air/server-led`), systemd units, ports 8130 (tools), 8131 (mock), 8132 (bridge), and a Caddy site file for `/server-led/*`. Its own Retell LLM and agent, "Summit Air server-led (test)".
 
 ## Out of scope

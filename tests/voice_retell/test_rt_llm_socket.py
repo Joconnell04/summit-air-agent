@@ -448,7 +448,7 @@ def test_an_arm_tool_the_tool_server_lacks_is_refused(tmp_path):
 
 def test_an_arm_tool_writes_as_our_spec_says():
     tools = llm_socket.arm_tools(
-        llm_socket.ROOT / "retell" / "arms" / "socket" / "tools.yaml",
+        llm_socket.ROOT / "retell" / "socket" / "tools.yaml",
         llm_socket.tool_specs(llm_socket.job_types(llm_socket.ROOT / "tenants" / "summit-air")),
     )
     writes = {t["name"]: t["write"] for t in tools}
@@ -691,9 +691,9 @@ def test_server_led_a_goodbye_without_end_call_is_said(server_led):
 
 def test_the_closing_is_always_a_pinned_falling_line():
     """Jackson heard "Thanks for calling Summit Air." rise like a question; only niceties measured
-    to fall in Brian's voice are pinned (retell/arms/socket/closing-pitch-01.json)."""
+    to fall in Brian's voice are pinned (retell/socket/closing-pitch-01.json)."""
     lines = llm_socket.tenant_lines(llm_socket.ROOT / "tenants", "summit-air")
-    measured = json.loads((llm_socket.ROOT / "retell" / "arms" / "socket"
+    measured = json.loads((llm_socket.ROOT / "retell" / "socket"
                            / "closing-pitch-01.json").read_text())
     falling = {m["sentence"].strip() for m in measured if m.get("falls")}
     assert lines["closing"] == "Thanks for calling Summit Air today."
