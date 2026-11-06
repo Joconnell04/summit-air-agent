@@ -917,13 +917,15 @@ def test_a_hedged_denial_gets_the_check_question_and_a_plain_one_nothing(line, a
 GAS_CALL = "call_0246b91f77e01a4b18583e6ca8b"
 
 
-def test_the_lines_are_advice_with_9_1_1_written_out_and_no_question():
+def test_the_lines_are_advice_with_9_1_1_written_out_and_one_question_the_dispatch_offer():
     """Jackson's gas test call: "it shouldn't be demanding me to do anything", and "911" was read
-    as nine hundred and eleven."""
+    as nine hundred and eleven. The one question is the offer of a technician (DECISIONS.md 129),
+    never "are you outside?"."""
     for kind in ("gas", "co"):
         lines = " ".join(CFG["kinds"][kind]["lines"].split())
         assert "the safest thing is" in lines and "9-1-1" in lines
-        assert "911" not in lines.replace("9-1-1", "") and "?" not in lines
+        assert "911" not in lines.replace("9-1-1", "") and lines.count("?") == 1
+        assert lines.endswith("would you like us to send a technician out right away?")
         assert not lines.startswith("Please")
     assert CFG["repeat_limit"] == 0
     assert "9-1-1" not in CFG["booking_note"] and "stay outside" not in CFG["booking_note"]

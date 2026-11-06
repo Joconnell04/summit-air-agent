@@ -288,6 +288,10 @@ In code, once a reply asks something, nothing more of that reply is said. The cl
 
 From the done-bar spot-checks. On the CO false-alarm call (call_d101fce0cddb6792cb6214aaacb) Brian asked "since when" five times, said "What kind of job is this? A safety check?" and "To book the safety check, I need your name first". Two rules: ask for a detail at most twice, then take "not sure" or whatever they said and move on; never say a job type out loud or what the booking needs. The socket also cuts that second kind of line in code now, and the server stopped asking a safety check or tune-up about the fault in the first place. Not on a call yet.
 
+### v8 (safety dispatch offer)
+
+The safety lines now end by offering a technician right away, and the prompt says what to do with the answer: on a yes, get the address if I don't have it and call `read_back` with `safety_check`, and the server dispatches it as Urgent; on a no, carry on and never bring the hazard back up. I wanted the safety route to end in help, since plenty of people trip it by accident. One sentence in the safety section; nothing else in the prompt moved. Outcome: the server side is tested (tests/tool_server/test_ts_safety_dispatch.py); checked on the phone after deploy, results in the round doc.
+
 ### Review (issue #183)
 
 I checked it against my change sets 18 to 28, with nothing the server does said twice. Two passes went to the socket lane (`socket-prompt-review-183.md` in the session notes). The first pass's items are in v5, except one. The second pass found only small things:

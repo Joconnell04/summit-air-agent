@@ -50,11 +50,18 @@ safety:
     gas:
       lines: >-
         If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the gas
-        company from there.
+        company from there. Once everyone's safe, would you like us to send a technician out right
+        away?
     co:
       lines: >-
         If a CO alarm is going off, the safest thing is to open a window if one's right there, get
-        everyone outside, and call 9-1-1 from there.
+        everyone outside, and call 9-1-1 from there. Once everyone's safe, would you like us to send
+        a technician out right away?
+  # The lines end by offering an emergency visit (Jackson, 2026-11-06: callers who trigger the lines
+  # by accident should still get help, as an Urgent dispatch). A yes is dispatched at the read-back
+  # as this job type, the same way as an urgent no-heat call; a no carries on, and neither the lines
+  # nor the offer are said again (repeat_limit below). DECISIONS.md 129.
+  dispatch_job_type: safety_check
   # The one check question a vague description gets first (the trade's vague phrases).
   vague:
     gas:

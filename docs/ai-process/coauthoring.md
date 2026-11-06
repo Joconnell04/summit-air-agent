@@ -444,3 +444,16 @@ Changed:
 - docs/spec.md S-17, S-18, S-19 and docs/call-journeys.md journeys 2 and 3 updated to match.
 Commit: (joco/stripped)
 Status: open
+
+## safety r3 (Jackson, demo prep, 2026-11-06)
+Feedback (verbatim, Jackson):
+> I think in the safety situation, we should be asking the caller if they want a technician to be dispatched right away if they think the issue is within the scope of what a technician could do. Like, I like that we say, oh, like, get outside, call emergency services, but I think we should also be able to say, would you like us to dispatch an on call technician? Because right now it just feels like the safety procedure is kind of pointless when realistically a lot of people will accidentally trigger that.
+> The TLDR is I want the safety system to be able to offer an emergency dispatch, which would be going in as urgent, not routine.
+> but if they say no, the AI agent stays on and keeps operating as usual in this instance (i.e. can't loop itself on the safety issue thing)
+Changed:
+- Gas and carbon monoxide lines end with "Once everyone's safe, would you like us to send a technician out right away?", said once with the lines.
+- A yes is dispatched at the read-back as a safety check (Urgent), with the booking note first; after hours it goes to the on-call technician. A no carries on; the lines and the offer are never said again (repeat_limit 0).
+- The socket prompt's safety section says what to do with each answer.
+- DECISIONS.md 129.
+Commit: (main)
+Status: open

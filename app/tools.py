@@ -2859,6 +2859,19 @@ def _dispatch_unheard(ctx: Ctx) -> str:
     return "" if any(said in words(r["text"]) for r in heard) else row["say"]
 
 
+def _safety_dispatch(ctx: Ctx, job_type: str) -> bool:
+    """A yes to the safety lines' offer (DECISIONS.md 129): once the lines were said and a person
+    flagged, the tenant's safety job type is dispatched at the read-back like an urgent no-heat
+    call. Never before the lines, and never for any other job type on a safety call."""
+    wanted = ctx.tenant.safety.get("dispatch_job_type")
+    return bool(
+        wanted
+        and job_type == wanted
+        and ctx.call["safety_state"] == "lines_said"
+        and ctx.call["safety_flag_id"] is not None
+    )
+
+
 def _dispatched(ctx: Ctx) -> sqlite3.Row | None:
     """The visit this call dispatched, while it stands."""
     return ctx.conn.execute(
@@ -2908,9 +2921,12 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
     the caller's yes, or no answer at all, confirms it. A call on the safety route never dispatches;
     its visit waits until the problem is shut off. None when the call doesn't dispatch, and
     read_back reads its own sentence."""
-    if job_type not in _dispatch_types(ctx) or job_type not in ctx.tenant.job_types:
+    safety_dispatch = _safety_dispatch(ctx, job_type)
+    if job_type not in ctx.tenant.job_types:
         return None
-    if ctx.call["safety_state"] in ("signal", "checking", "lines_said"):
+    if job_type not in _dispatch_types(ctx) and not safety_dispatch:
+        return None
+    if ctx.call["safety_state"] in ("signal", "checking", "lines_said") and not safety_dispatch:
         return None
     found = _priority(ctx, job_type, None)
     decided = found.priority
@@ -2975,6 +2991,10 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
         )
     sentence = _dispatch_said(ctx, window, current, on_call)
     say = _connector(ctx, sentence)
+    if safety_dispatch and ctx.tenant.safety.get("booking_note"):
+        # The visit goes ahead only once the problem is checked and safe, said before the
+        # sentence's closing question so the caller answers that.
+        say = " ".join(ctx.tenant.safety["booking_note"].split()) + " " + say
     with tx(ctx.conn):
         records.update_call(
             ctx.conn, ctx.call["id"], readback_json=json.dumps({**current, "sentence": sentence})

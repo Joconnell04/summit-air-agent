@@ -12,6 +12,24 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 129. The gas and carbon monoxide lines offer an emergency technician, dispatched as Urgent
+
+Decided: the safety lines end with one question, "Once everyone's safe, would you like us to send a technician out right away?" A yes is dispatched at the read-back as a safety check, the same way as an urgent no-heat call: the soonest technician (the on-call technician after hours), no menu of times, the booking note that the technician works on it only once it's been checked and found safe, and the label Urgent. A no carries on as usual. The lines and the offer are said once per hazard, so neither comes back.
+Why: many callers trip the lines by accident or after the gas company has it in hand, and the lines alone left them with nothing; Jackson wanted the safety route to end in help, as an emergency dispatch rather than a routine visit. The dispatch path and the safety gate were already tested, so the change reuses both: the server allows a dispatch on a safety call only after the lines were said and a person flagged, and only as the tenant's `safety.dispatch_job_type`.
+Considered: a callback from the on-call technician once the caller is outside (Jackson's first idea; replaced by the dispatch, which a callback can't do); a transfer to a person during the hazard (keeps the caller on the phone indoors).
+Would change if: live calls show callers saying yes before they're outside, or the gas company asking that technicians not be sent until it has cleared the site.
+Discussion: docs/ai-process/coauthoring.md safety r3; tests/tool_server/test_ts_safety_dispatch.py
+Issue: #176
+
+## 128. The label describes the visit a call left, not the call
+
+Decided: Urgent and Routine are for visits: Urgent is a visit booked or dispatched at priority High or Urgent, or a visit booked on a safety call; Routine is a visit booked or moved below that. Every call that left no visit standing is No visit, with the reason: a callback promised, a question answered, a cancellation, an urgent lookup the caller didn't book, or a safety call where nothing was booked ("No visit: gas smell, no visit booked"). Safety calls stay marked as safety calls on the owner view whatever their label.
+Why: Jackson: the labels are for visits and dispatches, so "a routine checkup is Routine, a phone callback about a visit is No visit, unless a visit was booked as well." Before this, a callback or a gas call with nothing booked showed as Routine or Urgent, which overstated the work the call made.
+Considered: keeping safety calls with no visit as Urgent (left as No visit, the recommended default; the safety marker and alert already flag them); counting a cancellation as Routine (it leaves no visit).
+Would change if: the owner wants a separate label for safety calls with no visit.
+Discussion: this session, Jackson's message on labels
+Issue: #176
+
 ## 127. The demo line is (516), on the socket agent in the live world; transfers can be switched to a hold line
 
 Decided: (516) 212-9051 is the demo number. It answers with the production socket agent, "Summit Air (socket)" (agent_f39c8c63d908deb1d0f822622d), on the live tool server, so its calls and bookings show on the owner view. (646) stays listed as the earlier line. Transfers ring Jackson's phone by default; the owner view's Hold line switch (Settings) sends them to a Retell hold agent on (678) 336-6730 instead, which repeats a hold message for about six minutes. Production noise cancellation is `no-denoise`, as on the test agent that passed the done bar.

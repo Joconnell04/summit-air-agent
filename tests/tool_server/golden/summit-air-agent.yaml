@@ -1250,6 +1250,7 @@ retention:
   record_calls: true
   transcript_days: 30
 safety:
+  dispatch_job_type: safety_check
   booking_note: Just so you know, the technician can only work on it once it's been checked and found
     safe.
   denials:
@@ -1380,7 +1381,8 @@ safety:
       - co detector
       label: carbon monoxide
       lines: If a CO alarm is going off, the safest thing is to open a window if one's right there, get
-        everyone outside, and call 9-1-1 from there.
+        everyone outside, and call 9-1-1 from there. Once everyone's safe, would you like us to send
+        a technician out right away?
     gas:
       clear:
       - smell gas
@@ -1402,7 +1404,8 @@ safety:
       - hiss of gas
       label: gas smell
       lines: If you're smelling gas, the safest thing is to get everyone outside and call 9-1-1 or the
-        gas company from there.
+        gas company from there. Once everyone's safe, would you like us to send a technician out right
+        away?
   repeat_limit: 0
   retractions:
   - never mind
