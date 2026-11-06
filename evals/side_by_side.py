@@ -1,12 +1,12 @@
 """The four-arm side-by-side (issue #169): scripted calls over the real line, scored three ways.
 
-    uv run --env-file .env python -m evals.side_by_side judge <run_dir>     Opus scores each call
-    uv run --env-file .env python -m evals.side_by_side report <run_dir>    checks, table, JSON
+    uv run --env-file .env python -m evals.side_by_side judge <run_dir>...   Opus scores each call
+    uv run python -m evals.side_by_side report <run_dir>... [--out results.json]
 
 <run_dir> is a copy of what voice/retell/side_by_side/run_slate.sh wrote on the server
 (manifest.jsonl and calls/<tag>.{log,rows.json}), with calls/<tag>.retell.json added by
-voice/retell/side_by_side/collect.py. judge adds calls/<tag>.judge.json, and report writes
-results.json beside them and prints the per-arm table. The phone and Retell pieces live in
+voice/retell/side_by_side/collect.py. judge adds calls/<tag>.judge.json, and report scores the runs
+in order (a rerun replaces the earlier call for its arm and persona) and prints the per-arm table. The phone and Retell pieces live in
 voice/retell/side_by_side/, so nothing here imports a voice layer.
 
 The gross-error checks read Retell's transcript_with_tool_calls and the tool server's rows for the
@@ -42,10 +42,22 @@ NARRATION = [
     r"\bknowledge base\b",
     r"\bnot something i need\b",
     r"\bon this call\b",
+    r"\b(placeholder|by mistake|lookup|look-up|redo)\b",
+    r"\blooking at (the|that|your)\b",
+    r"\bthe system\b",
 ]
-CONFIRM = r"(is that (right|correct)|that'?s all correct|does that (sound right|look right)|did i get that right|right\?$|correct\?$)"
-# A safety instruction to the caller. Counted per agent turn; the server's lines come once.
-SAFETY = r"(nine one one|\b911\b|get (everyone )?out(side)?|leave the (house|home|building|apartment)|open (a |the )?windows?|breaker|move away from|step away from|don'?t (use|touch|flip|light))"
+# The agent's own safety questions, which Jackson ruled out ("it shouldn't ask 'are you outside
+# the house now'", retell-live-calls-01.md). The server's lines are the only safety words.
+OWN_SAFETY_QUESTION = r"\b(are you|is everyone|are you all|everyone) (out|outside)\b[^.?!]*\?"
+# The bridge's own gas-check questions. It injects them, so they count against the server.
+SERVER_CHECK = r"(rotten eggs|smelling gas in the (house|home))"
+# The scripted caller leaving its role; the rest of that call is not a fair test of the agent.
+ROLE_BREAK = (
+    r"(caller role|scripted caller|step(ping)? out of|this is a test|i'?m an ai|role-?play)"
+)
+CONFIRM = r"(just to confirm|is that (right|correct)|that'?s all correct|does that (sound right|look right)|did i get that right|right\?$|correct\?$)"
+# A safety instruction to the caller (a mention such as "thanks for switching it off" is not one).
+SAFETY = r"(call (nine one one|9-?1-?1|911|the gas company)|get (everyone )?out(side)?\b|leave the (house|home|building|apartment)|open (a |the )?windows?|turn (it|the unit|that|the furnace) off|switch (it|that) off|step away from|move away from|don'?t (use|touch|flip|light))"
 PRIOR_VISIT = r"\b(already have a visit|you have a visit|visit (booked|on file)|existing (visit|appointment))\b"
 ASKED_SPELLING = r"\bspell\b"
 ASKED_FULL_NAME = r"\b(first and last|full name|last name)\b"
@@ -55,6 +67,18 @@ def norm(text: str) -> str:
     text = text.lower().replace("’", "'")
     text = re.sub(r"[^a-z0-9' ]+", " ", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+TAG_QUESTION = r",?\s*\b(right|correct|okay|yeah)\?"
+CLARIFIER = r"\blike an? [^?.!]*\?"
+
+
+def questions(text: str) -> int:
+    """Questions asked in a turn. A tag ("..., right?") is folded into the question it tags, and a clarifier that only gives examples
+    ("Like a home or an apartment?") belong to the question before them, so they are not counted."""
+    text = re.sub(TAG_QUESTION, "?", text, flags=re.IGNORECASE)
+    text = re.sub(CLARIFIER, "", text, flags=re.IGNORECASE)
+    return text.count("?")
 
 
 def turns(transcript: list[dict]) -> list[dict]:
@@ -77,6 +101,12 @@ def turns(transcript: list[dict]) -> list[dict]:
             turn["tools"].append(
                 {"name": item.get("name", ""), "arguments": item.get("arguments", "")}
             )
+        elif role == "injected":
+            # The bridge's say_now ("Say this to the caller now, ...: <line>") is a server line to
+            # speak; its other injected notes are instructions to the model and are not spoken.
+            content = item.get("content", "")
+            if content.startswith("Say this to the caller"):
+                turn["says"].append({"tool": "injected", "say": content.split(": ", 1)[-1].strip()})
         elif role == "tool_call_result":
             try:
                 body = json.loads(item.get("content") or "{}")
@@ -119,7 +149,14 @@ def said_verbatim(say: str, spoken: str) -> bool:
     return True
 
 
-def check_call(persona: dict, transcript: list[dict], rows: dict) -> dict:
+ANYTHING_ELSE = r"\banything else\b"
+# A short "no" to "anything else?": the whole line, after norm(), and nothing more.
+DECLINE = r"^((no|nope|nah)( (thanks|thank you|that's it|that's all|i'm good|nothing else|bye))*|that's (it|all)( thanks)?)$"
+
+
+def check_call(
+    persona: dict, transcript: list[dict], rows: dict, disconnection: str | None = None
+) -> dict:
     """Gross-error checks for one call. Each value is {"ok": bool, "why": str}; checks that do not
     apply to the persona are left out."""
     ts = turns(transcript)
@@ -130,24 +167,54 @@ def check_call(persona: dict, transcript: list[dict], rows: dict) -> dict:
     def put(name: str, ok: bool, why: str = "") -> None:
         results[name] = {"ok": bool(ok), "why": "" if ok else why}
 
-    two_q = [t["text"] for t in agents if t["text"].count("?") >= 2]
+    broke = [t["text"] for t in callers if re.search(ROLE_BREAK, t["text"], re.IGNORECASE)]
+    if broke:
+        results["caller_broke_role"] = {"ok": True, "invalid": True, "text": broke[0][:120]}
+    # The call ran to the script's end if the caller's last real line is the persona's own
+    # closing line, or the caller declined an "anything else?" right before it.
+    spoken = [t for t in ts if t["who"] == "agent" or not re.match(r"^\s*[\[*(]", t["text"])]
+    last_i = max((i for i, t in enumerate(spoken) if t["who"] == "caller"), default=None)
+    last_caller = spoken[last_i]["text"] if last_i is not None else ""
+    before = spoken[last_i - 1]["text"] if last_i else ""
+    closed = bool(persona.get("closes_with")) and norm(persona["closes_with"]) in norm(last_caller)
+    declined = bool(re.search(ANYTHING_ELSE, before, re.IGNORECASE)) and bool(
+        re.match(DECLINE, norm(last_caller))
+    )
+    put(
+        "no_premature_hangup",
+        disconnection != "user_requested_dnc" and (closed or declined),
+        f"ended ({disconnection}) after the caller said: {last_caller[:80]}",
+    )
+
+    two_q = [t["text"] for t in agents if questions(t["text"]) >= 2]
     put("one_question_per_turn", not two_q, "; ".join(two_q[:2]))
 
     first = persona.get("first") or ""
-    named = [
-        t["text"]
-        for t in agents
-        if first and re.search(rf"\b{re.escape(first)}\b", t["text"], re.IGNORECASE)
-    ]
-    put("no_caller_name", not named, "; ".join(named[:2]))
 
-    narrated = []
+    # The greeting is the server's begin message, not the model's words; it is checked apart.
+    def says_name(text: str) -> bool:
+        return bool(first and re.search(rf"\b{re.escape(first)}\b", text, re.IGNORECASE))
+
+    named = [t["text"] for t in agents[1:] if says_name(t["text"])]
+    put("no_caller_name", not named, "; ".join(named[:2]))
+    if agents and says_name(agents[0]["text"]):
+        results["greeting_names_caller"] = {"ok": True, "server": True, "text": agents[0]["text"]}
+
+    # Narration that is a tool's own `say` is the server's wording; it is counted apart.
+    narrated, server_narration = [], []
     for t in agents:
+        server_text = " ".join(s["say"] for s in t["says"])
         for pattern in NARRATION:
             m = re.search(pattern, t["text"], re.IGNORECASE)
-            if m:
+            if not m:
+                continue
+            if re.search(pattern, server_text, re.IGNORECASE):
+                server_narration.append(m.group(0))
+            else:
                 narrated.append(m.group(0))
     put("no_narration", not narrated, ", ".join(narrated[:4]))
+    if server_narration:
+        results["server_says_narration"] = {"ok": True, "server": True, "text": server_narration}
 
     missed = []
     for i, t in enumerate(ts):
@@ -157,22 +224,28 @@ def check_call(persona: dict, transcript: list[dict], rows: dict) -> dict:
             # Slot offers may add the weekday and date; the other tools' lines are said as written.
             if say["tool"] in ("end_call", "find_slots"):
                 continue
-            if not said_verbatim(say["say"], t["text"]):
+            # A say_now line can land just before a caller fragment, so it may be spoken in the
+            # agent's next turn.
+            heard = t["text"]
+            if say["tool"] == "injected":
+                heard += " " + next((u["text"] for u in ts[i + 1 :] if u["who"] == "agent"), "")
+            if not said_verbatim(say["say"], heard):
                 missed.append(f"{say['tool']}: {say['say'][:80]}")
     put("server_lines_verbatim", not missed, "; ".join(missed[:3]))
 
-    closings = [t for t in agents if CLOSING in norm(t["text"])]
+    closings = [t for t in agents if norm(CLOSING) in norm(t["text"])]
     put("closing_said_once", len(closings) <= 1, f"{len(closings)} closings")
 
-    if any(OPEN_DOOR in norm(s["say"]) for t in agents for s in t["says"]):
+    if any(norm(OPEN_DOOR) in norm(s["say"]) for t in agents for s in t["says"]):
         put(
             "open_door_verbatim",
-            any(OPEN_DOOR in norm(t["text"]) for t in agents),
+            any(norm(OPEN_DOOR) in norm(t["text"]) for t in agents),
             "the open-door line came back from a tool but was not said as written",
         )
 
     order = tool_order(ts)
-    if "find_slots" in order:
+    # A move keeps the address and number on file, so it has no read-back to come first.
+    if "find_slots" in order and "reschedule" not in (persona.get("bookings") or []):
         rb = order.index("read_back") if "read_back" in order else None
         put(
             "read_back_before_slots",
@@ -183,8 +256,14 @@ def check_call(persona: dict, transcript: list[dict], rows: dict) -> dict:
         )
 
     confirms = sum(
-        1 for t in agents if re.search(CONFIRM, t["text"].strip(), re.IGNORECASE | re.MULTILINE)
+        1
+        for t in agents
+        if re.search(CONFIRM, t["text"].strip(), re.IGNORECASE | re.MULTILINE)
+        and not re.search(SERVER_CHECK, t["text"], re.IGNORECASE)
     )
+    server_checks = [t["text"] for t in agents if re.search(SERVER_CHECK, t["text"], re.IGNORECASE)]
+    if len(server_checks) > 1:
+        results["server_gas_check_repeated"] = {"ok": True, "server": True, "text": server_checks}
     allowed = persona.get("confirms", 1)
     put("no_double_confirm", confirms <= allowed, f"{confirms} confirmations, {allowed} earned")
 
@@ -206,11 +285,26 @@ def check_call(persona: dict, transcript: list[dict], rows: dict) -> dict:
         for i, t in enumerate(ts)
         if t["who"] == "agent" and re.search(SAFETY, t["text"], re.IGNORECASE)
     ]
+    # Which of those turns carried a server safety line (a tool's say or the bridge's say_now).
+    server_safety = [
+        i
+        for i in safety_turns
+        if any(re.search(SAFETY, x["say"], re.IGNORECASE) for x in ts[i]["says"])
+    ]
+    own_safety = [i for i in safety_turns if i not in server_safety]
+    if len(server_safety) > 1:
+        results["server_safety_repeated"] = {
+            "ok": True,
+            "server": True,
+            "turns": len(server_safety),
+        }
+    own_q = [t["text"] for t in agents if re.search(OWN_SAFETY_QUESTION, t["text"], re.IGNORECASE)]
     if persona.get("safety"):
+        put("no_own_safety_question", not own_q, "; ".join(own_q[:2]))
         put(
             "safety_advice_once",
-            len(safety_turns) <= 1,
-            f"safety instructions in {len(safety_turns)} turns",
+            not own_safety or len(safety_turns) <= 1,
+            f"safety instructions in {len(safety_turns)} turns, {len(own_safety)} in its own words",
         )
     retraction = persona.get("retraction")
     if retraction:
@@ -266,6 +360,25 @@ def check_call(persona: dict, transcript: list[dict], rows: dict) -> dict:
         put("records_lead", bool(ours.get("leads")), "no lead row")
     if persona.get("flag"):
         put("records_flag", bool(ours.get("flags")), "no flag row")
+    # The raise needs two things: the open door said with the first offer (the prompt's job), and,
+    # once the caller answers it, a raised booking (the server's). The scripted caller only names
+    # the reason when invited, so a missing door means no raise to check.
+    trigger = persona.get("raised")
+    if trigger:
+        offer = next((t for t in agents if any(s["tool"] == "find_slots" for s in t["says"])), None)
+        if offer is not None:
+            put(
+                "open_door_with_first_offer",
+                norm(OPEN_DOOR) in norm(offer["text"]),
+                "the first offer came without the open-door line",
+            )
+        if re.search(trigger, caller_text, re.IGNORECASE):
+            levels = [b.get("priority") for b in ours.get("bookings", [])]
+            put(
+                "records_priority_raised",
+                any(lv and lv != "Normal" for lv in levels),
+                f"booking priority {levels}, expected raised",
+            )
     if persona.get("dnc_undo"):
         put(
             "records_dnc_undone",
@@ -316,7 +429,10 @@ done (booked, moved, callback or lead as the caller asked), and a clean ending.
 
 Score 1 to 10: 10 is a call Jackson would have no notes on; 7 is good with small notes; 5 has one
 serious problem a caller would notice; 3 or lower would embarrass the company. Judge only what the
-caller hears and what got done; do not reward length.
+caller hears and what got done; do not reward length. Lines in parentheses are what the system
+told Brooke to say word for word; her next line is what the caller heard.
+The caller is an AI following a script and sometimes says odd things (stage directions, its own
+reasoning); judge only Brooke's side.
 
 Jackson's feedback on earlier calls:
 
@@ -338,6 +454,9 @@ def transcript_text(transcript: list[dict]) -> str:
     lines = []
     for t in turns(transcript):
         who = "Caller" if t["who"] == "caller" else "Brooke"
+        for say in t.get("says", []):
+            if say["tool"] == "injected":
+                lines.append(f"(The system told Brooke to say, word for word: {say['say']})")
         if t["text"]:
             lines.append(f"{who}: {t['text']}")
     return "\n".join(lines)
@@ -402,80 +521,128 @@ def load_json(path: Path) -> dict:
         return {}
 
 
-def report(run: Path) -> dict:
-    personas = yaml.safe_load(PERSONAS.read_text())["personas"]
+SAFETY_CHECKS = (
+    "safety_advice_once",
+    "retraction_honored",
+    "no_own_safety_question",
+    "records_flag",
+    "records_bookings",
+    "no_premature_hangup",
+)
+
+
+def score_run(run: Path, personas: dict) -> list[dict]:
     calls = []
     for entry in manifest(run):
         retell = load_json(run / entry["log"].replace(".log", ".retell.json"))
         rows = load_json(run / entry["rows"])
         verdict = load_json(run / entry["log"].replace(".log", ".judge.json"))
         transcript = retell.get("transcript_with_tool_calls") or []
-        checks = check_call(personas[entry["persona"]], transcript, rows) if retell else {}
+        checks = (
+            check_call(
+                personas[entry["persona"]], transcript, rows, retell.get("disconnection_reason")
+            )
+            if retell
+            else {}
+        )
         calls.append(
             {
+                "run": run.name,
                 **{k: entry[k] for k in ("n", "arm", "persona", "agent_id")},
                 "call_id": retell.get("call_id"),
                 "checks": checks,
                 "fails": sorted(k for k, v in checks.items() if not v["ok"]),
+                "server": sorted(k for k, v in checks.items() if v.get("server")),
+                "invalid": "caller_broke_role" in checks,
                 "judge": {k: verdict.get(k) for k in ("score", "vibe", "worst")}
                 if verdict
                 else None,
                 **(latency(retell) if retell else {}),
             }
         )
-    arms = {}
-    for arm in sorted({c["arm"] for c in calls}):
-        mine = [c for c in calls if c["arm"] == arm and c["call_id"]]
-        graded = [c for c in mine if c["checks"]]
-        n_checks = sum(len([k for k in c["checks"] if k != "name_asked"]) for c in graded)
-        n_fails = sum(len(c["fails"]) for c in graded)
-        e2e = [c["e2e_p50_ms"] for c in mine if c.get("e2e_p50_ms")]
-        e2e90 = [c["e2e_p90_ms"] for c in mine if c.get("e2e_p90_ms")]
-        llm = [c["llm_p50_ms"] for c in mine if c.get("llm_p50_ms")]
-        scores = [c["judge"]["score"] for c in mine if c.get("judge") and c["judge"].get("score")]
-        names = [c for c in mine if "name_spelled_right" in c["checks"]]
-        arms[arm] = {
-            "calls": len(mine),
-            "clean_calls": sum(1 for c in graded if not c["fails"]),
-            "checks_failed": n_fails,
-            "checks_run": n_checks,
-            "judge_mean": round(statistics.mean(scores), 2) if scores else None,
-            "judge_min": min(scores) if scores else None,
-            "e2e_p50_ms": round(statistics.median(e2e)) if e2e else None,
-            "e2e_p90_ms": round(statistics.median(e2e90)) if e2e90 else None,
-            "llm_p50_ms": round(statistics.median(llm)) if llm else None,
-            "cost_usd": round(sum(c.get("cost_usd") or 0 for c in mine), 2),
-            "cost_per_min_usd": round(
-                sum(c.get("cost_usd") or 0 for c in mine)
-                / max(1, sum(c.get("duration_s") or 0 for c in mine))
-                * 60,
-                4,
-            ),
-            "names_right": f"{sum(1 for c in names if c['checks']['name_spelled_right']['ok'])}/{len(names)}",
-            "fails_by_check": dict(
-                sorted(
-                    {
-                        k: sum(1 for c in graded if k in c["fails"])
-                        for c in graded
-                        for k in c["fails"]
-                    }.items()
-                )
-            ),
+    return calls
+
+
+def arm_summary(mine: list[dict]) -> dict:
+    graded = [c for c in mine if c["checks"]]
+    e2e = [c["e2e_p50_ms"] for c in mine if c.get("e2e_p50_ms")]
+    e2e90 = [c["e2e_p90_ms"] for c in mine if c.get("e2e_p90_ms")]
+    llm = [c["llm_p50_ms"] for c in mine if c.get("llm_p50_ms")]
+    scores = [c["judge"]["score"] for c in mine if c.get("judge") and c["judge"].get("score")]
+    names = [c for c in graded if "name_spelled_right" in c["checks"]]
+    fails = sorted({k for c in graded for k in c["fails"]})
+    return {
+        "calls": len(mine),
+        "clean_calls": sum(1 for c in graded if not c["fails"]),
+        "checks_failed": sum(len(c["fails"]) for c in graded),
+        "checks_run": sum(len([k for k, v in c["checks"].items() if "why" in v]) for c in graded),
+        "judge_mean": round(statistics.mean(scores), 2) if scores else None,
+        "judge_min": min(scores) if scores else None,
+        "e2e_p50_ms": round(statistics.median(e2e)) if e2e else None,
+        "e2e_p90_ms": round(statistics.median(e2e90)) if e2e90 else None,
+        "llm_p50_ms": round(statistics.median(llm)) if llm else None,
+        "cost_usd": round(sum(c.get("cost_usd") or 0 for c in mine), 2),
+        "cost_per_min_usd": round(
+            sum(c.get("cost_usd") or 0 for c in mine)
+            / max(1, sum(c.get("duration_s") or 0 for c in mine))
+            * 60,
+            4,
+        ),
+        "names_right": f"{sum(1 for c in names if c['checks']['name_spelled_right']['ok'])}/{len(names)}",
+        "fails_by_check": {k: sum(1 for c in graded if k in c["fails"]) for k in fails},
+    }
+
+
+def report(runs: list[Path], out: Path | None = None) -> dict:
+    """Score the runs in order. A later call for the same arm and persona (a rerun under fixed
+    conditions) replaces an earlier one in the per-arm numbers; a call where the scripted caller
+    broke its role is left out of them. Every call stays in `calls`, marked."""
+    personas = yaml.safe_load(PERSONAS.read_text())["personas"]
+    calls = [c for run in runs for c in score_run(run, personas)]
+    latest: dict[tuple[str, str], dict] = {}
+    for c in calls:
+        if c["call_id"]:
+            latest[(c["arm"], c["persona"])] = c
+    for c in calls:
+        c["scored"] = latest.get((c["arm"], c["persona"])) is c and not c["invalid"]
+    scored = [c for c in calls if c["scored"]]
+    arms = {
+        arm: arm_summary([c for c in scored if c["arm"] == arm])
+        for arm in sorted({c["arm"] for c in scored})
+    }
+    safety = {
+        arm: {
+            c["persona"]: {
+                "fails": [k for k in c["fails"] if k in SAFETY_CHECKS],
+                "judge": (c["judge"] or {}).get("score"),
+            }
+            for c in scored
+            if c["arm"] == arm and personas[c["persona"]].get("safety")
         }
-    result = {"arms": arms, "calls": calls}
-    (run / "results.json").write_text(json.dumps(result, indent=1))
+        for arm in arms
+    }
+    server = {}
+    for c in scored:
+        for k in c["server"]:
+            server.setdefault(k, []).append(f"{c['arm']}-{c['persona']} {c['call_id']}")
+    result = {"arms": arms, "safety": safety, "server_findings": server, "calls": calls}
+    if out:
+        out.write_text(json.dumps(result, indent=1))
     return result
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("action", choices=["judge", "report"])
-    parser.add_argument("run", type=Path)
+    parser.add_argument("runs", type=Path, nargs="+")
+    parser.add_argument("--out", type=Path, help="report: where to write the results JSON")
     args = parser.parse_args()
     if args.action == "judge":
-        judge(args.run)
+        for run in args.runs:
+            judge(run)
     else:
-        print(json.dumps(report(args.run)["arms"], indent=1))
+        result = report(args.runs, args.out)
+        print(json.dumps({k: result[k] for k in ("arms", "safety", "server_findings")}, indent=1))
 
 
 if __name__ == "__main__":

@@ -37,7 +37,13 @@ def rows(bookings=(), name=None, dnc=(), linked=None, **tables):
     return {"calls": [call], "do_not_call": list(dnc)}
 
 
-PERSONA = {"first": "Jordan", "name": "Jordan Lee", "bookings": ["book"], "confirms": 1}
+PERSONA = {
+    "first": "Jordan",
+    "name": "Jordan Lee",
+    "bookings": ["book"],
+    "confirms": 1,
+    "closes_with": "bye",
+}
 
 
 def good_call():
@@ -52,7 +58,9 @@ def good_call():
         *tool("find_slots", "t2", say="The soonest is today, 4 to 6."),
         agent("The soonest is today, Thursday, between 4 and 6. Does that work?", 3),
         user("Sure."),
-        agent("Thanks so much for calling Summit Air today. Have a great day!", 4),
+        agent("Anything else?", 4),
+        user("No, that's it."),
+        agent("Thanks so much for calling Summit Air today. Have a great day!", 5),
     ]
 
 
@@ -148,3 +156,131 @@ def test_the_list_calls_endpoint_is_the_versioned_one():
 
     assert allowed("POST", "/v3/list-calls")
     assert not allowed("POST", "/list-calls")
+
+
+def test_a_raise_needs_the_open_door_then_a_raised_booking():
+    persona = {**PERSONA, "raised": "newborn"}
+    call = good_call()
+    out = sbs.check_call(persona, call, rows(["book"], name="Jordan Lee"))
+    assert not out["open_door_with_first_offer"]["ok"]
+    assert "records_priority_raised" not in out
+    call[10] = agent(
+        "The soonest is today, 4 to 6. Does that work? " + sbs.OPEN_DOOR.capitalize() + ".", 3
+    )
+    call[11] = user("I've got a newborn here.")
+    low = rows(["book"], name="Jordan Lee")
+    out = sbs.check_call(persona, call, low)
+    assert out["open_door_with_first_offer"]["ok"]
+    assert not out["records_priority_raised"]["ok"]
+    low["calls"][0]["bookings"][0]["priority"] = "High"
+    assert sbs.check_call(persona, call, low)["records_priority_raised"]["ok"]
+
+
+def test_a_tag_or_an_example_clarifier_is_not_a_second_question():
+    assert sbs.questions("This is for a home, right? Like a house or an apartment?") == 1
+    assert sbs.questions("What's the address? And the ZIP?") == 2
+
+
+def test_the_server_greeting_and_server_narration_are_counted_apart_from_the_model():
+    call = good_call()
+    call[0] = agent("Hi Jordan, thanks for calling Summit Air. How can I help?")
+    call[9] = {**call[9], "content": json.dumps({"ok": True, "say": "Let me check that again."})}
+    call[10] = agent("Let me check that again. The soonest is today, 4 to 6. Does that work?", 3)
+    out = sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))
+    assert out["no_caller_name"]["ok"] and out["greeting_names_caller"]["server"]
+    assert out["no_narration"]["ok"] and out["server_says_narration"]["server"]
+
+
+def test_hanging_up_before_the_caller_closes_or_on_retells_dnc_detection_fails():
+    call = good_call()[:-2] + [
+        user("Also, why does my radiator bang?"),
+        agent("Thanks so much for calling Summit Air today. Have a great day!", 9),
+    ]
+    assert not sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))[
+        "no_premature_hangup"
+    ]["ok"]
+    closed = good_call() + [user("No, that's it. Bye.")]
+    assert sbs.check_call(PERSONA, closed, rows(["book"], name="Jordan Lee"))[
+        "no_premature_hangup"
+    ]["ok"]
+    dnc = sbs.check_call(PERSONA, closed, rows(["book"], name="Jordan Lee"), "user_requested_dnc")
+    assert not dnc["no_premature_hangup"]["ok"]
+
+
+def test_own_safety_question_role_break_and_server_gas_checks():
+    persona = {"first": "Sam", "bookings": [], "safety": True, "confirms": 1}
+    call = [
+        agent("How can I help?"),
+        user("I smell gas."),
+        agent("Please get outside and call 911. Is everyone out of the home right now?"),
+        user("I'm stepping out of the caller role, this was a scripted caller."),
+        agent("Just to confirm, it doesn't smell like rotten eggs, right?"),
+        user("no"),
+        agent("Just to be safe, are you smelling gas in the house right now? Is that right?"),
+        user("No, that's it. Bye."),
+    ]
+    out = sbs.check_call(persona, call, rows())
+    assert not out["no_own_safety_question"]["ok"]
+    assert out["caller_broke_role"]["invalid"]
+    assert out["no_double_confirm"]["ok"]
+    assert out["server_gas_check_repeated"]["server"]
+
+
+def test_a_rerun_replaces_the_earlier_call_and_a_role_break_is_not_scored(tmp_path):
+    def run(name, persona, call_id, transcript):
+        folder = tmp_path / name
+        (folder / "calls").mkdir(parents=True)
+        entry = {
+            "n": 1,
+            "arm": "A",
+            "persona": persona,
+            "agent_id": "x",
+            "log": "calls/1.log",
+            "rows": "calls/1.rows.json",
+        }
+        (folder / "manifest.jsonl").write_text(json.dumps(entry) + "\n")
+        (folder / "calls" / "1.retell.json").write_text(
+            json.dumps({"call_id": call_id, "transcript_with_tool_calls": transcript})
+        )
+        (folder / "calls" / "1.rows.json").write_text(json.dumps(rows()))
+        return folder
+
+    first = run("main", "d", "call_1", good_call())
+    again = run("rerun", "d", "call_2", good_call())
+    broken = run(
+        "broken", "c", "call_3", [agent("Hi"), user("I'm stepping out of the caller role.")]
+    )
+    result = sbs.report([first, again, broken])
+    scored = {c["call_id"]: c["scored"] for c in result["calls"]}
+    assert scored == {"call_1": False, "call_2": True, "call_3": False}
+    assert result["arms"]["A"]["calls"] == 1
+
+
+def test_a_hang_up_after_a_caller_line_with_no_in_it_is_still_premature():
+    call = good_call()[:-2] + [
+        user("No, it's more like burning plastic."),
+        agent("Thanks so much for calling Summit Air today. Have a great day!", 9),
+    ]
+    assert not sbs.check_call(PERSONA, call, rows(["book"], name="Jordan Lee"))[
+        "no_premature_hangup"
+    ]["ok"]
+
+
+def test_a_mention_of_the_breaker_is_not_a_second_safety_instruction():
+    persona = {"first": "Riley", "bookings": [], "safety": True}
+    call = [
+        agent("How can I help?"),
+        user("I saw a spark at the furnace."),
+        {
+            "role": "injected",
+            "content": "Say this to the caller now, exactly as written: Please step away from the unit and turn it off.",
+        },
+        agent("Please step away from the unit and turn it off."),
+        user("Okay, I switched it off at the breaker."),
+        agent("Thanks for switching it off at the breaker. Anything else?"),
+        user("No."),
+    ]
+    out = sbs.check_call(persona, call, rows())
+    assert out["safety_advice_once"]["ok"]
+    assert out["server_lines_verbatim"]["ok"]
+    assert "(The system told Brooke to say" in sbs.transcript_text(call)

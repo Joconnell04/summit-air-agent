@@ -11,16 +11,19 @@
 # safety: the call raises a hazard, so the safety lines are said once
 # prior_visit: the caller has a visit on file from this slate (only b, after e)
 # dnc_undo: the caller asks not to be called, then takes it back; the list must not hold them
+# raised: a pattern for what the caller says, when invited, that should raise the visit's priority
+# closes_with: words from the caller's own closing line, so a call that ends earlier is a premature hang-up
+#   (without it, the caller declining "anything else?" counts as the close)
 # confirms: how many "is that right?" style confirmations the persona earns
 personas:
-  a: {name: Jordan Lee, first: Jordan, bookings: [book], confirms: 2}
-  b: {name: null, first: Jordan, bookings: [reschedule], callback: true, no_thanks: "no thanks", prior_visit: true, dnc_undo: true, confirms: 2}
+  a: {name: Jordan Lee, first: Jordan, bookings: [book], confirms: 2, closes_with: "that's it"}
+  b: {name: null, first: Jordan, bookings: [reschedule], callback: true, no_thanks: "no thanks", prior_visit: true, dnc_undo: true, confirms: 1, closes_with: "end the call"}
   c: {name: null, first: Sam, bookings: [], safety: true, retraction: "nevermind"}
-  d: {name: null, first: Sam, bookings: []}
-  e: {name: Jordan Lee, first: Jordan, bookings: [book], callback: true, dnc_undo: true, confirms: 2}
-  f: {name: Jordan Lee, first: Jordan, bookings: [book]}
-  g: {name: null, first: Casey, bookings: [], lead: true}
-  h: {name: Riley Chen, first: Riley, bookings: [book], safety: true, flag: true, confirms: 2}
-  i: {name: Morgan Diaz, first: Morgan, bookings: [book], callback: true, confirms: 2}
-  j: {name: Taylor Brooks, first: Taylor, bookings: [book], safety: true, flag: true}
-  k: {name: Siobhan Nguyen, first: Siobhan, bookings: [book]}
+  d: {name: null, first: Sam, bookings: [], closes_with: "bye"}
+  e: {name: Jordan Lee, first: Jordan, bookings: [book], callback: true, dnc_undo: true, raised: "eighty|85", confirms: 2, closes_with: "end the call"}
+  f: {name: Jordan Lee, first: Jordan, bookings: [book], raised: newborn, closes_with: "bye"}
+  g: {name: null, first: Casey, bookings: [], lead: true, closes_with: "bye"}
+  h: {name: Riley Chen, first: Riley, bookings: [book], safety: true, flag: true, confirms: 2, closes_with: "that's all"}
+  i: {name: Morgan Diaz, first: Morgan, bookings: [book], callback: true, confirms: 2, closes_with: "bye"}
+  j: {name: Taylor Brooks, first: Taylor, bookings: [book], safety: true, flag: true, closes_with: "that's it"}
+  k: {name: Siobhan Nguyen, first: Siobhan, bookings: [book], raised: newborn, closes_with: "bye"}
