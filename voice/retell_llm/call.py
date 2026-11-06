@@ -92,6 +92,8 @@ def unnarrated(sentence: str) -> str:
     return rest[:1].upper() + rest[1:] if rest != sentence else sentence
 
 
+# A sentence that is only an acknowledgment, cut right after a hold phrase.
+LONE_ACK = re.compile(r"^\W*(got it|okay|ok|perfect|thanks|thank you|sure|alright)[.!]?$", re.IGNORECASE)
 # Thanking the caller for a wait (Jackson's change set 24: never).
 THANKS_FOR_WAITING = re.compile(
     r"\bthanks?( you)?( so much)? for (waiting|holding|your patience|holding on|bearing with)",
@@ -459,6 +461,16 @@ class LlmCall:
             return "", "thanks_for_waiting"
         return tidy, ""
 
+    def _one_question(self, text: str) -> str:
+        """A held reply up to and including its first question; the rest is cut and logged."""
+        parts = [p for p in SENTENCE_END.split(text) if p.strip()]
+        for i, part in enumerate(parts):
+            if part.rstrip().endswith("?"):
+                for rest in parts[i + 1:]:
+                    self._dropped(rest, "after_question")
+                return " ".join(parts[: i + 1])
+        return text
+
     def _dropped(self, sentence: str, reason: str) -> None:
         """Every sentence the filter cuts is logged in full, and counted per call."""
         self.drops[reason] = self.drops.get(reason, 0) + 1
@@ -544,6 +556,10 @@ class LlmCall:
                             goodbyes.append(sentence)
                             continue
                     if sentence and (said := self.reply.sentence(sentence)):
+                        if self.server_led and out.hold_ms is not None and LONE_ACK.match(said):
+                            # "One sec." already opened the reply: no "Got it." stacked on it.
+                            self._dropped(said, "ack_after_hold")
+                            continue
                         if self.server_led and out.asked:
                             self._dropped(said, "after_question")
                             continue
@@ -562,6 +578,8 @@ class LlmCall:
             calls = [(u["name"], u["input"]) for u in reply.tool_uses]
             if holding:
                 last = self.reply.text(" ".join([*held, pending]), calls)
+                if self.server_led and last:
+                    last = self._one_question(last)
             else:
                 rest = pending
                 if self.server_led and pending.strip():

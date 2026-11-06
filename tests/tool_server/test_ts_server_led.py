@@ -209,7 +209,7 @@ def test_the_questions_in_other_words_count(led):
     slot = slot_of(offer(led, call))
     led.turn(call, "That works.")
     for question in ("Can you approve repairs?", "Will anyone be home then?",
-                     "Any gate code or pets?"):
+                     "Any gate code?"):
         led.say(call, question)
         led.turn(call, "Yes.")
     assert book(led, call, slot)["ok"]
@@ -376,3 +376,20 @@ def test_an_address_booked_unverified_goes_on_to_the_next_question():
     asked = Result(ok=False, say="And which borough is that in?")
     assert "What's the best phone number" in flow._next(ctx, "find_address", None, said)
     assert flow._next(ctx, "find_address", None, asked) == "Wait for the caller's answer."
+
+
+
+def test_a_unit_the_caller_already_gave_is_not_asked_again(led):
+    """The smoke call on 516 asked "Is there an apartment or unit number?" after "unit 4B"."""
+    from app.envelope import Result
+
+    call = led.start()["data"]["call_id"]
+    led.turn(call, "Seventeen hundred Bedford Avenue, unit 4B.")
+    conn = led.db()
+    try:
+        ctx = type("Ctx", (), {"tenant": Tenant.load(TENANT_DIR), "conn": conn,
+                               "call": {"id": call}})()
+        found = Result(ok=True, data={"needs_unit": True})
+        assert "apartment or unit number" not in flow._next(ctx, "find_address", None, found)
+    finally:
+        conn.close()

@@ -33,7 +33,7 @@ VISIT_QUESTIONS = (
             r"(always |usually )?(home|here)\b|\bwork from home\b"
         ),
     ),
-    ("ask_access", r"\bgate code\b|\bbuzzer\b|\bpets?\b", r"\bgate\b|\bbuzzer\b|\bpets?\b|\bdogs?\b|\bcats?\b|\bdoorman\b"),
+    ("ask_access", r"\bgate code\b|\bbuzzer\b", r"\bgate\b|\bbuzzer\b|\bdoorman\b|\bno code\b"),
 )
 
 # A caller saying nobody will be home, and the follow-up that asks how the technician gets in
@@ -287,13 +287,26 @@ def _out_jobs(ctx) -> list[str]:
 UNIT_QUESTION = "'Is there an apartment or unit number?'"
 
 
+UNIT_SAID = re.compile(
+    r"\b(unit|apt|apartment|suite|floor)\s+\w+|#\s*\w+|\b\d+(st|nd|rd|th)\s+floor\b", re.IGNORECASE
+)
+
+
+def _unit_said(ctx) -> bool:
+    """The caller already gave the unit ("1700 Bedford Avenue, unit 4B"): it isn't asked again."""
+    if getattr(ctx, "conn", None) is None:
+        return False
+    return any(t["speaker"] == "caller" and UNIT_SAID.search(t["text"]) for t in _turns(ctx))
+
+
 def _after_address(ctx, needs_unit: bool) -> str:
     """The questions between the address and the read-back, built from what the caller already
     said (Jackson's call call_046f37112cac691a50019893717): the unit only for a building with more
     than one home (find_address `needs_unit`); how bad only on a no-heat or no-cooling call, in
     their words when they named a symptom; the system type fit to the issue; a catch-all that
     never offers an example they already gave."""
-    unit = f"{UNIT_QUESTION}, unless they said it's a house or gave one; " if needs_unit else ""
+    unit = (f"{UNIT_QUESTION}, unless they said it's a house; "
+            if needs_unit and not _unit_said(ctx) else "")
     line = ctx.tenant.line
     return (
         "Ask the next of these you don't have yet, one a turn, built from what the caller already "

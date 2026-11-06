@@ -736,3 +736,31 @@ def test_server_led_the_read_back_never_gets_a_hold_phrase(monkeypatch):
     with client.websocket_connect(path()) as ws:
         open_call(ws)
         assert said(ask(ws, 1, ["Hi.", "This number."])) == READ_BACK
+
+
+def test_server_led_a_held_reply_stops_at_its_first_question(server_led):
+    """Before the read-back the whole reply is held; it still ends at its first question (the
+    smoke call on 516: "...or a heat pump? Actually, mentioned a boiler. So next. ...")."""
+    server, make = server_led
+    find = {"id": "t1", "name": "find_address", "input": {"street": "1700 Bedford Avenue"}}
+    server.tools["find_address"] = envelope(data={"zip": "11225"})
+    client, _ = make([
+        ([], [find]), (["What's the best number? "], []),
+        (["Is it a boiler, a furnace, or a heat pump? ", "Actually, you mentioned a boiler. ",
+          "I'll set it up as a tune-up."], []),
+    ])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        ask(ws, 1, ["Hi.", "1700 Bedford Avenue."])
+        events = ask(ws, 2, ["Hi.", "1700 Bedford Avenue.", "What's the best number?", "Mine."])
+    assert said(events) == "Is it a boiler, a furnace, or a heat pump?"
+
+
+def test_server_led_no_lone_got_it_after_a_hold_phrase(monkeypatch):
+    slots = {"id": "t1", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    server, client, _ = slow_socket(monkeypatch, {"find_slots": 0.2},
+                                    [([], [slots]), (["Got it. ", "Which day works for you?"], [])])
+    server.tools["find_slots"] = envelope(ok=True, data={})
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        assert said(ask(ws, 1, ["Hi.", "Yes."])) == "One sec. Which day works for you?"
