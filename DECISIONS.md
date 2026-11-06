@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 121. The demo runs on the socket build: our server speaks the fixed lines, Haiku writes the rest
+
+Decided: Summit Air's agent moves to the server-led flow behind Retell's custom-LLM WebSocket (issue #176). Retell keeps the phone line, listening, turn-taking, backchannels and Brian's voice; our tool server decides each turn, speaks the sentences that must be exact (read-back, slot offer, booking confirmation, safety lines, greeting and goodbye) word for word, and asks Haiku 5.5 to write the adaptive replies. A short hold phrase plays only on genuinely long waits. The single-prompt Retell agent (change set 25, archived with a Retell backup copy) stays as the fallback, one phone-number switch away.
+Why: across the side-by-side and the build-outs, the errors left on every hosted-model arm were the model rewording or adding to words the server owns (names, narration, read-backs, the open-door line). The socket removes that class by construction: every server sentence was word for word on every socket call (MEASURED, evals/rounds/socket-buildout-01.md on joco/socket-buildout-176). Jackson called it and found the pace fine because of the backchannels, with e2e p50 1.41 s and p90 2.35 s on his call (MEASURED, Retell latency), in line with the hosted Haiku agent. Sonnet 5.5 cut errors but narrated its own reasoning aloud, ran slower and cost about 3.5 times as much (MEASURED, evals/rounds/sonnet-buildout-01.md).
+Considered: the hosted single-prompt Haiku agent with a consolidated prompt (fallback); Sonnet 5.5 hosted (slower, costlier, narrates); Retell Conversation Flow (the model still judges step changes, and a flag the model can set is not a gate).
+Would change if: the socket fails the done bar (DECISIONS 119) on something the server can't fix, or its turn latency drifts above the hosted agent's on Jackson's calls.
+Discussion: evals/rounds/side-by-side-01.md, docs/explorations/retell-exact-speech.md
+Issue: #176
+
 ## 119. V1 is done when three journeys are reliable, not when every call is clean
 
 Decided: V1 is done when three journeys pass about 10 scripted runs each with no safety errors: a routine booking, no heat with an elderly person (the raise reaches the booking), and a gas smell (real and retracted). Everything else that still goes wrong is listed in the debrief as a known issue with its fix. A safety error means the advice for a real hazard isn't spoken, a retraction is ignored, a hazard is booked as routine without a flag, or the agent says something unsafe. An extra caring question or a reworded line is a style issue, not a safety error. Asking how to spell a name is expected only when it's needed, not on every call.

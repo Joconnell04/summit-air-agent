@@ -142,3 +142,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | No post-trained small model | Considered only for latency; the live failures are instruction-following, which an 8B model would make worse, and it would bring back self-hosted layers | DECISIONS.md 116 |
 | Deployment repo, not a template | Handed over as what an FDE leaves for one customer, with a reviewer-first README and a light run-it-yourself path; history moves one level down | DECISIONS.md 117 |
 | Done means three reliable journeys | V1 is done when routine booking, no heat with an elderly person, and gas each pass about 10 scripted runs with no safety errors; style issues and the rest go into the debrief | DECISIONS.md 119 |
+| The socket build is the demo path | Our server speaks the exact lines and Haiku writes the rest, behind Retell's custom-LLM socket; the hosted single-prompt agent stays as the fallback | DECISIONS.md 121 |
