@@ -1,0 +1,57 @@
+{# The failure grader's shared pieces: the range form, a run's progress, and the flagged list. #}
+
+{% macro range_form(action, asked=none, bench=false) -%}
+{% set a = asked or {} %}
+<form class="check-range" method="post" action="{{ action }}">
+  <span class="label" id="check-range-label">Check calls from</span>
+  <div class="seg" role="radiogroup" aria-labelledby="check-range-label">
+    {% for value, name in [("hour", "Past hour"), ("day", "Past day"), ("custom", "Custom")] %}
+    <input type="radio" id="span-{{ value }}" name="span" value="{{ value }}"{% if (a.span or "day") == value %} checked{% endif %}>
+    <label for="span-{{ value }}">{{ name }}</label>
+    {% endfor %}
+  </div>
+  <span class="custom-range">
+    <label class="sr-only" for="check-start">From</label>
+    <input class="field" id="check-start" type="datetime-local" name="start" value="{{ a.start or '' }}">
+    <span class="faint">to</span>
+    <label class="sr-only" for="check-end">To</label>
+    <input class="field" id="check-end" type="datetime-local" name="end" value="{{ a.end or '' }}">
+  </span>
+  {% if bench %}<label class="check-force"><input type="checkbox" name="force" value="1"{% if a.force %} checked{% endif %}> Grade again</label>{% endif %}
+  <button class="btn primary" type="submit">Check</button>
+</form>
+{%- endmacro %}
+
+{% macro estimate_box(est, asked, action, bench=false) -%}
+<form class="check-confirm" method="post" action="{{ action }}" role="alert">
+  <p><strong>{{ est.to_grade }} {{ "call" if est.to_grade == 1 else "calls" }} to check, about ${{ "%.2f" | format(est.usd) }}.</strong>
+  {% if est.already %}{{ est.already }} already checked {{ "is" if est.already == 1 else "are" }} skipped.{% endif %}
+  {% if est.capped %}Only the first 200 are checked.{% endif %}</p>
+  {% for k in ("span", "start", "end") %}<input type="hidden" name="{{ k }}" value="{{ asked[k] or '' }}">{% endfor %}
+  {% if bench and asked.force %}<input type="hidden" name="force" value="1">{% endif %}
+  <input type="hidden" name="confirm" value="1">
+  <button class="btn primary" type="submit">Check them</button>
+  <a class="btn quiet" href="{{ action }}">Cancel</a>
+</form>
+{%- endmacro %}
+
+{% macro progress(run) -%}
+<div class="check-progress" data-run-poll="/owner/checks/runs/{{ run.id }}" role="status" aria-live="polite">
+  <div class="bar" aria-hidden="true"><span style="width: {{ run.percent }}%"></span></div>
+  <span class="num" data-run-text>{% if run.status == "queued" %}Waiting to start{% else %}Checked {{ run.done }} of {{ run.total }}{% endif %}</span>
+</div>
+{%- endmacro %}
+
+{% macro flag_list(items, link_bench=false) -%}
+<ul class="list check-list">
+  {% for g in items %}
+  <li>
+    <a class="what" href="{% if link_bench %}/bench/calls/{{ g.key }}{% else %}/owner/calls/{{ g.call_id }}{% endif %}">{{ g.label }}</a>
+    <span class="meta num">{{ g.local.strftime("%a %b %-d, %-I:%M %p") }}, {{ g.caller_id }}</span>
+    <span class="end"><span class="tag {{ 'urgent' if g.severity == 'critical' else 'high' }}">{{ "Critical" if g.severity == "critical" else "Serious" }}</span></span>
+    <p class="why">{{ g.reason }}</p>
+    {% if g.evidence %}<ul class="evidence">{% for e in g.evidence %}<li>&ldquo;{{ e }}&rdquo;</li>{% endfor %}</ul>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{%- endmacro %}

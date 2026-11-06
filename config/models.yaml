@@ -130,6 +130,9 @@ offline:
     provider: anthropic
     model: claude-opus-5-5
     thinking: true
+    # The failure grader (app/failure_grader.py) sets this; other users of the profile keep the
+    # model's default. Chosen on the calibration set (evals/failure_grader/).
+    effort: medium
     price: {input: 4.00, output: 20.00}
 
 # Side models: one narrow question each, answered beside the live call (app/side_model.py,

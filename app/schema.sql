@@ -709,3 +709,62 @@ CREATE TABLE IF NOT EXISTS kept_misses (
     attempts INTEGER NOT NULL,
     next_at TEXT NOT NULL
 );
+
+-- The failure grader (app/failure_grader.py): one grade per ended call, kept so a call is never
+-- graded twice unless forced. failure is the server's decision on the model's answer (raw_json);
+-- dropped says why a failure the model gave was not kept. A row with an error is graded again.
+CREATE TABLE IF NOT EXISTS grades (
+    call_id TEXT PRIMARY KEY REFERENCES calls (id) ON DELETE CASCADE,
+    tenant TEXT NOT NULL,
+    failure INTEGER NOT NULL DEFAULT 0,
+    kind TEXT,
+    severity TEXT,
+    reason TEXT NOT NULL DEFAULT '',
+    evidence_json TEXT NOT NULL DEFAULT '[]',
+    dropped TEXT,
+    raw_json TEXT,
+    -- Where the transcript came from: retell (GET /v2/get-call) or server (the turns table).
+    source TEXT NOT NULL,
+    model_profile TEXT NOT NULL,
+    cost_usd REAL NOT NULL DEFAULT 0,
+    flag_id INTEGER REFERENCES flags (id) ON DELETE SET NULL,
+    error TEXT,
+    graded_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_grades_tenant ON grades (tenant, failure);
+
+-- A grader run: one call, a time range, or the daily run. Progress is counted as it goes so the
+-- pages can show it.
+CREATE TABLE IF NOT EXISTS grader_runs (
+    id INTEGER PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    scope TEXT NOT NULL CHECK (scope IN ('call', 'range', 'daily')),
+    since TEXT,
+    until TEXT,
+    call_ids_json TEXT NOT NULL,
+    force INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'done', 'failed')),
+    total INTEGER NOT NULL DEFAULT 0,
+    done INTEGER NOT NULL DEFAULT 0,
+    flagged INTEGER NOT NULL DEFAULT 0,
+    errors INTEGER NOT NULL DEFAULT 0,
+    estimate_usd REAL NOT NULL DEFAULT 0,
+    cost_usd REAL NOT NULL DEFAULT 0,
+    requested_by TEXT NOT NULL,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    started_at TEXT,
+    finished_at TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_grader_runs_tenant ON grader_runs (tenant, scope, id);
+
+-- The owner's daily schedule for the grader: on or off, and the local time. Every change is a new
+-- row, like setting_changes; the newest row is the current choice.
+CREATE TABLE IF NOT EXISTS grader_schedule (
+    id INTEGER PRIMARY KEY,
+    tenant TEXT NOT NULL,
+    enabled INTEGER NOT NULL,
+    at_time TEXT NOT NULL,
+    author TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);

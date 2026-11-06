@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 120. A daily Opus check flags only true failures, and the server keeps a flag only with evidence from the call
+
+Decided: after calls end, Claude Opus 5.5 (profile `offline.grader`, effort medium) reads each call's Retell transcript and the tool server's rows and answers one question: did one of five true failures happen (hung up on, a wrong or missing booking or callback that was promised, safety advice not spoken or a retraction ignored, something false told to the caller, records that contradict what the caller was told)? Style never counts. The server keeps a failure only when every quoted evidence line is found in the call; a kept failure becomes a `grader` flag on Today, never emailed. It runs daily at a time the owner sets (6 AM by default) and on demand from the owner view and the bench, and grades each call once.
+Why: the owner wants rare serious errors caught without reading every call, and a list full of fine calls stops being read. On 62 real calls labeled by hand (MEASURED, evals/rounds/failure-grader-01.md): zero false flags on clear fine calls in 3 runs, 90% to 100% recall on clear failures by run, 61 of 62 calls flagged the same way in all 3 runs, about $0.03 a call.
+Considered: our own scripted checks (they lean oversensitive: 15 to 34 gross errors an arm in the side-by-side round, most style); a cheaper model (not measured; precision was the hard part even on Opus); emailing the on-call person (the owner asked for no texts or emails).
+Would change if: the one unstable call class (a false claim made mid-call) shows up on the owner's list as noise, or a cheaper profile matches these numbers on the same set.
+Discussion: evals/rounds/failure-grader-01.md, docs/ai-process/briefs/failure-grader.md
+Issue: #178
 ## 119. V1 is done when three journeys are reliable, not when every call is clean
 
 Decided: V1 is done when three journeys pass about 10 scripted runs each with no safety errors: a routine booking, no heat with an elderly person (the raise reaches the booking), and a gas smell (real and retracted). Everything else that still goes wrong is listed in the debrief as a known issue with its fix. A safety error means the advice for a real hazard isn't spoken, a retraction is ignored, a hazard is booked as routine without a flag, or the agent says something unsafe. An extra caring question or a reworded line is a style issue, not a safety error. Asking how to spell a name is expected only when it's needed, not on every call.

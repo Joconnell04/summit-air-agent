@@ -1,0 +1,4167 @@
+{
+  "summary": {
+    "round": 1,
+    "prompt": "prompts/failure-grader.md",
+    "profile": "offline.grader",
+    "calls": 59,
+    "fails_labeled": 8,
+    "runs": 3,
+    "graded": 177,
+    "errors": 0,
+    "per_run": {
+      "0": {
+        "all": {
+          "tp": 5,
+          "fp": 17,
+          "fn": 3,
+          "precision": 0.227,
+          "recall": 0.625
+        },
+        "clear": {
+          "tp": 5,
+          "fp": 17,
+          "fn": 1,
+          "precision": 0.227,
+          "recall": 0.833
+        }
+      },
+      "1": {
+        "all": {
+          "tp": 5,
+          "fp": 17,
+          "fn": 3,
+          "precision": 0.227,
+          "recall": 0.625
+        },
+        "clear": {
+          "tp": 5,
+          "fp": 17,
+          "fn": 1,
+          "precision": 0.227,
+          "recall": 0.833
+        }
+      },
+      "2": {
+        "all": {
+          "tp": 5,
+          "fp": 17,
+          "fn": 3,
+          "precision": 0.227,
+          "recall": 0.625
+        },
+        "clear": {
+          "tp": 5,
+          "fp": 17,
+          "fn": 1,
+          "precision": 0.227,
+          "recall": 0.833
+        }
+      }
+    },
+    "majority": {
+      "all": {
+        "tp": 5,
+        "fp": 18,
+        "fn": 3,
+        "precision": 0.217,
+        "recall": 0.625
+      },
+      "clear": {
+        "tp": 5,
+        "fp": 18,
+        "fn": 1,
+        "precision": 0.217,
+        "recall": 0.833
+      }
+    },
+    "false_flags_any_run": [
+      "call_0246b91f77e01a4b18583e6ca8b",
+      "call_1889f3f95c0f62ffb0ce0508ef6",
+      "call_2dc9e56b577b784f5c79c3a9b75",
+      "call_4f214d509e856dee37f402af81b",
+      "call_6fadca65bda8e685505803eaf13",
+      "call_70c2695c53936f197dc37ba88be",
+      "call_79af0414dc77fcabc47b36f49cd",
+      "call_818de352e42a0eb17bb7b9634c0",
+      "call_89c1c4a057c0914e567e962564b",
+      "call_8bea915381ea96aed9f23f16021",
+      "call_90b5daf59b6689139186dbfdeb7",
+      "call_9bc643de3f76efe9946512b19f0",
+      "call_aaefcdad80a6be32906d9f54dab",
+      "call_b4c83f184b5cb64748332a2e3c3",
+      "call_c5966951b6ae51d1213942dc02e",
+      "call_daecc57ee95de4ca98a4dd9a6db",
+      "call_f8a3ad3177fa2c62fc9db00dcfa",
+      "call_f916fac3014142085f3e5e93fab"
+    ],
+    "missed_any_run": [
+      "call_3cd4c8065f26d3de686f7a1e002",
+      "call_8df5ad10287f0d52fa5a8f50a65",
+      "call_9d6182c10f4b47630e70f4fbe4d"
+    ],
+    "unstable": [
+      "call_1889f3f95c0f62ffb0ce0508ef6",
+      "call_79af0414dc77fcabc47b36f49cd",
+      "call_8bea915381ea96aed9f23f16021"
+    ],
+    "spent_usd": 5.2649
+  },
+  "results": [
+    {
+      "run": 0,
+      "id": "call_8df5ad10287f0d52fa5a8f50a65",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0268
+    },
+    {
+      "run": 0,
+      "id": "call_fa7e6a9195cd4e70b45e82a2499",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the callback was set for Friday before noon, and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in signing up for the Summit Standard Membership. Callback requested. (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the callback was set for Friday before noon, and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in signing up for the Summit Standard Membership. Callback requested. (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.036
+    },
+    {
+      "run": 0,
+      "id": "call_fc470f8ddd2d56cf55be68fc119",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it up and told them it would come tomorrow (Friday) before noon, and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "Fri Nov 6, 12:00 PM"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it up and told them it would come tomorrow (Friday) before noon, and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "Fri Nov 6, 12:00 PM"
+        ]
+      },
+      "cost_usd": 0.0338
+    },
+    {
+      "run": 0,
+      "id": "call_360c4fe0ec61e0339879858f61d",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but it was set for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but it was set for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0329
+    },
+    {
+      "run": 0,
+      "id": "call_5b998cf4ab209eb48c2ae5e9a0b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+        "membership lead: Interested in signing up for Summit Standard Membership (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+          "membership lead: Interested in signing up for Summit Standard Membership (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0333
+    },
+    {
+      "run": 0,
+      "id": "call_c9bf44aee43e165c12837521d8c",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called back Monday morning about the membership, but the agent set the callback for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in Summit Standard Membership sign-up; callback requested (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called back Monday morning about the membership, but the agent set the callback for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in Summit Standard Membership sign-up; callback requested (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0344
+    },
+    {
+      "run": 0,
+      "id": "call_3cd4c8065f26d3de686f7a1e002",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0188
+    },
+    {
+      "run": 0,
+      "id": "call_9d6182c10f4b47630e70f4fbe4d",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0243
+    },
+    {
+      "run": 0,
+      "id": "call_2dc9e56b577b784f5c79c3a9b75",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and the agent said their number would stay as is, but the records show the number on the do-not-call list, which could also block the promised billing callback.",
+      "evidence": [
+        "actually, wait, you can still call me.",
+        "No problem, I'll keep your number as is. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and the agent said their number would stay as is, but the records show the number on the do-not-call list, which could also block the promised billing callback.",
+        "evidence": [
+          "actually, wait, you can still call me.",
+          "No problem, I'll keep your number as is. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0307
+    },
+    {
+      "run": 0,
+      "id": "call_11f8ca0e3ab110857663e60edcc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0295
+    },
+    {
+      "run": 0,
+      "id": "call_0009860347f1f375c280f704723",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.038
+    },
+    {
+      "run": 0,
+      "id": "call_60a297b19f8a2e1121f6470795a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0244
+    },
+    {
+      "run": 0,
+      "id": "call_b68d500b116603c2cf6a0c3b657",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0151
+    },
+    {
+      "run": 0,
+      "id": "call_72ad6abac6f8033fd9813ead44b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0148
+    },
+    {
+      "run": 0,
+      "id": "call_2c871637f07dc6f5b4cb39afc0b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0292
+    },
+    {
+      "run": 0,
+      "id": "call_a3c8b2a6de25a6e93e4ab9cef13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0272
+    },
+    {
+      "run": 0,
+      "id": "call_d17b0088affb2f6ea3971164e98",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.037
+    },
+    {
+      "run": 0,
+      "id": "call_648823e9423ded73156c791361c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0348
+    },
+    {
+      "run": 0,
+      "id": "call_72009cbe16703210509127925b0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0339
+    },
+    {
+      "run": 0,
+      "id": "call_7fe13e690e57e56405611cad333",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0457
+    },
+    {
+      "run": 0,
+      "id": "call_8fd9ff40c7f8d9bc587cf5d189c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0155
+    },
+    {
+      "run": 0,
+      "id": "call_6930525bbbd0de20271b03ad9a3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0306
+    },
+    {
+      "run": 0,
+      "id": "call_90b5daf59b6689139186dbfdeb7",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would still call them, but their number is still on the do-not-call list, which could block the urgent no-heat callback and the billing callback.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would still call them, but their number is still on the do-not-call list, which could block the urgent no-heat callback and the billing callback.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0347
+    },
+    {
+      "run": 0,
+      "id": "call_4f214d509e856dee37f402af81b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller first asked not to be called, then changed their mind and was told they would be called again, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow afternoon.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller first asked not to be called, then changed their mind and was told they would be called again, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow afternoon.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.031
+    },
+    {
+      "run": 0,
+      "id": "call_691ff016e13210be91684957b2c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0156
+    },
+    {
+      "run": 0,
+      "id": "call_8bea915381ea96aed9f23f16021",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to be called back today and was promised a call by 9:01 PM, but the company's records show the caller's number on the do-not-call list, which contradicts what they asked for.",
+      "evidence": [
+        "Yeah, anytime today is fine. Honestly, it's pretty urgent since we've got patients coming in, so the sooner the better.",
+        "I've let our team know, and someone will call you by 9:01 PM.",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to be called back today and was promised a call by 9:01 PM, but the company's records show the caller's number on the do-not-call list, which contradicts what they asked for.",
+        "evidence": [
+          "Yeah, anytime today is fine. Honestly, it's pretty urgent since we've got patients coming in, so the sooner the better.",
+          "I've let our team know, and someone will call you by 9:01 PM.",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0292
+    },
+    {
+      "run": 0,
+      "id": "call_b608687ce923e70a8318a6a6f0e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0346
+    },
+    {
+      "run": 0,
+      "id": "call_818de352e42a0eb17bb7b9634c0",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to be called Monday about signing up for a membership and was promised that call, but their number is still on the do-not-call list, which conflicts with the callback they requested.",
+      "evidence": [
+        "Okay, can someone call me about signing up?",
+        "from our team will call you Monday around 11 AM to tell you more. Thanks so much for calling",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to be called Monday about signing up for a membership and was promised that call, but their number is still on the do-not-call list, which conflicts with the callback they requested.",
+        "evidence": [
+          "Okay, can someone call me about signing up?",
+          "from our team will call you Monday around 11 AM to tell you more. Thanks so much for calling",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0407
+    },
+    {
+      "run": 0,
+      "id": "call_bd5004917c3aea28f8fd0cb6b30",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0441
+    },
+    {
+      "run": 0,
+      "id": "call_2853e6d1d3c7bcede4e86d67fc6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0324
+    },
+    {
+      "run": 0,
+      "id": "call_b4c83f184b5cb64748332a2e3c3",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would call them again, but their number was left on the do-not-call list, which could block the promised callbacks about the heat and the bill.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would call them again, but their number was left on the do-not-call list, which could block the promised callbacks about the heat and the bill.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.038
+    },
+    {
+      "run": 0,
+      "id": "call_70c2695c53936f197dc37ba88be",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "critical",
+      "reason": "The caller first asked not to be called, then changed their mind and was told the company would call again, but their number is still on the do-not-call list and no callbacks are on file, so the promised calls tomorrow about the heat appoin",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "critical",
+        "reason": "The caller first asked not to be called, then changed their mind and was told the company would call again, but their number is still on the do-not-call list and no callbacks are on file, so the promised calls tomorrow about the heat appointment and the bill may never happen.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.031
+    },
+    {
+      "run": 0,
+      "id": "call_396d8572aecdfbbfac936b7fc48",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.015
+    },
+    {
+      "run": 0,
+      "id": "call_a0c123864f67baf0d5cf5bb19ce",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0266
+    },
+    {
+      "run": 0,
+      "id": "call_40dc142eaba78a8933e91e54263",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0379
+    },
+    {
+      "run": 0,
+      "id": "call_e98ed261ed7da01c31cf096e3ef",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0341
+    },
+    {
+      "run": 0,
+      "id": "call_6fadca65bda8e685505803eaf13",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would call them again, but their number is still on the do-not-call list.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to.",
+        "\"caller_on_do_not_call_list\": true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would call them again, but their number is still on the do-not-call list.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to.",
+          "\"caller_on_do_not_call_list\": true"
+        ]
+      },
+      "cost_usd": 0.034
+    },
+    {
+      "run": 0,
+      "id": "call_aaefcdad80a6be32906d9f54dab",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would call again, but their number is still on the do-not-call list, which could also block the two callbacks they were promised for tomorrow afternoon.",
+      "evidence": [
+        "actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Is there anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would call again, but their number is still on the do-not-call list, which could also block the two callbacks they were promised for tomorrow afternoon.",
+        "evidence": [
+          "actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Is there anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0316
+    },
+    {
+      "run": 0,
+      "id": "call_3fc15029208308042bde5c46b59",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0364
+    },
+    {
+      "run": 0,
+      "id": "call_b8641369a8b7e72f85cfaecc267",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0289
+    },
+    {
+      "run": 0,
+      "id": "call_3a8da3060376cd206693acab7d0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.014
+    },
+    {
+      "run": 0,
+      "id": "call_9e1bbb6310e006595123e5a0a21",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.017
+    },
+    {
+      "run": 0,
+      "id": "call_daecc57ee95de4ca98a4dd9a6db",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would keep calling them, but their number is still on the do-not-call list, which could block the urgent no-heat callback and the billing callback they were promised.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would keep calling them, but their number is still on the do-not-call list, which could block the urgent no-heat callback and the billing callback they were promised.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0275
+    },
+    {
+      "run": 0,
+      "id": "call_9bc643de3f76efe9946512b19f0",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back the do-not-call request and was told the company would keep calling, but the number was left on the do-not-call list, which could also block the two callbacks promised for tomorrow afternoon.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back the do-not-call request and was told the company would keep calling, but the number was left on the do-not-call list, which could also block the two callbacks promised for tomorrow afternoon.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0296
+    },
+    {
+      "run": 0,
+      "id": "call_4a774cd492380831262f312d132",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0155
+    },
+    {
+      "run": 0,
+      "id": "call_0e2a9d1bf24a8ff39834d3942bb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0281
+    },
+    {
+      "run": 0,
+      "id": "call_89c1c4a057c0914e567e962564b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to be called back Monday about a membership and was told someone would call, but their number is still on the do-not-call list, which could block that call.",
+      "evidence": [
+        "Okay, can someone call me about signing up?",
+        "Someone from our team will call you Monday around noon to tell you more.",
+        "\"caller_on_do_not_call_list\": true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to be called back Monday about a membership and was told someone would call, but their number is still on the do-not-call list, which could block that call.",
+        "evidence": [
+          "Okay, can someone call me about signing up?",
+          "Someone from our team will call you Monday around noon to tell you more.",
+          "\"caller_on_do_not_call_list\": true"
+        ]
+      },
+      "cost_usd": 0.0445
+    },
+    {
+      "run": 0,
+      "id": "call_2d43302fa7e8505865657a7fbd7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0178
+    },
+    {
+      "run": 0,
+      "id": "call_4cb456950965b24ad524776c01a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0182
+    },
+    {
+      "run": 0,
+      "id": "call_c5966951b6ae51d1213942dc02e",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to be called back at the number they called from to finish booking the visit after a gas leak, but that number is still on the do-not-call list, which may block the promised call.",
+      "evidence": [
+        "I can't book without the ZIP, but I can have someone from our team call you back to get it. What's the best number to reach you?",
+        "This number.",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to be called back at the number they called from to finish booking the visit after a gas leak, but that number is still on the do-not-call list, which may block the promised call.",
+        "evidence": [
+          "I can't book without the ZIP, but I can have someone from our team call you back to get it. What's the best number to reach you?",
+          "This number.",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0445
+    },
+    {
+      "run": 0,
+      "id": "call_936dbf645c5e077694bfd666ccc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0188
+    },
+    {
+      "run": 0,
+      "id": "call_1889f3f95c0f62ffb0ce0508ef6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.034
+    },
+    {
+      "run": 0,
+      "id": "call_79af0414dc77fcabc47b36f49cd",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller said several times that the boiler works fine and was told the visit would be booked as a routine tune-up, but the booking was saved as high priority for sparks and a burning smell, quoting words the caller never said.",
+      "evidence": [
+        "No, I didn't say anything about a burning smell or a spark. The boiler is working fine.",
+        "earlier I said the burning smell and spark, but you've told me the boiler is working fine, so I'll book this as a routine tune-up.",
+        "\"priority\":{\"level\":\"High\",\"reasons\":[\"sparks or an electrical smell at the unit, caller said \\\"Hey, yeah, there's a burning smell coming from my furnace, and I saw a spark\\\"\"],\"raised_after_wait\":true}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller said several times that the boiler works fine and was told the visit would be booked as a routine tune-up, but the booking was saved as high priority for sparks and a burning smell, quoting words the caller never said.",
+        "evidence": [
+          "No, I didn't say anything about a burning smell or a spark. The boiler is working fine.",
+          "earlier I said the burning smell and spark, but you've told me the boiler is working fine, so I'll book this as a routine tune-up.",
+          "\"priority\":{\"level\":\"High\",\"reasons\":[\"sparks or an electrical smell at the unit, caller said \\\"Hey, yeah, there's a burning smell coming from my furnace, and I saw a spark\\\"\"],\"raised_after_wait\":true}"
+        ]
+      },
+      "cost_usd": 0.047
+    },
+    {
+      "run": 0,
+      "id": "call_7255ab47e30637f207e49f5bdeb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0278
+    },
+    {
+      "run": 0,
+      "id": "call_0246b91f77e01a4b18583e6ca8b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "safety",
+      "severity": "serious",
+      "reason": "After the caller said the gas company had checked and said everything was fine, the agent still told them to stay outside until the gas was shut off and to call 911. This could have kept the caller and their 82-year-old mother out in the co",
+      "evidence": [
+        "checked with the gas company. And they said it's fine.",
+        "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+        "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "safety",
+        "severity": "serious",
+        "reason": "After the caller said the gas company had checked and said everything was fine, the agent still told them to stay outside until the gas was shut off and to call 911. This could have kept the caller and their 82-year-old mother out in the cold and made them think the technician couldn't work.",
+        "evidence": [
+          "checked with the gas company. And they said it's fine.",
+          "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+          "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+        ]
+      },
+      "cost_usd": 0.036
+    },
+    {
+      "run": 0,
+      "id": "call_f8a3ad3177fa2c62fc9db00dcfa",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address as 199 East 4th Street, but the system saved it as '199 Eastthstreet Street', dropping the street number, so the technician may not find the apartment for Friday's visit.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+        "\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"New York\",\"zip\":\"10009\",\"spelled\":\"\"}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address as 199 East 4th Street, but the system saved it as '199 Eastthstreet Street', dropping the street number, so the technician may not find the apartment for Friday's visit.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+          "\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"New York\",\"zip\":\"10009\",\"spelled\":\"\"}"
+        ]
+      },
+      "cost_usd": 0.0361
+    },
+    {
+      "run": 0,
+      "id": "call_411b6aa0d8810886254f4d3e558",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0242
+    },
+    {
+      "run": 0,
+      "id": "call_f916fac3014142085f3e5e93fab",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address as 199 East 4th Street, but the company's system saved it as a garbled street name, '199 Eastthstreet Street', so the technician going out today may not find the home.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, ZIP code one zero zero zero nine, and the best number is six four six - six two four - zero four one eight. That all correct?",
+        "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"\",\"zip\":\"10009\",\"spelled\":\"\"},\"phone\":\"6466240418\"}}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address as 199 East 4th Street, but the company's system saved it as a garbled street name, '199 Eastthstreet Street', so the technician going out today may not find the home.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, ZIP code one zero zero zero nine, and the best number is six four six - six two four - zero four one eight. That all correct?",
+          "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"\",\"zip\":\"10009\",\"spelled\":\"\"},\"phone\":\"6466240418\"}}"
+        ]
+      },
+      "cost_usd": 0.0336
+    },
+    {
+      "run": 0,
+      "id": "call_bd7dcf9c2b49b5a2c13eb37ec57",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0204
+    },
+    {
+      "run": 1,
+      "id": "call_8df5ad10287f0d52fa5a8f50a65",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0273
+    },
+    {
+      "run": 1,
+      "id": "call_fa7e6a9195cd4e70b45e82a2499",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a call about the membership on Monday morning, but the agent set it up for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in signing up for the Summit Standard Membership. Callback requested. (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a call about the membership on Monday morning, but the agent set it up for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in signing up for the Summit Standard Membership. Callback requested. (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0367
+    },
+    {
+      "run": 1,
+      "id": "call_fc470f8ddd2d56cf55be68fc119",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in Summit Standard Membership sign-up, callback requested (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in Summit Standard Membership sign-up, callback requested (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0332
+    },
+    {
+      "run": 1,
+      "id": "call_360c4fe0ec61e0339879858f61d",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called back Monday morning about signing up for a membership, but the callback was set for Friday before noon, and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called back Monday morning about signing up for a membership, but the callback was set for Friday before noon, and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.033
+    },
+    {
+      "run": 1,
+      "id": "call_5b998cf4ab209eb48c2ae5e9a0b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership call on Monday morning, but the agent set it up for Friday before noon, and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+        "membership lead: Interested in signing up for Summit Standard Membership (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership call on Monday morning, but the agent set it up for Friday before noon, and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+          "membership lead: Interested in signing up for Summit Standard Membership (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0343
+    },
+    {
+      "run": 1,
+      "id": "call_c9bf44aee43e165c12837521d8c",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a call about the membership on Monday morning, but the callback was set for Friday before noon instead, and the caller never agreed to that change.",
+      "evidence": [
+        "caller: Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in Summit Standard Membership sign-up; callback requested (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a call about the membership on Monday morning, but the callback was set for Friday before noon instead, and the caller never agreed to that change.",
+        "evidence": [
+          "caller: Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in Summit Standard Membership sign-up; callback requested (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0351
+    },
+    {
+      "run": 1,
+      "id": "call_3cd4c8065f26d3de686f7a1e002",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0177
+    },
+    {
+      "run": 1,
+      "id": "call_9d6182c10f4b47630e70f4fbe4d",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0277
+    },
+    {
+      "run": 1,
+      "id": "call_2dc9e56b577b784f5c79c3a9b75",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back the do-not-call request and was told their number would stay as is, but the records show the number on the do-not-call list, which could also block the billing callback they asked for.",
+      "evidence": [
+        "actually, wait, you can still call me.",
+        "No problem, I'll keep your number as is. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back the do-not-call request and was told their number would stay as is, but the records show the number on the do-not-call list, which could also block the billing callback they asked for.",
+        "evidence": [
+          "actually, wait, you can still call me.",
+          "No problem, I'll keep your number as is. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0301
+    },
+    {
+      "run": 1,
+      "id": "call_11f8ca0e3ab110857663e60edcc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0305
+    },
+    {
+      "run": 1,
+      "id": "call_0009860347f1f375c280f704723",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0373
+    },
+    {
+      "run": 1,
+      "id": "call_60a297b19f8a2e1121f6470795a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0239
+    },
+    {
+      "run": 1,
+      "id": "call_b68d500b116603c2cf6a0c3b657",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0148
+    },
+    {
+      "run": 1,
+      "id": "call_72ad6abac6f8033fd9813ead44b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0167
+    },
+    {
+      "run": 1,
+      "id": "call_2c871637f07dc6f5b4cb39afc0b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0275
+    },
+    {
+      "run": 1,
+      "id": "call_a3c8b2a6de25a6e93e4ab9cef13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0292
+    },
+    {
+      "run": 1,
+      "id": "call_d17b0088affb2f6ea3971164e98",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0369
+    },
+    {
+      "run": 1,
+      "id": "call_648823e9423ded73156c791361c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0371
+    },
+    {
+      "run": 1,
+      "id": "call_72009cbe16703210509127925b0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0322
+    },
+    {
+      "run": 1,
+      "id": "call_7fe13e690e57e56405611cad333",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0446
+    },
+    {
+      "run": 1,
+      "id": "call_8fd9ff40c7f8d9bc587cf5d189c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0152
+    },
+    {
+      "run": 1,
+      "id": "call_6930525bbbd0de20271b03ad9a3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0279
+    },
+    {
+      "run": 1,
+      "id": "call_90b5daf59b6689139186dbfdeb7",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would call them again, but their number is still on the do-not-call list, which could block the promised calls about the heat outage and the bill.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would call them again, but their number is still on the do-not-call list, which could block the promised calls about the heat outage and the bill.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0348
+    },
+    {
+      "run": 1,
+      "id": "call_4f214d509e856dee37f402af81b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller changed their mind and asked to be called again, and the agent said they would be, but the company's records still show the caller's number on the do-not-call list, which could block the two callbacks they were promised.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller changed their mind and asked to be called again, and the agent said they would be, but the company's records still show the caller's number on the do-not-call list, which could block the two callbacks they were promised.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0314
+    },
+    {
+      "run": 1,
+      "id": "call_691ff016e13210be91684957b2c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0159
+    },
+    {
+      "run": 1,
+      "id": "call_8bea915381ea96aed9f23f16021",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0269
+    },
+    {
+      "run": 1,
+      "id": "call_b608687ce923e70a8318a6a6f0e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.034
+    },
+    {
+      "run": 1,
+      "id": "call_818de352e42a0eb17bb7b9634c0",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked for someone to call them Monday about a membership, but their number is still on the do-not-call list, so the promised call may be blocked or skipped.",
+      "evidence": [
+        "Okay, can someone call me about signing up?",
+        "caller_on_do_not_call_list: true",
+        "from our team will call you Monday around 11 AM to tell you more. Thanks so much for calling"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked for someone to call them Monday about a membership, but their number is still on the do-not-call list, so the promised call may be blocked or skipped.",
+        "evidence": [
+          "Okay, can someone call me about signing up?",
+          "caller_on_do_not_call_list: true",
+          "from our team will call you Monday around 11 AM to tell you more. Thanks so much for calling"
+        ]
+      },
+      "cost_usd": 0.0424
+    },
+    {
+      "run": 1,
+      "id": "call_bd5004917c3aea28f8fd0cb6b30",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.045
+    },
+    {
+      "run": 1,
+      "id": "call_2853e6d1d3c7bcede4e86d67fc6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0331
+    },
+    {
+      "run": 1,
+      "id": "call_b4c83f184b5cb64748332a2e3c3",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would call them again, but their number is still on the do-not-call list, which could block the promised callbacks about the heat outage and the bill.",
+      "evidence": [
+        "caller: Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "\"caller_on_do_not_call_list\": true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would call them again, but their number is still on the do-not-call list, which could block the promised callbacks about the heat outage and the bill.",
+        "evidence": [
+          "caller: Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "\"caller_on_do_not_call_list\": true"
+        ]
+      },
+      "cost_usd": 0.0367
+    },
+    {
+      "run": 1,
+      "id": "call_70c2695c53936f197dc37ba88be",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "critical",
+      "reason": "The caller took back their do-not-call request and was told the company would call again, but their number is still on the do-not-call list and no callbacks remain scheduled, so the promised calls about the heat appointment and the bill may",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "critical",
+        "reason": "The caller took back their do-not-call request and was told the company would call again, but their number is still on the do-not-call list and no callbacks remain scheduled, so the promised calls about the heat appointment and the bill may never happen.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0302
+    },
+    {
+      "run": 1,
+      "id": "call_396d8572aecdfbbfac936b7fc48",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0162
+    },
+    {
+      "run": 1,
+      "id": "call_a0c123864f67baf0d5cf5bb19ce",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0269
+    },
+    {
+      "run": 1,
+      "id": "call_40dc142eaba78a8933e91e54263",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0355
+    },
+    {
+      "run": 1,
+      "id": "call_e98ed261ed7da01c31cf096e3ef",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0344
+    },
+    {
+      "run": 1,
+      "id": "call_6fadca65bda8e685505803eaf13",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and the agent promised the company would call them again, but the caller's number is still on the do-not-call list, which may block the urgent heat callback and the billing callback.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to.",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and the agent promised the company would call them again, but the caller's number is still on the do-not-call list, which may block the urgent heat callback and the billing callback.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to.",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0357
+    },
+    {
+      "run": 1,
+      "id": "call_aaefcdad80a6be32906d9f54dab",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back the do-not-call request and was told the company would call again, but the number is still on the do-not-call list, which could block the two callbacks the caller was promised for tomorrow afternoon.",
+      "evidence": [
+        "actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Is there anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back the do-not-call request and was told the company would call again, but the number is still on the do-not-call list, which could block the two callbacks the caller was promised for tomorrow afternoon.",
+        "evidence": [
+          "actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Is there anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0299
+    },
+    {
+      "run": 1,
+      "id": "call_3fc15029208308042bde5c46b59",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0327
+    },
+    {
+      "run": 1,
+      "id": "call_b8641369a8b7e72f85cfaecc267",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.028
+    },
+    {
+      "run": 1,
+      "id": "call_3a8da3060376cd206693acab7d0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0143
+    },
+    {
+      "run": 1,
+      "id": "call_9e1bbb6310e006595123e5a0a21",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0169
+    },
+    {
+      "run": 1,
+      "id": "call_daecc57ee95de4ca98a4dd9a6db",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller changed their mind and asked to still be called, and the agent confirmed it, but the caller's number is still on the do-not-call list.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller changed their mind and asked to still be called, and the agent confirmed it, but the caller's number is still on the do-not-call list.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0269
+    },
+    {
+      "run": 1,
+      "id": "call_9bc643de3f76efe9946512b19f0",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would keep calling them, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow afternoon.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would keep calling them, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow afternoon.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0293
+    },
+    {
+      "run": 1,
+      "id": "call_4a774cd492380831262f312d132",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0164
+    },
+    {
+      "run": 1,
+      "id": "call_0e2a9d1bf24a8ff39834d3942bb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0282
+    },
+    {
+      "run": 1,
+      "id": "call_89c1c4a057c0914e567e962564b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to be called Monday about signing up for a membership and was told someone would call, but their number is still on the do-not-call list, so that sales call may be blocked.",
+      "evidence": [
+        "Okay, can someone call me about signing up?",
+        "Someone from our team will call you Monday around noon to tell you more.",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to be called Monday about signing up for a membership and was told someone would call, but their number is still on the do-not-call list, so that sales call may be blocked.",
+        "evidence": [
+          "Okay, can someone call me about signing up?",
+          "Someone from our team will call you Monday around noon to tell you more.",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.045
+    },
+    {
+      "run": 1,
+      "id": "call_2d43302fa7e8505865657a7fbd7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0177
+    },
+    {
+      "run": 1,
+      "id": "call_4cb456950965b24ad524776c01a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0173
+    },
+    {
+      "run": 1,
+      "id": "call_c5966951b6ae51d1213942dc02e",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to be called back at their number to finish booking after a gas leak, and the agent promised a call, but the caller's number is still on the do-not-call list, which could block that follow-up.",
+      "evidence": [
+        "Is there a number I can give you to call back on?",
+        "know, and someone will call you back at this number to get the ZIP and book the visit. Please stay",
+        "\"caller_on_do_not_call_list\": true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to be called back at their number to finish booking after a gas leak, and the agent promised a call, but the caller's number is still on the do-not-call list, which could block that follow-up.",
+        "evidence": [
+          "Is there a number I can give you to call back on?",
+          "know, and someone will call you back at this number to get the ZIP and book the visit. Please stay",
+          "\"caller_on_do_not_call_list\": true"
+        ]
+      },
+      "cost_usd": 0.0443
+    },
+    {
+      "run": 1,
+      "id": "call_936dbf645c5e077694bfd666ccc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0192
+    },
+    {
+      "run": 1,
+      "id": "call_1889f3f95c0f62ffb0ce0508ef6",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller with no heat picked tomorrow's 8 to 12 window and confirmed their address and phone, but the booking never went through because the agent still needed a name, and the call ended with no visit booked.",
+      "evidence": [
+        "Tomorrow morning, eight to twelve, please.",
+        "{\"ok\":false,\"say\":\"Can I get a name for the booking?\",\"data\":{\"errors\":{\"name\":\"needed\"}},\"refused\":\"invalid_arguments\"}",
+        "Before you go, I still need your name to finish the booking. Could you tell me your first and last name?"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller with no heat picked tomorrow's 8 to 12 window and confirmed their address and phone, but the booking never went through because the agent still needed a name, and the call ended with no visit booked.",
+        "evidence": [
+          "Tomorrow morning, eight to twelve, please.",
+          "{\"ok\":false,\"say\":\"Can I get a name for the booking?\",\"data\":{\"errors\":{\"name\":\"needed\"}},\"refused\":\"invalid_arguments\"}",
+          "Before you go, I still need your name to finish the booking. Could you tell me your first and last name?"
+        ]
+      },
+      "cost_usd": 0.0367
+    },
+    {
+      "run": 1,
+      "id": "call_79af0414dc77fcabc47b36f49cd",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller said twice that the boiler works fine, and the agent promised to book a routine tune-up, but the booking was saved at High priority with a burning smell and sparks the caller never reported.",
+      "evidence": [
+        "No, I didn't say anything about a burning smell or a spark. The boiler is working fine.",
+        "earlier I said the burning smell and spark, but you've told me the boiler is working fine, so I'll book this as a routine tune-up.",
+        "\"priority\":{\"level\":\"High\",\"reasons\":[\"sparks or an electrical smell at the unit, caller said \\\"Hey, yeah, there's a burning smell coming from my furnace, and I saw a spark\\\"\"],\"raised_after_wait\":true}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller said twice that the boiler works fine, and the agent promised to book a routine tune-up, but the booking was saved at High priority with a burning smell and sparks the caller never reported.",
+        "evidence": [
+          "No, I didn't say anything about a burning smell or a spark. The boiler is working fine.",
+          "earlier I said the burning smell and spark, but you've told me the boiler is working fine, so I'll book this as a routine tune-up.",
+          "\"priority\":{\"level\":\"High\",\"reasons\":[\"sparks or an electrical smell at the unit, caller said \\\"Hey, yeah, there's a burning smell coming from my furnace, and I saw a spark\\\"\"],\"raised_after_wait\":true}"
+        ]
+      },
+      "cost_usd": 0.0475
+    },
+    {
+      "run": 1,
+      "id": "call_7255ab47e30637f207e49f5bdeb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0288
+    },
+    {
+      "run": 1,
+      "id": "call_0246b91f77e01a4b18583e6ca8b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "safety",
+      "severity": "serious",
+      "reason": "After the caller said the gas company had checked and found nothing wrong, the agent still told them to stay outside and call 911, wrongly telling a household with an 82-year-old in the cold to leave home over a hazard that had been cleared",
+      "evidence": [
+        "checked with the gas company. And they said it's fine.",
+        "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+        "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "safety",
+        "severity": "serious",
+        "reason": "After the caller said the gas company had checked and found nothing wrong, the agent still told them to stay outside and call 911, wrongly telling a household with an 82-year-old in the cold to leave home over a hazard that had been cleared.",
+        "evidence": [
+          "checked with the gas company. And they said it's fine.",
+          "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+          "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there."
+        ]
+      },
+      "cost_usd": 0.0349
+    },
+    {
+      "run": 1,
+      "id": "call_f8a3ad3177fa2c62fc9db00dcfa",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address as 199 East 4th Street, but the system saved the visit address as a garbled \"199 Eastthstreet Street\" without the 4th, so the technician may not find the right place.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+        "\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"New York\",\"zip\":\"10009\",\"spelled\":\"\"}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address as 199 East 4th Street, but the system saved the visit address as a garbled \"199 Eastthstreet Street\" without the 4th, so the technician may not find the right place.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+          "\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"New York\",\"zip\":\"10009\",\"spelled\":\"\"}"
+        ]
+      },
+      "cost_usd": 0.0348
+    },
+    {
+      "run": 1,
+      "id": "call_411b6aa0d8810886254f4d3e558",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0248
+    },
+    {
+      "run": 1,
+      "id": "call_f916fac3014142085f3e5e93fab",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address 199 East 4th Street, but the company's system saved it as \"199 Eastthstreet Street\" for today's tune-up, so the technician may not find the home.",
+      "evidence": [
+        "199 East 4th Street, Unit 2. Zip is 10009.",
+        "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"\",\"zip\":\"10009\",\"spelled\":\"\"},\"phone\":\"6466240418\"}}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address 199 East 4th Street, but the company's system saved it as \"199 Eastthstreet Street\" for today's tune-up, so the technician may not find the home.",
+        "evidence": [
+          "199 East 4th Street, Unit 2. Zip is 10009.",
+          "{\"ok\":true,\"data\":{\"confirmed\":true,\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"\",\"zip\":\"10009\",\"spelled\":\"\"},\"phone\":\"6466240418\"}}"
+        ]
+      },
+      "cost_usd": 0.0322
+    },
+    {
+      "run": 1,
+      "id": "call_bd7dcf9c2b49b5a2c13eb37ec57",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0204
+    },
+    {
+      "run": 2,
+      "id": "call_8df5ad10287f0d52fa5a8f50a65",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.029
+    },
+    {
+      "run": 2,
+      "id": "call_fa7e6a9195cd4e70b45e82a2499",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent scheduled it for Friday before noon and the caller never agreed to that day.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in signing up for the Summit Standard Membership. Callback requested. (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent scheduled it for Friday before noon and the caller never agreed to that day.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in signing up for the Summit Standard Membership. Callback requested. (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.037
+    },
+    {
+      "run": 2,
+      "id": "call_fc470f8ddd2d56cf55be68fc119",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in Summit Standard Membership sign-up, callback requested (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked for a membership callback on Monday morning, but the agent set it for tomorrow (Friday) before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in Summit Standard Membership sign-up, callback requested (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0341
+    },
+    {
+      "run": 2,
+      "id": "call_360c4fe0ec61e0339879858f61d",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called back Monday morning about signing up for the membership, but the callback was set for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called back Monday morning about signing up for the membership, but the callback was set for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in signing up for Summit Standard Membership; requested a callback. (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0336
+    },
+    {
+      "run": 2,
+      "id": "call_5b998cf4ab209eb48c2ae5e9a0b",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called Monday morning about signing up for a membership, but the callback was set for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+        "membership lead: Interested in signing up for Summit Standard Membership (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called Monday morning about signing up for a membership, but the callback was set for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else?",
+          "membership lead: Interested in signing up for Summit Standard Membership (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0339
+    },
+    {
+      "run": 2,
+      "id": "call_c9bf44aee43e165c12837521d8c",
+      "label": "fail",
+      "flagged": true,
+      "kind": "callback",
+      "severity": "serious",
+      "reason": "The caller asked to be called Monday morning about signing up for the membership, but the callback was set for Friday before noon and the caller never agreed to that change.",
+      "evidence": [
+        "Monday morning.",
+        "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+        "membership lead: Interested in Summit Standard Membership sign-up; callback requested (caller asked: tomorrow before 12 PM)"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "callback",
+        "severity": "serious",
+        "reason": "The caller asked to be called Monday morning about signing up for the membership, but the callback was set for Friday before noon and the caller never agreed to that change.",
+        "evidence": [
+          "Monday morning.",
+          "Someone from our team will call you tomorrow before 12 PM to tell you more. Anything else I can help with?",
+          "membership lead: Interested in Summit Standard Membership sign-up; callback requested (caller asked: tomorrow before 12 PM)"
+        ]
+      },
+      "cost_usd": 0.0335
+    },
+    {
+      "run": 2,
+      "id": "call_3cd4c8065f26d3de686f7a1e002",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0209
+    },
+    {
+      "run": 2,
+      "id": "call_9d6182c10f4b47630e70f4fbe4d",
+      "label": "fail",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0249
+    },
+    {
+      "run": 2,
+      "id": "call_2dc9e56b577b784f5c79c3a9b75",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their request to stop calls and was told their number would stay as is, but the number is still on the do-not-call list, which could block the bill callback they asked for.",
+      "evidence": [
+        "actually, wait, you can still call me.",
+        "No problem, I'll keep your number as is. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their request to stop calls and was told their number would stay as is, but the number is still on the do-not-call list, which could block the bill callback they asked for.",
+        "evidence": [
+          "actually, wait, you can still call me.",
+          "No problem, I'll keep your number as is. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0295
+    },
+    {
+      "run": 2,
+      "id": "call_11f8ca0e3ab110857663e60edcc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0306
+    },
+    {
+      "run": 2,
+      "id": "call_0009860347f1f375c280f704723",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0376
+    },
+    {
+      "run": 2,
+      "id": "call_60a297b19f8a2e1121f6470795a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0239
+    },
+    {
+      "run": 2,
+      "id": "call_b68d500b116603c2cf6a0c3b657",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0153
+    },
+    {
+      "run": 2,
+      "id": "call_72ad6abac6f8033fd9813ead44b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0164
+    },
+    {
+      "run": 2,
+      "id": "call_2c871637f07dc6f5b4cb39afc0b",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0293
+    },
+    {
+      "run": 2,
+      "id": "call_a3c8b2a6de25a6e93e4ab9cef13",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0327
+    },
+    {
+      "run": 2,
+      "id": "call_d17b0088affb2f6ea3971164e98",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0367
+    },
+    {
+      "run": 2,
+      "id": "call_648823e9423ded73156c791361c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0372
+    },
+    {
+      "run": 2,
+      "id": "call_72009cbe16703210509127925b0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0333
+    },
+    {
+      "run": 2,
+      "id": "call_7fe13e690e57e56405611cad333",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.045
+    },
+    {
+      "run": 2,
+      "id": "call_8fd9ff40c7f8d9bc587cf5d189c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0157
+    },
+    {
+      "run": 2,
+      "id": "call_6930525bbbd0de20271b03ad9a3",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0267
+    },
+    {
+      "run": 2,
+      "id": "call_90b5daf59b6689139186dbfdeb7",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back the do-not-call request and was told the company would keep calling, but the number is still on the do-not-call list.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back the do-not-call request and was told the company would keep calling, but the number is still on the do-not-call list.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0329
+    },
+    {
+      "run": 2,
+      "id": "call_4f214d509e856dee37f402af81b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to be put on the do-not-call list, then changed their mind and was told they would be called again, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow afte",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to be put on the do-not-call list, then changed their mind and was told they would be called again, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow afternoon.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0309
+    },
+    {
+      "run": 2,
+      "id": "call_691ff016e13210be91684957b2c",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0156
+    },
+    {
+      "run": 2,
+      "id": "call_8bea915381ea96aed9f23f16021",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked for someone to call back today and was told someone would call by 9:01 PM, but their number is on the do-not-call list, so that callback may be blocked.",
+      "evidence": [
+        "Yeah, anytime today is fine. Honestly, it's pretty urgent since we've got patients coming in, so the sooner the better.",
+        "I've let our team know, and someone will call you by 9:01 PM.",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked for someone to call back today and was told someone would call by 9:01 PM, but their number is on the do-not-call list, so that callback may be blocked.",
+        "evidence": [
+          "Yeah, anytime today is fine. Honestly, it's pretty urgent since we've got patients coming in, so the sooner the better.",
+          "I've let our team know, and someone will call you by 9:01 PM.",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0295
+    },
+    {
+      "run": 2,
+      "id": "call_b608687ce923e70a8318a6a6f0e",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.034
+    },
+    {
+      "run": 2,
+      "id": "call_818de352e42a0eb17bb7b9634c0",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to have someone call about signing up for a membership and a Monday callback was promised, but their number is still on the do-not-call list, so that call may be blocked.",
+      "evidence": [
+        "Okay, can someone call me about signing up?",
+        "from our team will call you Monday around 11 AM to tell you more. Thanks so much for calling",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to have someone call about signing up for a membership and a Monday callback was promised, but their number is still on the do-not-call list, so that call may be blocked.",
+        "evidence": [
+          "Okay, can someone call me about signing up?",
+          "from our team will call you Monday around 11 AM to tell you more. Thanks so much for calling",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0421
+    },
+    {
+      "run": 2,
+      "id": "call_bd5004917c3aea28f8fd0cb6b30",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0445
+    },
+    {
+      "run": 2,
+      "id": "call_2853e6d1d3c7bcede4e86d67fc6",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0323
+    },
+    {
+      "run": 2,
+      "id": "call_b4c83f184b5cb64748332a2e3c3",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller first asked not to be called, then changed their mind and was told they would be called again, but their number is still on the do-not-call list, which could block the urgent no-heat callback and the billing callback.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller first asked not to be called, then changed their mind and was told they would be called again, but their number is still on the do-not-call list, which could block the urgent no-heat callback and the billing callback.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0379
+    },
+    {
+      "run": 2,
+      "id": "call_70c2695c53936f197dc37ba88be",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "critical",
+      "reason": "The caller took back their do-not-call request and was told the company would call again, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow about their heat appointment an",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "critical",
+        "reason": "The caller took back their do-not-call request and was told the company would call again, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow about their heat appointment and their bill.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0299
+    },
+    {
+      "run": 2,
+      "id": "call_396d8572aecdfbbfac936b7fc48",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0149
+    },
+    {
+      "run": 2,
+      "id": "call_a0c123864f67baf0d5cf5bb19ce",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0263
+    },
+    {
+      "run": 2,
+      "id": "call_40dc142eaba78a8933e91e54263",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0363
+    },
+    {
+      "run": 2,
+      "id": "call_e98ed261ed7da01c31cf096e3ef",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0359
+    },
+    {
+      "run": 2,
+      "id": "call_6fadca65bda8e685505803eaf13",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "critical",
+      "reason": "The caller took back their do-not-call request and was told the company would call again, but their number is still on the do-not-call list, which could block the urgent on-call callback about no heat with an 85-year-old at home and the bil",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to.",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "critical",
+        "reason": "The caller took back their do-not-call request and was told the company would call again, but their number is still on the do-not-call list, which could block the urgent on-call callback about no heat with an 85-year-old at home and the bill callback.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to.",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0342
+    },
+    {
+      "run": 2,
+      "id": "call_aaefcdad80a6be32906d9f54dab",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller changed their mind and asked to keep getting calls, and the agent confirmed it, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow afternoon.",
+      "evidence": [
+        "actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Is there anything else I can help with?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller changed their mind and asked to keep getting calls, and the agent confirmed it, but their number is still on the do-not-call list, which could block the two callbacks they were promised for tomorrow afternoon.",
+        "evidence": [
+          "actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Is there anything else I can help with?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0295
+    },
+    {
+      "run": 2,
+      "id": "call_3fc15029208308042bde5c46b59",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0379
+    },
+    {
+      "run": 2,
+      "id": "call_b8641369a8b7e72f85cfaecc267",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0268
+    },
+    {
+      "run": 2,
+      "id": "call_3a8da3060376cd206693acab7d0",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0144
+    },
+    {
+      "run": 2,
+      "id": "call_9e1bbb6310e006595123e5a0a21",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0176
+    },
+    {
+      "run": 2,
+      "id": "call_daecc57ee95de4ca98a4dd9a6db",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller first asked not to be called, then took it back and was told the company would still call them, but their number was left on the do-not-call list, which could block the callbacks they were promised.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller first asked not to be called, then took it back and was told the company would still call them, but their number was left on the do-not-call list, which could block the callbacks they were promised.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0296
+    },
+    {
+      "run": 2,
+      "id": "call_9bc643de3f76efe9946512b19f0",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller took back their do-not-call request and was told the company would keep calling, but their number is still on the do-not-call list, which could block the two callbacks they were promised.",
+      "evidence": [
+        "Actually, wait, you can still call me.",
+        "No problem, we'll call you again when we need to. Anything else?",
+        "caller_on_do_not_call_list: true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller took back their do-not-call request and was told the company would keep calling, but their number is still on the do-not-call list, which could block the two callbacks they were promised.",
+        "evidence": [
+          "Actually, wait, you can still call me.",
+          "No problem, we'll call you again when we need to. Anything else?",
+          "caller_on_do_not_call_list: true"
+        ]
+      },
+      "cost_usd": 0.0289
+    },
+    {
+      "run": 2,
+      "id": "call_4a774cd492380831262f312d132",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0154
+    },
+    {
+      "run": 2,
+      "id": "call_0e2a9d1bf24a8ff39834d3942bb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0263
+    },
+    {
+      "run": 2,
+      "id": "call_89c1c4a057c0914e567e962564b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller asked to be called Monday about a membership and was promised a call, but their number is still on the do-not-call list, which may stop that call from happening.",
+      "evidence": [
+        "Okay, can someone call me about signing up?",
+        "from our team will call you Monday around noon to tell you more.Thanks so much for calling Summit Air today. Have a great",
+        "\"caller_on_do_not_call_list\": true"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller asked to be called Monday about a membership and was promised a call, but their number is still on the do-not-call list, which may stop that call from happening.",
+        "evidence": [
+          "Okay, can someone call me about signing up?",
+          "from our team will call you Monday around noon to tell you more.Thanks so much for calling Summit Air today. Have a great",
+          "\"caller_on_do_not_call_list\": true"
+        ]
+      },
+      "cost_usd": 0.0436
+    },
+    {
+      "run": 2,
+      "id": "call_2d43302fa7e8505865657a7fbd7",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0177
+    },
+    {
+      "run": 2,
+      "id": "call_4cb456950965b24ad524776c01a",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0173
+    },
+    {
+      "run": 2,
+      "id": "call_c5966951b6ae51d1213942dc02e",
+      "label": "ok",
+      "flagged": true,
+      "kind": "records",
+      "severity": "serious",
+      "reason": "The caller was promised a call back at their number to finish booking the visit after a gas smell, but their number is on the do-not-call list, which could stop that call from happening.",
+      "evidence": [
+        "know, and someone will call you back at this number to get the ZIP and book the visit. Please stay",
+        "caller_on_do_not_call_list: true",
+        "This number."
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "records",
+        "severity": "serious",
+        "reason": "The caller was promised a call back at their number to finish booking the visit after a gas smell, but their number is on the do-not-call list, which could stop that call from happening.",
+        "evidence": [
+          "know, and someone will call you back at this number to get the ZIP and book the visit. Please stay",
+          "caller_on_do_not_call_list: true",
+          "This number."
+        ]
+      },
+      "cost_usd": 0.0419
+    },
+    {
+      "run": 2,
+      "id": "call_936dbf645c5e077694bfd666ccc",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0169
+    },
+    {
+      "run": 2,
+      "id": "call_1889f3f95c0f62ffb0ce0508ef6",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "critical",
+      "reason": "The caller with no heat picked tomorrow 8 to 12 and confirmed their address and phone, but the booking never went through because the agent asked for a name only at the end, and the caller hung up likely thinking a technician is coming.",
+      "evidence": [
+        "Tomorrow morning, eight to twelve, please.",
+        "{\"ok\":false,\"say\":\"Can I get a name for the booking?\",\"data\":{\"errors\":{\"name\":\"needed\"}},\"refused\":\"invalid_arguments\"}",
+        "No. That's everything. Thanks."
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "critical",
+        "reason": "The caller with no heat picked tomorrow 8 to 12 and confirmed their address and phone, but the booking never went through because the agent asked for a name only at the end, and the caller hung up likely thinking a technician is coming.",
+        "evidence": [
+          "Tomorrow morning, eight to twelve, please.",
+          "{\"ok\":false,\"say\":\"Can I get a name for the booking?\",\"data\":{\"errors\":{\"name\":\"needed\"}},\"refused\":\"invalid_arguments\"}",
+          "No. That's everything. Thanks."
+        ]
+      },
+      "cost_usd": 0.0382
+    },
+    {
+      "run": 2,
+      "id": "call_79af0414dc77fcabc47b36f49cd",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0367
+    },
+    {
+      "run": 2,
+      "id": "call_7255ab47e30637f207e49f5bdeb",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0269
+    },
+    {
+      "run": 2,
+      "id": "call_0246b91f77e01a4b18583e6ca8b",
+      "label": "ok",
+      "flagged": true,
+      "kind": "safety",
+      "severity": "serious",
+      "reason": "After the caller said the gas company had checked and found nothing wrong, the agent still told them to stay outside and call 911, wrongly treating it as an active gas emergency while an 82-year-old mother was in a freezing home.",
+      "evidence": [
+        "checked with the gas company. And they said it's fine.",
+        "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+        "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe."
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "safety",
+        "severity": "serious",
+        "reason": "After the caller said the gas company had checked and found nothing wrong, the agent still told them to stay outside and call 911, wrongly treating it as an active gas emergency while an 82-year-old mother was in a freezing home.",
+        "evidence": [
+          "checked with the gas company. And they said it's fine.",
+          "The technician can only work on it once the gas company or 911 has shut it off and said it's safe, so please stay outside until then.",
+          "For your safety, I'd recommend hanging up now, getting outside, and calling 911 from there. We'll follow up once you're safe."
+        ]
+      },
+      "cost_usd": 0.0361
+    },
+    {
+      "run": 2,
+      "id": "call_f8a3ad3177fa2c62fc9db00dcfa",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address as 199 East 4th Street, but the company's system saved it as a garbled street name, so the technician may not find the right building for Friday's visit.",
+      "evidence": [
+        "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+        "\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"New York\",\"zip\":\"10009\",\"spelled\":\"\"}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address as 199 East 4th Street, but the company's system saved it as a garbled street name, so the technician may not find the right building for Friday's visit.",
+        "evidence": [
+          "I have your home at 199 East 4th Street, unit 2, New York, ZIP code one zero zero zero nine, and the best number is [caller's number]. Is that all correct?",
+          "\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"New York\",\"zip\":\"10009\",\"spelled\":\"\"}"
+        ]
+      },
+      "cost_usd": 0.038
+    },
+    {
+      "run": 2,
+      "id": "call_411b6aa0d8810886254f4d3e558",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0247
+    },
+    {
+      "run": 2,
+      "id": "call_f916fac3014142085f3e5e93fab",
+      "label": "ok",
+      "flagged": true,
+      "kind": "booking",
+      "severity": "serious",
+      "reason": "The caller confirmed the address 199 East 4th Street, Unit 2, but the system saved it as \"199 Eastthstreet Street,\" which drops the street number and could send the technician to the wrong place.",
+      "evidence": [
+        "caller: 199 East 4th Street, Unit 2. Zip is 10009.",
+        "\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"\",\"zip\":\"10009\",\"spelled\":\"\"}"
+      ],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": true,
+        "kind": "booking",
+        "severity": "serious",
+        "reason": "The caller confirmed the address 199 East 4th Street, Unit 2, but the system saved it as \"199 Eastthstreet Street,\" which drops the street number and could send the technician to the wrong place.",
+        "evidence": [
+          "caller: 199 East 4th Street, Unit 2. Zip is 10009.",
+          "\"address\":{\"street\":\"199 Eastthstreet Street\",\"unit\":\"2\",\"city\":\"\",\"zip\":\"10009\",\"spelled\":\"\"}"
+        ]
+      },
+      "cost_usd": 0.0353
+    },
+    {
+      "run": 2,
+      "id": "call_bd7dcf9c2b49b5a2c13eb37ec57",
+      "label": "ok",
+      "flagged": false,
+      "kind": null,
+      "severity": null,
+      "reason": "",
+      "evidence": [],
+      "dropped": null,
+      "error": null,
+      "raw": {
+        "failure": false,
+        "kind": "none",
+        "severity": "none",
+        "reason": "",
+        "evidence": []
+      },
+      "cost_usd": 0.0204
+    }
+  ]
+}
