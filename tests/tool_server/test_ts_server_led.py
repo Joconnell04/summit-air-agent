@@ -18,7 +18,9 @@ ACCESS = "Is there a gate code or buzzer the technician should know about?"
 
 @pytest.fixture
 def led(tmp_path, clock, mock):
-    return Agent(make_server(tmp_path, clock, mock[0], server_led=True), clock)
+    agent = Agent(make_server(tmp_path, clock, mock[0], server_led=True), clock)
+    agent.read_back_job_type = "tune_up"
+    return agent
 
 
 def offer(agent, call, job_type="tune_up") -> dict:
@@ -55,11 +57,12 @@ def test_every_result_names_the_next_step(led):
     call = led.start()["data"]["call_id"]
     led.turn(call, "Hi, the heat's out. It's 101 Union Street, 11231.")
     address = in_area_address()
-    asked = led.tool("read_back", call, address=address, phone="caller_id")
+    asked = led.tool("read_back", call, address=address, phone="caller_id", job_type="tune_up")
     assert asked["ok"] and "confirmed true" in asked["next"]
     led.say(call, asked["say"])
     led.turn(call, "Yes.")
-    confirmed = led.tool("read_back", call, address=address, phone="caller_id", confirmed=True)
+    confirmed = led.tool("read_back", call, address=address, phone="caller_id", confirmed=True,
+                         job_type="tune_up")
     assert "find_slots" in confirmed["next"]
     found = offer(led, call)
     # The server asks the visit questions itself, from book_appointment's refusals.
@@ -323,7 +326,9 @@ def test_nobody_home_asks_once_how_the_technician_gets_in(led):
 @pytest.fixture
 def live(tmp_path, clock, mock):
     """A tool server as the live one runs: no SERVER_LED, so only a call that asks gets the flow."""
-    return Agent(make_server(tmp_path, clock, mock[0]), clock)
+    agent = Agent(make_server(tmp_path, clock, mock[0]), clock)
+    agent.read_back_job_type = "tune_up"
+    return agent
 
 
 def test_a_single_prompt_call_never_meets_a_gate_beside_a_socket_call(live):
@@ -350,3 +355,24 @@ def test_a_socket_call_gets_every_gate(live):
     live.turn(call, "That works.")
     refused = book(live, call, slot_of(found))
     assert refused["refused"] == "visit_questions_first"
+
+
+
+def test_the_read_back_never_goes_without_the_job_type(led):
+    """Dispatch at High is decided at the read-back from the job type (reviewer gap 3)."""
+    call = led.start()["data"]["call_id"]
+    led.turn(call, "Hi, the heat's out. It's 101 Union Street, 11231.")
+    refused = led.tool("read_back", call, address=in_area_address(), phone="caller_id")
+    assert refused["refused"] == "job_type_first" and refused["say"] == ""
+    assert "job type" in refused["next"]
+
+
+def test_an_address_booked_unverified_goes_on_to_the_next_question():
+    """Reviewer gap 4: the unverified line is a statement, so the flow goes on, not waits."""
+    from app.envelope import Result
+
+    ctx = type("Ctx", (), {"tenant": Tenant.load(TENANT_DIR)})()
+    said = Result(ok=True, say="I can't find that one in the city's records, so I'll book it.")
+    asked = Result(ok=False, say="And which borough is that in?")
+    assert "What's the best phone number" in flow._next(ctx, "find_address", None, said)
+    assert flow._next(ctx, "find_address", None, asked) == "Wait for the caller's answer."

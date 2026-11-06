@@ -93,7 +93,9 @@ def guide(ctx, tool: str, args, handler: Callable) -> Result:
         raise
     if tool == "find_slots":
         _open_door(ctx, args, result)
-    result.next = result.next or _next(ctx, tool, args, result)
+    # A tool's own next step (a dispatch's: the access question, then "Anything else?") wins over
+    # the flow's, so the model never gets two that disagree.
+    result.next = result.next or result.data.pop("next", "") or _next(ctx, tool, args, result)
     _record(ctx, tool, result)
     return result
 
@@ -102,6 +104,16 @@ def guide(ctx, tool: str, args, handler: Callable) -> Result:
 
 
 def _gate(ctx, tool: str, args) -> None:
+    if tool == "read_back" and not args.confirmed and not getattr(args, "job_type", None):
+        # Dispatch at High is decided at the read-back from the job type, so the read-back never
+        # goes without it (a gate shouldn't rest on the model remembering a parameter).
+        raise Refused(
+            "job_type_first",
+            "",
+            gate="flow_job_type",
+            need="read_back needs job_type",
+        ).with_next("Say nothing. Call read_back again with the same details and the job type: "
+                    "no_heat, no_cooling, tune_up, safety_check or estimate.")
     if tool == "find_slots" and not args.moving_a_visit and not ctx.call["readback_confirmed_at"]:
         raise Refused(
             "read_back_first",
@@ -314,7 +326,8 @@ def _next(ctx, tool: str, args, result: Result) -> str:
     if tool == "get_customer_history":
         return "Answer only what the caller asked, in a sentence. Never read out an address on file."
     if tool in ("find_address", "check_service_area"):
-        if result.say:
+        # An address booked unverified says so and goes on; only a question waits for the answer.
+        if result.say and (not result.ok or result.say.rstrip().endswith("?")):
             return "Wait for the caller's answer."
         return _after_address(ctx, bool(data.get("needs_unit")))
     if tool == "read_back":
