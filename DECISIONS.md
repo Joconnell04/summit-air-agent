@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 116. No post-trained small model for the voice agent
+
+Decided: the agent stays on a Retell-hosted Claude model. We don't post-train and self-host a small model (a Qwen 8B-class model with a merged adapter on a RunPod GPU).
+Why: we considered it only as a possible latency gain. One RTX 5090 serving an 8B model at about 150 tokens a second would cost about $50 for three days (ASSUMED, from RunPod list prices and memory-bandwidth estimates), and a cached system prompt could bring time to first token under 200 ms (ASSUMED). But the failures on live and scripted calls are instruction-following, not speed: Haiku 5.5's median end-to-end turn latency on Retell is already about 1 s (MEASURED, Retell call latency, call_926427e1d1f2a80cb78dc6a4e04), and an 8B model follows instructions worse than Haiku. It would also need a dataset of good calls we don't have, a custom-LLM bridge to Retell, and a GPU server to run, which is the layering DECISIONS 112 moved away from.
+Considered: serving the adapter separately in vLLM (slower than merging it); a 32B model on two H100s (about $390 for three days, ASSUMED, and still a weaker instruction follower).
+Would change if: there are thousands of real calls to distill from and latency, not behavior, is the limit.
+Discussion: docs/later.md C-79
+Issue: none
+
 ## 112. Summit Air runs on Retell, starting from Jackson's own agent
 
 Decided: the product is a Retell agent, "Summit Air Jackson" (agent_a3e38e6aa3d4e75dfac12aafc8, LLM llm_12eba5f1d4a3b067f0635097de30), which Jackson built and tunes in Retell's dashboard with Retell's builder assistant. Retell runs the phone line, listening, turn-taking and voice; Claude Haiku 5.5 runs on a short prompt; our FastAPI tool server and mock ServiceTitan still own every fact and every rule (lookups, the read-back, booking, safety, priority, identity). Work stops on the LiveKit custom stack and on the other slate entries. Testing moves to Retell's platform: web calls from a laptop and Retell's own test tools, against our tool server.
