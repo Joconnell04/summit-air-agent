@@ -42,6 +42,9 @@ SILENCE_HANG_UP_MS = 480_000
 NOT_COPIED = {
     "agent_id", "agent_name", "base_version", "version", "is_published", "response_engine",
     "webhook_url", "webhook_events", "last_modification_timestamp", "channel",
+    # The socket agents' own setting (retell/arms/socket/denoise.py), so a push never undoes a
+    # switch made for a test call.
+    "denoising_mode",
 }
 
 

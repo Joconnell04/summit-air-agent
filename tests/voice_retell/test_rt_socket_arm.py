@@ -91,3 +91,10 @@ def test_the_live_agent_uses_the_live_socket_and_points_no_number():
     source = (ROOT / "retell" / "arms" / "socket" / "push.py").read_text()
     live_branch = source[source.index("    if live:"):source.index("    number = next")]
     assert "update-phone-number" not in live_branch
+
+
+def test_a_push_never_undoes_a_denoising_switch():
+    push = load("push")
+    body = push.agent_body({"voice_id": "cartesia-Brian", "denoising_mode": "noise-cancellation"},
+                           "key")
+    assert "denoising_mode" not in body
