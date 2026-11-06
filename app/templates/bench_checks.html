@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_ui.html" import bench_tabs, count, empty with context %}
+{% from "_checks.html" import range_form, estimate_box, progress, flag_list with context %}
+{% block title %}Bench: checks{% endblock %}
+{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs">Bench<span>/</span><span>failure grader, profile offline.grader</span></div>
+      <h1 class="page-title">Checks</h1>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Run</h2><span class="sub">asks before more than {{ confirm_calls }} calls or ${{ "%.2f" | format(confirm_usd) }}</span></div>
+    <div class="panel-body">
+      {% if not on %}<p class="muted">Off: FAILURE_GRADER is not 1, or ANTHROPIC_API_KEY is not set.</p>
+      {% elif cost_check is defined %}{{ estimate_box(cost_check, asked, "/bench/checks", bench=true) }}
+      {% else %}{{ range_form("/bench/checks", asked if asked is defined else none, bench=true) }}{% endif %}
+      {% if error is defined %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+      {% if active %}{{ progress(active) }}{% endif %}
+      {% if shown_run is defined and shown_run and shown_run.finished %}
+      <p class="muted" role="status">Run {{ shown_run.id }}: {{ shown_run.status }}, {{ shown_run.done }} of {{ shown_run.total }}, {{ shown_run.flagged }} flagged, {{ shown_run.errors }} errors, ${{ "%.4f" | format(shown_run.cost_usd) }}{% if shown_run.error %}, {{ shown_run.error }}{% endif %}.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Graded calls</h2>{{ count(grades | length) }}<span class="sub">newest first; failure is the server's decision on the raw answer</span></div>
+    {% if grades %}
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Call</th><th>Verdict</th><th>Reason and raw output</th><th class="right">Cost</th><th class="right"><span class="sr-only">Grade again</span></th></tr></thead>
+      <tbody>
+      {% for g in grades %}
+        <tr>
+          <td class="fit"><a class="num" href="/bench/calls/{{ g.key }}">{{ g.local.strftime("%b %-d %-I:%M %p") }}</a><div class="faint small"><code>{{ g.call_id }}</code></div></td>
+          <td class="fit">{% if g.error %}<span class="tag high">Error</span>{% elif g.failure %}<span class="tag {{ 'urgent' if g.severity == 'critical' else 'high' }}">{{ g.label }}</span>{% elif g.dropped %}<span class="tag outline" title="{{ g.dropped }}">Dropped</span>{% else %}<span class="tag done">No failure</span>{% endif %}<div class="faint small">{{ g.source }}</div></td>
+          <td>
+            {% if g.reason %}<div>{{ g.reason }}</div>{% endif %}
+            {% if g.dropped %}<div class="muted small">Dropped: {{ g.dropped }}</div>{% endif %}
+            {% if g.error %}<div class="error small">{{ g.error }}</div>{% endif %}
+            {% if g.raw %}<details class="raw"><summary>Raw output</summary><pre class="tech-block">{{ g.raw | tojson(indent=2) }}</pre></details>{% endif %}
+          </td>
+          <td class="fit right num">${{ "%.4f" | format(g.cost_usd) }}</td>
+          <td class="fit right"><form method="post" action="/bench/checks/calls/{{ g.call_id }}"><button class="btn quiet" type="submit">Grade again</button></form></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}{{ empty("No calls graded yet.") }}{% endif %}
+  </section>
+</main>
+{% endblock %}
