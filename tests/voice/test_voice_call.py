@@ -778,3 +778,13 @@ def test_the_servers_question_is_not_asked_again_after_the_model_asked_it():
     assert reply.text("And what name should I put the visit under?", []) != ""
     assert reply.already_said("Thanks. And what name should I put the visit under?")
     assert not reply.already_said("Thanks. Is that right?")
+
+
+def test_a_placeholder_account_name_is_never_said_in_the_greeting():
+    """Phone check p3, 6 November: a dispatch opened an account as "Caller ending 6730", and the
+    next call from that number was greeted "Hi, caller"."""
+    from prompts.assemble import greeting
+
+    voice = {"greeting_known": "Hi {first_name}!", "greeting_unknown": "Hi there!"}
+    start = {"customers": [{"name": "Caller ending 6730", "residential": True}]}
+    assert greeting(start, voice) == "Hi there!"

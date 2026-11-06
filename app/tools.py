@@ -67,6 +67,7 @@ from .settings import BOOKING_DAYS_AHEAD, LIMITS
 from .tenant import Tenant
 from .text import (
     DIGIT_WORDS,
+    PLACEHOLDER_NAME,
     SPELLED_RUN,
     address_said,
     clock_time,
@@ -2989,7 +2990,7 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
     name = _booking_name(ctx)
     if not name and not _callers_accounts(ctx):
         # No name given yet: the office has the number, and asking now would hold up the visit.
-        name = f"Caller ending {current['phone'][-4:]}"
+        name = f"{PLACEHOLDER_NAME} {current['phone'][-4:]}"
     job_name = ctx.tenant.job_types[job_type]["name"]
     issue = job_name + (f" ({'; '.join(decided.reasons)})" if decided.reasons else "")
     with tx(ctx.conn):

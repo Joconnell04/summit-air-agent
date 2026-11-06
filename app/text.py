@@ -508,3 +508,8 @@ def unit_settled(lines: list[str]) -> str:
         if found := UNIT_SAID.search(line):
             return found.group(0)
     return ""
+
+
+# The name the server gives an account it opened for a dispatch before the caller said one
+# (app/tools.py `_dispatch`): never said to the caller ("Hi, caller" on phone check p3, 6 November).
+PLACEHOLDER_NAME = "Caller ending"

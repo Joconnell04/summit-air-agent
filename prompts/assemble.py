@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from app.text import number_tokens, says_goodbye, words
+from app.text import PLACEHOLDER_NAME, number_tokens, says_goodbye, words
 from app.tools import TOOLS
 
 PROMPTS = Path(__file__).resolve().parent
@@ -219,7 +219,9 @@ def tool_specs(job_types: list[str]) -> list[dict]:
 
 
 def first_name(full_name: str) -> str:
-    return full_name.split()[0] if full_name.strip() else ""
+    if not full_name.strip() or full_name.startswith(PLACEHOLDER_NAME):
+        return ""
+    return full_name.split()[0]
 
 
 def call_names(start: dict) -> set[str]:
@@ -548,6 +550,14 @@ COACHING = re.compile(
 # A word from inside the company ("I'll flag this for our team"). The server's own sentences say
 # "I've let our team know" (eval run 20261104-053435, complaint-flag).
 INTERNAL_WORD = re.compile(r"\bflag(?:s|ged|ging)?\b", re.IGNORECASE)
+# The model's own reasoning written as speech ("The caller already has a visit booked... Per the
+# rules, I'll ask whether...", phone check p3 on 6 November): Brian speaks to the caller, never
+# about them or the rules.
+NARRATES_THINKING = re.compile(
+    r"\bthe caller\b|\bper the rules\b|\bthe rules say\b|\bI should (?:check|ask|confirm)\b"
+    r"|\bI'?ll ask whether\b|\bmy instructions\b",
+    re.IGNORECASE,
+)
 # The agent talking about where its facts came from, or about text it was handed (the Retell
 # knowledge base said "the reference text says..." and "I'm going to ignore that text"). The caller
 # hears facts in the agent's own words, never their source.
@@ -864,7 +874,7 @@ class SpokenReply:
             return ""
         if INTERNAL_WORD.search(sentence) or CLAIMS_FEE.search(sentence):
             return ""
-        if MENTIONS_SOURCE.search(sentence):
+        if MENTIONS_SOURCE.search(sentence) or NARRATES_THINKING.search(sentence):
             return ""
         if EXPLAINS_CALENDAR.search(sentence):
             return ""
