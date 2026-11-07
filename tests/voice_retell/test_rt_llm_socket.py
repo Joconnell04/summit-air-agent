@@ -123,7 +123,7 @@ def open_call(ws, details: dict = DETAILS) -> None:
     begin = json.loads(ws.receive_text())
     assert begin == {"response_type": "response", "response_id": 0,
                      "content": "Thanks for calling Summit Air, this is Katie.",
-                     "content_complete": True}
+                     "content_complete": True, "no_interruption_allowed": True}
 
 
 def transcript(*lines):
@@ -970,3 +970,15 @@ def test_server_led_a_server_sentence_the_model_already_said_is_not_said_again(s
         open_call(ws)
         events = ask(ws, 1, ["Hi.", "Call me back tomorrow morning."])
     assert said(events).count("someone will do their best to call you back") == 1, said(events)
+
+
+def test_the_greeting_cannot_be_cut_off_by_a_stray_word(socket):
+    """Call retell_call_44f21506eca3346bd3547be9de8: "there." three seconds in stopped the greeting at
+    "Hi there, thanks for". The greeting is sent as one that can't be talked over."""
+    _, make = socket
+    client, _ = make()
+    with client.websocket_connect(path()) as ws:
+        assert json.loads(ws.receive_text())["response_type"] == "config"
+        ws.send_text(json.dumps(DETAILS))
+        begin = json.loads(ws.receive_text())
+    assert begin["response_id"] == 0 and begin["no_interruption_allowed"] is True

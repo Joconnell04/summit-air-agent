@@ -397,11 +397,14 @@ class LlmCall:
         self.facts_found = False
 
     async def begin(self, greeting: str) -> None:
-        """The first line, already built by whoever started the call on the tool server."""
+        """The first line, already built by whoever started the call on the tool server. It can't
+        be talked over: on call_44f21506eca3346bd3547be9de8 a stray "there." three seconds in (echo
+        from a speakerphone) cut it at "Hi there, thanks for". The caller's words are still heard
+        and answered once it ends, as with the safety lines."""
         self.messages += [{"role": "user", "content": CONNECTED},
                           {"role": "assistant", "content": greeting}]
         await self.send({"response_type": "response", "response_id": 0, "content": greeting,
-                         "content_complete": True})
+                         "content_complete": True, "no_interruption_allowed": True})
 
     def request(self, response_id: int) -> None:
         """A newer request replaces every earlier one at once, before its turn starts."""
