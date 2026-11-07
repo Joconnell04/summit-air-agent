@@ -431,3 +431,18 @@ def test_the_catch_all_drops_an_example_the_caller_already_gave():
     assert flow._without_said_examples(q, " banging and it keeps shutting off ") == (
         "Anything else the technician should know?"
     )
+
+
+def test_the_catch_all_names_what_the_caller_described_and_adds_no_example():
+    """Leak replay t5, 6 November: told to start "Besides the leak", the model asked "like the
+    banging or the boiler shutting off?" after the caller said it was banging. The server now
+    writes the whole question."""
+    from app import flow
+
+    q = "Anything else the technician should know, like banging pipes or it shutting off on its own?"
+    said = " my boiler is making this banging noise its actually leaking right now "
+    assert flow._catch_all(q, said) == (
+        "Besides the banging and the leak, anything else the technician should know, like it "
+        "shutting off on its own?"
+    )
+    assert flow._catch_all(q, " my heat is out and its not leaking ") == q

@@ -344,7 +344,7 @@ def _after_address(ctx, needs_unit: bool) -> str:
 
     def line(key: str) -> str:
         text = ctx.tenant.line(key)
-        return _without_said_examples(text, said) if key.startswith("ask_catch_all") else text
+        return _catch_all(text, said) if key.startswith("ask_catch_all") else text
 
     return (
         "Ask the next of these you don't have yet, one a turn, built from what the caller already "
@@ -358,8 +358,7 @@ def _after_address(ctx, needs_unit: bool) -> str:
         "a maintenance visit or a quote), one catch-all in its own turn, never with an example "
         f"they already gave: heating '{line('ask_catch_all_heating')}', cooling "
         f"'{line('ask_catch_all_cooling')}', vents or airflow '{line('ask_catch_all_airflow')}' "
-        "(after a symptom they named: 'Besides the leak, anything else ...'), with the answer in "
-        "the job's issue; then 'What's the best phone number to reach you?'. Once you have the "
+        "(word for word: never add an example), with the answer in the job's issue; then 'What's the best phone number to reach you?'. Once you have the "
         "phone number, call read_back with the job type."
     )
 
@@ -438,6 +437,28 @@ def _record(ctx, tool: str, result: Result) -> None:
             (ctx.call["id"], tool, int(result.ok), result.say, records.get_call(
                 ctx.conn, ctx.call["id"])["turn_seq"], iso(ctx.now)),
         )
+
+
+# What the caller already described, named back in the catch-all ("Besides the leak and the
+# banging, anything else ..."), keyed by the first four letters of the word they used. Leak
+# replay t5, 6 November: told to start "Besides the leak", the model added "like the banging"
+# back after the server had taken it out of the examples.
+SYMPTOMS = {"leak": "the leak", "drip": "the leak", "bang": "the banging", "knoc": "the banging",
+            "clan": "the banging", "grin": "the grinding", "sque": "the squealing",
+            "ratt": "the rattling", "hiss": "the hissing", "scre": "the screeching"}
+
+
+def _catch_all(question: str, said: str) -> str:
+    """The catch-all as said: without an example the caller gave, and after what they described."""
+    question = _without_said_examples(question, said)
+    heard = said.split()
+    named = list(dict.fromkeys(
+        SYMPTOMS[w[:4]] for i, w in enumerate(heard)
+        if w[:4] in SYMPTOMS and not (i and heard[i - 1] in ("no", "not", "isnt", "never"))
+    ))
+    if not named or not question.startswith("Anything else"):
+        return question
+    return f"Besides {' and '.join(named)}, anything else{question[len('Anything else'):]}"
 
 
 def _without_said_examples(question: str, said: str) -> str:
