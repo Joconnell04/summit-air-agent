@@ -137,8 +137,8 @@
 {%- endmacro %}
 
 {# A step's timing on the node graph: milliseconds, or "missing" when the record has none. #}
-{% macro ms(value, slow=1500) -%}
-{%- if value is none %}<span class="ms missing">missing</span>{% elif value < 1 %}<span class="ms">&lt;1 ms</span>{% else %}<span class="ms{% if value >= slow %} slow{% endif %}">{{ "{:,.0f}".format(value) }} ms</span>{% endif -%}
+{% macro ms(value, slow=1500, quiet=false) -%}
+{%- if value is none %}{% if quiet %}<span class="ms"></span>{% else %}<span class="ms missing">missing</span>{% endif %}{% elif value < 1 %}<span class="ms">&lt;1 ms</span>{% else %}<span class="ms{% if value >= slow %} slow{% endif %}">{{ "{:,.0f}".format(value) }} ms</span>{% endif -%}
 {%- endmacro %}
 
 {# Node graph (docs/design-system.md): a call's steps in lanes, from app/nodes.py. Each row links
@@ -151,20 +151,21 @@
   <li>
     <span class="at">{{ n.at }}</span>
     <span class="lanes" aria-hidden="true">{% if n.col != n.from_col %}<span class="edge" style="--edge: {{ lo }}; --span: {{ (n.col - n.from_col) | abs }}"></span>{% endif %}<span class="dot {{ n.lane }}{% if n.tone %} {{ n.tone }}{% endif %}" style="--col: {{ n.col }}"></span></span>
-    <a class="node {{ n.lane }}" href="#d-{{ n.id }}" data-node="{{ n.id }}"><b>{{ n.title }}</b><span class="sum">{{ n.summary }}</span></a>
-    {{ ms(n.ms) }}
+    <a class="node {{ n.lane }}" href="#d-{{ n.id }}" data-node="{{ n.id }}"><b>{{ n.title }}</b><span class="sum">{{ said_view(n) }}</span>{% if n.proof %}<span class="proof{% if n.tone %} {{ n.tone }}{% endif %}">{{ n.proof }}</span>{% endif %}</a>
+    {{ ms(n.ms, quiet=true) }}
   </li>
   {% endfor %}
 </ol>
 {%- endmacro %}
 
-{% macro node_detail(graph) -%}
-<div class="node-detail" data-node-detail>
-  {% for n in graph.nodes %}
-  <section class="panel" id="d-{{ n.id }}">
-    <div class="panel-head"><h2>{{ n.title }}</h2><span class="sub">{{ n.at }}{% for key, name in graph.lanes if key == n.lane %}, {{ name | lower }}{% endfor %}</span><div class="end">{% if n.ms is not none %}<span class="tag outline">{{ n.ms_label | capitalize }} {{ "{:,.0f}".format(n.ms) }} ms</span>{% elif n.ms_label %}<span class="tag outline">{{ n.ms_label | capitalize }} missing</span>{% endif %}</div></div>
-    <div class="panel-body">
-      <p>{{ n.summary }}</p>
+{# A reply as the caller heard it, then each part that was cut, struck through, with the rule or
+   reason that cut it. Plain text for any other step. #}
+{% macro said_view(n) -%}
+{%- if n.view and n.view.cut -%}{{ n.summary }}{% for c in n.view.cut %} {% if c.struck %}<s class="cut">{{ c.text }}</s>{% else %}<span class="kept">{{ c.text }}</span>{% endif %} <span class="cut-tag">{{ c.tag }}</span>{% endfor %}
+{%- else %}{{ n.summary }}{% endif -%}
+{%- endmacro %}
+
+{% macro node_body(n) -%}
       {% if n.facts %}<dl class="kv">{% for k, v in n.facts %}<dt>{{ k }}</dt><dd class="num">{% if v is sameas true %}yes{% elif v is sameas false %}no{% elif v is none %}<span class="faint">missing</span>{% else %}{{ v }}{% endif %}</dd>{% endfor %}</dl>{% endif %}
       {% for ref in n.refs %}<p><a href="#d-{{ ref.node }}" data-node-ref="{{ ref.node }}">{{ ref.title }}</a> <span class="faint">{{ ref.text }}</span></p>{% endfor %}
       {% if n.messages is not none %}
@@ -179,6 +180,27 @@
         <pre class="tech-block scroll">{{ b.text }}</pre>
       </details>
       {% endfor %}
+{%- endmacro %}
+
+{% macro node_detail(graph) -%}
+<div class="node-detail" data-node-detail>
+  {% for n in graph.nodes %}
+  <section class="panel" id="d-{{ n.id }}">
+    <div class="panel-head"><h2>{{ n.title }}</h2><span class="sub">{{ n.at }}{% for key, name in graph.lanes if key == n.lane %}, {{ name | lower }}{% endfor %}</span><div class="end">{% if n.ms is not none %}<span class="tag outline">{{ n.ms_label | capitalize }} {{ "{:,.0f}".format(n.ms) }} ms</span>{% endif %}</div></div>
+    <div class="panel-body">
+      {% if n.view %}
+      <div class="said-view"><p>{{ said_view(n) }}</p>{% if n.view.cut %}<p class="note-line">Normal text is what the caller heard. Struck text was written or sent but never heard, tagged with what cut it.</p>{% endif %}{% if n.view.note %}<p class="note-line">{{ n.view.note }}.</p>{% endif %}</div>
+      {% else %}<p>{{ n.summary }}</p>{% endif %}
+      {% if n.proof %}<p><span class="proof{% if n.tone %} {{ n.tone }}{% endif %}">{{ n.proof }}</span></p>{% endif %}
+      {{ node_body(n) }}
+      {% if n.joined %}
+      <details class="joined"><summary>Steps in this row ({{ n.joined | length }})</summary>
+        <ol class="joined-steps">{% for j in n.joined %}
+          <li><details><summary><b>{{ j.title }}</b> <span class="faint">{{ j.summary | truncate(90) }}</span>{% if j.ms is not none %} <span class="faint">{{ j.ms_label }} {{ "{:,.0f}".format(j.ms) }} ms</span>{% endif %}</summary>
+            <div class="joined-body">{{ node_body(j) }}</div></details></li>
+        {% endfor %}</ol>
+      </details>
+      {% endif %}
     </div>
   </section>
   {% endfor %}

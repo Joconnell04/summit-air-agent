@@ -274,6 +274,8 @@ class Response:
         self.asked = False
         # The words of each sentence said in this reply, so the model can't say one again.
         self.spoken: list[set[str]] = []
+        # What this reply sent to Retell, for the bench's said-against-heard view.
+        self.sent: list[str] = []
 
         self.closed = False
 
@@ -292,6 +294,7 @@ class Response:
         if not text or self.stale():
             return
         self.spoken += [w for w in map(sentence_words, SENTENCE_END.split(text)) if w]
+        self.sent.append(text)
         if self.said:
             text = " " + text
         self.said = True
@@ -381,6 +384,11 @@ class LlmCall:
         self.last_turn: tuple[int, int] | None = None
         # Stage timings of each reply, attached to the agent line Retell reports for it.
         self.stages: list[dict] = []
+        # Beside each stage: what the reply sent and the sentences cut from it, with why
+        # (posted with the line as `said` and `cuts`, for the bench).
+        self.sent: list[dict] = []
+        self.cuts: list[dict] = []
+        self.greeting = ""
         self.ended = "caller_hangup"
         self.handoff_id: int | None = None
         self.transfer_id: int | None = None
@@ -396,11 +404,17 @@ class LlmCall:
         # The last hop's tool results included a lookup that found facts.
         self.facts_found = False
 
+    def _stage(self, out: "Response", stage: dict) -> None:
+        self.stages.append(stage)
+        self.sent.append({"said": " ".join(out.sent), "cuts": self.cuts})
+        self.cuts = []
+
     async def begin(self, greeting: str) -> None:
         """The first line, already built by whoever started the call on the tool server. It can't
         be talked over: on call_44f21506eca3346bd3547be9de8 a stray "there." three seconds in (echo
         from a speakerphone) cut it at "Hi there, thanks for". The caller's words are still heard
         and answered once it ends, as with the safety lines."""
+        self.greeting = greeting
         self.messages += [{"role": "user", "content": CONNECTED},
                           {"role": "assistant", "content": greeting}]
         await self.send({"response_type": "response", "response_id": 0, "content": greeting,
@@ -426,11 +440,15 @@ class LlmCall:
                 if not text:
                     continue
                 timings = self.stages.pop(0) if self.stages and index > 0 else {}
+                if index == 0:
+                    sent = {"said": self.greeting, "cuts": []}
+                else:
+                    sent = self.sent.pop(0) if self.sent else {"said": "", "cuts": []}
                 ms = reply_ms(transcript, index)
                 if ms is not None:
                     timings = {**timings, "reply_ms": ms}
                 # Shielded: a cancelled turn must not leave a line half posted.
-                await asyncio.shield(self.server.turn("agent", text, timings))
+                await asyncio.shield(self.server.turn("agent", text, timings, **sent))
 
     async def respond(self, response_id: int, transcript: list[dict]) -> None:
         async with self.turn_lock:
@@ -487,6 +505,7 @@ class LlmCall:
         if not heard_after(transcript, at):
             del self.messages[mark:]
             self.stages.clear()
+            self.sent.clear()
         self.last_turn = None
 
     async def _caller_turn(self, out: Response, text: str, began: float) -> None:
@@ -527,7 +546,7 @@ class LlmCall:
         self.messages += [{"role": "user", "content": content},
                           {"role": "assistant", "content": line}]
         await out.say(line, fixed=True)
-        self.stages.append({"spoken_from_code_ms": round((time.perf_counter() - self.began) * 1000, 1)})
+        self._stage(out, {"spoken_from_code_ms": round((time.perf_counter() - self.began) * 1000, 1)})
 
     async def _hand_off(self, out: Response, text: str, say: str, handoff: dict) -> None:
         """The caller demanded a person (voice/livekit/call.py). With nothing to send the call
@@ -553,7 +572,7 @@ class LlmCall:
                 watch.cancel()
         if out.hold_ms is not None:
             stages["hold_ms"] = out.hold_ms
-        self.stages.append(stages)
+        self._stage(out, stages)
 
     def _lookup_history(self) -> list[dict]:
         """The history with the hand-off's instruction added to the last tool result, for this
@@ -625,8 +644,11 @@ class LlmCall:
         return text
 
     def _dropped(self, sentence: str, reason: str) -> None:
-        """Every sentence the filter cuts is logged in full, and counted per call."""
+        """Every sentence the filter cuts is logged in full, counted per call, and posted with the
+        reply's line for the bench."""
         self.drops[reason] = self.drops.get(reason, 0) + 1
+        if sentence.strip() and len(self.cuts) < 20:
+            self.cuts.append({"text": " ".join(sentence.split())[:1000], "reason": reason})
         log.info("%s: dropped (%s) %r", self.server.call_id, reason, sentence)
 
     def _known_names(self) -> set[str]:
@@ -788,6 +810,8 @@ class LlmCall:
             if last and not deferred:
                 kept.append(last)
                 await out.say(last)
+            elif last:
+                self._dropped(last, "lead_in_before_tool")
             # The history keeps what the caller heard of the model's text, as LiveKit's does.
             content = [b for b in reply.content if b.get("type") != "text"]
             if kept:
@@ -874,9 +898,11 @@ class LlmCall:
                     # The model already said this sentence itself before the tool answered (it
                     # can work out "by 11:17 PM" from the time and "in 10 minutes"): Jackson's call
                     # call_23b95cb04fd6cc9ea0cc084380e heard the callback line twice.
-                    say = " ".join(
-                        p for p in SENTENCE_END.split(say) if p.strip() and not out.repeats(p)
-                    )
+                    parts = [p for p in SENTENCE_END.split(say) if p.strip()]
+                    for part in parts:
+                        if out.repeats(part):
+                            self._dropped(part, "repeats_said")
+                    say = " ".join(p for p in parts if not out.repeats(p))
                 # Interruptible, so the caller can correct a read-back; a safety refusal is not.
                 await out.say(say, fixed=envelope.get("refused") == "gate_safety")
                 if line or ends_turn(envelope):
