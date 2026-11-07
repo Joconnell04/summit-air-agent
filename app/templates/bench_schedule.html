@@ -64,7 +64,7 @@
     </section>
   </div>
   <section class="panel">
-    <div class="panel-head"><h2>Technicians</h2><span class="sub">what find_slots offers now</span></div>
+    <div class="panel-head"><h2>Technicians</h2>{% if offers %}<span class="end sub" data-tip="Normal priority, windows not started yet, read the way find_slots reads them">find_slots offers {{ offers.openings }} opening{{ "s" if offers.openings != 1 }} in {{ offers.windows }} window{{ "s" if offers.windows != 1 }}</span>{% endif %}</div>
     {% if sched %}{% if sched.rows %}{{ grid(sched, here, job_types, bench=true) }}{% else %}{{ empty("Nobody is working this day.") }}{% endif %}
     {% else %}{{ empty(problem) }}{% endif %}
   </section>

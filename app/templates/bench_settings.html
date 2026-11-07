@@ -1,121 +1,78 @@
 {% extends "bench_base.html" %}
-{% from "_ui.html" import basis with context %}
-{% block title %}Bench: settings{% endblock %}
+{% block title %}Bench: system{% endblock %}
 {% macro price(p) -%}{% if p.input is defined %}${{ "%.2f" | format(p.input) }} / ${{ "%.2f" | format(p.output) }}{% else %}<span class="faint">-</span>{% endif %}{%- endmacro %}
-{% macro profile_table(rows, marks) -%}
-<div class="table-wrap">
-  <table class="table">
-    <thead><tr><th>Profile</th><th>Model</th><th>Thinking</th><th class="right">Price in / out, per M</th><th>Measured</th><th>Basis</th><th>Source</th></tr></thead>
-    <tbody>
-      {% for p in rows %}
-      <tr>
-        <td class="fit"><span class="what">{{ p.name }}</span>{% for label, name in marks if name == p.name %} <span class="tag {{ 'ember' if label == 'Live' else 'outline' }}">{{ label }}</span>{% endfor %}</td>
-        <td class="fit"><code>{{ p.provider }}/{{ p.model }}</code></td>
-        <td class="fit">{{ "on" if p.thinking else "off" }}</td>
-        <td class="fit right num">{{ price(p.price) }}</td>
-        <td>{{ p.measure }}</td>
-        <td class="fit">{{ basis(p.basis) }}</td>
-        <td class="fit muted">{{ p.source or "-" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-{%- endmacro %}
 {% block body %}
-{% set pr = profiles %}
+{% set replies = models | selectattr("job", "equalto", "Replies") | first %}
 <main class="page">
   <div class="page-head">
-    <div class="lead">
-            <h1 class="page-title">System</h1>
-    </div>
+    <div class="lead"><h1 class="page-title">System</h1></div>
   </div>
 
-  <section class="panel">
-    <div class="panel-head"><h2>Voice knobs</h2><span class="count">{{ knobs | length }}</span></div>
+  <dl class="ledger">
+    <div><dt>Number</dt><dd class="num">{{ number or "-" }}</dd></div>
+    <div><dt>Phone and voice</dt><dd>Retell</dd></div>
+    <div><dt>Each turn</dt><dd>Our server, over Retell's socket</dd></div>
+    <div><dt>Replies</dt><dd><code>{{ replies.model if replies else "-" }}</code></dd></div>
+    <div><dt>Records</dt><dd>ServiceTitan, mock</dd></div>
+    <div><dt>Owner rules</dt><dd>{% if live_rules %}Version {{ live_rules.number }}{% else %}As set up{% endif %}</dd></div>
+  </dl>
+
+  <section class="panel" id="voice">
+    <div class="panel-head"><h2>Voice knobs</h2><span class="count">{{ knobs | length }}</span><span class="sub">the live Retell agent</span></div>
     <div class="table-wrap">
       <table class="table">
-        <thead><tr><th>Setting</th><th>Where</th><th class="right">Now</th><th>Documented</th><th>Basis</th><th>Source</th></tr></thead>
+        <thead><tr><th>Setting</th><th>What it does</th><th class="right">Now</th><th>Why this value</th></tr></thead>
         <tbody>
           {% for k in knobs %}
           <tr>
-            <td><span class="what">{{ k.label }}</span></td>
-            <td class="fit"><code>{{ k.path }}</code></td>
-            <td class="fit right num"><span class="what">{{ k.value }}</span></td>
-            <td>{{ k.measure }}</td>
-            <td class="fit">{{ basis(k.basis) }}</td>
-            <td class="fit muted">{{ k.source }}</td>
-          </tr>
-          {% endfor %}
-          {% for name, where, value, source in unset %}
-          <tr>
-            <td><span class="what">{{ name }}</span></td>
-            <td class="fit"><code>{{ where }}</code></td>
-            <td class="fit right"><span class="tag outline">Not set</span></td>
-            <td>Runs at {{ value }}</td>
-            <td class="fit">{{ basis("") }}</td>
-            <td class="fit muted">{{ source }}</td>
+            <td class="fit"><span class="what" data-tip="{{ k.where }}">{{ k.label }}</span></td>
+            <td class="muted">{{ k.does }}</td>
+            <td class="fit right num"><span class="what">{{ k.shown }}</span></td>
+            <td><span data-tip="{{ k.source }}">{{ k.why }}</span></td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-    <div class="panel-foot">The whole stack on the audio rig: {{ stack_note[0] }} ({{ stack_note[2] }}).</div>
   </section>
 
-  <section class="panel">
-    <div class="panel-head"><h2>Live models</h2></div>
-    {{ profile_table(pr.live, [("Live", pr.active), ("Default", pr.default)]) }}
-  </section>
-
-    <section class="panel">
-      <div class="panel-head"><h2>Side models</h2></div>
-      {{ profile_table(pr.side, []) }}
-    </section>
-    <section class="panel">
-      <div class="panel-head"><h2>Server switches</h2></div>
+  <div class="split wide-side">
+    <section class="panel" id="models">
+      <div class="panel-head"><h2>Models</h2></div>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>Switch</th><th>Variable</th><th class="right">Now</th></tr></thead>
+          <thead><tr><th>Job</th><th>Model</th><th class="right">Per M in / out</th><th>Known</th></tr></thead>
           <tbody>
-            {% for s in switches %}
-            <tr><td><span class="what">{{ s.name }}</span></td><td class="fit"><code>{{ s.where }}</code></td><td class="fit right">{{ s.value }}</td></tr>
+            {% for m in models %}
+            <tr>
+              <td class="fit"><span class="what">{{ m.job }}</span>{% if m.live and m.job == "Replies" %} <span class="tag ember">Live</span>{% endif %}</td>
+              <td class="fit">{% if m.model %}<code data-tip="{{ m.provider }}, profile {{ m.profile }}">{{ m.model }}</code>{% else %}<span class="faint">off</span>{% endif %}</td>
+              <td class="fit right num">{{ price(m.price) }}</td>
+              <td class="muted">{% if m.source %}<span data-tip="{{ m.source }}">{{ m.note }}</span>{% else %}{{ m.note }}{% endif %}</td>
+            </tr>
             {% endfor %}
-            <tr><td><span class="what">Owner rules</span></td><td class="fit"><code>/bench/rules</code></td><td class="fit right">{% if live_rules %}version {{ live_rules.number }}, by {{ live_rules.author }}{% else %}defaults{% endif %}</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="panel-foot">Secrets show only whether they are set.</div>
-    </section>
-
-  <section class="panel">
-    <div class="panel-head"><h2>Offline models</h2></div>
-    {{ profile_table(pr.offline, []) }}
-  </section>
-  <div class="split">
-    <section class="panel" id="prompt">
-      <div class="panel-head"><h2>Prompt</h2><span class="count">{{ prompts | length }}</span><span class="sub">prompts/</span></div>
-      <div class="table-wrap"><table class="table dense">
-        <thead><tr><th>File</th><th class="right">Lines</th><th>Sections</th></tr></thead>
-        <tbody>{% for f in prompts %}
-          <tr><td class="fit"><code>{{ f.name }}</code></td><td class="fit right num">{{ f.lines }}</td><td class="muted small">{{ f.heads | join(", ") | truncate(140) or "-" }}</td></tr>
-        {% endfor %}</tbody>
-      </table></div>
     </section>
     <section class="panel" id="after-hours">
-      <div class="panel-head"><h2>After hours</h2><span class="sub">agent.yaml</span></div>
+      <div class="panel-head"><h2>After hours</h2></div>
       <div class="panel-body"><dl class="kv">{% for label, value in after_hours %}<dt>{{ label }}</dt><dd class="num">{{ value }}</dd>{% endfor %}</dl></div>
     </section>
   </div>
 
-  <section class="panel" id="capacity">
-    <div class="panel-head"><h2>Capacity</h2><span class="count">{{ capacity | length }}</span><span class="sub">docs/scaling.md</span></div>
-    <div class="table-wrap"><table class="table dense">
-      <thead><tr><th>Part</th><th>On</th><th>Limit at once</th><th>Source</th></tr></thead>
-      <tbody>{% for c in capacity %}
-        <tr><td class="fit"><span class="what">{{ c.part }}</span></td><td class="muted">{{ c.on }}</td><td>{{ c.limit }}</td><td class="muted small">{{ c.source }}</td></tr>
-      {% endfor %}</tbody>
-    </table></div>
+  <section class="panel" id="switches">
+    <div class="panel-head"><h2>Server switches</h2></div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Switch</th><th>What it does</th><th class="right">Now</th></tr></thead>
+        <tbody>
+          {% for s in switches %}
+          <tr><td class="fit"><span class="what" data-tip="{{ s.where }}">{{ s.name }}</span></td><td class="muted">{{ s.does }}</td><td class="fit right">{{ s.value }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </section>
 </main>
 {% endblock %}

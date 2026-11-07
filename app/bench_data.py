@@ -1,7 +1,7 @@
-"""What the debug bench (app/bench.py) reads besides the call record: the tuning knobs and model
-profiles from config/models.yaml with the measurement each one has in the docs, the server's own
-switches, the eval runs in evals/results and the rounds in evals/rounds, and a draft eval scenario
-made from a real call. All read-only.
+"""What the debug bench (app/bench.py) reads besides the call record: the live call's voice
+settings and the models in use with the measurement behind each, the server's own switches, the
+eval runs in evals/results and the rounds in evals/rounds, and a draft eval scenario made from a
+real call. All read-only.
 """
 
 import html
@@ -18,73 +18,136 @@ BASELINE = ROOT / "evals" / "baseline.json"
 ROUNDS = ROOT / "evals" / "rounds"
 COAUTHORING = ROOT / "docs" / "ai-process" / "coauthoring.md"
 
-# The documented measurement behind each voice setting: (path in models.yaml, what it does, the
-# measurement or why there is none, its label, where it is written down). Labels follow CLAUDE.md:
-# MEASURED, SOURCE or ASSUMED. A test checks every path exists, so a renamed knob fails make check.
-KNOBS = (
-    ("voice.endpointing.normal.min_delay", "Shortest wait before answering",
-     "Turn end decided in about 354 ms on the first real call", "MEASURED",
-     "docs/latency.md, First real call"),
-    ("voice.endpointing.normal.max_delay", "Longest wait before answering",
-     "Starting point from the earlier practice agent, not measured here", "ASSUMED",
-     "docs/tuning.md"),
-    ("voice.endpointing.digits.min_delay", "Shortest wait after asking for digits",
-     "Starting point; the earlier practice agent settled on a 1.5 s cap with 0.35 s of silence",
-     "ASSUMED", "docs/latency.md, Where the time is saved"),
-    ("voice.endpointing.digits.max_delay", "Longest wait after asking for digits",
-     "Starting point, not measured here", "ASSUMED", "docs/tuning.md"),
-    ("voice.vad.min_silence_s", "Silence that ends the caller's turn",
-     "0.35 to 0.6 s to decide the caller finished, on the earlier practice agent", "MEASURED",
-     "docs/latency.md, Plain turn"),
-    ("voice.vad.activation", "Voice activity threshold", "Not measured", "ASSUMED",
-     "config/models.yaml"),
-    ("voice.stt.endpointing_ms", "Deepgram's own end of speech",
-     "Final transcript about 250 ms after speech ends (88 to 434) on the first real call",
-     "MEASURED", "docs/latency.md, First real call"),
-    ("voice.stt.model", "Speech to text model",
-     "Final transcript about 250 ms after speech ends on the first real call", "MEASURED",
-     "docs/latency.md, First real call"),
-    ("voice.tts.model", "Voice model",
-     "First audio byte median 216 ms on the first real call", "MEASURED",
-     "docs/latency.md, First real call"),
-    ("voice.interruption.min_words", "Words before the caller can interrupt",
-     "Starting point; tested by live calls 4 and 5", "ASSUMED", "docs/tuning.md"),
-    ("voice.interruption.min_duration", "Speech before the caller can interrupt",
-     "Starting point; tested by live calls 4 and 5", "ASSUMED", "docs/tuning.md"),
-    ("voice.interruption.false_interruption_timeout", "Resume after a false interruption",
-     "Starting point; tested by live calls 4 and 5", "ASSUMED", "docs/tuning.md"),
-    ("voice.bridge.after_s", "Bridge line after a slow tool",
-     "Never fired on the first real call: the slowest tool took 68 ms", "MEASURED",
-     "docs/latency.md, First real call"),
-    ("voice.bridge.min_turns_between", "Caller turns between bridge lines",
-     "Not measured", "ASSUMED", "docs/latency.md"),
+# The live call's voice settings: Retell's dials on the socket agent, which copies them from
+# Jackson's agent (retell/socket/push.py; snapshot in retell/summit-air-jackson/agent.json), the
+# socket push's own override, and the socket's hold phrase (config/models.yaml). Each row: label,
+# where the value is read (file and field), what it does, and why it has this value. The why's
+# source is in the row's tooltip: docs/retell-knobs.md, the round named, or the decision. A test
+# checks every field is found, so a renamed setting fails make check.
+AGENT_SNAPSHOT = ROOT / "retell" / "summit-air-jackson" / "agent.json"
+SOCKET_PUSH = ROOT / "retell" / "socket" / "push.py"
+VOICE_KNOBS = (
+    ("Transcription", ("agent", "stt_mode"), "How Retell turns the caller's speech into text",
+     "Fast mode missed a quiet one-word \"sure\"; accurate heard 12 of 12 short replies",
+     "MEASURED, docs/retell-knobs.md (replay of live call 3)"),
+    ("Noise filter", ("agent", "denoising_mode"), "Cleans line noise before transcription",
+     "With accurate transcription it heard every reply; retell/socket/denoise.py switches it",
+     "MEASURED, docs/retell-knobs.md"),
+    ("Responsiveness", ("agent", "responsiveness"), "How soon the agent answers once the caller stops",
+     "Answered short replies in 1.7 s and still waited through a pause mid-sentence",
+     "MEASURED, docs/retell-knobs.md"),
+    ("Interruptions", ("agent", "interruption_sensitivity"), "How easily the caller cuts the agent off",
+     "Retell's default; their advice for noisy lines is 0.8, not tried on our calls",
+     "SOURCE, docs.retellai.com/build/handle-background-noise"),
+    ("Backchannel", ("agent", "backchannel_frequency"), "\"Mm-hmm\" and \"okay\" while the caller talks",
+     "Never talked over a replayed caller, and the wait feels shorter",
+     "MEASURED, docs/retell-knobs.md; DECISIONS.md 127"),
+    ("Check-in", ("agent", "reminder_trigger_ms"), "Silence before the agent asks if the caller is there",
+     "At 6 s it cut in on a caller who was thinking", "MEASURED, docs/retell-knobs.md (call 2)"),
+    ("Hang-up on silence", ("push", "SILENCE_HANG_UP_MS"), "Ends a call the caller walked away from",
+     "Matches the dead-air goodbye at 8 minutes", "DECISIONS.md 081"),
+    ("Hold phrase", ("models", "voice.hold_phrase_after_s"), "How long a lookup runs before \"One sec.\"",
+     "At 0.7 s it played on 1 caller turn in 5", "MEASURED, evals/rounds/socket-buildout-01.md"),
+    ("Voice", ("agent", "voice_id"), "Brian's voice, at Retell's normal pace",
+     "Retell sets pace per agent, so it can't slow down for one caller", "docs/tuning.md"),
 )
-# Settings named in docs/tuning.md that config/models.yaml doesn't set yet.
-UNSET = (
-    ("Speaking rate", "voice.tts speed", "1.0, the Cartesia default", "docs/tuning.md"),
-    ("Sampling temperature", "the live profile", "1.0, the provider default", "docs/tuning.md"),
-    ("Reply length cap", "the live profile's output-token limit", "none", "docs/tuning.md"),
+# The models in use, by job, with the one fact that matters for the demo. Profiles are read from
+# config/models.yaml; the side model shows only when SIDE_MODEL turns one on.
+MODEL_JOBS = (
+    ("Replies", ("profiles", None), "First word 0.57 s on plain turns; 91% of the standard suite",
+     "MEASURED, evals/rounds/model-matrix-01.md"),
+    ("Tried for replies", ("profiles", "quality"), "First word 1.6 s; 84 to 87%; narrated its reasoning",
+     "MEASURED, evals/rounds/model-matrix-01.md, sonnet-buildout-01.md"),
+    ("Technician summary", ("post_call", "summary"), "Written after the call ends", ""),
+    ("Failure grader", ("offline", "grader"), "Labels each ended call", "evals/rounds/failure-grader-01.md"),
+    ("Owner rule check", ("owner_edits", "guidance_check"), "Checks an owner's draft rule on save", ""),
+    ("Simulated caller", ("offline", "caller"), "Plays the caller in evals", ""),
 )
-# Measurements per model profile, from the latency page and the round readouts.
-PROFILE_NOTES = {
-    "fast": (("First token median 565 ms on plain turns, thinking off (n=20); 29 of 32 standard "
-             "scenarios passed, twice"), "MEASURED",
-             "docs/latency.md; evals/rounds/model-matrix-01.md"),
-    "fast-prev": ("First token median 472 ms on plain turns (n=16), the control", "MEASURED",
-                  "docs/latency.md"),
-    "quality": ("First word 1.6 s on plain turns; 26 and 27 of 31 standard scenarios passed",
-                "MEASURED", "evals/rounds/model-matrix-01.md"),
-}
-SIDE_NOTES = {
-    "haiku": ("Recall 0.97, precision 1.00 alone; p95 1395 ms", "MEASURED",
-              "evals/rounds/side-model-01.md"),
-    "openai-decisions": (("Recall 1.00, precision 0.97 alone; p95 511 ms; back before the gate on "
-                         "47 of 47 reads"), "MEASURED", "evals/rounds/side-model-01.md"),
-    "jev": ("Recall 1.00, precision 0.97 alone; p95 120 ms", "MEASURED",
-            "evals/rounds/side-model-01.md"),
-}
-STACK_NOTE = ("Plain-turn reply median 1.89 s on the audio rig (30 turns), slowest 10% 2.49 s",
-              "MEASURED", "evals/rounds/bakeoff-audio-01.md")
+
+
+def baseline() -> dict:
+    """evals/baseline.json: the eval floor and the reference run."""
+    import json
+
+    return json.loads(BASELINE.read_text()) if BASELINE.exists() else {}
+
+
+def _snapshot() -> dict:
+    import json
+
+    return json.loads(AGENT_SNAPSHOT.read_text())
+
+
+def _push_constant(name: str):
+    found = re.search(rf"^{name} = ([0-9_]+)", SOCKET_PUSH.read_text(), re.MULTILINE)
+    return int(found.group(1).replace("_", "")) if found else None
+
+
+def live_number() -> str:
+    """The number the socket agent answers (retell/socket/push.py NUMBER), as written."""
+    found = re.search(r'^NUMBER = "\+1(\d{3})(\d{3})(\d{4})"', SOCKET_PUSH.read_text(), re.MULTILINE)
+    return f"({found.group(1)}) {found.group(2)}-{found.group(3)}" if found else ""
+
+
+def _shown_knob(field: str, value, agent: dict) -> str:
+    if value is None:
+        return "-"
+    if field == "stt_mode":
+        return str(value).capitalize()
+    if field == "denoising_mode":
+        return str(value).replace("-", " ").capitalize()
+    if field == "backchannel_frequency":
+        return f"On, {value:g}" if agent.get("enable_backchannel") else "Off"
+    if field in ("responsiveness", "interruption_sensitivity"):
+        return f"{value:.1f}"
+    if field == "reminder_trigger_ms":
+        times = agent.get("reminder_max_count", 1)
+        return f"{value / 1000:g} s, {'once' if times == 1 else f'up to {times}'}"
+    if field == "SILENCE_HANG_UP_MS":
+        return f"{value / 60000:g} min"
+    if field == "voice.hold_phrase_after_s":
+        return f"{value:g} s"
+    if field == "voice_id":
+        return f"{str(value).split('-', 1)[-1]}, {agent.get('voice_speed', 1):g}x"
+    return f"{value:g}" if isinstance(value, (int, float)) else str(value)
+
+
+def voice_knobs(config: dict | None = None) -> list[dict]:
+    config = config or _models()
+    agent = _snapshot()
+    out = []
+    for label, (where, field), does, why, source in VOICE_KNOBS:
+        if where == "agent":
+            value, place = agent.get(field), f"Retell agent, {field}"
+        elif where == "push":
+            value, place = _push_constant(field), f"retell/socket/push.py, {field}"
+        else:
+            value, place = lookup(config, field), f"config/models.yaml, {field}"
+        out.append({"label": label, "field": field, "where": place, "value": value,
+                    "shown": _shown_knob(field, value, agent), "does": does, "why": why,
+                    "source": source})
+    return out
+
+
+def models_in_use(side_model: str, active: str, config: dict | None = None) -> list[dict]:
+    """The models the system runs, by job. The replies row is the live profile."""
+    config = config or _models()
+    rows = []
+    for job, (section, name), note, source in MODEL_JOBS:
+        name = name or active or config["default"]
+        p = config[section].get(name)
+        if p is None or (job == "Tried for replies" and name == (active or config["default"])):
+            continue
+        rows.append({"job": job, "profile": name, "model": p["model"], "provider": p["provider"],
+                     "price": p.get("price") or {}, "note": note, "source": source,
+                     "live": job == "Replies"})
+    side = config["side"].get(side_model) if side_model else None
+    rows.insert(1, {"job": "Side model", "profile": side_model or "off",
+                    "model": side["model"] if side else "", "provider": side["provider"] if side else "",
+                    "price": (side or {}).get("price") or {},
+                    "note": "Can only raise a call's priority" if side else "Off: the phrase rules decide alone",
+                    "source": "DECISIONS.md 006", "live": bool(side)})
+    return rows
 
 
 def _models() -> dict:
@@ -98,60 +161,31 @@ def lookup(config: dict, path: str):
     return node
 
 
-def knobs(config: dict | None = None) -> list[dict]:
-    config = config or _models()
-    return [
-        {"path": path, "label": label, "value": lookup(config, path), "measure": measure,
-         "basis": basis, "source": source}
-        for path, label, measure, basis, source in KNOBS
-    ]
+def switches(settings) -> list[dict]:
+    """The server switches worth naming on the walkthrough. Secrets show only whether they are set."""
 
-
-def profiles(active: str, config: dict | None = None) -> dict:
-    """The live profiles and the side models, each with its measurement where one exists."""
-    config = config or _models()
-
-    def rows(section: dict, notes: dict) -> list[dict]:
-        out = []
-        for name, p in section.items():
-            measure, basis, source = notes.get(name, ("Not measured", "", ""))
-            out.append({"name": name, "provider": p["provider"], "model": p["model"],
-                        "thinking": p.get("thinking"), "price": p.get("price") or {},
-                        "measure": measure, "basis": basis, "source": source})
-        return out
-
-    return {
-        "default": config["default"],
-        "active": active or config["default"],
-        "live": rows(config["profiles"], PROFILE_NOTES),
-        "side": rows(config["side"], SIDE_NOTES),
-        "offline": rows({**config["offline"], **config["post_call"], **config["owner_edits"]}, {}),
-    }
-
-
-def switches(settings, env: dict) -> list[dict]:
-    """The server's own switches. Secrets show only whether they are set."""
-
-    def is_set(value) -> str:
-        return "set" if value else "not set"
+    def on(value) -> str:
+        return "On" if value else "Off"
 
     return [
-        {"name": "Live model profile", "where": "MODEL_PROFILE (voice worker)",
-         "value": env.get("MODEL_PROFILE") or "default"},
-        {"name": "Side model", "where": "SIDE_MODEL",
-         "value": settings.side_model or "off, the phrase rules decide alone"},
-        {"name": "Eval gate on publish", "where": "RULES_GATE", "value": "on" if settings.rules_gate else "off"},
-        {"name": "Technician summaries", "where": "SUMMARIES", "value": "on" if settings.summaries else "off"},
-        {"name": "Weather for priority", "where": "WEATHER", "value": "on" if settings.weather else "off"},
-        {"name": "Slot cache", "where": "SLOT_CACHE_SECONDS", "value": f"{settings.slot_cache_seconds:g} s"},
+        {"name": "Eval gate on publish", "where": "RULES_GATE", "value": on(settings.rules_gate),
+         "does": "An owner rule goes live only after the must-pass evals pass"},
+        {"name": "Technician summaries", "where": "SUMMARIES", "value": on(settings.summaries),
+         "does": "Writes the job summary after the call"},
+        {"name": "Weather", "where": "WEATHER", "value": on(settings.weather),
+         "does": "Outside temperature for no-heat priority"},
+        {"name": "Slot cache", "where": "SLOT_CACHE_SECONDS", "value": f"{settings.slot_cache_seconds:g} s",
+         "does": "How long find_slots reuses ServiceTitan's capacity"},
         {"name": "Background jobs", "where": "JOBS_INTERVAL_SECONDS",
-         "value": f"every {settings.jobs_interval_seconds:g} s" if settings.jobs_interval_seconds else "off"},
-        {"name": "Environment", "where": "APP_ENV", "value": settings.environment},
-        {"name": "Recordings", "where": "RECORDING_S3_BUCKET", "value": is_set(settings.recording_bucket)},
-        {"name": "Alert email", "where": "SMTP_HOST", "value": is_set(settings.smtp_host)},
-        {"name": "Reports to GitHub", "where": "REPORTS_GITHUB_TOKEN", "value": is_set(settings.reports_github_token)},
-        {"name": "Debug token", "where": "DEBUG_TOKEN", "value": is_set(settings.debug_token)},
-        {"name": "Fixed clock", "where": "FIXED_NOW", "value": settings.fixed_now or "off"},
+         "value": f"Every {settings.jobs_interval_seconds:g} s" if settings.jobs_interval_seconds else "Off",
+         "does": "Retries queued bookings, places callbacks, writes summaries"},
+        {"name": "Recordings", "where": "RECORDING_S3_BUCKET",
+         "value": "Set" if settings.recording_bucket else "Not set", "does": "Where call audio is kept"},
+        {"name": "Alert email", "where": "AGENTMAIL_API_KEY or SMTP_HOST",
+         "value": "Set" if settings.agentmail_api_key or settings.smtp_host else "Held, not sent",
+         "does": "Emails the on-call person after hours"},
+        {"name": "Fixed clock", "where": "FIXED_NOW", "value": settings.fixed_now or "Off",
+         "does": "Pins the server's time for a demo world"},
     ]
 
 
@@ -177,27 +211,80 @@ def runs(directory: Path = eval_results.RESULTS_DIR) -> list:
     return sorted(found, key=lambda r: r.created, reverse=True)
 
 
-def run_summary(run) -> dict:
-    judged = [s for s in run.scenarios if s.outcome != "error"]
+# What each scenario tests, from its flow labels (evals/README.md), as the Evals filter names it.
+TESTED = {
+    "safety": "Safety",
+    "priority": "Priority",
+    "booking": "Booking",
+    "repeat-caller": "Repeat caller",
+    "membership": "Membership",
+    "renter": "Renter",
+    "commercial": "Commercial",
+    "after-hours": "After hours",
+    "injection": "Prompt attacks",
+    "off-topic": "Off topic",
+    "spam": "Off topic",
+}
+# The stacks as the Evals page names them; any other is shown as recorded.
+STACK_NAMES = {
+    "livekit": "LiveKit", "livekit-rig": "LiveKit, audio rig", "retell_llm": "Retell socket",
+    "retell_flow": "Retell flow", "retell-flow-rig": "Retell flow, audio rig",
+    "retell-rig": "Retell, audio rig",
+}
+# A run this size or bigger is a suite run; smaller ones are reruns of a scenario or two.
+SUITE_MIN = 10
+
+
+def tested_key(label: str) -> str:
+    return label.lower().replace(" ", "-")
+
+
+def tested_labels(scenario) -> set[str]:
+    flows = scenario.flow if isinstance(scenario.flow, list) else [scenario.flow]
+    return {TESTED[f] for f in flows if f in TESTED}
+
+
+def run_summary(run, tested: str = "") -> dict:
+    """A run's numbers, over its scenarios that test `tested` (a TESTED label key) when given."""
+    scenarios = [s for s in run.scenarios
+                 if not tested or tested in {tested_key(x) for x in tested_labels(s)}]
+    judged = [s for s in scenarios if s.outcome != "error"]
     passed = sum(s.outcome == "pass" for s in judged)
     delays = sorted(s.reply_delay_p50_ms for s in judged if s.reply_delay_p50_ms)
+    counts: dict[str, int] = {}
+    for s in run.scenarios:
+        for label in tested_labels(s):
+            counts[label] = counts.get(label, 0) + 1
     return {
         "run": run,
         "id": run.run_id,
         "created": run.created,
         "suite": run.suite,
         "stack": run.stack,
+        "stack_name": STACK_NAMES.get(run.stack, run.stack.replace("_", " ")),
         "profile": run.profile,
         "transport": run.transport,
-        "rate": run.pass_rate(),
+        "rate": (passed / len(judged)) if judged else None,
         "passed": passed,
         "judged": len(judged),
-        "errors": len(run.scenarios) - len(judged),
-        "must_pass": sum(bool(s.must_pass_failures) for s in run.scenarios),
-        "cost": sum(s.cost_usd for s in run.scenarios),
+        "errors": len(scenarios) - len(judged),
+        "size": len(run.scenarios),
+        "must_pass": sum(bool(s.must_pass_failures) for s in scenarios),
+        "cost": sum(s.cost_usd for s in scenarios),
         "delay": delays[len(delays) // 2] if delays else None,
         "overlay": run.overlay is not None,
+        "tested": [label for label, _ in sorted(counts.items(), key=lambda kv: -kv[1])[:3]],
     }
+
+
+def tested_choices(runs: list) -> list[tuple[str, str, int]]:
+    """The TESTED labels that some run covers: key, label, and how many runs cover it."""
+    seen: dict[str, int] = {}
+    for run in runs:
+        for label in {x for s in run.scenarios for x in tested_labels(s)}:
+            seen[label] = seen.get(label, 0) + 1
+    order = list(dict.fromkeys(TESTED.values()))
+    return [(tested_key(label), label, seen[label]) for label in order if label in seen]
 
 
 def failures(run) -> list:
@@ -218,12 +305,48 @@ def _round_files() -> list[Path]:
     return [p for p in sorted(ROUNDS.glob("*.md")) if p.name != "README.md"]
 
 
+_ROUND_ROW = re.compile(r"^\| (.+?) \| (.+?) \|$", re.MULTILINE)
+_ROUND_FILE = re.compile(r"\]\(([\w-]+)\.md\)")
+_RUN_STAMP = re.compile(r"\b(\d{8}-\d{6})\b")
+
+
+def _settled() -> dict[str, str]:
+    """What each round settled, from the table in evals/rounds/README.md, by file stem."""
+    readme = ROUNDS / "README.md"
+    if not readme.exists():
+        return {}
+    out = {}
+    for files, settled in _ROUND_ROW.findall(readme.read_text()):
+        for stem in _ROUND_FILE.findall(files):
+            out[stem] = settled.strip()
+    return out
+
+
 def rounds() -> list[dict]:
-    out = [{"slug": p.stem, "title": _title(p), "path": f"evals/rounds/{p.name}"}
-           for p in _round_files()]
+    """Every round, newest first (the README's table is oldest first), with what it settled and
+    the results files it names."""
+    settled = _settled()
+    order = {stem: i for i, stem in enumerate(settled)}
+    found = []
+    for p in _round_files():
+        text = p.read_text()
+        found.append({"slug": p.stem, "title": _title(p), "path": f"evals/rounds/{p.name}",
+                      "settled": settled.get(p.stem, ""),
+                      "runs": sorted(set(_RUN_STAMP.findall(text)))})
+    found.sort(key=lambda r: order.get(r["slug"], len(order)), reverse=True)
     if COAUTHORING.exists():
-        out.append({"slug": "coauthoring", "title": _title(COAUTHORING),
-                    "path": "docs/ai-process/coauthoring.md"})
+        found.append({"slug": "coauthoring", "title": _title(COAUTHORING),
+                      "path": "docs/ai-process/coauthoring.md",
+                      "settled": "Jackson's reads of real calls, round by round", "runs": []})
+    return found
+
+
+def round_of(found: list[dict]) -> dict[str, dict]:
+    """The round that names each results file, by the file's date and time stamp."""
+    out: dict[str, dict] = {}
+    for r in found:
+        for stamp in r["runs"]:
+            out.setdefault(stamp, r)
     return out
 
 
@@ -239,6 +362,63 @@ def _title(path: Path) -> str:
     first = path.read_text().split("\n", 1)[0]
     return first.lstrip("# ").strip() or path.stem
 
+
+
+# ---- prompt versions -----------------------------------------------------------------------
+
+PROMPT_LOG = ROOT / "retell" / "PROMPT-LOG.md"
+SOCKET_SECTION = "\n## Socket build (issue #176)"
+REPO_COMMITS = "https://github.com/Joconnell04/summit-air-agent/commit/"
+_VERSION_ROW = re.compile(r"^\| (v\d+) \| ([^|]*) \| ([\d,]+) \| (\d+) \| (\w+) \|$", re.MULTILINE)
+_VERSION_HEAD = re.compile(r"^### (v\d+) \(([^)]*)\)\s*$", re.MULTILINE)
+_OUTCOME = re.compile(
+    r'(?:Outcome: |(?<=\. )|(?<=\." )|^)(Kept|Mostly kept|Dropped|Replaced|tests pass|checked|Not measured|'
+    r"Not on a call yet|Being measured)[^.]*\.", re.MULTILINE | re.IGNORECASE)
+_TIME_OR_COMMIT = re.compile(r"^(\d{2}:\d{2}|[0-9a-f]{7})$")
+
+
+def _first_sentence(text: str) -> str:
+    plain = " ".join(line.strip("- ").strip() for line in text.splitlines() if line.strip())
+    found = re.match(r"(.+?[.!?])(\s|$)", plain)
+    return (found.group(1) if found else plain)[:240]
+
+
+def prompt_versions(path: Path = PROMPT_LOG) -> list[dict]:
+    """The live socket prompt's versions (retell/socket/prompt.md), newest first, from the socket
+    section of retell/PROMPT-LOG.md: the measured table (time, words, "never" count, commit) and
+    each version's entry (its title, first sentence, outcome and the whole entry)."""
+    if not path.exists():
+        return []
+    text = path.read_text()
+    start = text.find(SOCKET_SECTION)
+    if start < 0:
+        return []
+    end = text.find("\n## ", start + len(SOCKET_SECTION))
+    section = text[start:end if end > 0 else None]
+    table = {m.group(1): m for m in _VERSION_ROW.finditer(section)}
+    heads = list(_VERSION_HEAD.finditer(section))
+    out = []
+    for i, head in enumerate(heads):
+        version, label = head.group(1), head.group(2).strip()
+        body_end = heads[i + 1].start() if i + 1 < len(heads) else len(section)
+        body = section[head.end():body_end]
+        body = body[:body.find("\n### ")] if "\n### " in body else body
+        row = table.get(version)
+        outcome = _OUTCOME.search(body)
+        out.append({
+            "version": version,
+            "number": int(version[1:]),
+            "title": "" if _TIME_OR_COMMIT.match(label) else label[:1].upper() + label[1:],
+            "summary": _first_sentence(body),
+            "outcome": outcome.group(0).removeprefix("Outcome: ").rstrip(".") if outcome else "",
+            "time": row.group(2).strip() if row else "",
+            "words": row.group(3) if row else "",
+            "never": row.group(4) if row else "",
+            "commit": row.group(5) if row else "",
+            "commit_url": f"{REPO_COMMITS}{row.group(5)}" if row else "",
+            "body": markdown(body.strip()),
+        })
+    return sorted(out, key=lambda v: v["number"], reverse=True)
 
 _INLINE_CODE = re.compile(r"`([^`]+)`")
 _BOLD = re.compile(r"\*\*([^*]+)\*\*")

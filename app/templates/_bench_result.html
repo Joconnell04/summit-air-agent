@@ -1,0 +1,9 @@
+{# What a tool call returned to the agent: shown in the transcript and on the tool call page. #}
+<dl class="kv result-kv">
+  {% if r.error %}<dt>Error</dt><dd class="error">{{ r.error }}</dd>{% endif %}
+  {% if r.refused %}<dt>Refused</dt><dd><span class="tag high">{{ r.refused | replace("_", " ") }}</span></dd>{% endif %}
+  {% if r.gate %}<dt>Gate</dt><dd>{{ r.gate | replace("_", " ") }}</dd>{% endif %}
+  <dt>Say</dt><dd>{% if r.say %}{{ mask(r.say) }}{% else %}<span class="faint">nothing</span>{% endif %}</dd>
+  <dt>Next</dt><dd>{% if r.next %}{{ mask(r.next) }}{% else %}<span class="faint">none</span>{% endif %}</dd>
+  <dt>Data</dt><dd>{% if r.data %}<pre class="tech-block scroll">{{ r.data }}</pre>{% else %}<span class="faint">Not in this server's log.</span>{% endif %}</dd>
+</dl>

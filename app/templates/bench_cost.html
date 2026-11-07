@@ -1,5 +1,5 @@
 {% extends "bench_base.html" %}
-{% from "_ui.html" import go, basis, empty with context %}
+{% from "_ui.html" import go, empty with context %}
 {% block title %}Bench: cost{% endblock %}
 {% macro usd(v) %}${{ "%.3f" | format(v) }}{% endmacro %}
 {% block body %}
@@ -13,6 +13,29 @@
     <div><dt>After the call</dt><dd>{{ usd(average.after) }}</dd></div>
     <div><dt>Calls</dt><dd>{{ rows | length }}</dd></div>
   </dl>
+  {% set first = chart.measures[0] %}
+  <section class="panel" id="stacks" data-chart>
+    <div class="chips" role="group" aria-label="Chart">
+      <div class="chip-group"><span class="label">Show</span>
+        {% for m in chart.measures %}<button class="chip" type="button" data-measure="{{ m.key }}" data-unit="{{ m.unit }}" aria-current="{{ 'true' if loop.first else 'false' }}">{{ m.label }}</button>{% endfor %}
+      </div>
+      <div class="chip-group"><span class="label">Of</span>
+        {% for g in chart.groups %}<button class="chip" type="button" data-group="{{ g }}" aria-current="{{ 'true' if loop.first else 'false' }}">{{ g }}</button>{% endfor %}
+      </div>
+    </div>
+    <div class="panel-head"><h2>Stacks we tested</h2><span class="sub">click a name to leave it out</span></div>
+    <ul class="hbars">
+      {% for r in chart.rows %}
+      {% set v = r["values"].get(first.key) %}
+      <li data-row data-in="{{ r.group }}"{% if r.group != chart.groups[0] %} hidden{% endif %}{% for key, x in r["values"].items() %} data-v-{{ key }}="{{ x.v }}" data-src-{{ key }}="{{ x.src }}"{% endfor %}>
+        <button class="bar-name" type="button" aria-pressed="true">{{ r.name }}</button>
+        <span class="bar-track"><span class="hbar{% if r.live %} live{% endif %}" data-tip="{{ v.src if v else 'Not measured' }}"></span></span>
+        <span class="bar-value num">{% if v %}{{ "%.2f" | format(v.v) }} s{% else %}-{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+
   <div class="split">
     <section class="panel">
       <div class="panel-head"><h2>Per call</h2><span class="count">{{ rows | length }}</span></div>
@@ -38,7 +61,7 @@
       <div class="panel-head"><h2>Rates</h2></div>
       <div class="table-wrap"><table class="table dense">
         <tbody>{% for name, value, label, source in rates %}
-          <tr><td>{{ name }}<div class="why small">{{ source }}</div></td><td class="fit right num"><span class="what">{{ value }}</span></td><td class="fit">{{ basis(label) }}</td></tr>
+          <tr><td>{{ name }}</td><td class="fit right num"><span class="what" data-tip="{{ label | capitalize }}, {{ source }}">{{ value }}</span></td></tr>
         {% endfor %}</tbody>
       </table></div>
     </section>

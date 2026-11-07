@@ -23,6 +23,22 @@
         <td class="text{% if r.differs %} muted{% endif %}">{% if loading is defined and loading %}<span class="skel" style="width: {{ [40, 70, 55, 85, 62][loop.index0 % 5] }}%"></span>{% elif r.retell %}{% if r.differs %}<span class="diff">{{ mask(r.retell) }}</span>{% else %}{{ mask(r.retell) }}{% endif %}{% else %}<span class="faint">-</span>{% endif %}</td>
         <td class="fit right"><span class="tags">{% if r.over %}<span class="tag high">Talked over</span>{% endif %}{% if r.tail %}<span class="tag outline">Split</span>{% endif %}</span></td>
       </tr>
+      {% for x in r.tools %}
+      <tr class="tool">
+        <td class="time">{{ x.clock }}</td>
+        <td class="side-cell"><span class="who-tag">Tool</span></td>
+        <td colspan="3"><details class="tool-call">
+          <summary><span class="mono what">{{ x.tool }}</span>{% if x.error %}<span class="tag urgent">Error</span>{% elif not x.ok %}<span class="tag high">Refused</span>{% elif x.gate %}<span class="tag outline">{{ x.gate | replace("_", " ") }}</span>{% endif %}<span class="say">{{ mask(x.say) }}</span><span class="num faint">{{ "{:,.0f}".format(x.ms) }} ms</span></summary>
+          <div class="tool-body">
+            <div class="tool-cols">
+              <div><span class="label">Arguments</span><pre class="tech-block scroll">{{ x.args }}</pre></div>
+              <div data-result="/bench/calls/{{ key }}/tools/{{ x.id }}/result"><span class="label">Result</span><span class="skel" style="width: 70%"></span><span class="skel" style="width: 45%"></span></div>
+            </div>
+            <div class="actions"><a class="btn" href="/bench/calls/{{ key }}/tools/{{ x.id }}">{{ "Records it wrote" if x.writes else "Open" }}</a></div>
+          </div>
+        </details></td>
+      </tr>
+      {% endfor %}
       {% endfor %}
     </tbody>
   </table></div>

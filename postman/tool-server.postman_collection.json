@@ -3399,6 +3399,100 @@
           }
         },
         {
+          "name": "Staff can't read a call's log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admins only', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/bench/calls/{{call_id}}/log"
+          }
+        },
+        {
+          "name": "Staff can't download a call's log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admins only', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/bench/calls/{{call_id}}/log.json"
+          }
+        },
+        {
+          "name": "Staff can't open a tool call's records",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('tool_id', '1');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admins only', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/bench/calls/{{call_id}}/tools/{{tool_id}}"
+          }
+        },
+        {
+          "name": "Staff can't read a tool call's result",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('tool_id', '1');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admins only', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/bench/calls/{{call_id}}/tools/{{tool_id}}/result"
+          }
+        },
+        {
           "name": "Staff can't open the bench's schedule",
           "event": [
             {
@@ -3519,6 +3613,29 @@
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/bench/rounds/{{eval_round}}"
+          }
+        },
+        {
+          "name": "Staff can't cancel a job from the bench",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admins only', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/bench/schedule/jobs/{{sched_job_id}}/cancel",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            }
           }
         },
         {
@@ -3675,6 +3792,45 @@
             "method": "GET",
             "header": [],
             "url": "{{base_url}}/bench/calls/{{call_id}}/heard"
+          }
+        },
+        {
+          "name": "A call's log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('opens', () => pm.response.to.have.status(200));",
+                  "pm.test('is HTML', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('text/html'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/bench/calls/{{call_id}}/log"
+          }
+        },
+        {
+          "name": "A call's log, as JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('the call's lines', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/bench/calls/{{call_id}}/log.json"
           }
         },
         {

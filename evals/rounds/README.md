@@ -28,6 +28,7 @@ One file per round of testing, with its numbers and the results files behind the
 | [server-led-01.md](server-led-01.md) | The server runs the steps and the model talks: the arm the live agent is built on |
 | [socket-buildout-01.md](socket-buildout-01.md) | The server-led flow behind Retell's custom-LLM socket, the live path |
 | [knowledge-rag-01.md](knowledge-rag-01.md) | Embedding search for equipment questions; the Sonnet hand-off built and left off |
+| [reliability-loop-01.md](reliability-loop-01.md) | Six phone replays on the socket agent, each miss fixed in the server or the socket, not the prompt |
 | [symptom-questions-ab-01.md](symptom-questions-ab-01.md) | Server-written symptom questions against fixed sentences: 6 real re-asks against 13 in 96 runs |
 
 The ten real phone calls are scripted in [../live-calls.md](../live-calls.md).

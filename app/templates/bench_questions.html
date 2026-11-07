@@ -3,24 +3,24 @@
 {% block title %}Bench: questions{% endblock %}
 {% block body %}
 <main class="page">
-  <div class="page-head"><div class="lead"><h1 class="page-title">Questions</h1></div></div>
+  <div class="page-head">
+    <div class="lead">
+      <h1 class="page-title">Questions</h1>
+      <p class="muted small">What the owner is likely to ask, answered from the calls on record.</p>
+    </div>
+  </div>
   {% for g in groups %}
   <section class="panel">
     <div class="panel-head"><h2>{{ g.group }}</h2><span class="count">{{ g["items"] | length }}</span></div>
-    <div class="table-wrap"><table class="table dense q-table fixed">
-      <colgroup><col style="width: 200px"><col><col style="width: 140px"><col style="width: 32px"></colgroup>
-      <thead><tr><th>Question</th><th>Evidence</th><th>Where</th><th></th></tr></thead>
-      <tbody>
-        {% for q in g["items"] %}
-        <tr{% if q.link %} data-href="{{ q.link }}"{% endif %}>
-          <td><span class="what">{% if q.link %}<a href="{{ q.link }}">{{ q.name }}</a>{% else %}{{ q.name }}{% endif %}</span></td>
-          <td class="ev" title="{{ q.evidence }}">{% if q.evidence.startswith("docs/") %}<code>{{ q.evidence }}</code>{% else %}{{ q.evidence }}{% endif %}</td>
-          <td class="view">{{ q.view }}</td>
-          <td class="go">{% if q.link %}{{ go() }}{% endif %}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table></div>
+    <ul class="q-list">
+      {% for q in g["items"] %}
+      <li{% if q.link %} data-href="{{ q.link }}"{% endif %}>
+        <span class="q what">{{ q.q }}</span>
+        <span class="a">{{ q.answer }}<span class="ev">{% if q.evidence.startswith("docs/") %}<code>{{ q.evidence }}</code>{% else %}{{ q.evidence }}{% endif %}</span></span>
+        <span class="open">{% if q.link %}<a class="btn quiet" href="{{ q.link }}">{{ q.view }}{{ go() }}</a>{% endif %}</span>
+      </li>
+      {% endfor %}
+    </ul>
   </section>
   {% endfor %}
 </main>

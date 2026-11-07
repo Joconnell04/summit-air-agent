@@ -4,8 +4,11 @@ checks who is signed in, reads the form and renders HTML.
 
 Every route needs a signed-in user. Staff may block a window, add an event or a job and change a
 job; changing a customer's name or phone number needs an admin, checked here and again in
-app/schedule.py. The bench pages need an admin. A form posts to the owner routes from either
-surface and says where to go back to; the edit is logged with the surface it came from.
+app/schedule.py. The bench pages need an admin, and so does cancelling a job, which only the bench
+offers. A form posts to the owner routes from either surface and says where to go back to; the
+edit is logged with the surface it came from. An edit made from the bench also logs what
+find_slots offered that day before and after it, which is the proof that a block changes what the
+agent can offer.
 """
 
 import json
@@ -15,7 +18,7 @@ from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 
 from . import schedule
-from .db import parse_iso
+from .db import parse_iso, tx
 from .fsm import FsmRejected, FsmUnavailable
 from .owner_view import _common, _login, _need_admin, _next_path, _render, _signed_in, _user
 from .text import phone_key
@@ -68,6 +71,14 @@ def _day(value: str, fallback: date) -> date:
         return date.fromisoformat(value)
     except ValueError:
         return fallback
+
+
+def _offer_change(on: date, before: dict, after: dict) -> str:
+    """The log's note on what an edit did to the agent's offers that day."""
+    return (
+        f"; find_slots for {on.strftime('%a %b %-d')}: {before['openings']} openings in "
+        f"{before['windows']} windows before, {after['openings']} in {after['windows']} after"
+    )
 
 
 def _int(value: str) -> int | None:
@@ -153,6 +164,7 @@ def add_routes(app: FastAPI) -> None:
                 "problem": problem,
                 "here": f"/bench/schedule?day={on.isoformat()}",
                 "changes": _changes(conn, tenant),
+                "offers": schedule.offers(found) if found else None,
                 "customer": shown,
                 "not_found": bool(missing),
             }
@@ -194,13 +206,22 @@ def add_routes(app: FastAPI) -> None:
         tail = f"&customer={found[0]['id']}" if found else "&missing=1"
         return RedirectResponse(f"/bench/schedule?day={on.isoformat()}{tail}#customer", 303)
 
-    def edit(request: Request, next_path: str, run) -> Response:
-        """Run one edit as the signed-in user, then go back to the page it came from."""
+    def offered(request, tenant, on: date | None) -> dict | None:
+        if on is None or on == date.min:
+            return None
+        found, _ = grid(request, tenant, on)
+        return schedule.offers(found) if found else None
+
+    def edit(request: Request, next_path: str, run, on: date | None = None) -> Response:
+        """Run one edit as the signed-in user, then go back to the page it came from. From the
+        bench, with the day the edit is on, the log line also says what find_slots offered that
+        day before and after."""
         if not _signed_in(request):
             return _login(request)
         svc = services(request)
         tenant = svc.tenants.default
         target = _next_path(next_path)
+        before = offered(request, tenant, on) if target.startswith("/bench") else None
         conn = svc.connect()
         try:
             try:
@@ -214,6 +235,13 @@ def add_routes(app: FastAPI) -> None:
                 "SELECT max(id) FROM schedule_edits WHERE tenant = ? AND user_id = ?",
                 (tenant.slug, _user(request)["id"]),
             ).fetchone()
+            after = offered(request, tenant, on) if before is not None else None
+            if before is not None and after is not None and row[0] is not None:
+                with tx(conn):
+                    conn.execute(
+                        "UPDATE schedule_edits SET detail = detail || ? WHERE id = ? AND ok = 1",
+                        (_offer_change(on, before, after), row[0]),
+                    )
         finally:
             conn.close()
         return RedirectResponse(_with_edit(target, row[0]), 303)
@@ -233,6 +261,7 @@ def add_routes(app: FastAPI) -> None:
             lambda conn, fsm, cache, tenant, who, now: schedule.block(
                 conn, fsm, cache, tenant, who, now, on, window, _int(technician), name
             ),
+            on,
         )
 
     @app.post("/owner/schedule/blocks/{block_id}/remove")
@@ -249,6 +278,7 @@ def add_routes(app: FastAPI) -> None:
             lambda conn, fsm, cache, tenant, who, now: schedule.unblock(
                 conn, fsm, cache, tenant, who, now, block_id, group == "1", on
             ),
+            on,
         )
 
     @app.post("/owner/schedule/jobs")
@@ -270,6 +300,7 @@ def add_routes(app: FastAPI) -> None:
                 conn, fsm, cache, tenant, who, now, on, window, phone, job_type, notes,
                 _int(technician), _int(customer),
             ),
+            on,
         )
 
     @app.get("/owner/jobs/{job_id}", response_class=HTMLResponse)
@@ -325,6 +356,21 @@ def add_routes(app: FastAPI) -> None:
                 conn, fsm, cache, tenant, who, now, job_id, window, job_type, notes,
                 address if street or zip else None,
             ),
+        )
+
+    @app.post("/bench/schedule/jobs/{job_id}/cancel")
+    def bench_cancel_job(
+        request: Request, job_id: int, day: str = Form(""), next: str = Form("/bench/schedule")
+    ):
+        refused = _need_admin(request)
+        if refused:
+            return refused
+        return edit(
+            request, next,
+            lambda conn, fsm, cache, tenant, who, now: schedule.cancel_job(
+                conn, fsm, cache, tenant, who, now, job_id
+            ),
+            _day(day, date.min),
         )
 
     @app.post("/owner/customers/{customer_id}")

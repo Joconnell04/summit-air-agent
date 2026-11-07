@@ -48,8 +48,8 @@ The owner view is three pages for the owner and dispatcher: Today (`/owner`, the
 |---|---|
 | `main.py` | Routes, the request wrapper (idempotency replay, refusals into the envelope, one log line per request), the background timer, `/healthz`, `/debug/*` |
 | `bench.py` | The debug bench at `/bench`, admin only (`require_admin`): calls with filters, a call's tabs (summary, why, transcript, timing, steps, replay), the live stream, a call as a draft scenario, questions, cost, system, evals and rounds |
-| `bench_call.py` | What a bench call page shows beyond the step graph: who ended it, each server decision with its rule, per-turn timings, the customer matched, the read-back check, cost, and what Retell heard (`GET /v2/get-call`, read when the transcript opens) |
-| `bench_pages.py` | The bench's Questions page (each walkthrough question with its evidence), Cost page, and the System page's prompt files, after-hours roster and capacity limits |
+| `bench_call.py` | What a bench call page shows beyond the step graph: what the call achieved and the details captured, who ended it, each server decision in plain words, per-turn timings, the customer matched (read from ServiceTitan when the log lacks the call's start), the read-back check, cost, and what Retell heard (`GET /v2/get-call`, read when the transcript opens) |
+| `bench_pages.py` | The bench's Questions page (the owner's likely questions, each with a one-line answer and its evidence), Cost page with the tested stacks' chart, and the System page's after-hours roster |
 | `bench_rules.py` | The Rules page on the bench (`/bench/rules`): the owner's rules, the fixed responses and the system prompt by section; save, publish through the eval gate, override with a reason, discard, stop a check, roll back |
 | `nodes.py` | A call as a graph of steps in lanes, with the prompt and messages each model request was given rebuilt from the call record, and the rule proof |
 | `bench_data.py` | What the bench reads besides calls: the tuning knobs with their documented measurements, model profiles, switches, eval runs, rounds, the scenario draft |
