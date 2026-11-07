@@ -60,7 +60,7 @@ VARIANTS = {
                        "enable_backchannel": False},
     # What went live after Jackson's notes: accurate, responsiveness 1.0, backchannel kept on.
     "live": {},
-    # The native agent's dials: the same, with Retell's Agent Handbook (voice/archive/retell_native).
+    # The native agent's dials: the same, with Retell's Agent Handbook (voice/archive/retell_native on branch archive/voice-stacks).
     "native": {"handbook_config": {"conversational_personality": True, "natural_filler_words": True,
                                    "high_empathy": True, "echo_verification": True,
                                    "speech_normalization": True, "smart_matching": True,

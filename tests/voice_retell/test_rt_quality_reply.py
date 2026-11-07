@@ -17,7 +17,7 @@ from test_rt_llm_socket import (
     said,
 )
 
-from voice.archive.livekit.settings import ROOT
+from voice.livekit.settings import ROOT
 from voice.retell_llm import llm_socket
 
 FILLER = "Good question, let me check on that."

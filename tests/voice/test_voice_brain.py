@@ -10,10 +10,10 @@ from livekit.agents import llm, utils
 
 from prompts import assemble
 from tests.tool_server.toolkit import TENANT_DIR
-from voice.archive.livekit.brain import ClaudeLLM, build_llm, thinking_request
-from voice.archive.livekit.bridge import Bridge
-from voice.archive.livekit.settings import Profile, load_profile
-from voice.archive.livekit.tools import ToolLog, build_tools
+from voice.livekit.brain import ClaudeLLM, build_llm, thinking_request
+from voice.livekit.bridge import Bridge
+from voice.livekit.settings import Profile, load_profile
+from voice.livekit.tools import ToolLog, build_tools
 
 START = {
     "type": "message_start",

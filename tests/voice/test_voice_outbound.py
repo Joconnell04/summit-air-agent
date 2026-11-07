@@ -6,8 +6,8 @@ import json
 
 from app import jobs
 from tests.tool_server.toolkit import UNKNOWN
-from voice.archive.livekit.capacity import Lines
-from voice.archive.livekit.outbound import poll_once
+from voice.livekit.capacity import Lines
+from voice.livekit.outbound import poll_once
 
 
 def due_callback(agent):

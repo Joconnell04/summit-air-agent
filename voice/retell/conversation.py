@@ -2,7 +2,7 @@
 worker: the instructions from prompts/assemble.py and the spoken lines in the tenant's agent.yaml
 (`voice:`). Retell takes them per call as dynamic variables: {{instructions}} is the whole prompt,
 {{greeting}} the first thing it says, and {{call_context}} only the prompt's "This call" part, for
-the native agent (voice/archive/retell_native), whose prompt is fixed and short."""
+the native agent (voice/archive/retell_native on branch archive/voice-stacks), whose prompt is fixed and short."""
 
 import json
 from collections.abc import Callable

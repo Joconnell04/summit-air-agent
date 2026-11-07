@@ -51,7 +51,7 @@ ALLOWED = (
     ("PATCH", r"/update-conversation-flow/[\w-]+"),
     ("GET", r"/list-voices"),
     ("POST", r"/add-community-voice"),
-    # The native agent's knowledge base (voice/archive/retell_native/push.py), found by its content name.
+    # The native agent's knowledge base (voice/archive/retell_native on branch archive/voice-stacks/push.py), found by its content name.
     ("GET", r"/list-knowledge-bases"),
     ("POST", r"/create-knowledge-base"),
     ("GET", r"/get-knowledge-base/[\w-]+"),

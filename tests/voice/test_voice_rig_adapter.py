@@ -4,8 +4,8 @@ Claude tokens are read from what the worker logged."""
 import jwt
 import pytest
 
-from voice.archive.livekit import settings
-from voice.archive.livekit.rig_adapter import (
+from voice.livekit import settings
+from voice.livekit.rig_adapter import (
     DIALED,
     caller_token,
     merged,

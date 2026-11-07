@@ -12,8 +12,8 @@ from livekit.plugins import anthropic as lk_anthropic
 
 from prompts import assemble
 from tests.tool_server.toolkit import TENANT_DIR
-from voice.archive.livekit.bridge import Bridge
-from voice.archive.livekit.tools import ToolLog, build_tools
+from voice.livekit.bridge import Bridge
+from voice.livekit.tools import ToolLog, build_tools
 
 EVENTS = [
     (

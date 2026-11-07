@@ -34,7 +34,7 @@ LANES = (
 LANE_INDEX = {key: i for i, (key, _) in enumerate(LANES)}
 # Lifecycle requests the voice layer makes; the rest are tools the model called.
 LIFECYCLE = {"calls.start", "calls.end", "calls.transfer", "calls.recording", "turn"}
-# Turn results whose text the worker speaks itself, word for word (voice/archive/livekit/call.py).
+# Turn results whose text the worker speaks itself, word for word (voice/livekit/call.py).
 SPOKEN_ACTIONS = ("speak_lines", "speak_variant", "ask_check")
 SAFETY_TEXT = {
     "none": "No safety signal",
@@ -78,7 +78,7 @@ def _dumps(obj) -> str:
 
 def _tool_output(row: dict | None) -> str | None:
     """What the worker hands the model as a tool's result: the envelope without empty fields
-    (voice/archive/livekit/tools.py compact)."""
+    (voice/livekit/tools.py compact)."""
     if row is None:
         return None
     envelope = {"ok": row["ok"], "say": row["say"], "data": row.get("result"), "refused": row["refused"]}

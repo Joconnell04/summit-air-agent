@@ -1,7 +1,7 @@
 """Letter questions answered by the bridge itself ("how many e's in seventeen?"): the model passes
 the word and the letter, and gets the count and the spelling back. Models miscount letters (the
 native agent said three e's in seventeen on its gate call), and Retell's Code tool can't take
-arguments, so this is a plain function on the bridge (voice/archive/retell_native, next copy)."""
+arguments, so this is a plain function on the bridge (voice/archive/retell_native on branch archive/voice-stacks, next copy)."""
 
 
 def count_letters(word: str, letter: str = "") -> dict:

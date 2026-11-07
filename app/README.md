@@ -1,6 +1,6 @@
 # Tool server
 
-The integration layer every call talks to: it owns every fact and every rule. The model asks; the server decides. The voice layer (our LiveKit worker or the Retell baseline) calls the lifecycle endpoints and passes the model's tool calls through; the contract is `docs/tools.md`. The server reaches the company's field service system only through `app/fsm/`, pointed at the mock ServiceTitan today.
+The integration layer every call talks to: it owns every fact and every rule. The model asks; the server decides. The voice layer (the Retell custom-LLM socket on the live number, or the LiveKit agent in the text evals) calls the lifecycle endpoints and passes the model's tool calls through; the contract is `docs/tools.md`. The server reaches the company's field service system only through `app/fsm/`, pointed at the mock ServiceTitan today.
 
 Python 3.12, FastAPI, SQLite. Brief: `docs/ai-process/briefs/02-tool-server.md`.
 

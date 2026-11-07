@@ -9,7 +9,7 @@ rather than talking over them, and the count goes on. The interruption settings
 (`voice.interruption`, at least two recognized words) keep a TV from cutting off a check-in.
 
 Shared by the voice layers and with no LiveKit imports, so the text harness (evals/stacks.py) runs
-the same timer on a short clock. The LiveKit worker drives it (voice/archive/livekit/worker.py).
+the same timer on a short clock. The LiveKit worker drives it (voice/livekit/worker.py).
 """
 
 import asyncio
