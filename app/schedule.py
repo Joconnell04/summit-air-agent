@@ -149,7 +149,7 @@ def _with_refs(old_summary: str, notes: str) -> str:
 def day(
     fsm: FsmAdapter, tenant: Tenant, cache: SlotCache, on: date, now: datetime
 ) -> dict:
-    """The day as a grid: a row per technician on shift, a column per arrival window, and in each
+    """The day as a grid: a row per technician, off or on shift, a column per arrival window, and in each
     cell the jobs and blocks ServiceTitan has there. Also what the agent would offer for that day
     right now, read the way find_slots reads it."""
     frames = _frames(fsm, tenant, on)
@@ -228,6 +228,9 @@ def day(
                     }
                 )
 
+    # Everyone who takes jobs has a row, so the owner sees who is off as well as who works.
+    for tech in fsm.technicians():
+        staff.setdefault(tech["id"], tech["name"])
     rows = []
     for tech_id, name in sorted(staff.items(), key=lambda t: t[1]):
         row = []

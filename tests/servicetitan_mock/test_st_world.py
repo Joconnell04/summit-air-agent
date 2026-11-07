@@ -29,7 +29,7 @@ def test_the_world_has_the_promised_shape(world):
     types = [c["type"] for c in api.get("/crm/customers", pageSize=200).json()["data"]]
     types += [c["type"] for c in api.get("/crm/customers", pageSize=200, page=2).json()["data"]]
     assert types.count("Commercial") == 4 and types.count("Residential") >= 200
-    assert api.get("/settings/technicians", pageSize=1).json()["totalCount"] == 40
+    assert api.get("/settings/technicians", pageSize=1).json()["totalCount"] == 32
     statuses = {
         m["status"] for m in api.get("/memberships/memberships", pageSize=200).json()["data"]
     }
@@ -46,13 +46,13 @@ def test_the_world_has_the_promised_shape(world):
 
 
 def test_each_technician_has_their_own_first_name_and_about_20_work_a_weekday(world):
-    """A day's schedule is about 20 rows, each a name a dispatcher can say on its own
-    (owner view feedback). The shop is still 40 technicians."""
+    """32 people take jobs (the rest of the 40-person shop is the office), each with a name a
+    dispatcher can say on its own, and about 20 of them work a weekday (owner view feedback)."""
     api, _ = world
     conn = sqlite3.connect(api.app.state.db_path)
     names = [r[0] for r in conn.execute("SELECT name FROM technicians")]
     firsts = [name.split()[0] for name in names]
-    assert len(names) == 40 and len(set(firsts)) == 40
+    assert len(names) == 32 and len(set(firsts)) == 32
     per_day = conn.execute(
         "SELECT substr(start, 1, 10), COUNT(*) FROM technician_shifts WHERE shift_type != 'OnCall' "
         "GROUP BY 1"
