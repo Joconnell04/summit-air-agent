@@ -37,6 +37,21 @@ VISIT_QUESTIONS = (
     ("ask_access", r"\bgate code\b|\bbuzzer\b", r"\bgate\b|\bbuzzer\b|\bdoorman\b|\bno code\b"),
 )
 
+# What a caller says before the opening that still answers a visit question, because it doesn't
+# change with the day: who approves the work, the gate or buzzer, and being home as a habit. "I'm
+# home" before a day is picked may mean right now, so only these count from earlier in the call
+# (eval run 20261107-214125: card-pay-by-card-ask and tenant-landlord-approves were asked approval
+# and access after saying "I own the place", "my landlord has to approve" and "the buzzer is
+# broken" before the offer).
+SETTLED_EARLY = {
+    "ask_approval": r"\bapprov|\bi'?m the owner\b|\bi own (it|the|this|my)\b",
+    "ask_someone_home": (
+        r"\bwork(s|ing)? from home\b|\b(always|usually) (home|here)\b"
+        r"|\bhome (all|most of the) day\b"
+    ),
+    "ask_access": r"\bgate\b|\bbuzzer\b|\bdoorman\b|\bno code\b",
+}
+
 # A caller saying nobody will be home, and the follow-up that asks how the technician gets in
 # (Jackson's change set 25): asked once, unless the caller already said how.
 NOBODY_HOME = (
@@ -182,10 +197,16 @@ def question_line(ctx, missing: list[str]) -> str:
 def visit_questions_missing(ctx, job_type: str = "") -> list[str]:
     """The visit questions not yet settled since the opening was offered, in the order they are
     asked. One is settled when an agent line asked it and a caller line came after, or when the
-    caller answered it unasked."""
-    after = [t for t in _turns(ctx) if t["seq"] > _offer_seq(ctx)]
+    caller answered it unasked; earlier in the call, only the answers in SETTLED_EARLY count."""
+    turns = _turns(ctx)
+    offered = _offer_seq(ctx)
+    after = [t for t in turns if t["seq"] > offered]
+    before = [t for t in turns if t["seq"] <= offered and t["speaker"] == "caller"]
     missing = []
     for key, asked, volunteered in visit_questions(ctx, job_type):
+        early = SETTLED_EARLY.get(key)
+        if early and any(re.search(early, t["text"], re.IGNORECASE) for t in before):
+            continue
         settled = any(
             t["speaker"] == "caller" and re.search(volunteered, t["text"], re.IGNORECASE) for t in after
         ) or any(

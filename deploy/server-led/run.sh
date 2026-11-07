@@ -12,7 +12,7 @@ mkdir -p "$DATA"
 case "$1" in
   mock)
     uv run python -m servicetitan_mock.seed --db "$DATA/mock.db" --if-stale
-    SUMMIT_WORLD=server-led ST_MOCK_DB="$DATA/mock.db" ST_MOCK_ALLOW_RESET=1 ST_MOCK_RESET_TOKEN="$SUMMIT_EVAL_TOKEN" \
+    SUMMIT_WORLD=server-led ST_MOCK_DB="$DATA/mock.db" ST_MOCK_ALLOW_RESET=1 ST_MOCK_RESET_OPEN=1 ST_MOCK_RESET_TOKEN="$SUMMIT_EVAL_TOKEN" \
       exec uv run uvicorn --factory --host 127.0.0.1 --port 8131 servicetitan_mock.app:create_app ;;
   tools)
     # Summaries off: they are written after the call and change nothing the caller hears.

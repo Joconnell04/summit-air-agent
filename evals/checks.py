@@ -25,6 +25,10 @@ BOOKED = ("booked", "queued")
 PRIORITIES = ("Low", "Normal", "High", "Urgent")
 LEAD_KINDS = ("commercial", "membership", "install", "not_offered")
 NEW_YORK = ZoneInfo("America/New_York")
+# What a check that reads the scratch ServiceTitan returns on a stack that has none (the Retell
+# socket against a remote tool server). It isn't a failure of the agent: run_checks leaves it out,
+# and the check is reported as not run (unchecked).
+NO_ST = "no ServiceTitan record: the check runs on the in-process stack"
 DIGIT_WORDS = ["oh", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 
 
@@ -47,7 +51,7 @@ class Evidence:
 
     def st(self, sql: str, params: tuple = ()) -> list[sqlite3.Row]:
         if self.st_db is None:
-            raise LookupError("no ServiceTitan record: the check runs on the in-process stack")
+            raise LookupError(NO_ST)
         conn = sqlite3.connect(self.st_db)
         conn.row_factory = sqlite3.Row
         try:
@@ -194,7 +198,9 @@ def booking(arg: Any, ev: Evidence) -> list[str]:
         problems.append(f"booked at ZIP {_readback_zip(ev)}, expected {want['zip']}")
     booked_args = [e["args"] for e in ev.tools("book_appointment", ok=True)]
     if "job_type" in want:
-        types = [a.get("job_type") for a in booked_args]
+        # A High no-heat call is booked by the server at the read-back (DECISIONS.md 123), with no
+        # book_appointment call, so the booking's own job type counts too.
+        types = [a.get("job_type") for a in booked_args] + [b.get("job_type") for b in booked]
         if want["job_type"] not in types:
             problems.append(f"job type {types}, expected {want['job_type']}")
     if "window" in want:
@@ -998,14 +1004,22 @@ CHECKS: dict[str, Check] = {
 
 
 def run_checks(must: list[dict], ev: Evidence, prohibitions_only: bool = False) -> list[str]:
-    """Every failure across the scenario's checks, each prefixed with its check name."""
+    """Every failure across the scenario's checks, each prefixed with its check name. A check that
+    couldn't read the ServiceTitan it needs (NO_ST) isn't a failure; see unchecked."""
     failures = []
     for item in must:
         ((name, arg),) = item.items()
         if prohibitions_only and not CHECKS[name].prohibits(arg):
             continue
-        failures += [f"{name}: {p}" for p in CHECKS[name].run(arg, ev)]
+        failures += [f"{name}: {p}" for p in CHECKS[name].run(arg, ev) if p != NO_ST]
     return failures
+
+
+def unchecked(must: list[dict], ev: Evidence) -> list[str]:
+    """The checks that couldn't run here because they read the scratch ServiceTitan, which only the
+    in-process stack has (eval run 20261107-214125 counted them as failures of the agent)."""
+    return [name for item in must for name, arg in item.items()
+            if NO_ST in CHECKS[name].run(arg, ev)]
 
 
 def check_names(must: list[dict], prohibitions_only: bool = False) -> list[str]:

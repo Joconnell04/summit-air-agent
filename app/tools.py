@@ -3594,7 +3594,7 @@ def _membership_next(ctx: Ctx) -> str:
         "call back, ask when and call record_lead with kind membership, their name, the need "
         "'wants to hear about the membership' and that time; for the technician, add_note "
         "(attach_to job) that they'd like to hear about the membership at the visit. If "
-        "they don't want to hear it, or once that's settled, say \"Anything else I can help "
+        "they don't want to hear it, or after that, say \"Anything else I can help "
         'with?" If they say they are a member, say "Thanks for being a member! I\'ll make a note '
         'so the office can check your account.", call add_note (attach_to customer), then '
         'ask "Anything else I can help with?". Ask about membership only this once.'

@@ -12,6 +12,32 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 141. A remote eval runs on a world opened like the live one, and a check it can't run isn't a failure
+
+Decided: the eval and server-led test mocks open the schedule after each reset the way the live world is opened (`ST_MOCK_RESET_OPEN=1`, scripts/open_live_schedule.py: shifts on the seed's rota of about 20 technicians a day, weekends included, and five in six filler visits cancelled). A check that reads the scratch ServiceTitan file, which only the in-process stack has, is reported as not run on a remote stack instead of failing the call. The booking check counts a visit the server booked at the read-back (a High no-heat dispatch, DECISIONS.md 123) for its job type.
+Why: on the socket run 20261107-214125 (56%), the test world was booked solid for its first days (77 visits on Monday, none cancelled, against 13 left on the live world), so ac-not-cooling-warm-spell heard "nothing's open" three days running; five fails were checks that couldn't read ServiceTitan or a dispatch with no book_appointment call, while the server's records showed the bookings and dispatches made.
+Considered: freezing the remote world's clock (the socket reads real time); leaving the seed as it is (a test world unlike the live one hides real behavior and invents fails).
+Would change if: a scenario needs the full calendar (give it its own world).
+Discussion: this session; tests/servicetitan_mock/test_st_reset.py, tests/evals/test_checks.py
+Issue: #195
+
+## 140. Who approves, the gate or buzzer and being home as a habit count from anywhere in the call
+
+Decided: before the opening is offered, a caller line that says who approves the work ("I own the place", "my landlord has to approve"), names a gate, buzzer or doorman, or says being home is a habit ("I work from home", "home most of the day") settles that visit question. Being home said before a day is picked ("I'm home", "we're home right now") still doesn't count, and is asked after the offer as before. The membership next step no longer says "once that's settled".
+Why: on the socket run 20261107-214125, card-pay-by-card-ask and tenant-landlord-approves were asked approval and access again after answering them before the offer; the grader failed both for asking twice. The model spoke the next step's "once that's settled" as "The membership offer is settled, so I'll move on."
+Considered: counting every answer from the whole call (a caller home now may not be home on the visit day); leaving the rule (one repeated question per call that volunteers early, which callers often do).
+Would change if: a caller who said they own the place turns out not to approve repairs (narrow the approval phrases), or a habitual "home all day" turns out not to hold for the visit day.
+Discussion: this session; tests/tool_server/test_ts_server_led.py
+Issue: #195
+
+## 139. A hyphenated spoken number is one number
+
+Decided: the number reader takes "twenty-five" as 25 wherever a transcript writes it with a hyphen, alone or before "hundred" ("twenty-five hundred" is 2500), and after "hundred" ("two hundred forty-eight" is 248). "Twenty-oh-five" stays 2005, and a Queens house number written with a hyphen between digits ("41-12") is unchanged.
+Why: on the socket run 20261107-214125, retell-call-bronx-zip said "Yes, that's correct. Twenty-five hundred Grand Concourse" three times; the reader made it 20500, took it for a new house number, refused every yes to the read-back of 2500 and flagged a person instead of booking. Every hyphenated number was split the same way: "ninety-nine" was 909 and "forty-one twelve" 40112.
+Considered: matching the read-back's house number in words (only that check, while units, ZIPs and phone numbers share the reader).
+Would change if: a transcript writes a hyphen between two numbers that are meant apart ("twenty-five" as 20 and 5), which no call has shown.
+Discussion: this session; tests/tool_server/test_ts_booking_flow.py
+Issue: #195
 ## 138. About 20 technicians work a day out of 40; the owner checks rows off Needs attention; Callbacks lists only booked callbacks
 
 Decided: The seeded shop keeps 40 technicians, each with a first name of their own, and half the service technicians work any one weekday by turns, so a day's schedule is 20 rows with the comfort advisors. No customer or technician is named Paul or Jackson. The schedule's columns read as clock times over the part of the day ("8 to 10 AM", "Morning"). Each Needs attention row has a button that closes the flag with who did it, and the callback it stands for. The Today tray drops Turned away (still a filter on Calls), and its Callbacks tab shows only callbacks the caller booked for a time. Every call shows its ID on the Calls list and its page.

@@ -43,11 +43,14 @@ def create_app(
     clock: Callable[[], datetime] | None = None,
     allow_reset: bool | None = None,
     reset_token: str | None = None,
+    open_after_reset: bool | None = None,
 ) -> FastAPI:
     """Defaults come from ST_MOCK_DB, ST_MOCK_TENANT and ST_MOCK_NOW (an ISO time with an offset that
     freezes the clock, for repeatable evals). SUMMIT_CLOCK_OFFSET_H shifts it on the eval and
     server-led worlds only (shifted, below; app/clock.py reads the same). POST /debug/reset exists only when ST_MOCK_ALLOW_RESET
-    is 1; ST_MOCK_RESET_TOKEN, if set, must come in the X-Debug-Token header."""
+    is 1; ST_MOCK_RESET_TOKEN, if set, must come in the X-Debug-Token header. ST_MOCK_RESET_OPEN=1
+    opens the schedule after each reset the way the live world is opened
+    (scripts/open_live_schedule.py), so a test world has the openings a live caller would hear."""
     db_path = Path(db_path or os.environ.get("ST_MOCK_DB", "data/servicetitan_mock.db"))
     tenant_dir = tenant_dir or os.environ.get("ST_MOCK_TENANT", DEFAULT_TENANT_DIR)
     if clock is None:
@@ -68,6 +71,10 @@ def create_app(
         reset_token if reset_token is not None else os.environ.get("ST_MOCK_RESET_TOKEN", "")
     )
     app.state.tenant_dir = Path(tenant_dir)
+    app.state.open_after_reset = (
+        open_after_reset if open_after_reset is not None
+        else os.environ.get("ST_MOCK_RESET_OPEN") == "1"
+    )
 
     install_handlers(app)
     app.add_middleware(logs.RequestLogMiddleware)
@@ -185,6 +192,14 @@ def create_app(
             raise ApiError(403, "reset_forbidden", "Missing or wrong X-Debug-Token.")
         today = state.clock().astimezone(state.cfg.tz).date()
         scenarios = reseed(state.db_path, state.tenant_dir, today)
-        return {"reset": True, "startDate": today.isoformat(), "scenarios": sorted(scenarios)}
+        result = {"reset": True, "startDate": today.isoformat(), "scenarios": sorted(scenarios)}
+        if state.open_after_reset:
+            # The reseeded world is booked solid for its first days; the live world never is
+            # (eval run 20261107-214125, ac-not-cooling-warm-spell: "nothing's open" three days
+            # running). Imported here: the script imports this package.
+            from scripts.open_live_schedule import open_schedule
+
+            result["opened"] = open_schedule(state.db_path, state.tenant_dir, today)
+        return result
 
     return app

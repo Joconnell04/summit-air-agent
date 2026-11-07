@@ -162,3 +162,6 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Symptom questions kept server-written | An A/B of 96 runs kept the word map: 6 real re-asks against 13 without it; how bad is skipped once answered; no second address check after a confirmed read-back | DECISIONS.md 133 |
 | One stack in the repository's main line | Dropped voice stacks on branch archive/voice-stacks; LiveKit back to voice/livekit for the evals; only the Retell path runs on the server | DECISIONS.md 134 |
 | Owner view: roster, check-off, booked callbacks | 20 of 40 technicians work a day with their own first names; Needs attention rows check off; Callbacks lists only callbacks a caller booked | DECISIONS.md 138 |
+| Hyphenated spoken numbers | "Twenty-five hundred" is 2500, so a yes that repeats the house number in words confirms the read-back | DECISIONS.md 139 |
+| Visit answers given early | Who approves, the gate or buzzer and being home as a habit count from anywhere in the call; being home now still waits for the offer | DECISIONS.md 140 |
+| Remote evals on a live-like world | The test mocks open the schedule after a reset; checks that need the scratch ServiceTitan are not run on a remote stack | DECISIONS.md 141 |
