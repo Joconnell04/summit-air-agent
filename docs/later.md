@@ -1,5 +1,7 @@
 # Come back to later
 
+> This was Jackson's scratch pad through the build: ideas, things set aside and known issues, written down as they came up. It is kept as it was, not as a roadmap; the known issues that matter are summarized in the README.
+
 Things Jackson set aside on purpose, and ideas not yet looked into. Nothing here is dropped; each item gets walked before V1 is called done (phases.md, phase 3). Add an item whenever Jackson says "later", "come back to that" or "not now", with where it came from. This file replaced docs/considerations.md for new items; that file is now the design-time triage record.
 
 | Item | Why it waits | Where it came from | Status |
