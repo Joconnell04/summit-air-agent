@@ -485,4 +485,4 @@ def test_how_bad_is_skipped_when_the_caller_already_said(led):
         text = flow._next(ctx, "find_address", None, Result(ok=True, data={"needs_unit": False}))
     finally:
         conn.close()
-    assert "unless they already said whether it's still working or out" in text
+    assert text.startswith("If the caller already said whether it still works")

@@ -351,12 +351,16 @@ def _after_address(ctx, needs_unit: bool) -> str:
         return _catch_all(text, said) if key.startswith("ask_catch_all") else text
 
     return (
+        # Up front, not inside the list: as a clause there it was skipped 3 times in 3 after "the
+        # heat's still on" (eval check of 6 November, ab-boiler-dripping-still-on).
+        "If the caller already said whether it still works (the heat's still on, it's still warm, "
+        "it's running) or that it's out, never ask how bad it is. "
         "Ask the next of these you don't have yet, one a turn, built from what the caller already "
         "said and never asking for anything they told you: "
         f"{unit}only on a no-heat or no-cooling call (never a tune-up, maintenance visit or quote), "
         # Skipped when the caller already said: A/B of 6 November, 48 runs a side, the how-bad
         # question was the most common re-ask after "the heat's still on" or "it's still warm".
-        + "how bad it is, unless they already said whether it's still working or out, "
+        + "how bad it is, "
         + (f"word for word: '{line('ask_how_bad_symptom')}', " if named else
            "'Is it completely out, or just not keeping up?', ")
         + "and then, still only on a "
