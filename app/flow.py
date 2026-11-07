@@ -365,8 +365,11 @@ def _after_address(ctx, needs_unit: bool) -> str:
            "'Is it completely out, or just not keeping up?', ")
         + "and then, still only on a "
         "no-heat or no-cooling call, 'Since when?'; if they haven't said "
-        f"what system it is, for heating '{line('ask_system_type_heating')}', for cooling "
-        f"'{line('ask_system_type_cooling')}'; when heating, cooling or airflow isn't working (not "
+        f"what system it is, word for word: for heating '{line('ask_system_type_heating')}', for "
+        f"cooling '{line('ask_system_type_cooling')}', for a tune-up '{line('ask_system_type')}' "
+        # A tune-up isn't heating or cooling yet: Jackson's call call_55b467b41ae58e725fa142d29b7
+        # heard "a tune-up on a system you already have, or for a heating or cooling system?".
+        "; when heating, cooling or airflow isn't working (not "
         "a maintenance visit or a quote), one catch-all in its own turn, never with an example "
         f"they already gave: heating '{line('ask_catch_all_heating')}', cooling "
         f"'{line('ask_catch_all_cooling')}', vents or airflow '{line('ask_catch_all_airflow')}' "

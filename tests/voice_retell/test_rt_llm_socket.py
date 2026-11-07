@@ -947,3 +947,11 @@ def test_the_prompt_says_a_problem_that_still_runs_is_not_a_tune_up():
     assert "even when it still runs" in text
     assert "`tune_up` is routine maintenance with nothing wrong" in text
     assert "Never say the job type or how you chose it." in text
+
+
+def test_the_prompt_thanks_the_caller_after_the_name_and_asks_to_spell_a_garbled_one():
+    """Jackson's call call_55b467b41ae58e725fa142d29b7: "Okay, none" for "O'Connell", then the next
+    question with no thanks."""
+    text = (Path(__file__).resolve().parents[2] / "retell" / "socket" / "prompt.md").read_text()
+    assert 'say "Thanks." before your next question; never move on in silence' in text
+    assert "Could you spell your last name for me?" in text

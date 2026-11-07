@@ -2149,9 +2149,9 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
         data["seek_earlier"] = first["day"] != "today"
 
     if args.day:
-        on_day = [
+        on_day = _in_part([
             _describe(ctx, w) for w in _tiled(windows) if w["date"] == args.day.isoformat()
-        ]
+        ], args.time_of_day)
         # Only the windows said: with the whole day in hand, "the last one" became the day's last
         # window, 7:30 PM, instead of the second one offered (phone checks b1 and b1s, 6 November).
         # A caller who wants later asks again, and find_slots looks with time_of_day.
@@ -2204,6 +2204,15 @@ def find_slots(ctx: Ctx, args: FindSlotsIn) -> Result:
 DAY_OFFERS = 2
 
 
+def _in_part(slots: list[dict], time_of_day: str | None, strict: bool = False) -> list[dict]:
+    """The windows in the part of the day the caller asked for; all of them when they asked for
+    none, or (unless strict) when none fits."""
+    if not time_of_day:
+        return slots
+    fitting = [s for s in slots if s.get("part") == time_of_day]
+    return fitting if fitting or strict else slots
+
+
 def _offered_already(ctx: Ctx, lead: str) -> bool:
     """The last find_slots on this call already said this offer."""
     last = ctx.conn.execute(
@@ -2234,9 +2243,13 @@ def _one_offer(
     liked = [
         d for d in dates if d in preferred or by_day[d][0]["weekday"].lower() in preferred
     ]
-    day = liked[0] if liked else dates[0]
-    slots = by_day[day]
-    offer = next((s for s in slots if s["window"] == time_of_day), slots[0])
+    # The first day with a window in the part of the day they asked for ("can you do the
+    # evening?"): it used to compare the part with the window code, so it never matched and the
+    # caller heard the same 8 AM offer twice (Jackson's call call_55b467b41ae58e725fa142d29b7).
+    in_part = [d for d in (liked or dates) if _in_part(by_day[d], time_of_day, strict=True)]
+    day = in_part[0] if in_part else (liked[0] if liked else dates[0])
+    slots = _in_part(by_day[day], time_of_day)
+    offer = slots[0]
     visit = date.fromisoformat(day)
     today = ctx.tenant.local(ctx.now).date()
     named = offer["day_and_date"] if (visit - today).days >= 7 else offer["day"]
@@ -2252,9 +2265,17 @@ def _one_offer(
         first = today + timedelta(days=(visit.weekday() - today.weekday()) % 7)
         if visit != first and weekday.lower() in preferred:
             lead = f"This {weekday} is full. "
+    if time_of_day and not lead:
+        # Said back in the caller's terms, or plainly when that part of the day is full.
+        lead = (f"In the {time_of_day}, " if in_part
+                else f"I don't have anything in the {time_of_day} in the next two weeks. ")
     if liked:
+        if lead.startswith("In the "):
+            return offer, f"{lead}{named} I have {offer['label']}. Does that work?"
         named = named[0].upper() + named[1:] + ("," if "," in named else "")
         return offer, f"{lead}{named} I have {offer['label']}. Does that work?"
+    if lead.startswith("In the "):
+        return offer, f"{lead}the soonest I have is {named}, {offer['label']}. Does that work?"
     return offer, f"{lead}The soonest I have is {named}, {offer['label']}. Does that work?"
 
 

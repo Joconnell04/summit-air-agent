@@ -486,3 +486,36 @@ def test_how_bad_is_skipped_when_the_caller_already_said(led):
     finally:
         conn.close()
     assert text.startswith("If the caller already said whether it still works")
+
+
+def test_asking_for_the_evening_offers_an_evening_window(led):
+    """Jackson's call call_55b467b41ae58e725fa142d29b7: "No, can you do in the evening?" heard the
+    same 8 to 8:30 twice, then "tomorrow in the evening" heard 8 to 8:30 or 8:30 to 9."""
+    call = ready_to_book(led)
+    first = offer(led, call)
+    led.turn(call, "No, can you do in the evening?")
+    evening = led.tool("find_slots", call, job_type="tune_up", time_of_day="evening")
+    assert evening["data"]["offer"]["part"] == "evening", evening
+    assert evening["say"].startswith("In the evening, ") and evening["say"] != first["say"]
+    led.turn(call, "Tomorrow in the evening.")
+    day = evening["data"]["offer"]["date"]
+    tomorrow = led.tool("find_slots", call, job_type="tune_up", time_of_day="evening", day=day)
+    assert tomorrow["data"]["windows"], tomorrow
+    assert all(w["part"] == "evening" for w in tomorrow["data"]["windows"]), tomorrow["data"]
+
+
+def test_a_tune_up_hears_one_plain_system_question(led):
+    """Jackson's call call_55b467b41ae58e725fa142d29b7 heard "Is this a tune-up on a system you
+    already have, or is it for a heating or cooling system?"."""
+    from app.envelope import Result
+
+    call = led.start()["data"]["call_id"]
+    led.turn(call, "I just need a tune-up, I haven't had one in a while.")
+    conn = led.db()
+    try:
+        tenant = Tenant.load(TENANT_DIR)
+        ctx = type("Ctx", (), {"tenant": tenant, "conn": conn, "call": {"id": call}})()
+        text = flow._next(ctx, "find_address", None, Result(ok=True, data={"needs_unit": False}))
+    finally:
+        conn.close()
+    assert f"for a tune-up '{tenant.line('ask_system_type')}'" in text
