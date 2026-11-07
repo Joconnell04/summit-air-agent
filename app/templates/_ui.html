@@ -186,16 +186,47 @@
 {%- endmacro %}
 
 {# The debug bench's tabs, in place of the owner view's, and a way back to the owner view. #}
-{% macro bench_tabs(tab) -%}
-<nav class="tabs" aria-label="Bench pages">
-  <a href="/bench"{% if tab == "bench" %} aria-current="page"{% endif %}>Calls</a>
-  <a href="/bench/schedule"{% if tab == "bench-schedule" %} aria-current="page"{% endif %}>Schedule</a>
-  <a href="/bench/settings"{% if tab == "bench-settings" %} aria-current="page"{% endif %}>Settings</a>
-  <a href="/bench/evals"{% if tab == "bench-evals" %} aria-current="page"{% endif %}>Evals</a>
-  <a href="/bench/rules"{% if tab == "bench-rules" %} aria-current="page"{% endif %}>Rules</a>
-  <a href="/bench/checks"{% if tab == "bench-checks" %} aria-current="page"{% endif %}>Checks</a>
-  <a href="/owner">Owner view</a>
-</nav>
+{% macro side_icon(name) -%}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{%- if name == "calls" %}<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>
+{%- elif name == "questions" %}<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/>
+{%- elif name == "rules" %}<path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/>
+{%- elif name == "evals" %}<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 15h9"/>
+{%- elif name == "cost" %}<path d="M12 3v18M16.5 7.5c-.6-1.4-2.3-2.5-4.5-2.5-2.5 0-4.5 1.3-4.5 3.25S9.5 11 12 11.5s4.5 1.5 4.5 3.5-2 3.5-4.5 3.5c-2.2 0-4-1.1-4.6-2.6"/>
+{%- elif name == "system" %}<rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/>
+{%- elif name == "schedule" %}<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16"/>
+{%- elif name == "checks" %}<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>
+{%- endif %}</svg>
+{%- endmacro %}
+
+{# The bench's sidebar: the call search, then the pages in four groups. #}
+{% macro bench_side(tab) -%}
+{%- set groups = [
+  [("bench", "/bench", "Calls", "calls"), ("bench-questions", "/bench/questions", "Questions", "questions")],
+  [("bench-rules", "/bench/rules", "Rules", "rules"), ("bench-evals", "/bench/evals", "Evals", "evals")],
+  [("bench-cost", "/bench/cost", "Cost", "cost"), ("bench-settings", "/bench/settings", "System", "system")],
+  [("bench-schedule", "/bench/schedule", "Schedule", "schedule"), ("bench-checks", "/bench/checks", "Checks", "checks")],
+] -%}
+<aside class="side">
+  <a class="side-brand" href="/bench"><span>Bench</span><span class="faint">{{ tenant }}</span></a>
+  <form class="side-search" method="get" action="/bench" role="search">
+    <label class="sr-only" for="side-q">Call id or phone</label>
+    <input class="field" id="side-q" type="search" name="q" value="{{ bench_query if bench_query is defined else '' }}" placeholder="Call or phone" autocomplete="off">
+  </form>
+  <nav class="side-nav" aria-label="Bench pages">
+    {% for group in groups %}
+    <ul>
+      {% for key, href, label, icon in group %}
+      <li><a href="{{ href }}"{% if tab == key %} aria-current="page"{% endif %}>{{ side_icon(icon) }}<span>{{ label }}</span></a></li>
+      {% endfor %}
+    </ul>
+    {% endfor %}
+  </nav>
+  <div class="side-foot">
+    {{ status_line(status) }}
+    {% if user %}<form method="post" action="/owner/logout"><button class="btn quiet" type="submit" data-tip="{{ user.name }}, admin">Sign out</button></form>{% endif %}
+  </div>
+</aside>
 {%- endmacro %}
 
 {# Where a documented number comes from, as a tag: MEASURED, SOURCE or ASSUMED (CLAUDE.md). #}

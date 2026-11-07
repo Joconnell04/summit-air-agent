@@ -1,16 +1,14 @@
-{% extends "base.html" %}
-{% from "_ui.html" import q, count, info, gate_result, bench_tabs with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import q, count, info, gate_result with context %}
 {% set checking = draft and draft.status == "checking" %}
 {% block head %}{% if checking %}<meta http-equiv="refresh" content="30">{% endif %}{% endblock %}
 {% block title %}Bench: rules{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
 {% set chevron %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>{% endset %}
 <main class="page">
   <form class="stack" method="post" action="/bench/rules/draft{{ q(slug) }}">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs">Debug bench</div>
       <h1 class="page-title">Rules</h1>
     </div>
     <div class="actions">
@@ -65,7 +63,7 @@
   </section>
 
   <section class="panel" id="fixed" data-tray>
-    <div class="panel-head"><h2>Fixed responses</h2><span class="sub">said word for word, whatever the agent is told</span></div>
+    <div class="panel-head"><h2>Fixed responses</h2><span class="sub">word for word</span></div>
     <div class="tray-tabs" role="tablist" aria-label="Topics">
       {% for key, name, rows in topics %}<button type="button" role="tab" id="tab-{{ key }}" aria-controls="topic-{{ key }}" aria-selected="{{ 'true' if key == picked else 'false' }}">{{ name }}{{ count(rows | length) }}</button>{% endfor %}
     </div>

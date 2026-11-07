@@ -1,13 +1,11 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs, pct, go, empty with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import pct, go, empty with context %}
 {% block title %}Bench: evals{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
 {% set oldest_first = runs | reverse | list %}
 <main class="page">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs">Debug bench<span>/</span><span>evals/results, read only</span></div>
       <h1 class="page-title">Evals</h1>
     </div>
     <div class="filters">
@@ -21,7 +19,7 @@
   <section class="panel">
     <div class="panel-head">
       <h2>Pass rate by run</h2><span class="count">{{ runs | length }}</span>
-      <span class="sub">oldest on the left; the dashed line is the floor the ratchet holds, {{ pct(floor) }}</span>
+      <span class="sub">floor {{ pct(floor) }}</span>
       <span class="legend end"><span><i style="--sw: var(--info)"></i>At or over the floor</span><span><i style="--sw: var(--urgent)"></i>Under it</span><span><i style="--sw: var(--neutral)"></i>No verdict</span></span>
     </div>
     {% if runs %}
@@ -38,7 +36,7 @@
 
   <div class="split wide-side">
     <section class="panel">
-      <div class="panel-head"><h2>Runs</h2><span class="sub">newest first</span></div>
+      <div class="panel-head"><h2>Runs</h2></div>
       {% if runs %}
       <div class="table-wrap">
         <table class="table">
@@ -62,7 +60,7 @@
       {% else %}{{ empty("No results files.") }}{% endif %}
     </section>
     <section class="panel">
-      <div class="panel-head"><h2>Rounds</h2><span class="count">{{ rounds | length }}</span><span class="sub">evals/rounds and the co-authoring log</span></div>
+      <div class="panel-head"><h2>Rounds</h2><span class="count">{{ rounds | length }}</span></div>
       <ul class="list">
         {% for d in rounds %}
         <li data-href="/bench/rounds/{{ d.slug }}"><span class="what"><a href="/bench/rounds/{{ d.slug }}">{{ d.title }}</a></span><span class="meta"><code>{{ d.path }}</code></span><span class="end go">{{ go() }}</span></li>

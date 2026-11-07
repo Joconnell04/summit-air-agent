@@ -304,7 +304,7 @@ def test_calls_are_found_by_phone_digits_or_call_id(agent):
     assert response.headers["location"] == f"/bench/calls/{key(other)}"
     listed = agent.client.get("/bench").text
     assert f"/bench/calls/{key(call)}" in listed and f"/bench/calls/{key(other)}" in listed
-    assert "In progress" in listed, "neither call has ended"
+    assert "<h2>Live</h2>" in listed, "neither call has ended"
 
 
 def test_a_call_in_progress_streams_its_changes_until_the_cap_without_saying_it_ended(agent, monkeypatch):

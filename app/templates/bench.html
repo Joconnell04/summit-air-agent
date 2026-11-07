@@ -1,42 +1,48 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs, go, empty with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import go, empty with context %}
 {% block title %}Bench: calls{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% macro chip_href(group, value) -%}
+{%- set p = dict(picked) -%}
+{%- if value is none or p.get(group) == value %}{% set _ = p.pop(group, none) %}{% else %}{% set _ = p.update({group: value}) %}{% endif -%}
+{%- if bench_query %}{% set _ = p.update({"q": bench_query}) %}{% endif -%}
+/bench{% if p %}?{{ p | urlencode }}{% endif %}
+{%- endmacro %}
 {% block body %}
 <main class="page">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs">Debug bench</div>
       <h1 class="page-title">Calls</h1>
     </div>
-    <form class="actions" method="get" action="/bench" role="search">
-      <label class="sr-only" for="bench-q">Call id or phone</label>
-      <input class="field" id="bench-q" type="search" name="q" value="{{ bench_query }}" placeholder="Call id or phone digits" autocomplete="off">
-      <button class="btn" type="submit">Find</button>
-      {% if bench_query %}<a class="btn quiet" href="/bench">Clear</a>{% endif %}
-    </form>
+    {% if bench_query or picked %}<div class="actions"><a class="btn quiet" href="/bench">Clear</a></div>{% endif %}
   </div>
 
   {% if live %}
   <section class="panel">
-    <div class="panel-head"><h2>In progress</h2>{{ "" }}<span class="count alarm">{{ live | length }}</span><span class="sub">Open one to watch its steps as they happen.</span></div>
+    <div class="panel-head"><h2>Live</h2><span class="count alarm">{{ live | length }}</span></div>
     <ul class="list">
       {% for c in live %}
-      <li data-href="/bench/calls/{{ c.key }}"><span class="what"><a href="/bench/calls/{{ c.key }}">{{ mask(c.id) }}</a></span><span class="meta num">{{ c.local.strftime("%-I:%M %p") }}, {{ mask(c.caller_id) }}, {{ c.turns }} lines</span><span class="end"><span class="tag ember">Live</span><span class="go">{{ go() }}</span></span></li>
+      <li data-href="/bench/calls/{{ c.key }}"><span class="what"><a href="/bench/calls/{{ c.key }}"><code>{{ mask(c.id) }}</code></a></span><span class="meta num">{{ c.local.strftime("%-I:%M %p") }}, {{ mask(c.caller_id) }}, {{ c.turns }} lines</span><span class="end"><span class="tag ember">Live</span><span class="go">{{ go() }}</span></span></li>
       {% endfor %}
     </ul>
   </section>
   {% endif %}
 
   <section class="panel">
+    <div class="chips" role="group" aria-label="Filters">
+      {% for group, (label, values) in filter_labels.items() %}
+      <div class="chip-group"><span class="label">{{ label }}</span>
+        {% for value, name in values.items() %}<a class="chip" href="{{ chip_href(group, value) }}"{% if picked.get(group) == value %} aria-current="true"{% endif %}>{{ name }}</a>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
     <div class="panel-head">
-      <h2>{% if bench_query %}Matches{% else %}Recent calls{% endif %}</h2><span class="count">{{ calls | length }}</span>
-      <span class="sub">{% if bench_query %}by call id, or phone digits when the search has four or more{% else %}newest first, the last {{ calls | length }}{% endif %}</span>
+      <h2>{% if bench_query or picked %}Matches{% else %}Recent{% endif %}</h2><span class="count">{{ calls | length }}</span>
+      {% if bench_query %}<span class="sub">"{{ bench_query }}"</span>{% endif %}
     </div>
     {% if calls %}
     <div class="table-wrap">
-      <table class="table">
-        <thead><tr><th>Started</th><th>Call</th><th>Caller</th><th>Outcome</th><th class="right">Lines</th><th class="right">Tools</th><th class="right">Refused</th><th class="right">Reply p50</th><th></th><th></th></tr></thead>
+      <table class="table dense">
+        <thead><tr><th>Started</th><th>Call</th><th>Caller</th><th>Outcome</th><th>Label</th><th>Ended by</th><th class="right">Length</th><th class="right">Lines</th><th class="right">Refused</th><th class="right">Reply p50</th><th class="right">Cost</th><th></th><th></th></tr></thead>
         <tbody>
           {% for c in calls %}
           <tr data-href="/bench/calls/{{ c.key }}">
@@ -44,18 +50,21 @@
             <td><span class="what"><a href="/bench/calls/{{ c.key }}"><code>{{ mask(c.id) }}</code></a></span></td>
             <td class="fit num muted">{{ mask(c.caller_id) }}</td>
             <td class="fit">{{ (c.outcome or "open") | replace("_", " ") }}</td>
+            <td class="fit">{% if c.label == "Emergency dispatch" %}<span class="tag urgent">Emergency</span>{% elif c.label %}<span class="muted">{{ c.label }}</span>{% else %}<span class="faint">-</span>{% endif %}</td>
+            <td class="fit">{% if c.ended_by == "Caller" %}<span class="tag high">Caller</span>{% elif c.ended_by %}{{ c.ended_by }}{% else %}<span class="faint">-</span>{% endif %}</td>
+            <td class="fit right num muted">{% if c.seconds is not none %}{{ c.seconds // 60 }}:{{ "%02d" | format(c.seconds % 60) }}{% endif %}</td>
             <td class="fit right num">{{ c.turns }}</td>
-            <td class="fit right num">{{ c.tools }}</td>
             <td class="fit right num">{% if c.refused %}<span class="count alarm">{{ c.refused }}</span>{% else %}<span class="faint">0</span>{% endif %}</td>
-            <td class="fit right num">{% if c.reply_p50 is none %}<span class="faint">missing</span>{% else %}{{ "{:,.0f}".format(c.reply_p50) }} ms{% endif %}</td>
-            <td class="fit right"><span class="tags">{% if c.live %}<span class="tag ember">Live</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}</span></td>
+            <td class="fit right num">{% if c.reply_p50 is none %}<span class="faint">-</span>{% else %}{{ "{:,.0f}".format(c.reply_p50) }} ms{% endif %}</td>
+            <td class="fit right num muted">{% if c.cost is not none %}${{ "%.2f" | format(c.cost) }}{% endif %}</td>
+            <td class="fit right"><span class="tags">{% if c.live %}<span class="tag ember">Live</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">{{ c.safety_kind | upper }}</span>{% endif %}{% if c.after_hours %}<span class="tag outline">After hours</span>{% endif %}</span></td>
             <td class="go">{{ go() }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-    {% else %}{{ empty("No call matches " ~ bench_query ~ "." if bench_query else "No calls on record.") }}{% endif %}
+    {% else %}{{ empty("No calls match.") }}{% endif %}
   </section>
 </main>
 {% endblock %}

@@ -183,6 +183,9 @@ def build(conn, trace: dict, log_path) -> dict:
         "nodes": g.nodes,
         "proof": proof(trace, turn_rows),
         "logged": bool(rows),
+        # What /calls/start returned (customers matched, membership, open jobs), from the same log
+        # read, so the bench's call page reads the log once.
+        "start": next((r.get("result") or {} for r in rows if r["tool"] == "calls.start"), None),
     }
 
 

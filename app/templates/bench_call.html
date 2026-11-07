@@ -1,36 +1,185 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs, outcome, empty with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import outcome, empty, count with context %}
 {% block title %}Bench: {{ mask(call_id) }}{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
+{% macro ms(v) %}{% if v is none %}<span class="faint">-</span>{% else %}{{ "{:,.0f}".format(v) }}{% endif %}{% endmacro %}
+{% macro mmss(s) %}{% if s is none %}-{% else %}{{ s // 60 }}:{{ "%02d" | format(s % 60) }}{% endif %}{% endmacro %}
 {% block body %}
 {% set live = call.ended_at is none %}
+{% set refused = decisions | selectattr("kind", "equalto", "Refused") | list %}
 <main class="page"{% if live %} data-live="/bench/calls/{{ key }}/stream" data-live-graph="/bench/calls/{{ key }}/graph"{% endif %}>
-  <div class="call-head">
-    <div class="lead">
-      <div class="crumbs"><a href="/bench">Bench</a><span>/</span><a href="/bench">Calls</a><span>/</span><span class="num">{{ local.strftime("%b %-d, %-I:%M %p") }}</span></div>
-      <div class="who">
-        <h1 class="page-title">{{ mask(call_id) }}</h1>
-        {% if live %}<span class="tag ember" data-live-tag>Live</span>{% elif call.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}
-      </div>
-      <div class="facts">
-        <span class="num">{{ call.caller_id }}</span>
-        <span>{{ call.direction | capitalize }}</span>
-        <span>{{ (call.outcome or "open") | replace("_", " ") | capitalize }}{% if call.end_reason %}, {{ call.end_reason | replace("_", " ") }}{% endif %}</span>
-        <span>Rules version {% if stages and stages[0].version_id %}{{ stages[0].version_id }}{% else %}defaults{% endif %}</span>
+  <div class="call-top">
+    <div class="crumbs"><a href="/bench">Calls</a><span>/</span><span class="num">{{ local.strftime("%b %-d, %-I:%M %p") }}</span></div>
+    <div class="row">
+      <h1>{{ mask(call_id) }}</h1>
+      {% if live %}<span class="tag ember" data-live-tag>Live</span>{% endif %}
+      {% if call.safety_kind %}<span class="tag urgent">{{ call.safety_kind | upper }}</span>{% endif %}
+      {% if label %}<span class="tag {{ 'urgent' if label.label == 'Emergency dispatch' else 'outline' }}" data-tip="{{ label.reason }}">{{ label.label }}</span>{% endif %}
+      <div class="actions">
+        <a class="btn" href="/debug/logs?call_id={{ call_id | urlencode }}" data-tip="Needs the debug token">Log</a>
+        <a class="btn" href="/bench/calls/{{ key }}/scenario.yaml" download>Replay</a>
       </div>
     </div>
-    <nav class="step-nav" aria-label="Call actions">
-      <a class="btn" href="/bench/calls/{{ key }}/scenario.yaml" download>Scenario draft</a>
-    </nav>
+    <dl class="ledger">
+      <div><dt>Caller</dt><dd class="num">{{ mask(call.caller_id) }}</dd></div>
+      <div><dt>Outcome</dt><dd>{{ (call.outcome or "open") | replace("_", " ") | capitalize }}</dd></div>
+      <div><dt>Ended by</dt><dd>{{ ended.who }}{% if ended.why %}<span class="faint">, {{ ended.why }}</span>{% endif %}</dd></div>
+      <div><dt>Length</dt><dd>{{ mmss(seconds) }}</dd></div>
+      <div><dt>Reply p50</dt><dd>{% if timing.summary.reply.p50 is none %}-{% else %}{{ "{:,.0f}".format(timing.summary.reply.p50) }} ms{% endif %}</dd></div>
+      <div><dt>Cost</dt><dd data-tip="Measured rates, docs/cost.md">${{ "%.3f" | format(cost.total) }}</dd></div>
+      <div><dt>Flow</dt><dd>{{ (flow or "prompt") | replace("_", " ") }}</dd></div>
+      <div><dt>Rules</dt><dd>{% if stages and stages[0].version_id %}v{{ stages[0].version_id }}{% else %}defaults{% endif %}</dd></div>
+      {% if call.after_hours %}<div><dt>Hours</dt><dd>After hours</dd></div>{% endif %}
+      <div><dt>Grade</dt><dd>{% if not grade %}<span class="faint">not run</span>{% elif grade.error %}<span class="faint">error</span>{% elif grade.failure %}<span class="tag urgent" data-tip="{{ grade.reason }}">{{ (grade.kind or "failure") | replace("_", " ") }}</span>{% else %}<span class="tag done">Pass</span>{% endif %}</dd></div>
+    </dl>
   </div>
 
-  <div data-graph-slot>{% include "_bench_graph.html" %}</div>
+  <nav class="pane-tabs" role="tablist" aria-label="Call" data-panes>
+    <a role="tab" href="#summary" aria-controls="summary" aria-selected="true">Summary</a>
+    <a role="tab" href="#why" aria-controls="why" aria-selected="false">Why{% if refused %}{{ count(refused | length, true) }}{% endif %}</a>
+    <a role="tab" href="#transcript" aria-controls="transcript" aria-selected="false">Transcript</a>
+    <a role="tab" href="#timing" aria-controls="timing" aria-selected="false">Timing</a>
+    <a role="tab" href="#steps" aria-controls="steps" aria-selected="false">Steps</a>
+    <a role="tab" href="#replay" aria-controls="replay" aria-selected="false">Replay</a>
+  </nav>
 
-  <div class="split wide-side">
+  {# ---- Summary ---- #}
+  <section class="pane" id="summary" role="tabpanel">
+    <div class="kv-grid">
+      <section class="panel">
+        <div class="panel-head"><h2>Bookings</h2>{{ count(bookings | length) }}</div>
+        {% if bookings %}
+        <div class="table-wrap"><table class="table dense">
+          <thead><tr><th>Kind</th><th>Job</th><th>Window</th><th>Priority</th><th>Status</th></tr></thead>
+          <tbody>{% for b in bookings %}
+            <tr><td class="fit">{{ b.kind }}</td><td>{{ (b.job_type or "-") | replace("_", " ") }}{% if b.street %}<div class="why small">{{ mask(b.street) }}{% if b.unit %}, {{ b.unit }}{% endif %}</div>{% endif %}</td>
+            <td class="fit num muted">{{ (b.window_start or "")[5:16] | replace("T", " ") }}</td>
+            <td class="fit">{% if b.priority in ("Urgent", "High") %}<span class="tag {{ 'urgent' if b.priority == 'Urgent' else 'high' }}">{{ b.priority }}</span>{% else %}{{ b.priority or "-" }}{% endif %}</td>
+            <td class="fit">{{ b.status }}{% if b.fsm_job_id %} <span class="faint">job {{ b.fsm_job_id }}</span>{% endif %}</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+        {% else %}{{ empty("No booking.") }}{% endif %}
+        {% if readback %}
+        <div class="panel-foot">Read-back {% if not readback.confirmed %}<span class="tag high">Not confirmed</span>{% elif readback.mismatches %}<span class="tag urgent">Mismatch</span> {{ readback.mismatches | join("; ") }}{% else %}<span class="tag done">Matches</span>{% endif %}
+          <span class="faint">{{ mask(readback.said.street) }}{% if readback.said.unit %}, {{ readback.said.unit }}{% endif %}{% if readback.said.phone %}, ending {{ (readback.said.phone | string)[-4:] }}{% endif %}</span></div>
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Customer</h2>{{ count(customers | length) }}</div>
+        {% if customers %}
+        <div class="table-wrap"><table class="table dense">
+          <thead><tr><th>Name</th><th>Matched by</th><th>Membership</th><th class="right">Open jobs</th></tr></thead>
+          <tbody>{% for c in customers %}
+            <tr><td>{{ mask(c.name) or c.id }}<div class="why small">{{ c.type }}</div></td><td class="fit">{{ c.matched_by }}</td>
+            <td class="fit">{% if c.membership %}<span class="tag done">{{ c.membership }}</span>{% else %}<span class="faint">none</span>{% endif %}</td>
+            <td class="fit right num">{{ c.open_jobs if c.open_jobs is not none else "-" }}</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+        {% else %}{{ empty("No customer matched.") }}{% endif %}
+        {% if trace.identity_checks or trace.address_moves %}
+        <div class="panel-foot">{% for c in trace.identity_checks %}Identity check {{ c.status }}{% if not loop.last %}; {% endif %}{% endfor %}{% if trace.address_moves %}; {{ trace.address_moves | length }} address move{{ "s" if trace.address_moves | length != 1 }}{% endif %}</div>
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>For the tech</h2></div>
+        <div class="panel-body">
+          {% if summary_lines %}<pre class="tech-block scroll">{{ summary_lines | join("\n") }}</pre>
+          {% elif bookings and bookings[0].job_notes %}<pre class="tech-block scroll">{{ bookings[0].job_notes }}</pre>
+          {% else %}<span class="faint">Nothing written{% if call.summary_status != "none" %}, summary {{ call.summary_status }}{% endif %}.</span>{% endif %}
+          {% for n in trace.notes %}<div class="why small">Note on {{ n.attach_to }}: {{ n.text }}</div>{% endfor %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>People and holds</h2></div>
+        <div class="panel-body">
+          <dl class="kv">
+            <dt>Flags</dt><dd>{% for f in flags %}{{ f.kind | replace("_", " ") }}, {{ f.priority }}, {{ f.status }}<div class="why small">{{ f.reason }}</div>{% else %}<span class="faint">none</span>{% endfor %}</dd>
+            <dt>Callbacks</dt><dd>{% for c in trace.callbacks %}{{ c.status }}, {{ c.owner }}<div class="why small">{{ c.reason }}</div>{% else %}<span class="faint">none</span>{% endfor %}</dd>
+            <dt>Transfers</dt><dd>{% for t in trace.transfers + trace.handoffs %}{{ t.role }}, {{ t.status }}{% if not loop.last %}<br>{% endif %}{% else %}<span class="faint">none</span>{% endfor %}</dd>
+            <dt>Holds</dt><dd>{% if trace.holds %}{{ trace.holds | length }}, after line{{ "s" if trace.holds | length != 1 }} {{ trace.holds | map(attribute="seq") | join(", ") }}{% else %}<span class="faint">none</span>{% endif %}</dd>
+            <dt>Pace</dt><dd>{% if trace.pace %}{{ trace.pace[0].speed if trace.pace[0].speed is defined else "set" }}{% if trace.pace_changes %}, {{ trace.pace_changes | length }} change{{ "s" if trace.pace_changes | length != 1 }}{% endif %}{% else %}<span class="faint">normal</span>{% endif %}</dd>
+            <dt>Safety</dt><dd>{{ call.safety_state | replace("_", " ") }}{% if safety %}, lines in {% if safety.seconds is none %}<span class="tag urgent">never</span>{% else %}{{ "%.1f" | format(safety.seconds) }} s{% endif %}{% endif %}</dd>
+          </dl>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  {# ---- Why ---- #}
+  <section class="pane" id="why" role="tabpanel" hidden>
+    {% if safety %}
+    <dl class="ledger">
+      <div><dt>Hazard</dt><dd>{{ (safety.kind or "safety") | upper }}</dd></div>
+      <div><dt>Signal to lines</dt><dd>{% if safety.seconds is none %}<span class="tag urgent">Never said</span>{% else %}{{ "%.1f" | format(safety.seconds) }} s{% endif %}</dd></div>
+      <div><dt>Lines before</dt><dd>{{ safety.between }}</dd></div>
+      <div><dt>Lines after</dt><dd>{{ safety.after }}</dd></div>
+      <div><dt>Trigger</dt><dd class="muted">"{{ safety.trigger }}"</dd></div>
+    </dl>
+    {% endif %}
     <section class="panel">
-      <div class="panel-head"><h2>Rule proof</h2><span class="sub">each server rule this call reached, and how it came out</span></div>
+      <div class="panel-head"><h2>Decisions</h2>{{ count(decisions | length) }}</div>
+      {% if decisions %}
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>At</th><th>Kind</th><th>Decision</th><th>Rule</th><th>Source</th><th>Outcome</th></tr></thead>
+        <tbody>{% for d in decisions %}
+          <tr{% if d.alarm %} class="alarm"{% endif %}>
+            <td class="time">{{ d.clock or "" }}</td>
+            <td class="fit">{% if d.kind == "Refused" %}<span class="tag urgent">Refused</span>{% elif d.kind == "Safety" %}<span class="tag high">Safety</span>{% elif d.kind == "Priority" %}<span class="tag info">Priority</span>{% else %}<span class="tag outline">{{ d.kind }}</span>{% endif %}</td>
+            <td><span class="what{% if d.kind in ('Server line', 'Refused', 'Allowed') %} mono{% endif %}">{{ d.decision }}</span>{% if d.say %}<div class="why small">"{{ mask(d.say) }}"</div>{% endif %}</td>
+            <td class="fit muted">{{ d.rule or "-" }}</td>
+            <td class="fit muted">{{ d.source }}</td>
+            <td class="fit">{{ d.outcome }}</td>
+          </tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{{ empty("No server decision on this call.") }}{% endif %}
+    </section>
+  </section>
+
+  {# ---- Transcript ---- #}
+  <section class="pane" id="transcript" role="tabpanel" hidden{% if is_retell and retell_connected %} data-heard="/bench/calls/{{ key }}/heard"{% endif %}>
+    <div data-heard-slot>{% set loading = is_retell and retell_connected %}{% include "_bench_heard.html" %}</div>
+  </section>
+
+  {# ---- Timing ---- #}
+  <section class="pane" id="timing" role="tabpanel" hidden>
+    <section class="panel">
+      <div class="panel-head"><h2>Per turn, ms</h2>{{ count(timing.rows | length) }}
+        <div class="end keys">{% for k, label in timing.stages %}<span class="key"><i class="s-{{ k }}"></i>{{ label }}</span>{% endfor %}<span class="key"><i class="s-other"></i>Other</span></div>
+      </div>
+      {% if timing.rows %}
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>At</th><th>Agent said</th>{% for k, label in timing.stages %}<th class="right">{{ label }}</th>{% endfor %}<th class="right">Reply</th><th>Breakdown</th></tr></thead>
+        <tbody>
+          {% for r in timing.rows %}
+          <tr>
+            <td class="time">{{ r.clock }}</td>
+            <td><div class="why small" title="{{ r.text }}">{{ r.text | truncate(70) }}</div>{% if r.scripted %}<span class="tag outline">Server line</span>{% endif %}</td>
+            {% for k, _ in timing.stages %}<td class="fit right num">{{ ms(r.stages[k]) }}</td>{% endfor %}
+            <td class="fit right num"><span class="what">{{ ms(r.reply) }}</span></td>
+            <td class="fit">{% if r.reply %}<div class="tbar" style="width: {{ (220 * r.reply / timing.widest) | round | int }}px">{% set total = namespace(v=0) %}{% for k, _ in timing.stages %}{% if r.stages[k] %}{% set total.v = total.v + r.stages[k] %}{% endif %}{% endfor %}{% set scale = r.reply if total.v <= r.reply else total.v %}{% for k, _ in timing.stages %}{% if r.stages[k] %}<span class="s-{{ k }}" style="width: {{ 100 * r.stages[k] / scale }}%"></span>{% endif %}{% endfor %}{% if r.other %}<span class="s-other" style="width: {{ 100 * r.other / scale }}%"></span>{% endif %}</div>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          {% for p in ("p50", "p95") %}
+          <tr><td class="time">{{ p }}</td><td></td>{% for k, _ in timing.stages %}<td class="fit right num muted">{{ ms(timing.summary[k][p]) }}</td>{% endfor %}<td class="fit right num"><span class="what">{{ ms(timing.summary.reply[p]) }}</span></td><td></td></tr>
+          {% endfor %}
+        </tfoot>
+      </table></div>
+      {% else %}{{ empty("No agent line has timings.") }}{% endif %}
+    </section>
+  </section>
+
+  {# ---- Steps ---- #}
+  <section class="pane" id="steps" role="tabpanel" hidden>
+    <div data-graph-slot>{% include "_bench_graph.html" %}</div>
+    <section class="panel">
+      <div class="panel-head"><h2>Rule proof</h2></div>
       <div class="table-wrap">
-        <table class="table">
+        <table class="table dense">
           <thead><tr><th>Rule</th><th class="right">Checked</th><th>Outcome</th><th>Evidence</th></tr></thead>
           <tbody>
             {% for p in graph.proof %}
@@ -44,26 +193,15 @@
           </tbody>
         </table>
       </div>
-      <div class="panel-foot">Held means the rule refused a request on this call; passed means a request it guards went through.</div>
     </section>
+  </section>
 
-    <aside class="stack">
-      <section class="panel compact">
-        <div class="panel-head"><h2>Records</h2></div>
-        <div class="panel-body">
-          <dl class="kv">
-            <dt>Bookings</dt><dd>{% for b in bookings %}{{ b.kind }} {{ b.status }}{% if b.priority %}, {{ b.priority }}{% endif %}{% if b.fsm_job_id %}, job {{ b.fsm_job_id }}{% endif %}{% if not loop.last %}<br>{% endif %}{% else %}<span class="faint">none</span>{% endfor %}</dd>
-            <dt>Flags</dt><dd>{% for f in flags %}{{ f.kind | replace("_", " ") }}, {{ f.priority }}, {{ f.status }}{% if not loop.last %}<br>{% endif %}{% else %}<span class="faint">none</span>{% endfor %}</dd>
-            <dt>Stages</dt><dd>{% for s in stages %}{{ s.stage | replace("_", " ") }}{% if not loop.last %}, {% endif %}{% else %}<span class="faint">none recorded</span>{% endfor %}</dd>
-            <dt>Safety state</dt><dd>{{ call.safety_state | replace("_", " ") }}{% if call.safety_kind %}, {{ call.safety_kind | replace("_", " ") }}{% endif %}</dd>
-          </dl>
-        </div>
-      </section>
-      <section class="panel compact">
-        <div class="panel-head"><h2>Replay as a scenario</h2><div class="end"><a class="btn quiet" href="/bench/calls/{{ key }}/scenario.yaml" download>Download</a></div></div>
-        <div class="panel-body"><pre class="tech-block scroll">{{ draft }}</pre></div>
-      </section>
-    </aside>
-  </div>
+  {# ---- Replay ---- #}
+  <section class="pane" id="replay" role="tabpanel" hidden>
+    <section class="panel">
+      <div class="panel-head"><h2>Scenario draft</h2><div class="end"><a class="btn" href="/bench/calls/{{ key }}/scenario.yaml" download>Download</a></div></div>
+      <div class="panel-body"><pre class="tech-block scroll">{{ draft }}</pre></div>
+    </section>
+  </section>
 </main>
 {% endblock %}

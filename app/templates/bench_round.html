@@ -1,7 +1,6 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import go with context %}
 {% block title %}Bench: {{ title }}{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
 <main class="page">
   <div class="page-head">

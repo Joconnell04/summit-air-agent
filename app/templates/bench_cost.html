@@ -1,0 +1,47 @@
+{% extends "bench_base.html" %}
+{% from "_ui.html" import go, basis, empty with context %}
+{% block title %}Bench: cost{% endblock %}
+{% macro usd(v) %}${{ "%.3f" | format(v) }}{% endmacro %}
+{% block body %}
+<main class="page">
+  <div class="page-head"><div class="lead"><h1 class="page-title">Cost</h1></div></div>
+  <dl class="ledger">
+    <div><dt>Per call, average</dt><dd>{{ usd(average.total) }}</dd></div>
+    <div><dt>Minutes, average</dt><dd>{{ "%.1f" | format(average.minutes) }}</dd></div>
+    <div><dt>Voice</dt><dd>{{ usd(average.voice) }}</dd></div>
+    <div><dt>Models</dt><dd>{{ usd(average.model) }}</dd></div>
+    <div><dt>After the call</dt><dd>{{ usd(average.after) }}</dd></div>
+    <div><dt>Calls</dt><dd>{{ rows | length }}</dd></div>
+  </dl>
+  <div class="split">
+    <section class="panel">
+      <div class="panel-head"><h2>Per call</h2><span class="count">{{ rows | length }}</span></div>
+      {% if rows %}
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>Started</th><th>Call</th><th class="right">Minutes</th><th class="right">Voice</th><th class="right">Models</th><th class="right">After</th><th class="right">Total</th><th></th></tr></thead>
+        <tbody>{% for r in rows %}
+          <tr data-href="/bench/calls/{{ r.key }}">
+            <td class="time">{{ r.local.strftime("%b %-d, %-I:%M %p") }}</td>
+            <td><span class="what"><a href="/bench/calls/{{ r.key }}"><code>{{ mask(r.id) }}</code></a></span></td>
+            <td class="fit right num">{{ "%.1f" | format(r.minutes) }}</td>
+            <td class="fit right num muted">{{ usd(r.voice) }}</td>
+            <td class="fit right num muted">{{ usd(r.model) }}</td>
+            <td class="fit right num muted">{{ usd(r.after) }}</td>
+            <td class="fit right num"><span class="what">{{ usd(r.total) }}</span></td>
+            <td class="go">{{ go() }}</td>
+          </tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{{ empty("No ended calls.") }}{% endif %}
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Rates</h2></div>
+      <div class="table-wrap"><table class="table dense">
+        <tbody>{% for name, value, label, source in rates %}
+          <tr><td>{{ name }}<div class="why small">{{ source }}</div></td><td class="fit right num"><span class="what">{{ value }}</span></td><td class="fit">{{ basis(label) }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+    </section>
+  </div>
+</main>
+{% endblock %}

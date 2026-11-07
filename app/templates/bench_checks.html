@@ -1,8 +1,7 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs, count, empty with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import count, empty with context %}
 {% from "_checks.html" import range_form, estimate_box, progress, flag_list with context %}
 {% block title %}Bench: checks{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
 <main class="page">
   <div class="page-head">
@@ -27,7 +26,7 @@
   </section>
 
   <section class="panel">
-    <div class="panel-head"><h2>Graded calls</h2>{{ count(grades | length) }}<span class="sub">newest first; failure is the server's decision on the raw answer</span></div>
+    <div class="panel-head"><h2>Graded calls</h2>{{ count(grades | length) }}</div>
     {% if grades %}
     <div class="table-wrap">
     <table class="table">

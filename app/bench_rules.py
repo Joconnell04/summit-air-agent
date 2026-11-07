@@ -170,6 +170,7 @@ def add_routes(app: FastAPI) -> None:
         services = request.app.state.services
         context = {
             **_common(request, found, slug, "bench-rules", conn),
+            "bench": True,
             "live": live,
             "versions": versions,
             "local": lambda value: found.local(parse_iso(value)),

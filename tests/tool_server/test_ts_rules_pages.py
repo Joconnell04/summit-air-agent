@@ -14,7 +14,9 @@ from toolkit import PASSES, ROOT, Agent, make_server, sign_in
 from app import bench_rules, fixed, plain, rulebook, rules
 from prompts import assemble
 
-CSS = (ROOT / "app" / "static" / "owner" / "components.css").read_text()
+# Bench pages load the bench stylesheet (the sidebar, the dark tokens) after the shared one.
+CSS = "".join((ROOT / "app" / "static" / path).read_text()
+              for path in ("owner/components.css", "bench/bench.css"))
 
 
 @pytest.fixture

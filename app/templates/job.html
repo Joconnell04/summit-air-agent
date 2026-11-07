@@ -1,8 +1,7 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs, empty, priority_text with context %}
+{% extends "bench_base.html" if bench else "base.html" %}
+{% from "_ui.html" import empty, priority_text with context %}
 {% from "_schedule.html" import result_line, type_select, use_anyway with context %}
 {% block title %}{{ tenant }}: job {{ job_id }}{% endblock %}
-{% block tabs %}{% if bench %}{{ bench_tabs(tab) }}{% else %}{{ super() }}{% endif %}{% endblock %}
 {% block body %}
 <main class="page">
   <div class="page-head">
