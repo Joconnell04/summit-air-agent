@@ -89,3 +89,16 @@ document.querySelectorAll("[data-chart]").forEach((chart) => {
   });
   show();
 });
+
+// Transcript: a tool call's result is read when the call is first opened, not with the page.
+document.addEventListener("toggle", (event) => {
+  const details = event.target;
+  if (!(details instanceof HTMLDetailsElement) || !details.open) return;
+  const slot = details.querySelector("[data-result]");
+  if (!slot || slot.dataset.loaded) return;
+  slot.dataset.loaded = "1";
+  fetch(slot.dataset.result, { credentials: "same-origin" })
+    .then((response) => (response.ok ? response.text() : Promise.reject(response.status)))
+    .then((html) => { slot.innerHTML = "<span class='label'>Result</span>" + html; })
+    .catch(() => { slot.innerHTML = "<span class='label'>Result</span><span class='faint'>Couldn't read it.</span>"; });
+}, true);

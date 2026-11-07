@@ -25,21 +25,14 @@
     <div><dt>Request</dt><dd><code>{{ t.request_id }}</code></dd></div>
   </dl>
 
-  {% if t.say %}
-  <section class="panel">
-    <div class="panel-head"><h2>Said to the caller</h2></div>
-    <div class="panel-body">{{ mask(t.say) }}</div>
-  </section>
-  {% endif %}
-
   <div class="kv-grid">
     <section class="panel">
       <div class="panel-head"><h2>Arguments</h2></div>
       <div class="panel-body"><pre class="tech-block scroll">{{ args }}</pre></div>
     </section>
-    <section class="panel">
+    <section class="panel" id="result">
       <div class="panel-head"><h2>Result</h2></div>
-      <div class="panel-body">{% if result %}<pre class="tech-block scroll">{{ result }}</pre>{% else %}<span class="faint">Not in this server's log.</span>{% endif %}</div>
+      <div class="panel-body">{% include "_bench_result.html" %}</div>
     </section>
   </div>
 

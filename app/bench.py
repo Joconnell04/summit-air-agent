@@ -373,6 +373,49 @@ def add_routes(app: FastAPI) -> None:
             headers={"Content-Disposition": f'attachment; filename="log-{key}.json"'},
         )
 
+    def tool_call(conn, services, key: str, tool_id: int):
+        """The tool call row on this call, as an event, and its line of the JSON log (None when
+        the log no longer has it). None for a tool call on another call or a lifecycle request."""
+        call_id = call_for(conn, key)
+        row = conn.execute("SELECT * FROM tool_calls WHERE id = ? AND call_id = ?",
+                           (tool_id, call_id)).fetchone() if call_id else None
+        if row is None or row["tool"] in bench_call.LIFECYCLE:
+            return None
+        event = {**dict(row), "args": json.loads(row["args_json"]), "ok": bool(row["ok"])}
+        logged = next((r for r in logs.read(services.settings.log_path,
+                                            request_id=row["request_id"], limit=20)
+                       if r["tool"] == row["tool"]), None)
+        return call_id, event, logged
+
+    def returned(event: dict, logged: dict | None) -> dict:
+        """What the server returned to the agent: say, next, data, and the refusal or gate."""
+        return {
+            "say": event["say"] or "",
+            "next": (logged or {}).get("next", ""),
+            "refused": event["refused"] or "",
+            "gate": event["gate"] or "",
+            "error": event["error"] or "",
+            "data": json.dumps(logged["result"], indent=2, ensure_ascii=False) if logged else None,
+        }
+
+    @app.get("/bench/calls/{key}/tools/{tool_id}/result", response_class=HTMLResponse)
+    def bench_tool_result(request: Request, key: str, tool_id: int):
+        """A tool call's result alone, for the transcript to show when the call is opened."""
+        denied = require_admin(request)
+        if denied:
+            return denied
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            found = tool_call(conn, services, key, tool_id)
+            if found is None:
+                return HTMLResponse("No such tool call on this call.", 404)
+            _, event, logged = found
+            context = {**_context(request, conn, "bench"), "r": returned(event, logged)}
+        finally:
+            conn.close()
+        return _render(request, "_bench_result.html", context)
+
     @app.get("/bench/calls/{key}/tools/{tool_id}", response_class=HTMLResponse)
     def bench_tool_call(request: Request, key: str, tool_id: int):
         """One tool call: its arguments, the result the server returned (from the JSON log), and
@@ -383,17 +426,13 @@ def add_routes(app: FastAPI) -> None:
         services = request.app.state.services
         conn = services.connect()
         try:
-            call_id = call_for(conn, key)
-            row = conn.execute("SELECT * FROM tool_calls WHERE id = ? AND call_id = ?",
-                               (tool_id, call_id)).fetchone() if call_id else None
-            if row is None or row["tool"] in bench_call.LIFECYCLE:
+            found = tool_call(conn, services, key, tool_id)
+            if found is None:
                 return HTMLResponse("No such tool call on this call.", 404)
+            call_id, event, logged = found
+            row = event
             call = conn.execute("SELECT * FROM calls WHERE id = ?", (call_id,)).fetchone()
             tenant = services.tenants.by_slug.get(call["tenant"]) or services.tenants.default
-            event = {**dict(row), "args": json.loads(row["args_json"]), "ok": bool(row["ok"])}
-            logged = next((r for r in logs.read(services.settings.log_path,
-                                                request_id=row["request_id"], limit=20)
-                           if r["tool"] == row["tool"]), None)
             result = {"data": logged["result"]} if logged else None
             context = {
                 **_context(request, conn, "bench"),
@@ -403,8 +442,7 @@ def add_routes(app: FastAPI) -> None:
                 "label": bench_call.TOOL_WORDS.get(row["tool"], row["tool"]),
                 "clock": bench_call.clock(parse_iso(call["started_at"]), row["at"]),
                 "args": json.dumps(event["args"], indent=2, ensure_ascii=False),
-                "result": json.dumps(logged["result"], indent=2, ensure_ascii=False)
-                if logged else None,
+                "r": returned(event, logged),
                 "wrote": bench_call.tool_records(conn, call_id, event, result,
                                                  services.fsm.get(tenant.slug), tenant),
                 "local": lambda value: tenant.local(parse_iso(value)).strftime("%a %b %-d, %-I:%M %p")

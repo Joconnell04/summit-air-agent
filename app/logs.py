@@ -64,6 +64,8 @@ def record(
         "refused": body["refused"],
         "gate": gate,
         "say": body["say"],
+        # The step the server told the agent to take next, when it named one (app/envelope.py).
+        "next": body.get("next", ""),
         "result": body["data"],
         "replayed": replayed,
         "ms": ms,

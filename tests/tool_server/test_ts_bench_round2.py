@@ -405,7 +405,7 @@ def test_a_booking_in_the_transcript_opens_to_its_bookings_row_and_the_serviceti
     page = agent.client.get(f"/bench/calls/{key}").text
     transcript = page.split('id="transcript"')[1].split('id="timing"')[0]
     assert 'class="tool-call"' in transcript and "book_appointment" in transcript
-    assert f'href="/bench/calls/{key}/tools/{tool_id}"' in transcript and "Result and records" in transcript
+    assert f'href="/bench/calls/{key}/tools/{tool_id}"' in transcript and "Records it wrote" in transcript
 
     conn = agent.db()
     try:
@@ -463,3 +463,64 @@ def test_a_tool_call_page_is_for_admins_and_only_for_its_own_call(agent):
     assert agent.client.get(f"/bench/calls/{_key(other)}/tools/{tool_id}").status_code == 404
     sign_in(agent, "staff")
     assert agent.client.get(f"/bench/calls/{_key(first)}/tools/{tool_id}").status_code == 403
+
+
+def test_a_booking_made_from_the_read_back_links_to_its_bookings_and_dispatch_rows(agent):
+    from test_ts_dispatch import _dispatch, _start_no_heat
+
+    sign_in(agent, "admin")
+    call_id = _start_no_heat(agent)
+    sent = _dispatch(agent, call_id)
+    assert sent["ok"] and sent["data"]["dispatched"], sent
+    agent.end(call_id)
+    key = _key(call_id)
+    tool_id = _tool_id(agent, call_id, "read_back")
+    conn = agent.db()
+    try:
+        booking = conn.execute("SELECT * FROM bookings WHERE call_id = ? AND kind = 'book'",
+                               (call_id,)).fetchone()
+        dispatch = conn.execute("SELECT id FROM dispatches WHERE call_id = ?", (call_id,)).fetchone()
+    finally:
+        conn.close()
+
+    transcript = agent.client.get(f"/bench/calls/{key}").text.split('id="transcript"')[1]
+    link = f'href="/bench/calls/{key}/tools/{tool_id}"'
+    assert link in transcript.split('id="timing"')[0] and "Records it wrote" in transcript
+
+    result = html.unescape(agent.client.get(f"/bench/calls/{key}/tools/{tool_id}/result").text)
+    assert "right away" in result, "say"
+    assert "Will someone be home" in result, "next"
+    assert f'"booking_id": {booking["fsm_job_id"]}' in result, "data"
+
+    page = html.unescape(agent.client.get(f"/bench/calls/{key}/tools/{tool_id}").text)
+    wrote = page.split('id="wrote"')[1]
+    assert f'<td class="fit num">{booking["id"]}' in wrote and '<td class="fit">booked' in wrote
+    assert "no heat" in wrote and f"job {booking['fsm_job_id']}" in wrote
+    assert f'<td class="fit num">{dispatch["id"]}</td>' in wrote, "the dispatch row"
+    assert "ServiceTitan job" in page and "Found" in page
+
+
+def test_a_refused_tool_call_shows_its_refusal_and_gate(agent):
+    from test_ts_bench_walkthrough import gas_call
+
+    sign_in(agent, "admin")
+    call_id = gas_call(agent)
+    conn = agent.db()
+    try:
+        tool_id = conn.execute("SELECT id FROM tool_calls WHERE call_id = ? AND ok = 0 AND "
+                               "tool = 'book_appointment'", (call_id,)).fetchone()[0]
+    finally:
+        conn.close()
+    result = agent.client.get(f"/bench/calls/{_key(call_id)}/tools/{tool_id}/result").text
+    assert "Refused" in result and "gate safety" in result
+    assert agent.client.get(f"/bench/calls/{_key(call_id)}/tools/999999/result").status_code == 404
+
+
+def test_the_log_keeps_the_next_step_the_server_named():
+    from app import logs
+
+    body = {"ok": True, "say": "Okay.", "next": "Ask who will be home.", "data": {}, "refused": None}
+    line = logs.record(now=__import__("datetime").datetime(2026, 11, 2), request_id="r", call_id="c",
+                       tool="read_back", args={}, body=body, gate=None, ms=1.0, fsm=[], error=None,
+                       replayed=False)
+    assert line["next"] == "Ask who will be home."

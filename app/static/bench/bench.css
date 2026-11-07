@@ -282,6 +282,11 @@ button.chip { font: inherit; font-size: var(--text-sm); cursor: pointer; }
 .tool-body { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-2) 0; }
 .tool-body .tech-block { max-height: 240px; margin: 0; }
 .tool-body .actions { justify-content: flex-end; }
+.tool-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+.tool-cols .label { display: block; font-size: var(--text-xs); color: var(--faint); margin-bottom: var(--s-1); }
+.tool-cols .skel + .skel { margin-top: var(--s-2); }
+.result-kv { grid-template-columns: 64px minmax(0, 1fr); }
+.result-kv .tech-block { max-height: 240px; margin: 0; }
 details.raw summary { cursor: pointer; font-size: var(--text-xs); color: var(--muted); padding: var(--s-1) 0; }
 
 /* Log: one request per row, its JSON under it. */

@@ -745,8 +745,15 @@ def tool_records(conn: sqlite3.Connection, call_id: str, event: dict, result: di
         return rows(f"SELECT * FROM {table} WHERE call_id = ? AND created_at = ?", (call_id, at))
 
     flags = by_id("flags", "flag_id") if event["tool"] in ("flag_person", "request_transfer") else []
-    callbacks = by_id("callbacks", "callback_id") if event["tool"] in (
-        "flag_person", "request_transfer", "record_lead") else []
+    if event["tool"] in ("flag_person", "request_transfer", "record_lead"):
+        callbacks = by_id("callbacks", "callback_id")
+    elif bookings:
+        # A booking's own callback (an approval check, an urgent visit's follow-up) is made in
+        # the same request and returns no id of its own.
+        callbacks = rows("SELECT * FROM callbacks WHERE call_id = ? AND created_at = ?",
+                         (call_id, at))
+    else:
+        callbacks = []
     leads = by_id("leads", "lead_id") if event["tool"] == "record_lead" else []
     for lead in leads:
         lead["request"] = json.loads(lead.pop("request_json") or "{}")

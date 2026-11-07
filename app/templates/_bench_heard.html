@@ -30,8 +30,11 @@
         <td colspan="3"><details class="tool-call">
           <summary><span class="mono what">{{ x.tool }}</span>{% if x.error %}<span class="tag urgent">Error</span>{% elif not x.ok %}<span class="tag high">Refused</span>{% elif x.gate %}<span class="tag outline">{{ x.gate | replace("_", " ") }}</span>{% endif %}<span class="say">{{ mask(x.say) }}</span><span class="num faint">{{ "{:,.0f}".format(x.ms) }} ms</span></summary>
           <div class="tool-body">
-            <pre class="tech-block scroll">{{ x.args }}</pre>
-            <div class="actions">{% if x.refused %}<span class="small muted">Refused: {{ x.refused | replace("_", " ") }}</span>{% endif %}<a class="btn" href="/bench/calls/{{ key }}/tools/{{ x.id }}">{{ "Result and records" if x.writes else "Result" }}</a></div>
+            <div class="tool-cols">
+              <div><span class="label">Arguments</span><pre class="tech-block scroll">{{ x.args }}</pre></div>
+              <div data-result="/bench/calls/{{ key }}/tools/{{ x.id }}/result"><span class="label">Result</span><span class="skel" style="width: 70%"></span><span class="skel" style="width: 45%"></span></div>
+            </div>
+            <div class="actions"><a class="btn" href="/bench/calls/{{ key }}/tools/{{ x.id }}">{{ "Records it wrote" if x.writes else "Open" }}</a></div>
           </div>
         </details></td>
       </tr>
