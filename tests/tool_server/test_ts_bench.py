@@ -2,6 +2,8 @@
 call in progress as server-sent events, a call as a draft eval scenario, the settings with their
 documented measurements, and the eval runs."""
 
+import subprocess
+
 import pytest
 import yaml
 from test_ts_safety import GAS_LINES
@@ -616,3 +618,24 @@ def test_a_model_reply_joined_after_the_safety_lines_keeps_the_safety_proof():
                             part("model", "Do you want me to connect you?", "")])
     assert row["proof"] == "Safety lines, word for word"
     assert ("Source", "the server's fixed words, then the model") in row["facts"]
+
+
+def test_the_world_resets_from_the_bench_with_the_scripts_own_guard(agent, monkeypatch):
+    """Jackson, 7 November: a reset button on the bench instead of a shell on the server."""
+    ran = []
+
+    def fake_run(command, **kwargs):
+        ran.append(command)
+        if "--force" in command:
+            return subprocess.CompletedProcess(command, 0, '{"reseeded": 3}', "")
+        return subprocess.CompletedProcess(command, 1, "", "not reset: 1 call(s) live (call_x); --force to")
+
+    monkeypatch.setattr(bench.subprocess, "run", fake_run)
+    admin(agent)
+    refused = agent.client.post("/bench/world/reset", follow_redirects=True).text
+    assert "Not reset: 1 call(s) live (call_x)" in refused and "Reset anyway" in refused
+    settings = agent.app.state.services.settings
+    assert ran[0][2:] == ["scripts.reset_live_world", "--tool-db", str(settings.db_path),
+                          "--mock-db", str(settings.mock_db_path)]
+    done = agent.client.post("/bench/world/reset", data={"force": "1"}, follow_redirects=True).text
+    assert "World reset at" in done and ran[1][-1] == "--force"

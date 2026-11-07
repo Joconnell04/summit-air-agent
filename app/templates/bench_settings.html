@@ -8,6 +8,15 @@
     <div class="lead"><h1 class="page-title">System</h1></div>
   </div>
 
+  <section class="panel" id="world">
+    <div class="panel-head"><h2>Demo world</h2>
+      <form class="end" method="post" action="/bench/world/reset"><button class="btn" type="submit" data-tip="Reseeds the mock ServiceTitan and clears the old world's ids">Reset world</button></form>
+    </div>
+    {% if world %}<div class="panel-body"><p class="{{ 'muted' if world.startswith('World reset') else '' }}">{{ world }}</p>
+      {% if world.startswith("Not reset") %}<form method="post" action="/bench/world/reset"><input type="hidden" name="force" value="1"><button class="btn quiet" type="submit">Reset anyway</button></form>{% endif %}
+    </div>{% endif %}
+  </section>
+
   <dl class="ledger">
     <div><dt>Number</dt><dd class="num">{{ number or "-" }}</dd></div>
     <div><dt>Phone and voice</dt><dd>Retell</dd></div>

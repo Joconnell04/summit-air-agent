@@ -996,6 +996,14 @@ def build() -> dict:
         ),
         item("The bench's checks", "GET", "bench/checks", envelope=False, check=opens),
         item(
+            "The bench resets the demo world (refused while a call is live)",
+            "POST",
+            "bench/world/reset",
+            envelope=False,
+            form={},
+            check="pm.test('back on the system page', () => pm.response.to.have.status(200));",
+        ),
+        item(
             "The bench checks the past day",
             "POST",
             "bench/checks",

@@ -16,6 +16,10 @@ class Settings:
     db_path: Path = field(
         default_factory=lambda: Path(os.environ.get("TOOL_DB", "data/tool_server.db"))
     )
+    # The mock ServiceTitan's database, for the bench's world reset (scripts/reset_live_world.py).
+    mock_db_path: Path = field(
+        default_factory=lambda: Path(os.environ.get("MOCK_DB", "data/servicetitan_mock.db"))
+    )
     log_path: Path | None = None
     tenants_dir: Path = field(
         default_factory=lambda: Path(os.environ.get("TENANTS_DIR", "tenants"))
@@ -129,6 +133,7 @@ class Settings:
 
     def __post_init__(self):
         self.db_path = Path(self.db_path)
+        self.mock_db_path = Path(self.mock_db_path)
         self.tenants_dir = Path(self.tenants_dir)
         self.trades_dir = Path(self.trades_dir)
         if self.log_path is None:

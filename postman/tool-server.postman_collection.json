@@ -3965,6 +3965,29 @@
           }
         },
         {
+          "name": "The bench resets the demo world (refused while a call is live)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('back on the system page', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/bench/world/reset",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            }
+          }
+        },
+        {
           "name": "The bench checks the past day",
           "event": [
             {
