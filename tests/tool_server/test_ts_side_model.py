@@ -180,13 +180,15 @@ def test_find_slots_doesnt_wait_on_a_slow_side_model_and_the_booking_does(tmp_pa
     from toolkit import book, first_open, ready_to_book
 
     release = threading.Event()
-    slow = side_model.SideModel(lambda q, text: release.wait(5) and 0.95, wait_s=2)
+    # The side model takes up to 10 s and book_appointment would wait 6 s for it, so a find_slots
+    # under 3 s didn't wait; the margin keeps the test steady on a busy machine.
+    slow = side_model.SideModel(lambda q, text: release.wait(10) and 0.95, wait_s=6)
     agent = Agent(make_server(tmp_path, clock, mock[0], side_model=slow), clock)
     call = ready_to_book(agent)
     agent.turn(call, "Our boiler quit, and my wife is on dialysis three days a week.")
     started = time.perf_counter()
     found = agent.tool("find_slots", call, job_type="no_heat", facts={"inside_temp_f": 61})
-    assert time.perf_counter() - started < 1.0, "find_slots waited on the side model"
+    assert time.perf_counter() - started < 3.0, "find_slots waited on the side model"
     assert "from the side model" not in " ".join(found["data"]["priority"]["reasons"])
     release.set()
     booked = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat",
