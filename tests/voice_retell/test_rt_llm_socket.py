@@ -6,6 +6,7 @@ the real ones."""
 import asyncio
 import json
 import time
+from pathlib import Path
 
 import httpx
 import pytest
@@ -936,3 +937,12 @@ def test_an_empty_reply_after_the_caller_speaks_is_asked_again_once(socket):
     assert said(events) == "Is it completely out, or just not keeping up?"
     nudge = json.dumps(brain.requests[1][-1])
     assert "The caller is waiting for you" in nudge
+
+
+def test_the_prompt_says_a_problem_that_still_runs_is_not_a_tune_up():
+    """Verification call after the final fixes, 6 November: a banging, leaking boiler with the
+    heat still on was booked as a tune-up (Low, no dispatch question); the A/B runs did the same
+    4 times in 96."""
+    text = (Path(__file__).resolve().parents[2] / "retell" / "socket" / "prompt.md").read_text()
+    assert "even when it still runs" in text
+    assert "`tune_up` is routine maintenance with nothing wrong" in text

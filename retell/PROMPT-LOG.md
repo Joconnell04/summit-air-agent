@@ -315,3 +315,7 @@ I checked it against my change sets 18 to 28, with nothing the server does said 
 - the prompt should make sure read_back gets `job_type` on no-heat and no-cooling calls, so the server can dispatch (change set 26).
 
 Change set 25's one-yes access question already works in the flow. The pinned closing goes further than change set 27, and the tools are built from the server's schemas (change set 28). Outcome pending.
+
+### v13 (a leak isn't a tune-up)
+
+On the verification call after the final fixes, my leaking-boiler replay was booked as a tune-up: the heat still worked, so Brian treated it as maintenance, the server saw Low priority, never asked if it could wait, and booked tomorrow morning even after "right away would be best". The A/B runs did the same 4 times in 96, every time a leak, a drip or a grinding noise with the heat still on. One line now says what the job types mean: anything wrong with the heating is `no_heat` and anything wrong with the cooling is `no_cooling`, even when it still runs; `tune_up` is routine maintenance with nothing wrong. Outcome: checked on the three scenarios that hit it (below) and one phone replay.
