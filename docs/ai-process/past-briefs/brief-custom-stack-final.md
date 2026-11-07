@@ -1,10 +1,10 @@
 # Brief: where things stand
 
-The one page to read before the live calls and the interview: what needs Jackson, the decisions worth knowing cold, what was decided without him, and what's still being built. Older briefs are in [past-briefs/](past-briefs/).
+The one page to read before the live calls and the interview: what needs Jackson, the decisions worth knowing cold, what was decided without him, and what's still being built. Older briefs are in [past-briefs/](.).
 
 ## Needs Jackson
 
-1. **The simplicity slate.** One live call per stack, each gated by a short rig check and a scripted call first, with Jackson's feedback logged verbatim in [evals/rounds/simplicity-slate-01.md](../../evals/rounds/simplicity-slate-01.md). The entries are our stack (improved, with Flux, and stripped), Retell (improved, native and Jackson's own build), Deepgram Voice Agent, Vapi (waiting on an account) and GPT-Live-1. Calls so far: Deepgram (to redo after fixes), Retell native (liked; voice and pacing fixes underway) and GPT-Live-1 (call 3). Our own stack hasn't passed its gate yet: the speech filter caused stalls, now fixed and being re-checked.
+1. **The simplicity slate.** One live call per stack, each gated by a short rig check and a scripted call first, with Jackson's feedback logged verbatim in [evals/rounds/simplicity-slate-01.md](../../../evals/rounds/simplicity-slate-01.md). The entries are our stack (improved, with Flux, and stripped), Retell (improved, native and Jackson's own build), Deepgram Voice Agent, Vapi (waiting on an account) and GPT-Live-1. Calls so far: Deepgram (to redo after fixes), Retell native (liked; voice and pacing fixes underway) and GPT-Live-1 (call 3). Our own stack hasn't passed its gate yet: the speech filter caused stalls, now fixed and being re-checked.
 2. **One feedback pass after the calls.** The end of the script maps each kind of complaint to one setting. Two fixes are already built and waiting on what you hear: the lookup fix for long silences on address turns (switched off), and the "yes, that's right" fast path for a slow booking moment (later list, C-63).
 3. **Retell prototype agents.** The Retell flow lane left its prototype agents on the Retell account. Say whether to delete them; nothing deletes without your OK.
 
@@ -46,7 +46,7 @@ Say if you disagree with any of these.
 
 ## Still being built
 
-Progress for every lane is in [lanes.md](lanes.md).
+Progress for every lane is in [lanes.md](../lanes.md).
 
 - **Lookup results in the same turn (#142):** the fix for silent lookup turns, built behind a switch that's off by default and measured both ways. Ready to turn on only if your calls show lookups feel slow.
 
@@ -75,4 +75,4 @@ Signing in: https://45-77-105-247.sslip.io/owner (owner view) and https://45-77-
 
 ## Your earlier questions
 
-Answered in [past-briefs/brief-after-check-ins.md](past-briefs/brief-after-check-ins.md): Cartesia's hosted agents, Cartesia for speech-to-text, why Cartesia speaks but doesn't hear, and how we pick a model for each job.
+Answered in [past-briefs/brief-after-check-ins.md](brief-after-check-ins.md): Cartesia's hosted agents, Cartesia for speech-to-text, why Cartesia speaks but doesn't hear, and how we pick a model for each job.
