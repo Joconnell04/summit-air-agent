@@ -55,6 +55,12 @@ SETTINGS = (
         "app/main.py _ctx (transfer.held)",
     ),
     Setting(
+        "background_noise",
+        "Background noise",
+        "A quiet busy-office sound under the agent's voice. Applies from the next call.",
+        "app/ambient.py apply (the Retell agent's ambient sound)",
+    ),
+    Setting(
         "technician_summaries",
         "Technician summaries",
         "Write a job note for the technician after each booking.",
@@ -85,6 +91,7 @@ def defaults(tenant: Tenant) -> dict[str, bool]:
         # On by default, so a test call or a demo never rings the office phone unless the owner
         # turns it off (Jackson, 2026-11-06). With no hold number set it changes nothing.
         "hold_line": True,
+        "background_noise": False,
         "technician_summaries": True,
         "on_call_alerts": True,
     }
@@ -98,6 +105,8 @@ def shown(tenant: Tenant) -> tuple[Setting, ...]:
         hidden.update(("warm_transfer", "hold_line"))
     if not tenant.retention.get("record_calls"):
         hidden.add("call_recordings")
+    if not (tenant.agent.get("retell") or {}).get("background_noise"):
+        hidden.add("background_noise")
     return tuple(s for s in SETTINGS if s.key not in hidden)
 
 

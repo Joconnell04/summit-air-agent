@@ -644,6 +644,15 @@ lines:
 
 # What the voice worker says on its own, without the model (voice/livekit). {first_name} is the
 # matched customer's first name; {phone} is our number, on outbound calls.
+# The live Retell voice agent, and the sound the owner's Background noise switch puts under the
+# agent's voice (app/ambient.py). Retell's sounds are rooms, not music; "call-center" is the busy
+# office. The volume is ASSUMED, quiet enough not to cover the agent (Retell's range is 0 to 2).
+retell:
+  agent: Summit Air (socket)
+  background_noise:
+    sound: call-center
+    volume: 0.5
+
 voice:
   # Summit Air never ends a sentence, so the voice doesn't lift on it (Jackson, call
   # call_7727509d3289c4434b27efdad5b).

@@ -11,6 +11,7 @@ the page showed.
 """
 
 import json
+import os
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from fastapi.templating import Jinja2Templates
 
 from . import (
     accounts,
+    ambient,
     cost,
     failure_grader,
     owner,
@@ -36,6 +38,7 @@ from . import (
     reports,
     search,
     trace,
+    transfer,
 )
 from .db import parse_iso
 from .settings import REPORT_MAX_CHARS, WORKER_STALE_SECONDS
@@ -461,6 +464,8 @@ def add_routes(app: FastAPI) -> None:
             "saved": saved,
             "min_password": accounts.PASSWORD_MIN_CHARS,
             "check_schedule": failure_grader.schedule(conn, found),
+            "routes": transfer.routes(found, request.app.state.services.settings.transfer_numbers
+                                      or os.environ),
         }
         return _render(request, "settings.html", context, status)
 
@@ -498,7 +503,18 @@ def add_routes(app: FastAPI) -> None:
         services = request.app.state.services
         conn = services.connect()
         try:
-            owner_settings.change(conn, found, wanted, _user(request)["name"], services.clock())
+            changed = owner_settings.change(conn, found, wanted, _user(request)["name"],
+                                            services.clock())
+            if "background_noise" in changed:
+                try:
+                    ambient.apply(found, wanted["background_noise"])
+                except ambient.AmbientError as err:
+                    # Put the switch back, so the page never shows a sound the calls don't have.
+                    owner_settings.change(conn, found,
+                                          {"background_noise": not wanted["background_noise"]},
+                                          _user(request)["name"], services.clock())
+                    return settings_page(request, found, tenant, conn, {"settings": str(err)},
+                                         status=502)
         except owner_settings.SettingsError as err:
             return settings_page(request, found, tenant, conn, {"settings": str(err)}, status=422)
         finally:

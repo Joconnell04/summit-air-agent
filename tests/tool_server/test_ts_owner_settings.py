@@ -55,6 +55,7 @@ def test_the_defaults_are_consent_off_and_everything_else_as_the_tenant_is_set_u
         "call_recordings": True,
         "warm_transfer": True,
         "hold_line": True,
+        "background_noise": False,
         "technician_summaries": True,
         "on_call_alerts": True,
     }
@@ -412,3 +413,75 @@ def test_both_voice_stacks_say_the_notice_before_the_greeting():
     assert retell_opening(start, "", lines) == f"{NOTICE} Thanks for calling."
     assert retell_opening({**start, "recording_notice": None}, "", lines) == "Thanks for calling."
 
+
+
+# ---- background noise: a switch on the live Retell agent --------------------------------------
+
+
+def test_turning_background_noise_on_sets_the_live_agents_sound(agent, monkeypatch):
+    """Jackson, 7 November: a busy-office sound under the agent's voice, off by default."""
+    from app import ambient
+
+    applied = []
+    monkeypatch.setattr(ambient, "apply", lambda t, on: applied.append(on))
+    sign_in(agent)
+    agent.client.post("/owner/settings", data={"s.background_noise": "1"})
+    assert applied == [True] and current(agent)["background_noise"] is True
+    agent.client.post("/owner/settings", data={"s.background_noise": "0"})
+    assert applied == [True, False] and current(agent)["background_noise"] is False
+
+
+def test_when_retell_refuses_the_sound_the_switch_goes_back_and_says_why(agent, monkeypatch):
+    from app import ambient
+
+    def refuse(t, on):
+        raise ambient.AmbientError("Retell didn't take the change (503).")
+
+    monkeypatch.setattr(ambient, "apply", refuse)
+    sign_in(agent)
+    page = agent.client.post("/owner/settings", data={"s.background_noise": "1"})
+    assert page.status_code == 502 and "Retell didn" in page.text
+    assert current(agent)["background_noise"] is False
+
+
+def test_ambient_finds_the_live_agent_by_name_and_sets_or_clears_its_sound(agent):
+    import httpx
+
+    from app import ambient
+
+    sent = []
+
+    def retell(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v2/list-agents":
+            return httpx.Response(200, json={"items": [
+                {"agent_id": "agent_live", "agent_name": "Summit Air (socket)"},
+                {"agent_id": "agent_test", "agent_name": "Summit Air socket (test)"}],
+                "has_more": False})
+        sent.append((request.url.path, request.content))
+        return httpx.Response(200, json={})
+
+    http = httpx.Client(base_url=ambient.BASE_URL, transport=httpx.MockTransport(retell))
+    ambient.apply(tenant(agent), True, api_key="k", http=http)
+    ambient.apply(tenant(agent), False, api_key="k", http=http)
+    assert sent[0][0] == "/update-agent/agent_live"
+    assert b'"ambient_sound":"call-center"' in sent[0][1].replace(b" ", b"")
+    assert b'"ambient_sound":null' in sent[1][1].replace(b" ", b"")
+
+
+def test_a_push_never_copies_the_background_sound_over_the_owners_switch():
+    import sys
+
+    sys.path.insert(0, str(ROOT / "retell" / "socket"))
+    import push
+
+    assert {"ambient_sound", "ambient_sound_volume"} <= push.NOT_COPIED
+
+
+def test_the_hold_line_note_says_where_a_transfer_rings_either_way(agent, monkeypatch):
+    monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", "+12125550100")
+    monkeypatch.setenv("TRANSFER_ON_CALL_NUMBER", "+12125550111")
+    monkeypatch.setenv("TRANSFER_HOLD_NUMBER", "+12125550122")
+    sign_in(agent)
+    page = agent.client.get("/owner/settings").text
+    assert "the hold line (ends 0122)" in page
+    assert "the office (ends 0100)" in page and "on-call technician (ends 0111)" in page

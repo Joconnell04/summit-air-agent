@@ -312,3 +312,27 @@ def test_never_on_a_commercial_call(agent, numbers):
         agent, "I manage a restaurant on Court Street. Put me through to a manager right now."
     )
     assert "handoff" not in result["data"]
+
+
+@pytest.mark.parametrize("line", [
+    "Um, yeah, can you route me to a human?",
+    "patch me through to the office",
+    "can I get a live agent",
+])
+def test_routing_or_patching_through_to_a_person_is_an_ask(line):
+    """Jackson's call retell_call_480748620a2ad8cec45d7c26c71: "can you route me to a human?" was
+    refused as not asked, so his second ask didn't read as asking again."""
+    from app.transfer import asks_for_person
+
+    assert asks_for_person(line)
+
+
+@pytest.mark.parametrize("line", [
+    "can I get someone out here today",
+    "they routed me to a person last time",
+    "can I get a technician out today",
+])
+def test_routing_words_without_a_person_or_from_someone_else_are_not_an_ask(line):
+    from app.transfer import asks_for_person
+
+    assert not asks_for_person(line)

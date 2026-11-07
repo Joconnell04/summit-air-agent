@@ -12,6 +12,13 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 137. Background noise is an owner switch on the live Retell agent; asking to be routed or patched through to a person counts as an ask
+
+Decided: Settings gets a Background noise switch, off by default, that sets Retell's "call-center" ambient sound (volume 0.5, ASSUMED) on the company's live Retell agent, named in its agent.yaml under `retell`. If Retell refuses the change, the switch is put back and the page says why; push.py never copies the sound, so a push leaves the switch alone. The transfer phrases add "route me to", "patch me through to", "send me to", "pass me to", "a live agent", "a real human" and "can I get" a person. The Hold line row on Settings says where a transfer rings either way, by the last four digits of each number.
+Why: Jackson wanted a busy-office sound as a dial he controls (7 November). On his call call_480748620a2ad8cec45d7c26c71, "can you route me to a human?" was refused as not asked, so his second ask didn't read as asking again. He also asked for the Hold line switch to say plainly where calls go when it's off.
+Considered: a per-call sound (Retell keeps ambient sound on the agent, not the call); a custom hold or office recording (Retell plays only its own room sounds).
+Would change if: callers hear the sound as noise rather than an office (lower the volume or turn it off), or the new phrases hand off a caller who meant a technician.
+
 ## 136. After the safety lines, taking the offer of a person is handed off; the hold line stays quiet on chatter
 
 Decided: once the gas, carbon monoxide or general hazard lines have been said, a caller line that asks for a person ("connect me", "connect me with someone on your team") is handed off as the menu's "someone on our team right now", without needing the insistence a demand needs elsewhere. Bare "connect me" now counts as an ask, like "transfer me". The Retell hold line answers chatter with Retell's silent reply, says its one aside only to a question, and reminds every 45 s (was 40 s).

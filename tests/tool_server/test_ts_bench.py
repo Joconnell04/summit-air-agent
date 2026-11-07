@@ -210,6 +210,9 @@ def test_a_call_becomes_steps_in_lanes_with_their_timings(agent):
     assert by_kind["spoken"][1]["ms"] == 210.0
     assert [n["lane"] for n in g["nodes"][:3]] == ["server", "voice", "caller"]
     assert g["nodes"][3]["from_col"] == nodes.LANE_INDEX["caller"]
+    # Jackson read "Known number: yes" as a customer on file; it only means the caller ID came through.
+    labels = [k for k, _ in g["nodes"][0]["facts"]]
+    assert "Caller ID shown" in labels and "Known number" not in labels
 
 
 def test_a_model_request_shows_what_the_model_was_given(agent):

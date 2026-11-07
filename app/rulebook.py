@@ -231,7 +231,7 @@ PROMPT_STAGES = {
 }
 # agent.yaml sections that hold no rule an owner would read: numbers, connections, plumbing.
 NOT_SHOWN = {"extends", "phone_numbers", "fsm", "weather", "owner_rules", "lookup_knowledge",
-             "visit_questions", "intake", "assistant_name", "connectors", "seasons"}
+             "visit_questions", "intake", "assistant_name", "connectors", "seasons", "retell"}
 NOT_SHOWN_PROMPTS = {"tool-use.md"}
 
 

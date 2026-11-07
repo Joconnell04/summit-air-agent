@@ -198,7 +198,7 @@ def _start(g: Graph, event: dict, row: dict | None) -> None:
         f"the number{', linked to an earlier call' if data.get('linked_call') else ''}"
     )
     facts = [
-        ("Known number", (data.get("caller") or {}).get("known_number")),
+        ("Caller ID shown", (data.get("caller") or {}).get("known_number")),
         ("After hours", data.get("after_hours")),
         ("Scheduling system up", data.get("fsm_available")),
         ("Rules version", version if version is not None else "defaults"),

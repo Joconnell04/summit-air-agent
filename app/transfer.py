@@ -48,6 +48,12 @@ ASK_VERBS = (
     "connect me with",
     "transfer me to",
     "put me through to",
+    # Jackson's call retell_call_480748620a2ad8cec45d7c26c71: "can you route me to a human?" was
+    # refused as not asked.
+    "route me to",
+    "patch me through to",
+    "send me to",
+    "pass me to",
 )
 # Words for a person that can't be a technician, so "get me a manager" is a request for a person and
 # "get me someone out here today" is not.
@@ -58,6 +64,9 @@ PEOPLE = (
     "an actual person",
     "a human",
     "a human being",
+    "a real human",
+    "a live agent",
+    "a real agent",
     "a representative",
     "an operator",
     "a manager",
@@ -69,8 +78,9 @@ PEOPLE = (
 ASK_WHO = PEOPLE + ("someone", "somebody", "the office")
 ASKED_PHRASES = (
     tuple(f"{verb} {who}" for verb in ASK_VERBS for who in ASK_WHO)
-    + tuple(f"{verb} {who}" for verb in ("get me", "give me", "i want", "i need") for who in PEOPLE)
-    + ("transfer me", "put me through", "connect me")
+    + tuple(f"{verb} {who}" for verb in ("get me", "give me", "i want", "i need", "can i get",
+                                          "could i get") for who in PEOPLE)
+    + ("transfer me", "put me through", "connect me", "route me", "patch me through")
 )
 # What may come before an ask in the same sentence for it to be a request. "I need to talk to
 # someone" is one; "last time I talked to someone it took a week" and "my landlord said to talk to
@@ -102,7 +112,8 @@ FILLERS = {
 # An instruction to put the caller through is a request wherever it falls in the line, since
 # speech-to-text often drops the full stop before it ("it died again put me through to a person"),
 # unless someone else is doing it ("last time they put me through to someone").
-INSTRUCTIONS = ("put me through", "transfer me", "connect me", "get me", "give me", "let me")
+INSTRUCTIONS = ("put me through", "transfer me", "connect me", "route me", "patch me through",
+                "get me", "give me", "let me")
 NOT_THE_CALLER = {
     "they", "he", "she", "who", "we", "it", "which", "that", "never", "didnt", "dont", "wont",
     "cant", "couldnt", "wouldnt", "to", "hed", "shed", "theyd", "wed", "theyll", "youll",
@@ -242,6 +253,20 @@ def held(tenant: Tenant, environ: Mapping[str, str]) -> Mapping[str, str]:
         return environ
     names = (tenant.transfer or {}).get("targets", {}).values()
     return {**environ, **{name: hold for name in names}}
+
+
+def routes(tenant: Tenant, environ: Mapping[str, str]) -> dict[str, str]:
+    """Where a transfer rings, as the last four digits of each number, for the owner's Settings
+    page: the office, the on-call technician and the hold line. An unset number is empty."""
+    targets = (tenant.transfer or {}).get("targets", {})
+
+    def last_four(name: str) -> str:
+        digits = re.sub(r"\D", "", environ.get(name, "") if name else "")
+        return digits[-4:] if len(digits) >= 4 else ""
+
+    return {"office": last_four(targets.get("office", "")),
+            "on_call": last_four(targets.get("on_call", "")),
+            "hold": last_four(HOLD_NUMBER)}
 
 
 def role_for(

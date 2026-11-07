@@ -24,7 +24,8 @@
       <tbody>
       {% for s, value in settings %}
         <tr>
-          <td><span class="what" id="label-{{ s.key }}">{{ s.label }}</span><div class="why small">{{ s.detail }}</div></td>
+          <td><span class="what" id="label-{{ s.key }}">{{ s.label }}</span><div class="why small">{{ s.detail }}</div>
+            {% if s.key == "hold_line" %}<div class="why small">{% if routes.hold %}On: transfers ring the hold line (ends {{ routes.hold }}). Off: in office hours they ring the office{% if routes.office %} (ends {{ routes.office }}){% endif %}, after hours the on-call technician{% if routes.on_call %} (ends {{ routes.on_call }}){% endif %}. Applies from the next call.{% else %}No hold line number is set, so transfers always ring a person.{% endif %}</div>{% endif %}</td>
           <td class="fit right">{% if is_admin %}{{ on_off("s." ~ s.key, value, "label-" ~ s.key) }}{% elif value %}<span class="tag done">On</span>{% else %}<span class="tag outline">Off</span>{% endif %}</td>
         </tr>
       {% endfor %}

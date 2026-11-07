@@ -1772,6 +1772,11 @@ transfer:
 visit_questions:
   catch_all_cue: anything else the technician should know
   pets: false
+retell:
+  agent: Summit Air (socket)
+  background_noise:
+    sound: call-center
+    volume: 0.5
 voice:
   are_you_there: Are you still there?
   clips:

@@ -45,6 +45,9 @@ NOT_COPIED = {
     # The socket agents' own setting (retell/socket/denoise.py), so a push never undoes a
     # switch made for a test call.
     "denoising_mode",
+    # The owner's Background noise switch sets these on the live agent (app/ambient.py).
+    "ambient_sound",
+    "ambient_sound_volume",
 }
 
 
