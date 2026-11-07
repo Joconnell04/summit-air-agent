@@ -474,3 +474,14 @@ def test_filter_times_go_to_servicetitan_in_utc_whatever_zone_they_are_in():
 
     eight_am = datetime(2026, 11, 3, 8, 0, tzinfo=ZoneInfo("America/New_York"))
     assert _stamp(eight_am) == "2026-11-03T13:00:00Z"
+
+
+def test_window_columns_read_as_clock_times_and_part_of_day(agent):
+    """The columns read "8 to 10 AM" over "Morning", not the window's id ("0800-1000")."""
+    sign_in(agent)
+    html = agent.client.get("/owner/schedule").text
+    for text in ('<span class="w-name">8 to 10 AM</span>', '<span class="w-time">Morning</span>',
+                 '<span class="w-name">10 AM to 12 PM</span>', '<span class="w-name">After hours</span>',
+                 '<span class="w-time">8 PM to 8 AM</span>'):
+        assert text in html, text
+    assert '<span class="w-name">0800-1000</span>' not in html

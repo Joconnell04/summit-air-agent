@@ -116,6 +116,7 @@
               <td class="fit right">
                 {% if f.alert == "sent" %}<span class="tag info" title="Emailed to the on-call person">Emailed</span>{% elif f.alert == "held" %}<span class="tag outline" title="No mail server is set, so the email was held">Email held</span>{% elif f.alert == "failed" %}<span class="tag urgent">Email failed</span>{% endif %}
               </td>
+              <td class="fit"><form method="post" action="/owner/flags/{{ f.id }}/done{{ q(slug, day if not is_today else none) }}"><button class="check-off" type="submit" data-tip="Mark done" aria-label="Mark done: {{ flag_titles[f.id] }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></form></td>
               <td class="go">{{ go() }}</td>
             </tr>
           {% endfor %}
@@ -129,7 +130,7 @@
           <table class="table" style="margin-top: var(--s-2);">
             <tbody>
             {% for f in handled %}
-              <tr class="closed" data-href="/owner/calls/{{ f.call_id }}"><td class="time">{{ clock(f.at) }}</td><td><div class="what"><a href="/owner/calls/{{ f.call_id }}">{{ flag_titles[f.id] }}</a></div><div class="why small">{{ f.reason }}</div></td><td class="go">{{ go() }}</td></tr>
+              <tr class="closed" data-href="/owner/calls/{{ f.call_id }}"><td class="time">{{ clock(f.at) }}</td><td><div class="what"><a href="/owner/calls/{{ f.call_id }}">{{ flag_titles[f.id] }}</a></div><div class="why small">{{ f.reason }}</div></td><td class="fit right small muted">{% if f.checked_by %}Done by {{ f.checked_by }}{% endif %}</td><td class="go">{{ go() }}</td></tr>
             {% endfor %}
             </tbody>
           </table>
@@ -176,14 +177,15 @@
 
     <aside class="panel tray" data-tray>
       <div class="tray-tabs" role="tablist">
-        <button type="button" role="tab" aria-selected="true" aria-controls="tray-callbacks" id="tab-callbacks">Callbacks{{ count(callbacks["items"] | length, callbacks.overdue > 0) }}</button>
+        {# Callbacks the caller booked. One promised because they asked for a person is on Needs attention. #}
+        {% set booked_callbacks = callbacks["items"] | rejectattr("for_person") | list %}
+        <button type="button" role="tab" aria-selected="true" aria-controls="tray-callbacks" id="tab-callbacks">Callbacks{{ count(booked_callbacks | length, booked_callbacks | selectattr("status", "equalto", "overdue") | list | length > 0) }}</button>
         <button type="button" role="tab" aria-selected="false" aria-controls="tray-leads" id="tab-leads">Leads{{ count(leads | length) }}</button>
-        <button type="button" role="tab" aria-selected="false" aria-controls="tray-away" id="tab-away">Turned away{{ count(turned_away | length) }}</button>
       </div>
       <div class="tray-panel" role="tabpanel" id="tray-callbacks" aria-labelledby="tab-callbacks">
-        {% if callbacks["items"] %}
+        {% if booked_callbacks %}
         <ul class="list">
-        {% for cb in callbacks["items"] | sort(attribute="status", reverse=true) %}
+        {% for cb in booked_callbacks | sort(attribute="status", reverse=true) %}
           {% set who = "The agent" if cb.owner == "system" else "The office" %}
           <li class="{% if cb.status == 'overdue' %}late{% endif %}" data-href="/owner/calls/{{ cb.call_id }}">
             <span class="what"><a href="/owner/calls/{{ cb.call_id }}">{{ cb.reason[:1] | upper }}{{ cb.reason[1:] }}</a></span>
@@ -209,19 +211,6 @@
         {% endfor %}
         </ul>
         {% else %}{{ empty("No leads today.") }}{% endif %}
-      </div>
-      <div class="tray-panel" role="tabpanel" id="tray-away" aria-labelledby="tab-away" hidden>
-        {% if turned_away %}
-        <ul class="list">
-        {% for c in turned_away %}
-          <li data-href="/owner/calls/{{ c.id }}">
-            <span class="what"><a href="/owner/calls/{{ c.id }}">{{ c.outcome_label | replace("Turned away: ", "") | capitalize }}</a></span>
-            <span class="meta num">{{ clock(c.at) }}, {{ c.caller }}</span>
-            <span class="end"><span class="go">{{ go() }}</span></span>
-          </li>
-        {% endfor %}
-        </ul>
-        {% else %}{{ empty("Nobody turned away today.") }}{% endif %}
       </div>
     </aside>
   </div>

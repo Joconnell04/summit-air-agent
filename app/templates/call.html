@@ -28,6 +28,7 @@
         {% if p.booking and p.booking.fsm_job_id %}<span class="num">Job {{ p.booking.fsm_job_id }}</span>{% endif %}
         {% if call.direction == "outbound" and (p.open_flags or p.booking) %}<span>Placed by us</span>{% endif %}
         <span>Call {{ p.position }} of {{ p.of }} that day</span>
+        <span class="call-id">Call ID <code data-copy-text>{{ call.id }}</code><button class="btn quiet copy" type="button" data-copy="{{ call.id }}" aria-label="Copy call ID">Copy</button></span>
         {% if p.number_raised_after_wait %}<span title="Calls from this number whose priority went up on a fact first given after hearing the wait">Raised after the wait on {{ p.number_raised_after_wait }} {{ "call" if p.number_raised_after_wait == 1 else "calls" }} from this number</span>{% endif %}
       </div>
     </div>

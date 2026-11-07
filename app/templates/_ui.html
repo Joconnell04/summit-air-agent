@@ -65,7 +65,7 @@
   <td class="time">{{ clock(c.at) }}</td>
   <td class="fit num">{% if c.name %}<span class="what"><a href="/owner/calls/{{ c.id }}">{{ c.name }}</a></span> <span class="faint">{{ c.caller }}</span>{% else %}<span class="what"><a href="/owner/calls/{{ c.id }}">{{ c.caller }}</a></span>{% endif %}{% if c.job %}<div class="why small">{{ c.job.address }} {{ c.job.zip }}{% if c.job.fsm_job_id %}, job {{ c.job.fsm_job_id }}{% endif %}</div>{% endif %}</td>
   <td>{{ c.type_label }}</td>
-  <td>{{ c.outcome_label }}</td>
+  <td>{{ c.outcome_label }}<div class="why small"><code class="faint">{{ c.id }}</code></div></td>
   <td class="fit right num muted">{% if c.seconds is not none %}{{ c.seconds // 60 }}:{{ "%02d" | format(c.seconds % 60) }}{% endif %}</td>
   <td class="fit right"><span class="tags">{{ label_tag(c.label, c.label_reason) }}{% if c.direction == "outbound" %}<span class="tag outline">Placed by us</span>{% endif %}{% if c.safety_kind %}<span class="tag urgent">Safety</span>{% endif %}{% if c.open_flags %}<span class="tag high">Needs a person</span>{% endif %}</span></td>
   <td class="go">{{ go() }}</td>

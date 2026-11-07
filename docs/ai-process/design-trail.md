@@ -161,3 +161,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Equipment library by embeddings | Five pages searched by meaning, keyword fallback, Sonnet hand-off built and left off | DECISIONS.md 132 |
 | Symptom questions kept server-written | An A/B of 96 runs kept the word map: 6 real re-asks against 13 without it; how bad is skipped once answered; no second address check after a confirmed read-back | DECISIONS.md 133 |
 | One stack in the repository's main line | Dropped voice stacks on branch archive/voice-stacks; LiveKit back to voice/livekit for the evals; only the Retell path runs on the server | DECISIONS.md 134 |
+| Owner view: roster, check-off, booked callbacks | 20 of 40 technicians work a day with their own first names; Needs attention rows check off; Callbacks lists only callbacks a caller booked | DECISIONS.md 138 |

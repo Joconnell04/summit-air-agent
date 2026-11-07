@@ -12,7 +12,7 @@ from collections import Counter
 from datetime import date, datetime, time, timedelta
 
 from . import heads_up, labels, records, summary
-from .db import iso, parse_iso
+from .db import iso, parse_iso, tx
 from .lifecycle import outcome_of
 from .tenant import Tenant, Window, window_of
 from .text import phone_display
@@ -280,8 +280,9 @@ def flags(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
     Each carries whether the on-call email went out."""
     start, end = day_bounds(tenant, day)
     rows = conn.execute(
-        "SELECT f.*, a.status AS alert FROM flags f JOIN calls c ON c.id = f.call_id "
-        "LEFT JOIN alerts a ON a.flag_id = f.id "
+        "SELECT f.*, a.status AS alert, fc.by_name AS checked_by FROM flags f "
+        "JOIN calls c ON c.id = f.call_id LEFT JOIN alerts a ON a.flag_id = f.id "
+        "LEFT JOIN flag_checks fc ON fc.flag_id = f.id "
         "WHERE c.tenant = ? AND f.created_at >= ? AND f.created_at < ?",
         (tenant.slug, start, end),
     ).fetchall()
@@ -296,12 +297,72 @@ def flags(conn: sqlite3.Connection, tenant: Tenant, day: date) -> list[dict]:
             "priority": r["priority"],
             "open": r["status"] == "open",
             "alert": r["alert"],
+            "checked_by": r["checked_by"],
         }
         for r in rows
     ]
     found.sort(key=lambda f: f["at"], reverse=True)
     found.sort(key=lambda f: (not f["open"], PRIORITY_ORDER.get(f["priority"], 9)))
     return found
+
+
+def check_off(conn: sqlite3.Connection, tenant: Tenant, flag_id: int, by: str, now: datetime) -> bool:
+    """Close an open flag from the Needs attention list, and the callback it stands for: a late
+    callback's own callback, or the one promised when the caller asked for a person. False when
+    the flag isn't open or isn't this company's."""
+    flag = conn.execute(
+        "SELECT f.* FROM flags f JOIN calls c ON c.id = f.call_id "
+        "WHERE f.id = ? AND c.tenant = ? AND f.status = 'open'",
+        (flag_id, tenant.slug),
+    ).fetchone()
+    if flag is None:
+        return False
+    if flag["kind"] == "overdue_callback":
+        matches, extra = "substr(?, -length(cb.reason)) = cb.reason", ()
+    elif flag["kind"] in ("person", "transfer"):
+        matches = (
+            "(cb.reason = ? OR cb.id IN (SELECT callback_id FROM transfers WHERE flag_id = ?) "
+            "OR cb.id IN (SELECT callback_id FROM handoffs WHERE flag_id = ?))"
+        )
+        extra = (flag_id, flag_id)
+    else:
+        matches, extra = "", ()
+    callbacks = (
+        conn.execute(
+            "SELECT cb.id, cb.reason FROM callbacks cb WHERE cb.call_id = ? "
+            f"AND cb.status IN ('pending', 'overdue') AND {matches}",
+            (flag["call_id"], flag["reason"], *extra),
+        ).fetchall()
+        if matches
+        else []
+    )
+    closing = [flag_id] + [
+        r["id"]
+        for cb in callbacks
+        for r in conn.execute(
+            "SELECT id FROM flags WHERE call_id = ? AND kind = 'overdue_callback' AND status = 'open' "
+            "AND substr(reason, -length(?)) = ?",
+            (flag["call_id"], cb["reason"], cb["reason"]),
+        )
+    ]
+    with tx(conn):
+        for cb in callbacks:
+            conn.execute(
+                "UPDATE callbacks SET status = 'done', updated_at = ? WHERE id = ?",
+                (iso(now), cb["id"]),
+            )
+            conn.execute(
+                "UPDATE outbound SET status = 'skipped' WHERE callback_id = ? "
+                "AND status IN ('waiting', 'queued')",
+                (cb["id"],),
+            )
+        for closed in set(closing):
+            conn.execute("UPDATE flags SET status = 'done' WHERE id = ?", (closed,))
+            conn.execute(
+                "INSERT OR REPLACE INTO flag_checks (flag_id, by_name, at) VALUES (?, ?, ?)",
+                (closed, by, iso(now)),
+            )
+    return True
 
 
 def needs_person(day_flags: list[dict]) -> int:
@@ -318,6 +379,11 @@ def callbacks(conn: sqlite3.Connection, tenant: Tenant, day: date) -> dict:
     start, end = day_bounds(tenant, day)
     rows = conn.execute(
         "SELECT cb.*, o.id AS dial_id, o.status AS dial_status, o.result AS dial_result, "
+        # The callback promised when a caller asked for a person, rather than one they booked.
+        "(EXISTS (SELECT 1 FROM transfers t WHERE t.callback_id = cb.id) "
+        " OR EXISTS (SELECT 1 FROM handoffs h WHERE h.callback_id = cb.id) "
+        " OR EXISTS (SELECT 1 FROM flags f WHERE f.call_id = cb.call_id "
+        "            AND f.kind IN ('person', 'transfer') AND f.reason = cb.reason)) AS for_person, "
         # Overdue once: records.mark_overdue raised its flag, whatever the status says now.
         "EXISTS (SELECT 1 FROM flags f WHERE f.call_id = cb.call_id AND f.kind = 'overdue_callback' "
         "AND substr(f.reason, -length(cb.reason)) = cb.reason) AS went_late "
@@ -335,6 +401,7 @@ def callbacks(conn: sqlite3.Connection, tenant: Tenant, day: date) -> dict:
             "status": r["status"],
             "dial": r["dial_result"] or r["dial_status"],
             "on_time": r["status"] == "done" and not r["went_late"],
+            "for_person": bool(r["for_person"]),
         }
         for r in rows
     ]

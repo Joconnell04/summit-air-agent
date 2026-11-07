@@ -645,6 +645,14 @@ def build() -> dict:
             check="pm.test('stores it and goes back to the call', () => pm.expect(pm.response.code).to.be.oneOf([200, 303]));",
         ),
         item(
+            "Check the safety flag off Needs attention",
+            "POST",
+            "owner/flags/{{safety_flag_id}}/done",
+            envelope=False,
+            form={},
+            check="pm.test('goes back to Today', () => pm.expect(pm.response.code).to.be.oneOf([200, 303]));",
+        ),
+        item(
             "Results for seven days",
             "GET",
             "owner/results?days=7",
