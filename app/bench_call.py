@@ -10,6 +10,7 @@ memory so a page opened twice reads Retell once.
 """
 
 import json
+import os
 import re
 import sqlite3
 import threading
@@ -155,10 +156,129 @@ def _priority_source(rule: str, reason: str) -> str:
     return "Phrase rule"
 
 
-def decisions(conn: sqlite3.Connection, trace: dict) -> list[dict]:
+ROLE_WORDS = {"office": "the office", "on_call": "the on-call technician"}
+HANDOFF_RESULT = {
+    "handed_off": "Handed off; whoever answered isn't known here, so the flag stays open",
+    "failed": "Didn't go through; the agent said the callback line",
+    "not_dialed": "Nothing dialed (no number set, or warm transfer off); the callback stands",
+    "dialing": "Still ringing when the record stopped",
+}
+TRANSFER_RESULT = {
+    "connected": "Put through to a person",
+    "no_answer": "No answer; the agent said the callback line",
+    "not_accepted": "The person didn't take it; the agent said the callback line",
+    "failed": "Didn't go through; the agent said the callback line",
+    "dialing": "Still ringing when the record stopped",
+}
+
+
+def _last_four(phone: str) -> str:
+    digits = re.sub(r"\D", "", phone or "")
+    return digits[-4:] if len(digits) >= 4 else ""
+
+
+def _local(tenant, at: str | None) -> str:
+    if not at:
+        return ""
+    when = parse_iso(at)
+    return (tenant.local(when) if tenant else when).strftime("%-I:%M %p")
+
+
+def _caller_line_before(trace: dict, at: str) -> str:
+    lines = [e for e in trace["events"]
+             if e["type"] == "turn" and e["speaker"] == "caller" and e["at"] <= at]
+    return lines[-1]["text"] if lines else ""
+
+
+def _person_rows(conn: sqlite3.Connection, trace: dict, graph: dict | None, tenant, add,
+                 environ) -> None:
+    """The transfer to a person, from the server's own records: how the ask was recognized, who
+    it rang and why, the flag and the callback promised, and how it ended (Jackson: "i want the
+    why part to log the other important decisions like the transfer to human")."""
+    from . import transfer
+
+    call = trace["call"]
+    settings = conn.execute("SELECT settings_json FROM call_settings WHERE call_id = ?",
+                            (call["id"],)).fetchone()
+    switches = json.loads(settings["settings_json"]) if settings else {}
+    plans = list((graph or {}).get("handoffs") or [])
+    earlier: list[str] = []
+    for h in conn.execute("SELECT * FROM handoffs WHERE call_id = ? ORDER BY id", (call["id"],)):
+        flag = conn.execute("SELECT * FROM flags WHERE id = ?", (h["flag_id"],)).fetchone()
+        logged = next((p for p in plans if (p["plan"] or {}).get("id") == h["id"]),
+                      plans[0] if plans else {})
+        line = logged.get("line") or _caller_line_before(trace, h["started_at"])
+        earlier = [e["text"] for e in trace["events"] if e["type"] == "turn"
+                   and e["speaker"] == "caller" and e["at"] < h["started_at"] and e["text"] != line]
+        on_safety = bool(flag and "after the safety lines" in flag["reason"])
+        if on_safety and not transfer.demands_person(line, earlier):
+            how = "Took the safety menu's offer of someone on the team"
+        elif transfer.demands_person(line, earlier):
+            how = "A demand: said insistently, angrily, or asked again"
+        else:
+            how = "Asked for a person"
+        add(h["started_at"], "Person", "asked for a person", "Person only when asked",
+            "Caller's words", "recognized", line,
+            what="Caller asked for a person", why=how, result="Handoff started")
+        role = ROLE_WORDS.get(h["role"], h["role"])
+        four = _last_four((logged.get("plan") or {}).get("phone", ""))
+        hold = transfer.routes(tenant, environ)["hold"] if tenant else ""
+        switch_on = bool(switches.get("hold_line"))
+        held = switch_on and bool(hold) and (four == hold or not four)
+        rang = "the hold line" if held else role
+        why = [
+            "After hours, so the on-call technician" if call.get("after_hours")
+            else "Office hours, so the office",
+            "Hold line on for this call, so the hold line rang instead" if held
+            else "Hold line on, but no hold number was set, so the person rang" if switch_on
+            else "Hold line off for this call",
+            "Warm transfer on" if switches.get("warm_transfer", True) else "Warm transfer off",
+        ]
+        add(h["started_at"], "Person", f"rang {rang}", "Person only when asked", "Server",
+            h["status"], what=f"Rang {rang}" + (f", number ending {four}" if four else ""),
+            why="; ".join(why) + ".", result="Dialed" if h["status"] != "not_dialed"
+            else HANDOFF_RESULT["not_dialed"])
+        if flag:
+            add(flag["created_at"], "Person", "person flag", "Person only when asked", "Server",
+                flag["priority"], what=f"Person flag raised, {flag['priority']}",
+                why=flag["reason"], result="Open for the team")
+        if h["callback_id"]:
+            cb = conn.execute("SELECT * FROM callbacks WHERE id = ?", (h["callback_id"],)).fetchone()
+            if cb:
+                add(cb["created_at"], "Person", "callback promised", "Person only when asked",
+                    "Server", cb["status"], what=f"Callback promised by {_local(tenant, cb['due_at'])}",
+                    why=f"In case nobody picks up: {cb['reason'].rstrip('.')}",
+                    result=cb["status"].capitalize())
+        elif flag and on_safety:
+            add(flag["created_at"], "Person", "no callback time", "Person only when asked", "Server",
+                "", what="No callback time given",
+                why="A safety call is never given a callback time while the caller leaves the house",
+                result="The safety flag has a person following up")
+        if h["finished_at"]:
+            add(h["finished_at"], "Person", "handoff finished", "Person only when asked",
+                "Voice layer", h["status"], what="Handoff finished",
+                why="What the voice layer reported back", result=HANDOFF_RESULT.get(
+                    h["status"], h["status"].replace("_", " ")))
+    for t in conn.execute("SELECT * FROM transfers WHERE call_id = ? ORDER BY id", (call["id"],)):
+        role = ROLE_WORDS.get(t["role"], t["role"])
+        add(t["started_at"], "Person", "transfer allowed", "Person only when asked", "Server",
+            t["status"], _caller_line_before(trace, t["started_at"]),
+            what=f"Transfer to {role} allowed",
+            why="The caller asked for a person in office hours, and the model asked for the transfer",
+            result="Dialed")
+        if t["finished_at"]:
+            add(t["finished_at"], "Person", "transfer finished", "Person only when asked",
+                "Voice layer", t["status"], what="Transfer finished",
+                why="What the voice layer reported back",
+                result=TRANSFER_RESULT.get(t["status"], t["status"].replace("_", " ")))
+
+
+def decisions(conn: sqlite3.Connection, trace: dict, graph: dict | None = None,
+              tenant=None, environ=None) -> list[dict]:
     """Every decision the server made on the call, in order: safety signals and how fast the lines
     came, each refusal with the rule and the sentence the server wrote, the server's lines, the
-    priority of each booking with the source of each reason, dispatches, the label and the end."""
+    transfer to a person, the priority of each booking with the source of each reason,
+    dispatches, the label and the end."""
     call = trace["call"]
     call_id = call["id"]
     start = parse_iso(call["started_at"])
@@ -186,10 +306,13 @@ def decisions(conn: sqlite3.Connection, trace: dict) -> list[dict]:
         if tool in LIFECYCLE:
             continue
         if not event["ok"]:
+            from .nodes import GATE_TEXT
+
             code = event["gate"] or event["refused"] or "refused"
             name, guards = _rule(code)
+            plain = GATE_TEXT.get(code, ("", ""))[0]
             add(event["at"], "Refused", tool, name, "Server gate", "held", event["say"],
-                alarm=True, what=f"{_tool(tool)}: held", why=guards or name,
+                alarm=True, what=f"{_tool(tool)}: held", why=plain or guards or name,
                 result="Held back")
         elif event["gate"]:
             name, guards = _rule(event["gate"])
@@ -212,6 +335,9 @@ def decisions(conn: sqlite3.Connection, trace: dict) -> list[dict]:
             what=f"{hazard} safety lines" + ("" if lines_at else " never said"),
             why="The fixed lines come before anything else on a hazard",
             result=f"{took} after the signal" if lines_at else "Never said")
+
+    turn = 0
+    _person_rows(conn, trace, graph, tenant, add, environ if environ is not None else os.environ)
 
     for b in trace["bookings"]:
         rules = json.loads(b["priority_rules"]) if b.get("priority_rules") else []

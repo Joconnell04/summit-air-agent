@@ -238,6 +238,13 @@ def build(conn, trace: dict, log_path) -> dict:
         # What /calls/start returned (customers matched, membership, open jobs), from the same log
         # read, so the bench's call page reads the log once.
         "start": next((r.get("result") or {} for r in rows if r["tool"] == "calls.start"), None),
+        # Each handoff the server started from a caller's line: the line, and the plan it sent the
+        # voice layer (who it rings and the number), for the Why tab.
+        "handoffs": [
+            {"line": (r.get("args") or {}).get("text", ""),
+             "plan": ((r.get("result") or {}).get("handoff") or {}).get("transfer") or {}}
+            for r in rows if r["tool"] == "turn" and (r.get("result") or {}).get("handoff")
+        ],
     }
 
 

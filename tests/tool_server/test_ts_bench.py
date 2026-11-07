@@ -16,7 +16,7 @@ from toolkit import (
     sign_in,
 )
 
-from app import bench, bench_data, nodes, redact, trace
+from app import bench, bench_call, bench_data, nodes, redact, trace
 from evals.scenario import Scenario
 
 # A number the mock has no customer for, so a booking needs no account choice.
@@ -371,6 +371,63 @@ def test_the_rule_proof_counts_transfers_and_the_server_led_read_back(agent):
     assert not refused["ok"]
     proof = {p["rule"]: p for p in graph(agent, call)["proof"]}
     assert proof["Person only when asked"]["outcome"] == "fired"
+
+
+DEMAND = "this is ridiculous the furnace you fixed died again put me through to a real person right now"
+
+
+def why_rows(agent: Agent, call: str) -> list[dict]:
+    import os
+
+    conn = agent.db()
+    try:
+        found = trace.timeline(conn, call)
+        g = nodes.build(conn, found, agent.app.state.services.settings.log_path)
+        return bench_call.decisions(conn, found, g, agent.app.state.services.tenants.default,
+                                    os.environ)
+    finally:
+        conn.close()
+
+
+def test_the_why_tab_shows_the_transfer_to_a_person(agent, monkeypatch):
+    """Jackson, call retell_call_e2d08b8735893e12274237d845e: the Why tab showed only the label
+    and the end, not the transfer."""
+    monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", "+12125550100")
+    monkeypatch.setenv("TRANSFER_ON_CALL_NUMBER", "+12125550111")
+    monkeypatch.delenv("TRANSFER_HOLD_NUMBER", raising=False)
+    call = agent.start(CALLER)["data"]["call_id"]
+    plan = agent.turn(call, DEMAND)["data"]["handoff"]["transfer"]
+    agent.client.post(f"/calls/{call}/handoff/{plan['id']}/done", json={"outcome": "handed_off"})
+    rows = {r["what"]: r for r in why_rows(agent, call)}
+    asked = rows["Caller asked for a person"]
+    assert asked["why"].startswith("A demand") and asked["say"] == DEMAND
+    rang = next(r for w, r in rows.items() if w.startswith("Rang "))
+    assert rang["what"].endswith(("number ending 0100", "number ending 0111"))
+    assert "no hold number was set" in rang["why"] and "Warm transfer on" in rang["why"]
+    assert any(w.startswith("Person flag raised") for w in rows)
+    assert any(w.startswith("Callback promised by ") for w in rows)
+    assert rows["Handoff finished"]["result"].startswith("Handed off")
+    page = admin(agent).client.get(f"/bench/calls/{key(call)}").text
+    assert "Caller asked for a person" in page and "Handoff finished" in page
+
+
+def test_with_the_hold_line_on_the_why_says_the_hold_line_rang(agent, monkeypatch):
+    monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", "+12125550100")
+    monkeypatch.setenv("TRANSFER_ON_CALL_NUMBER", "+12125550111")
+    monkeypatch.setenv("TRANSFER_HOLD_NUMBER", "+12125550122")
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.turn(call, DEMAND)
+    rang = next(r for r in why_rows(agent, call) if r["what"].startswith("Rang "))
+    assert rang["what"] == "Rang the hold line, number ending 0122"
+    assert "Hold line on for this call" in rang["why"]
+
+
+def test_a_refused_transfer_is_a_why_row_with_the_rules_plain_reason(agent):
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.turn(call, "Can you route my call to the billing team?")
+    agent.tool("request_transfer", call, reason="person", summary="Caller asked.")
+    held = next(r for r in why_rows(agent, call) if r["kind"] == "Refused")
+    assert held["why"] == nodes.GATE_TEXT["transfer_not_asked"][0]
 
 
 def test_a_turn_takes_at_most_twenty_cuts(agent):
