@@ -1,13 +1,11 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs, day_nav, empty with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import day_nav, empty with context %}
 {% from "_schedule.html" import grid, result_line, pick_customer, use_anyway with context %}
 {% block title %}Bench: schedule{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
 <main class="page">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs">Debug bench<span>/</span><span>ServiceTitan, read live through the adapter the agent uses</span></div>
       <div class="actions">
         <h1 class="page-title">Schedule, {{ day.strftime("%a %b %-d") }}</h1>
         {{ day_nav("/bench/schedule", slug, day, is_today) }}
@@ -18,7 +16,7 @@
 
   <div class="split narrow-side">
     <section class="panel" id="changes" data-changes="/bench/schedule/changes">
-      <div class="panel-head"><h2>Changes in ServiceTitan</h2><span class="sub">edits from here and the owner view, and the agent's bookings, live</span></div>
+      <div class="panel-head"><h2>Changes in ServiceTitan</h2><span class="sub">live</span></div>
       <div class="table-wrap changes">
       <table class="table">
         <thead><tr><th>Sent</th><th>Who</th><th>What</th><th>In ServiceTitan</th></tr></thead>
@@ -66,7 +64,7 @@
     </section>
   </div>
   <section class="panel">
-    <div class="panel-head"><h2>Technicians</h2><span class="sub">each column says what find_slots would offer now</span></div>
+    <div class="panel-head"><h2>Technicians</h2><span class="sub">what find_slots offers now</span></div>
     {% if sched %}{% if sched.rows %}{{ grid(sched, here, job_types, bench=true) }}{% else %}{{ empty("Nobody is working this day.") }}{% endif %}
     {% else %}{{ empty(problem) }}{% endif %}
   </section>

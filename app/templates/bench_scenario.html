@@ -1,7 +1,6 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs, outcome, empty with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import outcome, empty with context %}
 {% block title %}Bench: {{ r.key }}{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% block body %}
 <main class="page">
   <div class="call-head">

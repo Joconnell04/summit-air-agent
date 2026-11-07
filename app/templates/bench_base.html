@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{# The bench's own page: its tokens, shell and views come from /bench/static. Only the shared
+   component primitives (panels, tables, tags, buttons) and their behaviour are borrowed from the
+   owner view's files; none of the owner view's tokens, header or brand load here. #}
+<link rel="stylesheet" href="/owner/static/components.css">
+<link rel="stylesheet" href="/bench/static/bench.css">
+{% block head %}{% endblock %}
+<title>{% block title %}Bench{% endblock %}</title>
+</head>
+<body class="bench">
+{% from "_ui.html" import bench_side with context %}
+<div class="shell">
+{{ bench_side(tab) }}
+<div class="shell-main">
+{% block body %}{% endblock %}
+</div>
+</div>
+<script src="/owner/static/owner.js" defer></script>
+<script src="/bench/static/bench.js" defer></script>
+</body>
+</html>

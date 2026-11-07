@@ -12,6 +12,7 @@ import json
 import os
 import re
 import time
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import (
@@ -21,12 +22,14 @@ from fastapi.responses import (
     Response,
     StreamingResponse,
 )
+from fastapi.staticfiles import StaticFiles
 
-from . import bench_data, nodes, redact, rules, trace
+from . import bench_call, bench_data, bench_pages, failure_grader, nodes, redact, rules, trace
 from .db import parse_iso
 from .owner_view import _common, _need_admin, _render
 
 RECENT = 60
+STATIC = Path(__file__).resolve().parent / "static" / "bench"
 SEARCH_MAX_CHARS = 80
 # A live view's stream closes after this long; the browser opens it again by itself (the
 # EventSource retry), so a forgotten tab never holds a server thread for the length of a call.
@@ -57,17 +60,70 @@ def _context(request: Request, conn, tab: str) -> dict:
     }
 
 
-def _calls(conn, q: str, tenants) -> list[dict]:
-    """Recent calls, or the ones whose id or phone matches q, newest first."""
+# The call list's filters: each group is one choice, and every group's choice must hold. Each value
+# is a SQL condition on the calls table `c`.
+FILTERS = {
+    "outcome": {
+        "booked": "c.outcome IN ('booked', 'changed_booking')",
+        "callback": "c.outcome = 'callback'",
+        "safety": "c.safety_kind IS NOT NULL",
+        "declined": "c.outcome LIKE 'declined%'",
+        "none": "c.outcome = 'no_booking'",
+    },
+    "label": {
+        "emergency": "EXISTS (SELECT 1 FROM call_labels l WHERE l.call_id = c.id AND l.label = 'Emergency dispatch')",
+        "scheduled": "EXISTS (SELECT 1 FROM call_labels l WHERE l.call_id = c.id AND l.label = 'Scheduled')",
+        "no_visit": "EXISTS (SELECT 1 FROM call_labels l WHERE l.call_id = c.id AND l.label = 'No visit')",
+    },
+    "ended": {
+        "agent": "c.end_reason IN ('agent_end', 'stepped_away')",
+        "caller": "c.end_reason = 'caller_hangup'",
+        "line": "c.end_reason IN ('dropped', 'error')",
+        "transfer": "c.end_reason = 'transfer'",
+    },
+    "signal": {
+        "refused": "EXISTS (SELECT 1 FROM tool_calls k WHERE k.call_id = c.id AND k.ok = 0)",
+        "person": "EXISTS (SELECT 1 FROM flags f WHERE f.call_id = c.id)",
+        "transfer": "(EXISTS (SELECT 1 FROM transfers t WHERE t.call_id = c.id) "
+                    "OR EXISTS (SELECT 1 FROM handoffs h WHERE h.call_id = c.id))",
+        "hold": "EXISTS (SELECT 1 FROM holds h WHERE h.call_id = c.id)",
+        "after_hours": "c.after_hours = 1",
+        "commercial": "c.commercial = 1",
+    },
+}
+FILTER_LABELS = {
+    "outcome": ("Outcome", {"booked": "Booked", "callback": "Callback", "safety": "Safety",
+                            "declined": "Declined", "none": "No booking"}),
+    "label": ("Label", {"emergency": "Emergency", "scheduled": "Scheduled", "no_visit": "No visit"}),
+    "ended": ("Ended by", {"agent": "Agent", "caller": "Caller", "line": "Line", "transfer": "Transfer"}),
+    "signal": ("Signal", {"refused": "Refused", "person": "Person", "transfer": "Transfer",
+                          "hold": "Hold", "after_hours": "After hours", "commercial": "Commercial"}),
+}
+
+
+def picked_filters(params) -> dict[str, str]:
+    """The filters a request asks for, only the known ones."""
+    return {group: params[group] for group in FILTERS if params.get(group) in FILTERS[group]}
+
+
+def _calls(conn, q: str, tenants, picked: dict[str, str] | None = None) -> list[dict]:
+    """Recent calls, or the ones whose id or phone matches q and that pass every picked filter,
+    newest first."""
     digits = re.sub(r"\D", "", q)
+    conditions, params = [], []
     if len(digits) >= 4:
-        where, params = "WHERE c.caller_key LIKE ?", [f"%{digits}%"]
+        conditions.append("c.caller_key LIKE ?")
+        params.append(f"%{digits}%")
     elif q:
-        where, params = "WHERE c.id LIKE ?", [f"{q}%"]
-    else:
-        where, params = "", []
+        conditions.append("c.id LIKE ?")
+        params.append(f"{q}%")
+    for group, value in (picked or {}).items():
+        conditions.append(FILTERS[group][value])
+    where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
     rows = conn.execute(
         f"""SELECT c.id, c.tenant, c.caller_id, c.started_at, c.ended_at, c.outcome, c.safety_kind,
+                   c.end_reason, c.after_hours,
+                   (SELECT label FROM call_labels l WHERE l.call_id = c.id) AS label,
                    (SELECT count(*) FROM turns t WHERE t.call_id = c.id) AS turns,
                    (SELECT count(*) FROM tool_calls k WHERE k.call_id = c.id AND k.tool NOT LIKE 'calls.%'
                       AND k.tool != 'turn') AS tools,
@@ -90,9 +146,13 @@ def _calls(conn, q: str, tenants) -> list[dict]:
     for r in rows:
         tenant = tenants.by_slug.get(r["tenant"]) or tenants.default
         d = sorted(delays[r["id"]])
+        ended = bench_call.ENDED_BY.get(r["end_reason"] or "", ("", ""))[0] if r["ended_at"] else ""
+        length = bench_call.seconds(dict(r))
         out.append({**dict(r), "key": redact.call_key(r["id"]),
                     "local": tenant.local(parse_iso(r["started_at"])),
-                    "reply_p50": d[len(d) // 2] if d else None, "live": r["ended_at"] is None})
+                    "reply_p50": d[len(d) // 2] if d else None, "live": r["ended_at"] is None,
+                    "ended_by": ended, "seconds": length,
+                    "cost": bench_call.estimate(r["started_at"], r["ended_at"])})
     return out
 
 
@@ -107,7 +167,27 @@ def call_for(conn, key: str) -> str | None:
     return None
 
 
+def _summary_lines(conn, call_id: str) -> list[str]:
+    """The technician's summary as written (app/summary.py), one line each."""
+    row = conn.execute("SELECT lines_json FROM summaries WHERE call_id = ?", (call_id,)).fetchone()
+    if not row or not row["lines_json"]:
+        return []
+    lines = json.loads(row["lines_json"])
+    return [str(x) for x in lines] if isinstance(lines, list) else [str(lines)]
+
+
+def retell_calls(request: Request) -> bench_call.RetellCalls:
+    """The app's reader of Retell call objects, made on first use from RETELL_API_KEY."""
+    state = request.app.state
+    if getattr(state, "bench_retell", None) is None:
+        state.bench_retell = bench_call.RetellCalls(failure_grader.transcripts_from_env())
+    return state.bench_retell
+
+
 def add_routes(app: FastAPI) -> None:
+    # The bench's own stylesheet and script, apart from the owner view's (/owner/static).
+    app.mount("/bench/static", StaticFiles(directory=STATIC), name="bench-static")
+
     @app.get("/bench", response_class=HTMLResponse)
     def bench_index(request: Request, q: str = ""):
         denied = require_admin(request)
@@ -117,11 +197,13 @@ def add_routes(app: FastAPI) -> None:
         q = q.strip()[:SEARCH_MAX_CHARS]
         conn = services.connect()
         try:
-            found = _calls(conn, q, services.tenants)
-            if q and len(found) == 1:
+            picked = picked_filters(request.query_params)
+            found = _calls(conn, q, services.tenants, picked)
+            if q and not picked and len(found) == 1:
                 return RedirectResponse(f"/bench/calls/{found[0]['key']}", 303)
             context = {**_context(request, conn, "bench"), "bench_query": q, "calls": found,
-                       "live": [c for c in found if c["live"]]}
+                       "live": [c for c in found if c["live"]], "picked": picked,
+                       "filter_labels": FILTER_LABELS}
         finally:
             conn.close()
         return _render(request, "bench.html", context)
@@ -138,8 +220,30 @@ def add_routes(app: FastAPI) -> None:
             tenant = services.tenants.by_slug.get(found["call"]["tenant"]) or services.tenants.default
             stages = [dict(r) for r in conn.execute(
                 "SELECT stage, version_id, at FROM call_stages WHERE call_id = ? ORDER BY at", (call_id,))]
+            log_path = services.settings.log_path
             return {
                 **_context(request, conn, "bench"),
+                "trace": found,
+                "ended": bench_call.ended_by(found),
+                "seconds": bench_call.seconds(found["call"]),
+                "decisions": bench_call.decisions(conn, found),
+                "safety": bench_call.safety_summary(found),
+                "timing": bench_call.timing(found),
+                "stage_labels": dict(bench_call.STAGES),
+                "customers": bench_call.customers(conn, found, log_path),
+                "readback": bench_call.readback(conn, found),
+                "cost": bench_call.call_cost(conn, found),
+                "label": conn.execute("SELECT label, reason FROM call_labels WHERE call_id = ?",
+                                      (call_id,)).fetchone(),
+                "flow": (conn.execute("SELECT flow FROM call_flows WHERE call_id = ?",
+                                      (call_id,)).fetchone() or {"flow": ""})["flow"],
+                "summary_lines": _summary_lines(conn, call_id),
+                "grade": conn.execute(
+                    "SELECT failure, kind, severity, reason, error FROM grades WHERE call_id = ?",
+                    (call_id,)).fetchone(),
+                "retell_connected": retell_calls(request).connected,
+                "is_retell": call_id.startswith(bench_call.RETELL_PREFIX),
+                "heard": bench_call.heard(found, None),
                 "call": found["call"],
                 "call_id": call_id,
                 "key": key,
@@ -155,7 +259,7 @@ def add_routes(app: FastAPI) -> None:
             conn.close()
 
     @app.get("/bench/calls/{key}", response_class=HTMLResponse)
-    def bench_call(request: Request, key: str):
+    def bench_call_page(request: Request, key: str):
         denied = require_admin(request)
         if denied:
             return denied
@@ -174,6 +278,33 @@ def add_routes(app: FastAPI) -> None:
         if context is None:
             return HTMLResponse("No such call.", 404)
         return _render(request, "_bench_graph.html", context)
+
+    @app.get("/bench/calls/{key}/heard", response_class=HTMLResponse)
+    def bench_call_heard(request: Request, key: str):
+        """The transcript pane with Retell's side filled in: Retell's call object is read here, on
+        demand, never while the page itself loads."""
+        denied = require_admin(request)
+        if denied:
+            return denied
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            call_id = call_for(conn, key)
+            found = trace.timeline(conn, call_id) if call_id else None
+            if found is None:
+                return HTMLResponse("No such call.", 404)
+            retell, why_not = retell_calls(request).get(call_id)
+            context = {
+                **_context(request, conn, "bench"),
+                "heard": bench_call.heard(found, retell),
+                "retell": bench_call.retell_facts(retell),
+                "retell_missing": why_not,
+                "ended": bench_call.ended_by(found, retell),
+                "billed": bench_call.call_cost(conn, found, retell)["retell_billed"],
+            }
+        finally:
+            conn.close()
+        return _render(request, "_bench_heard.html", context)
 
     @app.get("/bench/calls/{key}/stream")
     def bench_call_stream(request: Request, key: str):
@@ -263,10 +394,41 @@ def add_routes(app: FastAPI) -> None:
                 "stack_note": bench_data.STACK_NOTE,
                 "switches": bench_data.switches(services.settings, os.environ),
                 "live_rules": rules.live(conn, tenant.slug),
+                "prompts": bench_pages.prompt_files(),
+                "capacity": bench_pages.capacity(),
+                "after_hours": bench_pages.after_hours(tenant),
             }
         finally:
             conn.close()
         return _render(request, "bench_settings.html", context)
+
+    @app.get("/bench/questions", response_class=HTMLResponse)
+    def bench_questions(request: Request):
+        denied = require_admin(request)
+        if denied:
+            return denied
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            context = {**_context(request, conn, "bench-questions"),
+                       "groups": bench_pages.questions(conn, services.tenants.default)}
+        finally:
+            conn.close()
+        return _render(request, "bench_questions.html", context)
+
+    @app.get("/bench/cost", response_class=HTMLResponse)
+    def bench_cost(request: Request):
+        denied = require_admin(request)
+        if denied:
+            return denied
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            context = {**_context(request, conn, "bench-cost"),
+                       **bench_pages.cost_rows(conn, services.tenants)}
+        finally:
+            conn.close()
+        return _render(request, "bench_cost.html", context)
 
     @app.get("/bench/evals", response_class=HTMLResponse)
     def bench_evals(request: Request, suite: str = "all"):

@@ -1,0 +1,30 @@
+{% from "_ui.html" import count, empty with context %}
+{% if retell %}
+<dl class="ledger">
+  <div><dt>Retell ended</dt><dd>{{ retell.disconnection or "-" }}</dd></div>
+  {% if retell.billed is not none %}<div><dt>Retell billed</dt><dd>${{ "%.3f" | format(retell.billed) }}</dd></div>{% endif %}
+  {% for name, p50, p90 in retell.latency %}<div><dt>{{ name | upper }} p50 / p90</dt><dd>{{ "{:,.0f}".format(p50 or 0) }} / {{ "{:,.0f}".format(p90 or 0) }} ms</dd></div>{% endfor %}
+  {% if retell.recording %}<div><dt>Recording</dt><dd><a href="{{ retell.recording }}" target="_blank" rel="noopener">Open</a></dd></div>{% endif %}
+</dl>
+{% endif %}
+<section class="panel">
+  <div class="panel-head"><h2>Server vs Retell</h2>{{ count(heard | length) }}
+    <div class="end">{% if loading is defined and loading %}<span class="tag outline">Reading Retell</span>{% elif retell %}<span class="tag done">Retell</span>{% elif retell_missing is defined and retell_missing %}<span class="tag outline" data-tip="{{ retell_missing }}">Server only</span>{% else %}<span class="tag outline">Server only</span>{% endif %}</div>
+  </div>
+  {% if heard %}
+  <div class="table-wrap"><table class="table dense heard">
+    <thead><tr><th>At</th><th>Who</th><th>Server got</th><th>Retell heard</th><th></th></tr></thead>
+    <tbody>
+      {% for r in heard %}
+      <tr class="{{ r.role }}">
+        <td class="time">{{ r.clock or r.retell_at }}</td>
+        <td class="side-cell"><span class="who-tag {{ r.role }}">{{ "Agent" if r.role == "agent" else "Caller" }}</span></td>
+        <td class="text">{{ mask(r.server) }}{% if r.safety and r.safety != "none" %} <span class="tag high">{{ r.safety | replace("_", " ") }}</span>{% endif %}</td>
+        <td class="text{% if r.differs %} muted{% endif %}">{% if loading is defined and loading %}<span class="skel" style="width: {{ [40, 70, 55, 85, 62][loop.index0 % 5] }}%"></span>{% elif r.retell %}{% if r.differs %}<span class="diff">{{ mask(r.retell) }}</span>{% else %}{{ mask(r.retell) }}{% endif %}{% else %}<span class="faint">-</span>{% endif %}</td>
+        <td class="fit right"><span class="tags">{% if r.over %}<span class="tag high">Talked over</span>{% endif %}{% if r.tail %}<span class="tag outline">Split</span>{% endif %}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}{{ empty("Nothing said yet.") }}{% endif %}
+</section>

@@ -1,0 +1,249 @@
+/* The debug bench's own stylesheet: its tokens (dark first), the sidebar shell, the call page's
+   tabs and ledgers, the timing bars and the skeletons. It shares only the component primitives in
+   /owner/static/components.css, which read these tokens; the owner view's tokens.css never loads
+   on the bench. */
+
+:root {
+  /* Surfaces, back to front. */
+  --page: #0D0E10;
+  --surface: #141518;
+  --sunken: #101113;
+  --hover: #1B1D21;
+  --selected: #1F2227;
+
+  /* Lines. */
+  --line: #24272C;
+  --line-soft: #1C1E22;
+  --line-strong: #33373D;
+
+  /* Ink, strongest to weakest. */
+  --ink: #EDEEF0;
+  --ink-2: #C8CBD0;
+  --muted: #9A9FA7;
+  --faint: #7C818A;
+  --disabled: #4A4E55;
+
+  /* The one accent: the current page, the picked tab, the primary action. */
+  --ember: #FF6236;
+  --ember-ink: #FF8C6B;
+  --ember-action: #E5502A;
+  --ember-wash: rgba(255, 98, 54, 0.12);
+  --ember-line: rgba(255, 98, 54, 0.4);
+
+  /* Status. -ink is text on -wash; the plain value is for dots and bars. */
+  --urgent: #F0574D;
+  --urgent-ink: #FF928A;
+  --urgent-wash: rgba(240, 87, 77, 0.14);
+  --urgent-line: rgba(240, 87, 77, 0.4);
+  --high: #E2B341;
+  --high-ink: #EFCB72;
+  --high-wash: rgba(226, 179, 65, 0.13);
+  --high-line: rgba(226, 179, 65, 0.4);
+  --done: #3DB57F;
+  --done-ink: #73D2A5;
+  --done-wash: rgba(61, 181, 127, 0.13);
+  --done-line: rgba(61, 181, 127, 0.4);
+  --info: #6AA3FF;
+  --info-ink: #9AC0FF;
+  --info-wash: rgba(106, 163, 255, 0.13);
+  --info-line: rgba(106, 163, 255, 0.4);
+  --neutral: #6B7078;
+  --neutral-ink: #B6BAC0;
+  --neutral-wash: #1E2125;
+
+  /* Type: the system face, so the bench reads as a tool, not the owner's product. */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 12.5px;
+  --text-md: 13px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 26px;
+  --leading-tight: 1.25;
+  --leading: 1.5;
+  --regular: 400;
+  --medium: 500;
+  --semibold: 600;
+  --bold: 700;
+  --tracking-tight: -0.01em;
+
+  /* Space, on a 4px grid. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* Shape. */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-full: 999px;
+
+  /* Sizes. Every control in a row shares --control-h. */
+  --control-h: 30px;
+  --tag-h: 20px;
+  --row-h: 36px;
+  --header-h: 0px;
+  --page-w: 1320px;
+  --gutter: 24px;
+  --side-w: 216px;
+  --field-min: 220px;
+  --icon-sm: 14px;
+  --field-w: 280px;
+  --pop-w: 320px;
+  --lane-head-w: 176px;
+  --sched-min-w: 760px;
+  --list-max-h: 280px;
+
+  /* Depth. */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px rgba(0, 0, 0, 0.55);
+  --focus: 0 0 0 3px rgba(106, 163, 255, 0.32);
+
+  /* Motion. */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --fast: 120ms;
+  --base: 200ms;
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --fast: 0ms; --base: 0ms; }
+}
+
+body.bench { background: var(--page); color: var(--ink); font-family: var(--font); }
+
+/* The few light values components.css writes out. */
+.bench .table tr.urgent-open:hover td, .bench .list li.late[data-href]:hover { background: rgba(240, 87, 77, 0.2); }
+.bench .tooltip { background: #2A2D33; color: var(--ink); }
+.bench [role="tab"][aria-selected="true"] > .count { color: var(--page); }
+
+/* ---- Shell ---------------------------------------------------------------------------- */
+
+.shell { background: linear-gradient(to right, var(--sunken) var(--side-w), var(--page) 0); display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); min-height: 100vh; }
+.shell-main { min-width: 0; }
+.bench .page { padding-top: var(--s-5); gap: var(--s-5); }
+
+.side {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--s-4);
+  padding: var(--s-4) var(--s-3); background: var(--sunken); border-right: 1px solid var(--line);
+}
+.side-brand { display: flex; align-items: center; gap: var(--s-2); height: var(--control-h); padding: 0 var(--s-2); color: var(--ink); font-weight: var(--semibold); }
+.side-brand:hover { text-decoration: none; color: var(--ink); }
+.side-brand img { border-radius: var(--r-sm); }
+.side-brand .faint { margin-left: auto; font-weight: var(--regular); font-size: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-search .field { width: 100%; }
+.side-nav { display: flex; flex-direction: column; gap: var(--s-3); }
+.side-nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.side-nav ul + ul { padding-top: var(--s-3); border-top: 1px solid var(--line-soft); }
+.side-nav a, .side-foot > a {
+  display: flex; align-items: center; gap: var(--s-2); height: var(--control-h); padding: 0 var(--s-2);
+  border-radius: var(--r-md); color: var(--muted); font-size: var(--text-sm); font-weight: var(--medium);
+}
+.side-nav a:hover, .side-foot > a:hover { background: var(--hover); color: var(--ink); text-decoration: none; }
+.side-nav a[aria-current="page"] { background: var(--selected); color: var(--ink); box-shadow: inset 2px 0 0 var(--ember); }
+.side-nav svg, .side-foot svg { width: 16px; height: 16px; flex: none; }
+.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: var(--s-2); padding-top: var(--s-3); border-top: 1px solid var(--line-soft); }
+.side-foot .status { padding: 0 var(--s-2); font-size: var(--text-xs); white-space: normal; }
+.side-foot form .btn { width: 100%; justify-content: flex-start; padding: 0 var(--s-2); }
+
+/* ---- Filter chips ---------------------------------------------------------------------- */
+
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-4); padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line); }
+.chip-group { display: flex; align-items: center; gap: var(--s-1); }
+.chip-group .label { font-size: var(--text-xs); color: var(--faint); margin-right: var(--s-1); white-space: nowrap; }
+.chip {
+  display: inline-flex; align-items: center; height: var(--control-h); padding: 0 var(--s-3);
+  border: 1px solid var(--line); border-radius: var(--r-md); font-size: var(--text-sm);
+  color: var(--muted); background: transparent; white-space: nowrap;
+}
+.chip:hover { color: var(--ink); border-color: var(--line-strong); text-decoration: none; }
+.chip[aria-current="true"] { color: var(--ink); background: var(--selected); border-color: var(--ember-line); }
+
+/* ---- Call page ------------------------------------------------------------------------- */
+
+.call-top { display: flex; flex-direction: column; gap: var(--s-3); }
+.call-top .row { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.call-top h1 { font-family: var(--mono); font-size: var(--text-lg); font-weight: var(--semibold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.call-top .row .actions { margin-left: auto; }
+
+/* The call's facts as one ruled ledger line: label above value, hairlines between. */
+.ledger { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, auto); justify-content: start; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.ledger > div { display: flex; flex-direction: column; gap: 2px; padding: var(--s-2) var(--s-5) var(--s-2) var(--s-4); border-left: 1px solid var(--line-soft); min-width: 0; }
+.ledger > div:first-child { padding-left: 0; border-left: 0; }
+.ledger dt { font-size: var(--text-xs); color: var(--faint); white-space: nowrap; }
+.ledger dd { margin: 0; font-size: var(--text-sm); font-weight: var(--medium); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.pane-tabs { display: flex; gap: var(--s-1); border-bottom: 1px solid var(--line); }
+.pane-tabs a {
+  display: inline-flex; align-items: center; gap: var(--s-2); height: 36px; padding: 0 var(--s-3);
+  color: var(--muted); font-size: var(--text-sm); font-weight: var(--medium); border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.pane-tabs a:hover { color: var(--ink); text-decoration: none; }
+.pane-tabs a[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ember); }
+.pane-tabs .count { height: 18px; min-width: 18px; font-size: 11px; }
+.pane[hidden] { display: none; }
+.pane { display: flex; flex-direction: column; gap: var(--s-5); }
+
+.kv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-5); align-items: start; }
+.kv { display: grid; grid-template-columns: 136px minmax(0, 1fr); gap: var(--s-2) var(--s-3); margin: 0; font-size: var(--text-sm); }
+.kv dt { color: var(--faint); }
+.kv dd { margin: 0; min-width: 0; }
+
+.table.dense td { padding-top: var(--s-2); padding-bottom: var(--s-2); }
+.table.dense th { height: 32px; }
+.table .mono, .mono { font-family: var(--mono); font-size: var(--text-xs); }
+.table td.say { color: var(--ink-2); max-width: 520px; }
+.table tr.alarm td:first-child { box-shadow: inset 2px 0 0 var(--urgent); }
+.who-tag { display: inline-block; min-width: 46px; font-size: var(--text-xs); color: var(--faint); }
+.who-tag.agent { color: var(--ember-ink); }
+
+/* Transcript: the server's line beside what Retell heard. */
+.heard td { width: 50%; }
+.heard td.side-cell { width: 1%; white-space: nowrap; }
+.heard .diff { background: var(--high-wash); border-radius: var(--r-sm); padding: 0 2px; }
+.heard tr.caller td.text { color: var(--ink); }
+.heard tr.agent td.text { color: var(--ink-2); }
+
+/* Timing: a reply's stages as one bar, each stage its own shade; the rest is plain line. */
+.tbar { display: flex; height: 8px; border-radius: var(--r-sm); overflow: hidden; background: var(--line-soft); min-width: 120px; }
+.tbar span { display: block; height: 100%; }
+.s-server_ms { background: #6AA3FF; }
+.s-llm_first_token_ms { background: #FF8C6B; }
+.s-quality_first_token_ms { background: #C792EA; }
+.s-tool_ms { background: #E2B341; }
+.s-hold_ms { background: #3DB57F; }
+.s-tts_first_byte_ms { background: #8BD5E8; }
+.s-other { background: #3A3E45; }
+.key { display: inline-flex; align-items: center; gap: var(--s-1); font-size: var(--text-xs); color: var(--muted); }
+.key i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.keys { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+
+/* Skeleton rows shaped like the transcript, while Retell's side loads. */
+.skel { display: block; height: 10px; border-radius: var(--r-sm); background: linear-gradient(90deg, var(--line-soft) 0%, var(--line) 50%, var(--line-soft) 100%); background-size: 200% 100%; animation: skel 1.2s linear infinite; }
+@keyframes skel { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+
+/* Questions: one ledger per group. */
+.q-table td.ev { color: var(--ink-2); }
+.q-table td.view { color: var(--faint); font-size: var(--text-sm); }
+
+@media (max-width: 960px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; flex-direction: row; flex-wrap: wrap; }
+  .side-nav { flex-direction: row; flex-wrap: wrap; }
+  .side-nav ul { flex-direction: row; }
+  .side-nav ul + ul { border-top: 0; padding-top: 0; }
+  .side-foot { margin-top: 0; flex-direction: row; border-top: 0; padding-top: 0; }
+  .ledger { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kv-grid { grid-template-columns: 1fr; }
+}

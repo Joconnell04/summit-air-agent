@@ -1,0 +1,27 @@
+{% extends "bench_base.html" %}
+{% from "_ui.html" import go with context %}
+{% block title %}Bench: questions{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head"><div class="lead"><h1 class="page-title">Questions</h1></div></div>
+  {% for g in groups %}
+  <section class="panel">
+    <div class="panel-head"><h2>{{ g.group }}</h2><span class="count">{{ g["items"] | length }}</span></div>
+    <div class="table-wrap"><table class="table dense q-table fixed">
+      <colgroup><col style="width: 200px"><col><col style="width: 140px"><col style="width: 32px"></colgroup>
+      <thead><tr><th>Question</th><th>Evidence</th><th>Where</th><th></th></tr></thead>
+      <tbody>
+        {% for q in g["items"] %}
+        <tr{% if q.link %} data-href="{{ q.link }}"{% endif %}>
+          <td><span class="what">{% if q.link %}<a href="{{ q.link }}">{{ q.name }}</a>{% else %}{{ q.name }}{% endif %}</span></td>
+          <td class="ev" title="{{ q.evidence }}">{% if q.evidence.startswith("docs/") %}<code>{{ q.evidence }}</code>{% else %}{{ q.evidence }}{% endif %}</td>
+          <td class="view">{{ q.view }}</td>
+          <td class="go">{% if q.link %}{{ go() }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  {% endfor %}
+</main>
+{% endblock %}

@@ -1,7 +1,6 @@
-{% extends "base.html" %}
-{% from "_ui.html" import bench_tabs, basis with context %}
+{% extends "bench_base.html" %}
+{% from "_ui.html" import basis with context %}
 {% block title %}Bench: settings{% endblock %}
-{% block tabs %}{{ bench_tabs(tab) }}{% endblock %}
 {% macro price(p) -%}{% if p.input is defined %}${{ "%.2f" | format(p.input) }} / ${{ "%.2f" | format(p.output) }}{% else %}<span class="faint">-</span>{% endif %}{%- endmacro %}
 {% macro profile_table(rows, marks) -%}
 <div class="table-wrap">
@@ -28,13 +27,12 @@
 <main class="page">
   <div class="page-head">
     <div class="lead">
-      <div class="crumbs">Debug bench<span>/</span><span>config/models.yaml and the server's environment, read live</span></div>
-      <h1 class="page-title">Settings</h1>
+            <h1 class="page-title">System</h1>
     </div>
   </div>
 
   <section class="panel">
-    <div class="panel-head"><h2>Voice and turn-taking</h2><span class="count">{{ knobs | length }}</span><span class="sub">each knob with the measurement docs/tuning.md and docs/latency.md give it</span></div>
+    <div class="panel-head"><h2>Voice knobs</h2><span class="count">{{ knobs | length }}</span></div>
     <div class="table-wrap">
       <table class="table">
         <thead><tr><th>Setting</th><th>Where</th><th class="right">Now</th><th>Documented</th><th>Basis</th><th>Source</th></tr></thead>
@@ -66,13 +64,12 @@
   </section>
 
   <section class="panel">
-    <div class="panel-head"><h2>Live model profiles</h2><span class="sub">the voice worker runs MODEL_PROFILE, or the default</span></div>
+    <div class="panel-head"><h2>Live models</h2></div>
     {{ profile_table(pr.live, [("Live", pr.active), ("Default", pr.default)]) }}
   </section>
 
-  <div class="split wide-side">
     <section class="panel">
-      <div class="panel-head"><h2>Side models</h2><span class="sub">the vulnerable-person read beside the call</span></div>
+      <div class="panel-head"><h2>Side models</h2></div>
       {{ profile_table(pr.side, []) }}
     </section>
     <section class="panel">
@@ -90,11 +87,35 @@
       </div>
       <div class="panel-foot">Secrets show only whether they are set.</div>
     </section>
-  </div>
 
   <section class="panel">
-    <div class="panel-head"><h2>Off the live path</h2><span class="sub">the eval caller and grader, the technician summary, the owner edit check</span></div>
+    <div class="panel-head"><h2>Offline models</h2></div>
     {{ profile_table(pr.offline, []) }}
+  </section>
+  <div class="split">
+    <section class="panel" id="prompt">
+      <div class="panel-head"><h2>Prompt</h2><span class="count">{{ prompts | length }}</span><span class="sub">prompts/</span></div>
+      <div class="table-wrap"><table class="table dense">
+        <thead><tr><th>File</th><th class="right">Lines</th><th>Sections</th></tr></thead>
+        <tbody>{% for f in prompts %}
+          <tr><td class="fit"><code>{{ f.name }}</code></td><td class="fit right num">{{ f.lines }}</td><td class="muted small">{{ f.heads | join(", ") | truncate(140) or "-" }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+    </section>
+    <section class="panel" id="after-hours">
+      <div class="panel-head"><h2>After hours</h2><span class="sub">agent.yaml</span></div>
+      <div class="panel-body"><dl class="kv">{% for label, value in after_hours %}<dt>{{ label }}</dt><dd class="num">{{ value }}</dd>{% endfor %}</dl></div>
+    </section>
+  </div>
+
+  <section class="panel" id="capacity">
+    <div class="panel-head"><h2>Capacity</h2><span class="count">{{ capacity | length }}</span><span class="sub">docs/scaling.md</span></div>
+    <div class="table-wrap"><table class="table dense">
+      <thead><tr><th>Part</th><th>On</th><th>Limit at once</th><th>Source</th></tr></thead>
+      <tbody>{% for c in capacity %}
+        <tr><td class="fit"><span class="what">{{ c.part }}</span></td><td class="muted">{{ c.on }}</td><td>{{ c.limit }}</td><td class="muted small">{{ c.source }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
   </section>
 </main>
 {% endblock %}

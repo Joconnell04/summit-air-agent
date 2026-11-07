@@ -41,7 +41,7 @@ Every rule that must happen lives in server code, never only in the prompt; a fl
 
 ## Debug a call
 
-1. Find the call: the owner view's Calls page, or the bench, both list every call with its label.
+1. Find the call: the owner view's Calls page, or the bench (`/bench`), which filters by outcome, label, who ended the call and signals (refused, person, transfer, hold, after hours, commercial). The bench's call page has six tabs: Summary (bookings against the read-back, the customer matched, what the technician gets), Why (each server decision with its rule and source), Transcript (the server's lines beside what Retell heard, talked-over lines marked), Timing (each reply's stages), Steps (the step graph and rule proof) and Replay. The bench's Questions page maps the interview walkthrough's questions to that evidence.
 2. `make trace CALL=<id>` prints its timeline: each caller line, each tool call with its arguments and result, and what was said.
 3. The bench's **Checks** tab runs the Opus failure grader on one call, the past hour or the past day, and flags only real failures (DECISIONS 120).
 4. Retell's own record of the call (`GET /v2/get-call/<id>`) has the audio, per-turn latency and the transcript with tool calls.
