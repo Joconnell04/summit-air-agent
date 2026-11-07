@@ -111,11 +111,13 @@ def test_signing_in_from_the_bench_comes_back_to_it(agent):
     assert response.headers["location"] == "/bench/settings"
 
 
-def test_only_an_admin_sees_the_bench_tab_on_the_owner_view(agent):
+def test_the_bench_is_a_button_on_settings_for_admins_and_not_a_tab(agent):
+    """Jackson, 7 November: the bench is his tool, not the owner's, so it leaves the tab bar."""
     sign_in(agent, "staff", "sam")
-    assert 'href="/bench"' not in agent.client.get("/owner").text
+    assert 'href="/bench"' not in agent.client.get("/owner/settings").text
     admin(agent)
-    assert 'href="/bench"' in agent.client.get("/owner").text
+    assert 'href="/bench"' not in agent.client.get("/owner").text
+    assert 'href="/bench"' in agent.client.get("/owner/settings").text
 
 
 # ---- redaction -----------------------------------------------------------------------------

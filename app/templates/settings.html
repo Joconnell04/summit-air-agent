@@ -9,6 +9,7 @@
       <div class="crumbs">Settings<span>/</span><span>{% if is_admin %}Admin{% else %}View only{% endif %}</span></div>
       <h1 class="page-title">Settings</h1>
     </div>
+    {% if is_admin %}<div class="actions"><a class="btn" href="/bench">Open debug bench</a></div>{% endif %}
   </div>
 
   <form class="panel" id="calls" method="post" action="/owner/settings{{ q(slug) }}">
