@@ -615,3 +615,14 @@ def test_events_for_an_ignored_agent_never_start_a_call(bridge, tool_app):
     assert bridge.webhook({"event": "call_started", "call": hold})
     assert bridge.webhook({"event": "call_ended", "call": hold})
     assert rows(tool_app, "SELECT id FROM calls WHERE id = 'retell_hold1'") == []
+
+
+def test_the_inbound_webhook_for_an_ignored_agent_never_starts_a_call(bridge, client, tool_app):
+    """Phone check t4, 6 November: the transfer rang the hold line, its inbound webhook opened
+    retell_call_25ac4d83de242f13b41439035c8, and nothing closed it."""
+    bridge.ignored_agents = {"agent_hold"}
+    body = {"event": "call_inbound", "call_inbound": {
+        "call_id": "hold2", "agent_id": "agent_hold", "from_number": "+15162129051",
+        "to_number": "+16783366730"}}
+    assert signed(client, "/retell/inbound", body).status_code == 200
+    assert rows(tool_app, "SELECT id FROM calls WHERE id = 'retell_hold2'") == []

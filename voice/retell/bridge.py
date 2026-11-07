@@ -269,6 +269,10 @@ class Bridge:
         from it. Never rejects a call; if the tool server is down, the agent says so and the call
         ends, as on the LiveKit stack."""
         inbound = event.get("call_inbound") or {}
+        if inbound.get("agent_id") in self.ignored_agents:
+            # The hold line a transfer rings: its inbound webhook started a call record that no
+            # event ever closed, since its events are ignored (phone check t4, 6 November).
+            return {"call_inbound": {}}
         rid = inbound.get("call_id", "")
         call_id = PREFIX + rid
         flow = "server_led" if inbound.get("agent_id") in self.server_led_agents else ""
