@@ -185,7 +185,13 @@ def test_facts_that_raise_the_priority_dispatch_at_find_slots(agent, monkeypatch
     calm["on"] = False
     found = agent.tool("find_slots", call, job_type="no_heat")
     assert found["data"]["dispatched"], found
-    assert "Is that the right address?" in found["say"]
+    # The caller already confirmed the read-back: the dispatch sentence goes on to the arrival
+    # question instead of asking about the address again (Jackson: "it asked me to confirm my
+    # address too many times"; the A/B of 6 November saw it on every confirmed dispatch).
+    assert "Is that the right address?" not in found["say"]
+    arrival = agent.start(UNKNOWN)["data"]["tenant"]["arrival_question"]
+    assert found["say"].endswith(arrival)
+    assert "Wait for the answer" in found["data"]["next"]
 
 
 def test_a_dispatched_job_is_tagged_urgent_in_the_crm(agent):

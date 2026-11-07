@@ -443,7 +443,7 @@ NAME_ECHO = re.compile(
 # code is 1 1 2 0 1", digit by digit.
 ZIP_WORD = re.compile(r"\bZIP(?P<rest>\s+code(?:\s+is)?|:)?\s+(?P<digits>\d{5})\b", re.IGNORECASE)
 # The last four of a phone number, said digit by digit: "ending in 6730" was read as "six thousand
-# seven hundred and thirty" (leak replay t5), and "ends in 6730" too (no-heat call t6, 6 November).
+# seven hundred and thirty" (leak replay t5, 6 November).
 ENDING_IN = re.compile(r"\b(?P<lead>(?:ending|ends) (?:in|with))\s+(?P<digits>\d{4})\b",
                        re.IGNORECASE)
 # "No problem" with nothing to answer: only after a thank-you or an apology (Jackson's call on the

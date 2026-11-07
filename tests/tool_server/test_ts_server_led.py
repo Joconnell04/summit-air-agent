@@ -433,6 +433,25 @@ def test_the_catch_all_drops_an_example_the_caller_already_gave():
     )
 
 
+def test_the_catch_all_names_what_the_caller_described_and_adds_no_example():
+    """Leak replay t5, 6 November: told to start "Besides the leak", the model asked "like the
+    banging or the boiler shutting off?" after the caller said it was banging. The server now
+    writes the whole question."""
+    from app import flow
+
+    q = "Anything else the technician should know, like banging pipes or it shutting off on its own?"
+    said = " my boiler is making this banging noise its actually leaking right now "
+    assert flow._catch_all(q, said) == (
+        "Besides the banging and the leak, anything else the technician should know, like it "
+        "shutting off on its own?"
+    )
+    assert flow._catch_all(q, " my heat is out and its not leaking ") == q
+    # Review of tick 5: loose stems and a one-word negation named what the caller never said.
+    assert flow._catch_all(q, " the thermostat screen is blank ") == q
+    assert not flow._catch_all(q, " i dont hear any banging but the drip pan is full ").startswith(
+        "Besides")
+
+
 def test_how_bad_after_a_symptom_is_one_sentence_from_the_server(led):
     """Leak replays t1 and t5, 6 November: the line said "Is it still cooling" on a heating call,
     so the model asked "Is the leak still happening?" after "it's actually leaking right now"."""
@@ -447,7 +466,23 @@ def test_how_bad_after_a_symptom_is_one_sentence_from_the_server(led):
         text = flow._next(ctx, "find_address", None, Result(ok=True, data={"needs_unit": False}))
     finally:
         conn.close()
-    assert "'Is the system still working, or has it stopped?'" in text
+    assert "word for word: 'You mentioned the banging. Is the system still working, or has it " \
+        "stopped?'" in text
     assert "Is it still cooling" not in text
-    # The banging the caller gave is out of the catch-all's examples.
-    assert "like it shutting off on its own?" in text and "banging pipes" not in text
+
+
+def test_how_bad_is_skipped_when_the_caller_already_said(led):
+    """A/B of 6 November (48 runs a side): the how-bad question was the most common re-ask, after
+    "the heat's still on" or "it's still warm". The step says to skip it then."""
+    from app.envelope import Result
+
+    call = led.start()["data"]["call_id"]
+    led.turn(call, "There's water dripping from under my boiler, but the heat's still on.")
+    conn = led.db()
+    try:
+        ctx = type("Ctx", (), {"tenant": Tenant.load(TENANT_DIR), "conn": conn,
+                               "call": {"id": call}})()
+        text = flow._next(ctx, "find_address", None, Result(ok=True, data={"needs_unit": False}))
+    finally:
+        conn.close()
+    assert "unless they already said whether it's still working or out" in text

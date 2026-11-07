@@ -2998,6 +2998,8 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
     its visit waits until the problem is shut off. None when the call doesn't dispatch, and
     read_back reads its own sentence."""
     safety_dispatch = _safety_dispatch(ctx, job_type)
+    # A read-back the caller already confirmed isn't asked about again in the dispatch sentence.
+    heard_back = bool(ctx.call["readback_confirmed_at"])
     if job_type not in ctx.tenant.job_types:
         return None
     if job_type not in _dispatch_types(ctx) and not safety_dispatch:
@@ -3068,7 +3070,7 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
             "INSERT INTO dispatches (call_id, booking_id, job_type, at) VALUES (?, ?, ?, ?)",
             (ctx.call["id"], row["id"], job_type, iso(ctx.now)),
         )
-    sentence = _dispatch_said(ctx, window, current, on_call)
+    sentence = f"{_dispatch_said(ctx, window, current, on_call)} {_dispatch_tail(ctx, heard_back)}"
     note = ""
     if safety_dispatch and ctx.tenant.safety.get("booking_note"):
         # The visit goes ahead only once the problem is checked and safe, said before the
@@ -3090,7 +3092,7 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
         window=booked.data["window"],
         priority=booked.data["priority"],
         on_call=on_call,
-        next=_after_dispatch(ctx),
+        next=_after_dispatch(ctx, checking=not heard_back),
     )
 
 
@@ -3174,10 +3176,33 @@ def _wait_said(minutes: int) -> str:
     return said + {0: "", 1: " and fifteen minutes", 2: " and a half", 3: " and forty-five minutes"}[rest]
 
 
-def _after_dispatch(ctx: Ctx) -> str:
+def _access_missing(ctx: Ctx) -> list[str]:
     # Getting in is asked only for what the caller hasn't said yet: phone check t2 gas-now (6
     # November) heard "Someone will be home, no gate code" with the address, then was asked again.
-    missing = [k for k in flow.visit_questions_missing(ctx) if k != "ask_approval"]
+    return [k for k in flow.visit_questions_missing(ctx) if k != "ask_approval"]
+
+
+def _dispatch_tail(ctx: Ctx, heard_back: bool) -> str:
+    """How the dispatch sentence ends: the address check when it is also the read-back; after a
+    read-back the caller confirmed, the arrival question, or "Anything else" when they said how
+    the technician gets in."""
+    if not heard_back:
+        return ctx.tenant.line("dispatch_check")
+    missing = _access_missing(ctx)
+    return flow.question_line(ctx, missing) if missing else "Anything else I can help with?"
+
+
+def _after_dispatch(ctx: Ctx, checking: bool = True) -> str:
+    missing = _access_missing(ctx)
+    if not checking:
+        if not missing:
+            return "Wait for the caller. " + flow.ANYTHING_ELSE
+        return (
+            "Wait for the answer. A plain yes means someone is home and there is no code; if no "
+            "one will be home, ask how the technician can get in. Save what they say with "
+            "add_note (attach_to job), then say \"Okay, you're all set. Anything else I can help "
+            "with?\". Don't offer times, read back again or ask who approves the work."
+        )
     if missing:
         # A caller who asks what the technician needs ("is there a gate code I need to give?")
         # is asking this question: Brian dodged it twice (leak replays t3 and t5, 6 November).

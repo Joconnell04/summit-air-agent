@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 133. The server keeps writing the symptom questions; tested against fixed sentences
+
+Decided: keep the word map in `app/flow.py` that names what the caller described in the catch-all ("Besides the banging and the leak, anything else ...") and in the how-bad question, and add one instruction: skip how bad when the caller already said whether it is still working. The dispatch sentence no longer asks "Is that the right address?" once the caller confirmed the read-back.
+Why: in 96 scripted runs through the real socket (48 a side, after hours and midday), the word map had 6 real re-asks of these questions against 13 with fixed sentences (MEASURED, hand-judged, evals/rounds/symptom-questions-ab-01.md). A whole sentence from the server is said as written; one with room to fill gets rewritten.
+Considered: fixed sentences only (simpler, no word list, twice the re-asks); a side-model check of what the caller already said (not built; worth it if the list keeps missing symptoms).
+Would change if: live calls show the list naming something the caller didn't say, or missing common symptoms; the earlier stripped version is commit d49d9c1.
+Discussion: evals/rounds/symptom-questions-ab-01.md
+
 ## 132. Equipment questions are answered from five pages by embedding search; the Sonnet hand-off is built and left off
 
 Decided: `lookup_hvac_info` searches five short pages (heating, cooling, air and ventilation, thermostats and symptoms, and the earlier basics) by meaning: the question is embedded with OpenAI's small embedding model and compared with 74 passages embedded once and committed (`tenants/summit-air/knowledge/lookup-index.json`). `KNOWLEDGE_SEARCH=keyword` rolls back to the old word-overlap search, which is also what runs when the key is missing, the request takes over 1.5 s or the index no longer matches the pages. The result is plain facts; the file names go in `data.log`, which the model never sees, and the reply rule drops any sentence about "the document", "the text", "reference text", "the knowledge base" or "ignore that". `SONNET_HANDOFF=1` makes the quality model write the reply after a lookup that found facts (twice a call at most, after a filler line, back to the live model if its first word takes over 2.5 s). It stays off.

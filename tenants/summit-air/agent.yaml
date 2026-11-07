@@ -572,12 +572,15 @@ lines:
   # Emergency dispatch (DECISIONS.md 123): the server books the soonest technician at the read-back
   # and this sentence is the read-back. {address} is said as read_back says it, {last_four} digit by
   # digit, {eta} is dispatch_within_hour or "by 2:30 PM today".
-  dispatch_now: We'll get a technician out to you right away at {address}. Expect them {eta}, and we'll call the number ending in {last_four} if anything changes. Is that the right address?
-  dispatch_soonest: The soonest we can get a technician out to you at {address} is {eta}. We'll call the number ending in {last_four} if anything changes. Is that the right address?
+  dispatch_now: We'll get a technician out to you right away at {address}. Expect them {eta}, and we'll call the number ending in {last_four} if anything changes.
+  dispatch_soonest: The soonest we can get a technician out to you at {address} is {eta}. We'll call the number ending in {last_four} if anything changes.
   dispatch_within_hour: within the next hour
+  # Ends a dispatch sentence that is also the read-back. Left off when the caller already
+  # confirmed the read-back (Jackson: "it asked me to confirm my address too many times").
+  dispatch_check: Is that the right address?
   # After hours, when the on-call technician goes out tonight. {minutes} is spoken, "twenty".
-  dispatch_on_call: Our on-call technician will call you within {minutes} minutes and head out to you at {address}. We'll call the number ending in {last_four} if anything changes. Is that the right address?
-  dispatch_on_call_busy: Our on-call technicians are both out on jobs right now, so the first one free will call you and head to {address} after their current job, in about {wait}. We'll call the number ending in {last_four} if anything changes. Is that the right address?
+  dispatch_on_call: Our on-call technician will call you within {minutes} minutes and head out to you at {address}. We'll call the number ending in {last_four} if anything changes.
+  dispatch_on_call_busy: Our on-call technicians are both out on jobs right now, so the first one free will call you and head to {address} after their current job, in about {wait}. We'll call the number ending in {last_four} if anything changes.
   # Said once when the caller's own facts raised the priority below Urgent (Jackson: "it makes them
   # feel heard").
   raised_priority: Thanks for telling me. I've moved you up so you'll get one of our earlier openings.
@@ -606,8 +609,8 @@ lines:
   ask_system_type_cooling: Is it central air, a mini-split, or a window or wall unit?
   # How bad, in the caller's words, when they named a symptom (Jackson's call 046f37).
   # Leak replays t1 and t5, 6 November: "Is it still cooling" on a heating call let the model
-  # ask "Is the leak still happening?" after "it's leaking right now". One sentence for both.
-  ask_how_bad_symptom: Is the system still working, or has it stopped?
+  # ask "Is the leak still happening?" after "it's leaking right now". {symptom} is "the leak".
+  ask_how_bad_symptom: You mentioned {symptom}. Is the system still working, or has it stopped?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
   # has no booking yet (DECISIONS.md 085). {unit} is "5C".
   next_unit: Now let's set up apartment {unit}.
