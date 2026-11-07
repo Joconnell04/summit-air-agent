@@ -25,6 +25,8 @@ FILLER_SUMMARIES = ("Booked by phone.", "Replacement estimate.")
 SERVICE_UNIT, INSTALL_UNIT = 11, 12
 CANCEL_REASON = 401  # "Customer cancelled" (config.yaml cancel_reasons)
 WEEKEND_HOURS = ("08:00", "20:00")
+# Service technicians on a day's schedule: half the 36, as the seed staffs a weekday.
+ON_SHIFT = 18
 
 
 def day_bounds(cfg: TenantConfig, day: date) -> tuple[str, str]:
@@ -56,10 +58,16 @@ def weekday_hours(i: int) -> tuple[str, str]:
     return ("08:00", "16:00") if group < 4 else ("12:00", "20:00") if group < 7 else ("08:00", "20:00")
 
 
+def on_rota(i: int, day: date) -> bool:
+    """The seed's rota: half the service technicians (and advisors) work a day, by turns."""
+    return (i + day.toordinal()) % 2 == 0
+
+
 def add_shifts(conn: sqlite3.Connection, cfg: TenantConfig, first: date, days: int) -> int:
-    """Shifts for every technician with none that day: weekdays as the seed staffs them, and
-    weekends with two in three service technicians on all day. A technician who already has a
-    shift that day keeps it as it is. Returns the number added."""
+    """Shifts for the technicians on the seed's rota who have none that day: weekdays at the
+    seed's hours, weekends all day, until ON_SHIFT service technicians work it, so a day's schedule
+    stays about 20 rows with the advisors. A technician who already has a shift keeps it as it is.
+    Returns the number added."""
     service, advisors = technicians(conn, SERVICE_UNIT), technicians(conn, INSTALL_UNIT)
     all_skilled = [
         t["id"] for t in service if {"heating", "cooling"} <= set(json.loads(t["skills_json"]))
@@ -68,17 +76,19 @@ def add_shifts(conn: sqlite3.Connection, cfg: TenantConfig, first: date, days: i
     for offset in range(days):
         day = first + timedelta(days=offset)
         weekend = day.weekday() >= 5
+        working = sum(has_shift(conn, cfg, t["id"], day, "Normal") for t in service)
         for i, tech in enumerate(service):
-            if weekend and i % 3 == 2:
-                continue
-            if has_shift(conn, cfg, tech["id"], day, "Normal"):
+            if working >= ON_SHIFT:
+                break
+            if not on_rota(i, day) or has_shift(conn, cfg, tech["id"], day, "Normal"):
                 continue
             start, end = WEEKEND_HOURS if weekend else weekday_hours(i)
             wk.add_shift(conn, cfg, tech["id"], day, start, end)
+            working += 1
             added += 1
         if not weekend:
-            for tech in advisors:
-                if not has_shift(conn, cfg, tech["id"], day, "Normal"):
+            for i, tech in enumerate(advisors):
+                if on_rota(i, day) and not has_shift(conn, cfg, tech["id"], day, "Normal"):
                     wk.add_shift(conn, cfg, tech["id"], day, "08:00", "16:00")
                     added += 1
         # One on-call technician a night, rotating weekly like the seed.
