@@ -1,6 +1,6 @@
 """The schedule as ServiceTitan holds it, and the edits a person makes to it from the owner view or
 the bench (issue #152): block a window, add an event or a job, change a job, change a customer's
-name or phone number.
+name or phone number, and from the bench only, cancel a job (issue #191).
 
 Everything here reads and writes through the FSM adapter the tools use, never the mock's database,
 so the next find_slots, find_customer or call start sees the change. Each write clears the slot
@@ -9,7 +9,8 @@ start and find_customer read ServiceTitan live and have no cache to clear.
 
 Every write, taken or refused, is logged in schedule_edits with who made it. Nothing here deletes a
 record or changes more than the one window, job or customer asked for: a block is taken off the
-schedule, not deleted, and a whole-shop block is one block per technician on shift in that window.
+schedule and a job is cancelled, neither deleted, and a whole-shop block is one block per
+technician on shift in that window.
 Who may make which edit is checked here as well as in the routes.
 """
 
@@ -224,16 +225,26 @@ def day(
             row.append({"window": window["id"], "state": state, **found})
         rows.append({"id": tech_id, "name": name, "cells": row})
 
-    offered = {}
+    # find_slots offers arrival windows of the company's window length (half an hour for Summit
+    # Air), not the grid's columns: each column counts the offered windows that start inside it
+    # and the technician openings across them.
+    for window in windows:
+        window["offered"], window["openings"] = {}, {}
     for level in AGENT_LEVELS:
         job_type = typical_job_type(tenant, level)
         if job_type is None:
             continue
         for w in tools.open_windows(tenant, fsm, cache, now, job_type, level):
-            if w["date"] == on.isoformat():
-                offered.setdefault(w["window"], {})[level] = len(w["technician_ids"])
-    for window in windows:
-        window["offered"] = offered.get(window["id"], {})
+            if w["date"] != on.isoformat():
+                continue
+            begins = parse_iso(w["start"])
+            column = next((c for c in windows if c["start"] <= begins < c["end"]), None)
+            if column is None:
+                continue
+            column["offered"][level] = column["offered"].get(level, 0) + 1
+            column["openings"][level] = (
+                column["openings"].get(level, 0) + len(w["technician_ids"])
+            )
     groups: dict[str, int] = {}
     for row in rows:
         for c in row["cells"]:
@@ -242,6 +253,15 @@ def day(
                     groups[b["ref"]] = groups.get(b["ref"], 0) + 1
     return {"day": on, "windows": windows, "rows": rows, "groups": groups}
 
+
+def offers(g: dict) -> dict:
+    """What find_slots would offer on the grid's day at normal priority: the arrival windows it
+    offers, and the technician openings across them (a window two technicians could take is two)."""
+    # A column that has started can still hold windows later in it; find_slots drops the past.
+    return {
+        "windows": sum(w["offered"].get("Normal", 0) for w in g["windows"]),
+        "openings": sum(w["openings"].get("Normal", 0) for w in g["windows"]),
+    }
 
 def _span(value: str) -> timedelta:
     """ServiceTitan's time span, [d.]hh:mm:ss."""
@@ -673,6 +693,32 @@ def edit_job(
 
     return _run(conn, tenant, cache, who, now, "edit_job", target, f"Changed job {job_id}", write)
 
+
+def cancel_job(
+    conn, fsm: FsmAdapter, cache: SlotCache, tenant: Tenant, who: Who, now: datetime, job_id: int
+) -> str:
+    """Cancel an open job in ServiceTitan with the company's cancel reason, so its window opens up
+    again for find_slots. Admins only, from the bench: it is a test of the schedule, not something
+    the owner view offers."""
+    target = f"job {job_id}"
+
+    def write():
+        if not who.is_admin:
+            raise EditError("Only an admin can cancel a job.")
+        current = job_detail(fsm, tenant, job_id, now)
+        if not current["open"]:
+            raise EditError("That job is already closed.")
+        done = fsm.cancel_job(
+            _key(), job_id, tenant.fsm["cancel_reason_id"], f"Cancelled on the bench by {who.name}"
+        )
+        name = tenant.job_types.get(current["type"], {}).get("name", "job").lower()
+        return (
+            job_id,
+            done.get("modifiedOn"),
+            f"Cancelled job {current['number']}, {name} for {current['customer']['name']}",
+        )
+
+    return _run(conn, tenant, cache, who, now, "cancel_job", target, f"Cancelled job {job_id}", write)
 
 def edit_customer(
     conn, fsm: FsmAdapter, cache: SlotCache, tenant: Tenant, who: Who, now: datetime,

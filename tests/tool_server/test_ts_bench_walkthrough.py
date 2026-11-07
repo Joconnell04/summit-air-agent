@@ -232,7 +232,7 @@ def test_cost_uses_the_measured_rates_and_retells_bill_when_read(agent):
 
 # ---- Questions, Cost, System -----------------------------------------------------------------
 
-def test_every_question_has_evidence_and_its_links_open(agent):
+def test_every_question_has_an_answer_evidence_and_its_links_open(agent):
     gas_call(agent)
     timed_call(agent)
     conn = agent.db()
@@ -241,12 +241,14 @@ def test_every_question_has_evidence_and_its_links_open(agent):
     finally:
         conn.close()
     items = [i for g in groups for i in g["items"]]
-    names = {i["name"] for i in items}
-    for needed in ("Hazard smell", "Wants a human", "Hangs up on callers", "Cost per call", "2am Sunday",
-                   "200 calls at once", "Quotes a price", "Spanish", "Stack and latency", "Barge-in"):
-        assert needed in names
-    assert all(i["evidence"] for i in items)
-    gas = next(i for i in items if i["name"] == "Hazard smell")
+    asked = {i["q"] for i in items}
+    for needed in ("A caller reports a hazard?", "The caller wants a person?", "Does it hang up on people?",
+                   "What does a call cost?", "2am on a Sunday, freezing?", "A heat-wave rush?",
+                   "Will it quote a price?", "Spanish?", "How fast does it answer?"):
+        assert needed in asked
+    assert all(i["answer"] and i["evidence"] for i in items)
+    assert all(i["answer"].endswith(".") for i in items), "each answer is one sentence"
+    gas = next(i for i in items if i["q"] == "A caller reports a hazard?")
     assert gas["evidence"].startswith("1 calls, lines in")
     for i in items:
         if i["link"]:
@@ -257,15 +259,16 @@ def test_every_question_has_evidence_and_its_links_open(agent):
 def test_the_cost_page_lists_each_ended_call(agent):
     call = timed_call(agent)
     page = agent.client.get("/bench/cost").text
-    assert redact.call_key(call) in page and "Voice, per minute" in page and "Measured" in page
+    assert redact.call_key(call) in page and "Voice, per minute" in page
+    assert "Stacks we tested" in page and "data-chart" in page
 
 
-def test_system_shows_the_prompt_files_after_hours_and_capacity(agent):
+def test_system_shows_what_the_live_call_runs_and_no_unused_model(agent):
     page = agent.client.get("/bench/settings").text
-    assert 'id="prompt"' in page and "spine.md" in page
-    assert "On-call techs" in page
-    assert 'id="capacity"' in page and "Cartesia" in page
-    assert bench_pages.capacity(), "docs/scaling.md's limits table is read"
+    assert "On-call techs" in page and "Voice knobs" in page and "(516)" in page
+    assert "jev" not in page.lower(), "a side model that is off isn't listed"
+    for cut in ('id="capacity"', 'id="prompt"', "<th>Basis</th>", "spine.md"):
+        assert cut not in page
 
 
 def test_the_bench_uses_the_sidebar_on_every_page(agent):

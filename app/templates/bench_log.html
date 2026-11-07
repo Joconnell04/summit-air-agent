@@ -1,0 +1,33 @@
+{% extends "bench_base.html" %}
+{% from "_ui.html" import empty, count with context %}
+{% block title %}Bench: log {{ mask(call_id) }}{% endblock %}
+{% block body %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs"><a href="/bench">Calls</a><span>/</span><a href="/bench/calls/{{ key }}#steps">{{ mask(call_id) }}</a><span>/</span><span>Log</span></div>
+      <h1 class="page-title">Log</h1>
+    </div>
+    <div class="actions"><a class="btn" href="/bench/calls/{{ key }}/log.json" download>JSON</a></div>
+  </div>
+  <section class="panel">
+    <div class="panel-head"><h2>Requests</h2>{{ count(rows | length) }}{% if rows | length >= cap %}<span class="sub">newest {{ cap }}</span>{% endif %}</div>
+    {% if rows %}
+    <ol class="log-rows">
+      {% for r in rows %}
+      <li><details>
+        <summary>
+          <span class="time">{{ r.ts[11:19] }}</span>
+          <span class="what mono">{{ r.tool }}</span>
+          {% if r.error %}<span class="tag urgent">Error</span>{% elif not r.ok %}<span class="tag high">Refused</span>{% elif r.gate %}<span class="tag outline">{{ r.gate | replace("_", " ") }}</span>{% endif %}
+          <span class="say">{{ mask(r.say) }}</span>
+          <span class="end num muted">{{ "{:,.0f}".format(r.ms) }} ms</span>
+        </summary>
+        <pre class="tech-block scroll">{{ r.pretty }}</pre>
+      </details></li>
+      {% endfor %}
+    </ol>
+    {% else %}{{ empty("No log lines for this call on this server.") }}{% endif %}
+  </section>
+</main>
+{% endblock %}

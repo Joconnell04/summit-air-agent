@@ -15,8 +15,10 @@ import sqlite3
 import threading
 from datetime import datetime
 
-from . import consistency, cost, failure_grader
+from . import consistency, cost, failure_grader, lookup
 from .db import parse_iso
+from .fsm import FsmRejected, FsmUnavailable
+from .text import phone_display
 
 RETELL_PREFIX = failure_grader.RETELL_PREFIX
 
@@ -48,10 +50,36 @@ SAFETY_ACTIONS = {
     "ask_check": "Safety check question",
     "cleared": "Safety cleared",
 }
+SAFETY_HEARD = {
+    "speak_lines": "Hazard heard",
+    "speak_variant": "Hazard heard again",
+    "ask_check": "Possible hazard, asked to check",
+    "cleared": "Caller said there is no hazard",
+}
 # A priority rule's source, from its name in bookings.priority_rules (app/priority.py).
 SIDE_MODEL_RULE = "side_model"
 QUOTE = re.compile(r'caller said "(.*)"')
 LIFECYCLE = {"calls.start", "calls.end", "calls.transfer", "calls.recording", "turn"}
+# Each tool as the Why tab says it: what the agent asked the server to do.
+TOOL_WORDS = {
+    "find_customer": "Look up the caller",
+    "get_customer_history": "Read the customer's history",
+    "check_service_area": "Check the service area",
+    "find_address": "Look up the address",
+    "find_slots": "Find open times",
+    "read_back": "Read back the address and phone",
+    "book_appointment": "Book the visit",
+    "reschedule_appointment": "Move the visit",
+    "cancel_appointment": "Cancel the visit",
+    "record_move": "Record a move",
+    "flag_person": "Flag for a person",
+    "request_transfer": "Put the caller through",
+    "record_lead": "Store a lead",
+    "add_note": "Add a note for the tech",
+    "mark_do_not_call": "Mark do not call",
+    "end_call": "End the call",
+    "lookup_hvac_info": "Answer an equipment question",
+}
 
 
 def clock(start: datetime, at: str | None) -> str:
@@ -95,12 +123,21 @@ def ended_by(trace: dict, retell: dict | None = None) -> dict:
 
 
 def _rule_name(code: str) -> str:
+    return _rule(code)[0]
+
+
+def _rule(code: str) -> tuple[str, str]:
+    """A gate's rule name and what it guards (app/nodes.py RULES)."""
     from .nodes import RULES
 
-    for name, _, gates, _ in RULES:
+    for name, guards, gates, _ in RULES:
         if code in gates:
-            return name
-    return code.replace("_", " ")
+            return name, guards
+    return code.replace("_", " ").capitalize(), ""
+
+
+def _tool(tool: str) -> str:
+    return TOOL_WORDS.get(tool, tool.replace("_", " ").capitalize())
 
 
 def _priority_source(rule: str, reason: str) -> str:
@@ -123,10 +160,12 @@ def decisions(conn: sqlite3.Connection, trace: dict) -> list[dict]:
     rows: list[dict] = []
     turn = 0
 
-    def add(at, kind, decision, rule="", source="", outcome="", say="", alarm=False):
+    def add(at, kind, decision, rule="", source="", outcome="", say="", alarm=False, *,
+            what="", why="", result=""):
         rows.append({"at": at, "clock": clock(start, at), "turn": turn, "kind": kind,
                      "decision": decision, "rule": rule, "source": source, "outcome": outcome,
-                     "say": say or "", "alarm": alarm})
+                     "say": say or "", "alarm": alarm,
+                     "what": what or decision, "why": why or rule, "result": result or outcome})
 
     for event in trace["events"]:
         if event["type"] == "turn":
@@ -134,29 +173,40 @@ def decisions(conn: sqlite3.Connection, trace: dict) -> list[dict]:
             action = event.get("safety_action")
             if event["speaker"] == "caller" and action in SAFETY_ACTIONS:
                 add(event["at"], "Safety", SAFETY_ACTIONS[action], "Safety check on every line",
-                    "Caller's words", "fired", event["text"], alarm=action != "cleared")
+                    "Caller's words", "fired", event["text"], alarm=action != "cleared",
+                    what=SAFETY_HEARD[action], why="The safety check runs on every caller line",
+                    result="Cleared" if action == "cleared" else "Fixed lines next")
             continue
         tool = event["tool"]
         if tool in LIFECYCLE:
             continue
         if not event["ok"]:
             code = event["gate"] or event["refused"] or "refused"
-            add(event["at"], "Refused", tool, _rule_name(code), "Server gate", "held", event["say"],
-                alarm=True)
+            name, guards = _rule(code)
+            add(event["at"], "Refused", tool, name, "Server gate", "held", event["say"],
+                alarm=True, what=f"{_tool(tool)}: held", why=guards or name,
+                result="Held back")
         elif event["gate"]:
-            add(event["at"], "Allowed", tool, _rule_name(event["gate"]), "Server gate",
-                event["gate"].replace("_", " "), event["say"])
+            name, guards = _rule(event["gate"])
+            add(event["at"], "Allowed", tool, name, "Server gate",
+                event["gate"].replace("_", " "), event["say"],
+                what=f"{_tool(tool)}: allowed", why=guards or name, result="Went through")
         elif event["say"]:
-            add(event["at"], "Server line", tool, "", "Server", "", event["say"])
+            add(event["at"], "Server line", tool, "", "Server", "", event["say"],
+                what=_tool(tool), why="The server's own sentence, said word for word",
+                result="Said")
 
     if call.get("safety_signal_at"):
         lines_at = call.get("safety_lines_at")
         took = (f"{(parse_iso(lines_at) - parse_iso(call['safety_signal_at'])).total_seconds():.1f} s"
                 if lines_at else "never said")
         turn = 0
-        add(lines_at or call["safety_signal_at"], "Safety",
-            f"{(call.get('safety_kind') or 'safety').upper()} lines said", "Safety lines first",
-            "Server", took, alarm=not lines_at)
+        hazard = (call.get('safety_kind') or 'safety').upper()
+        add(lines_at or call["safety_signal_at"], "Safety", f"{hazard} lines said",
+            "Safety lines first", "Server", took, alarm=not lines_at,
+            what=f"{hazard} safety lines" + ("" if lines_at else " never said"),
+            why="The fixed lines come before anything else on a hazard",
+            result=f"{took} after the signal" if lines_at else "Never said")
 
     for b in trace["bookings"]:
         rules = json.loads(b["priority_rules"]) if b.get("priority_rules") else []
@@ -166,26 +216,47 @@ def decisions(conn: sqlite3.Connection, trace: dict) -> list[dict]:
             continue
         for i, reason in enumerate(reasons):
             rule = rules[i] if i < len(rules) else ""
-            add(None, "Priority", f"{b['priority']}: {QUOTE.sub('', reason).rstrip(', ')}",
-                rule.replace("_", " "), _priority_source(rule, reason), b["priority"],
-                (QUOTE.search(reason) or [None, ""])[1])
+            plain = QUOTE.sub('', reason).rstrip(', ')
+            source = _priority_source(rule, reason)
+            add(None, "Priority", f"{b['priority']}: {plain}",
+                rule.replace("_", " "), source, b["priority"],
+                (QUOTE.search(reason) or [None, ""])[1],
+                what=f"Priority set to {b['priority']}", why=plain[:1].upper() + plain[1:],
+                result=source)
     for d in conn.execute("SELECT * FROM dispatches WHERE call_id = ? ORDER BY id", (call_id,)):
-        add(d["at"], "Dispatch", d["job_type"].replace("_", " "), "Dispatch at read-back",
-            "Server", "replaced" if d["replaced_at"] else "booked")
+        job = d["job_type"].replace("_", " ")
+        add(d["at"], "Dispatch", job, "Dispatch at read-back",
+            "Server", "replaced" if d["replaced_at"] else "booked",
+            what=f"Technician dispatched for {job}",
+            why="An urgent call goes to the on-call technician once the address is confirmed",
+            result="Replaced by a later dispatch" if d["replaced_at"] else "Sent")
     for o in trace["out_of_area"]:
-        add(o["at"], "Refused", f"ZIP {o['zip']}", "Service area", "Server", "out of area", alarm=True)
+        add(o["at"], "Refused", f"ZIP {o['zip']}", "Service area", "Server", "out of area",
+            alarm=True, what=f"ZIP {o['zip']} turned away", why="Only ZIPs the company serves are booked",
+            result="Not booked")
     for c in trace["identity_checks"]:
         add(None, "Identity", f"customer {c['customer_id']}", "Name and address check", "Server",
-            c["status"])
+            c["status"], what=f"Checked the caller is customer {c['customer_id']}",
+            why="A change from a number not on the account needs the name and address to match",
+            result=c["status"].replace("_", " ").capitalize())
     label = conn.execute("SELECT label, reason, at FROM call_labels WHERE call_id = ?",
                          (call_id,)).fetchone()
     if label:
         turn = 0
-        add(label["at"], "Label", label["label"], "Call label", "Server", label["reason"])
+        add(label["at"], "Label", label["label"], "Call label", "Server", label["reason"],
+            what=f"Labeled {label['label']}", why=label["reason"], result="On the call list")
     reason = end_call_reason(trace)
     if call.get("ended_at"):
+        who, how = ENDED_BY.get(call.get("end_reason") or "", ("Unknown", ""))
+        end_why = {
+            "Agent": "The agent called end_call" + (f": {reason.replace('_', ' ')}" if reason else ""),
+            "Caller": "The caller hung up",
+            "Line": "The line dropped",
+            "Transfer": "The caller was put through to a person",
+        }.get(who, how or "The voice layer closed the call")
         add(call["ended_at"], "End", (call.get("end_reason") or "").replace("_", " "), "",
-            "Agent" if reason else "Voice layer", (reason or "").replace("_", " "))
+            "Agent" if reason else "Voice layer", (reason or "").replace("_", " "),
+            what="Call ended", why=end_why, result=who)
     # Rows without a time (priority, identity) sit at the booking they came from: after the
     # timed rows of the same moment, before the label and the end.
     end = call.get("ended_at") or "9999"
@@ -266,10 +337,22 @@ def timing(trace: dict) -> dict:
 # ---- records ------------------------------------------------------------------------------
 
 
-def customers(conn: sqlite3.Connection, trace: dict, start: dict | None) -> list[dict]:
+def _plan(membership) -> str:
+    """A membership as lookup.membership_summary gives it, in a few words."""
+    if not isinstance(membership, dict):
+        return membership or ""
+    plan = membership.get("plan") or membership.get("name") or "Member"
+    status = membership.get("status", "Active")
+    return plan if status == "Active" else f"{plan}, {status.lower()}"
+
+
+def customers(conn: sqlite3.Connection, trace: dict, start: dict | None, fsm=None,
+              tenant=None) -> list[dict]:
     """The customers matched to the call, how they were matched, and their membership and open
     jobs as /calls/start returned them. `start` is that result, from the log rows the step graph
-    already read (app/nodes.py build), so this reads no log of its own."""
+    already read (app/nodes.py build), so this reads no log of its own. A customer matched later
+    (by address or name), or on a call whose start isn't in the log, is read from ServiceTitan
+    when `fsm` is given."""
     call_id = trace["call"]["id"]
     matched = {r["customer_id"]: dict(r) for r in conn.execute(
         "SELECT customer_id, matched_by, customer_type FROM call_customers WHERE call_id = ?",
@@ -282,15 +365,30 @@ def customers(conn: sqlite3.Connection, trace: dict, start: dict | None) -> list
         out.append({"id": c.get("customer_id"), "name": c.get("name", ""),
                     "type": c.get("type", m.get("customer_type", "")),
                     "matched_by": (m.get("matched_by") or "caller_id").replace("_", " "),
-                    "membership": (membership.get("name") or membership.get("type") or "member")
-                    if isinstance(membership, dict) else (membership or ""),
+                    "membership": _plan(membership),
                     "locations": len(c.get("locations") or []),
                     "open_jobs": len(c.get("open_jobs") or [])})
     for customer_id, m in matched.items():
         out.append({"id": customer_id, "name": "", "type": m["customer_type"],
                     "matched_by": m["matched_by"].replace("_", " "), "membership": "",
-                    "locations": None, "open_jobs": None})
+                    "locations": None, "open_jobs": None, **_on_file(fsm, tenant, customer_id)})
     return out
+
+
+def _on_file(fsm, tenant, customer_id: int) -> dict:
+    """A matched customer's name, membership and open jobs read from ServiceTitan, for a call whose
+    start result isn't in the log (rotated, or another server's). Reads only; an unanswered read
+    leaves the row as it was."""
+    if fsm is None or tenant is None:
+        return {}
+    try:
+        customer = fsm.customer(customer_id)
+        membership = lookup.membership_summary(tenant, fsm.memberships(customer_id))
+        jobs = fsm.jobs(customer_id, list(lookup.OPEN_JOB_STATUSES))
+    except (FsmUnavailable, FsmRejected):
+        return {}
+    return {"name": customer.get("name", ""), "membership": _plan(membership),
+            "open_jobs": len(jobs)}
 
 
 def readback(conn: sqlite3.Connection, trace: dict) -> dict | None:
@@ -304,6 +402,144 @@ def readback(conn: sqlite3.Connection, trace: dict) -> dict | None:
     return {"said": said, "confirmed": bool(call.get("readback_confirmed_at")),
             "mismatches": consistency.booking_mismatches(conn, row)}
 
+
+# ---- what the call achieved ----------------------------------------------------------------
+
+BOOKING_TAGS = {
+    ("book", "booked"): ("Booked", "done"), ("book", "done"): ("Booked", "done"),
+    ("reschedule", "booked"): ("Moved", "done"), ("reschedule", "done"): ("Moved", "done"),
+    ("cancel", "booked"): ("Cancelled", "done"), ("cancel", "done"): ("Cancelled", "done"),
+}
+
+
+def _when(tenant, start: str | None) -> str:
+    if not start:
+        return ""
+    return tenant.local(parse_iso(start)).strftime("%a %b %-d, %-I:%M %p")
+
+
+def outcomes(conn: sqlite3.Connection, trace: dict, customers: list[dict], tenant) -> dict:
+    """What the call achieved, in the order an owner asks about it: what was booked or sent, who
+    the caller is on file (matched by phone, found by address, or added by the booking), what was
+    left for a person, and the details the agent captured. Each line has a tag and its tone."""
+    call = trace["call"]
+    lines: list[dict] = []
+
+    def line(tag, tone, text, sub=""):
+        lines.append({"tag": tag, "tone": tone, "text": text, "sub": sub})
+
+    rows = [dict(r) for r in conn.execute(
+        "SELECT * FROM bookings WHERE call_id = ? ORDER BY id", (call["id"],))]
+    for b in rows:
+        job = tenant.job_types.get(b["job_type"] or "", {}).get("name", (b["job_type"] or "visit").replace("_", " "))
+        tag, tone = BOOKING_TAGS.get((b["kind"], b["status"]), ("", ""))
+        if not tag:
+            tag, tone = {"queued": ("Queued", "high"), "sending": ("Sending", "high"),
+                         "failed": ("Failed", "urgent")}.get(b["status"], (b["status"].capitalize(), "outline"))
+        text = f"{job}, {_when(tenant, b['window_start'])}" + (f", {b['priority']}" if b["priority"] else "")
+        if b["status"] in ("queued", "sending"):
+            sub = f"Waiting for ServiceTitan, {b['attempts']} attempt{'s' if b['attempts'] != 1 else ''}"
+        elif b["status"] == "failed":
+            sub = b["last_error"] or "ServiceTitan refused it"
+        else:
+            sub = f"ServiceTitan job {b['fsm_job_id']}" if b["fsm_job_id"] else ""
+        line(tag, tone, text, sub)
+    for d in conn.execute("SELECT * FROM dispatches WHERE call_id = ? ORDER BY id", (call["id"],)):
+        if not d["replaced_at"]:
+            line("Dispatched", "urgent", f"On-call technician sent, {d['job_type'].replace('_', ' ')}")
+
+    matched = {c["id"] for c in customers}
+    for c in customers[:2]:
+        name = c["name"] or f"Customer {c['id']}"
+        how = {"caller id": "by caller ID"}.get(c["matched_by"], f"by {c['matched_by']}")
+        sub = ", ".join(p for p in (
+            c["membership"] and f"member: {c['membership']}",
+            c["open_jobs"] and f"{c['open_jobs']} open job{'s' if c['open_jobs'] != 1 else ''}",
+        ) if p)
+        line("Matched", "done", f"{name}, {how}", sub)
+    for b in rows:
+        if b["customer_id"] and b["customer_id"] not in matched and b["status"] in ("booked", "done"):
+            name = (json.loads(b["request_json"]).get("details") or {}).get("name", "")
+            line("Added", "done", f"New customer in ServiceTitan{': ' + name if name else ''}",
+                 f"Customer {b['customer_id']}, made by the booking")
+            matched.add(b["customer_id"])
+    if not matched:
+        line("New caller", "outline",
+             "Number not on file" if call.get("caller_key") else "No caller ID",
+             "Nothing added to ServiceTitan" if not rows else "")
+
+    for f in follow_ups(trace, tenant):
+        if f["callback"]:
+            cb = f["callback"]
+            tone = "high" if cb["status"] == "pending" else ("urgent" if cb["status"] == "overdue" else "done")
+            line("Callback", tone, f"{cb['owner'].capitalize()} calls back by {cb['due']}",
+                 cb["status"].capitalize())
+    for lead in trace["leads"]:
+        line("Lead", "info", lead["summary"], lead["status"])
+    for t in trace["transfers"] + trace["handoffs"]:
+        line("Transfer", "info", f"Put through to the {t['role']}", t["status"])
+    for o in trace["out_of_area"]:
+        line("Out of area", "outline", f"ZIP {o['zip']} isn't served", "Not booked")
+    if not lines or all(x["tag"] in ("Matched", "New caller") for x in lines):
+        line("No action", "outline", "Nothing booked, sent or left for a person")
+    return {"lines": lines, "captured": captured(trace, rows, customers)}
+
+
+def captured(trace: dict, bookings: list[dict], customers: list[dict]) -> list[tuple[str, str]]:
+    """The details the agent took down, from the newest booking, else the read-back and the name
+    the caller gave."""
+    call = trace["call"]
+    request = json.loads(bookings[-1]["request_json"]) if bookings else {}
+    details = request.get("details") or {}
+    said = json.loads(call["readback_json"]) if call.get("readback_json") else {}
+    address = request.get("address") or said
+    names = trace.get("names") or []
+    name = details.get("name") or (names[0]["name"] if names else "") or (
+        customers[0]["name"] if customers else "")
+    street = ", ".join(p for p in (address.get("street"), address.get("unit"), address.get("zip")) if p)
+    issue = details.get("issue", "")
+    if details.get("since") and not str(details["since"]).lower().startswith("not asked"):
+        issue = f"{issue}, since {details['since']}" if issue else f"Since {details['since']}"
+    out = [
+        ("Name", name),
+        ("Address", street),
+        ("Phone", phone_display(request.get("phone") or said.get("phone") or "")),
+        ("Problem", issue),
+        ("System", details.get("system_type", "")),
+        ("Tried", details.get("tried", "")),
+        ("Who's home", details.get("who_home", "")),
+        ("Approves work", details.get("approver", "")),
+    ]
+    # "not asked: emergency dispatch" is the agent saying it skipped a question, not a detail.
+    return [(k, str(v)) for k, v in out if v and not str(v).lower().startswith("not asked")]
+
+
+def follow_ups(trace: dict, tenant) -> list[dict]:
+    """Each flag for a person with the callback it led to, as one row: a callback whose reason is
+    the flag's, or that a transfer or handoff tied to it, is shown once with the flag. Callbacks
+    with no flag are rows of their own."""
+    callbacks = {c["id"]: c for c in trace["callbacks"]}
+    tied = {t["flag_id"]: t["callback_id"] for t in trace["transfers"] + trace["handoffs"]
+            if t.get("flag_id") and t.get("callback_id")}
+    used: set[int] = set()
+
+    def shown(c: dict) -> dict:
+        used.add(c["id"])
+        return {"owner": c["owner"].capitalize(), "due": _when(tenant, c["due_at"]),
+                "status": c["status"]}
+
+    out = []
+    for f in trace["flags"]:
+        match = callbacks.get(tied.get(f["id"])) or next(
+            (c for c in trace["callbacks"] if c["id"] not in used and c["reason"] == f["reason"]), None)
+        out.append({"kind": f["kind"].replace("_", " ").capitalize(), "priority": f["priority"],
+                    "status": f["status"], "reason": f["reason"],
+                    "callback": shown(match) if match else None})
+    for c in trace["callbacks"]:
+        if c["id"] not in used:
+            out.append({"kind": "Callback", "priority": "", "status": c["status"],
+                        "reason": c["reason"], "callback": shown(c)})
+    return out
 
 def call_cost(conn: sqlite3.Connection, trace: dict, retell: dict | None = None) -> dict:
     """The call's cost at the measured rates (app/cost.py, docs/cost.md), the grader's and the

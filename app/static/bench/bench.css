@@ -233,9 +233,55 @@ body.bench { background: var(--page); color: var(--ink); font-family: var(--font
 @keyframes skel { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
 
-/* Questions: one ledger per group. */
-.q-table td.ev { color: var(--ink-2); }
-.q-table td.view { color: var(--faint); font-size: var(--text-sm); }
+/* Questions: the owner's question, the one-line answer with its evidence under it, and the view. */
+.q-list { list-style: none; margin: 0; padding: 0; }
+.q-list li { display: grid; grid-template-columns: 240px minmax(0, 1fr) 132px; column-gap: var(--s-4); align-items: center; padding: var(--s-2) var(--s-4); min-height: 52px; }
+.q-list li + li { border-top: 1px solid var(--line-soft); }
+.q-list li[data-href]:hover { background: var(--hover); cursor: pointer; }
+.q-list .q { font-size: var(--text-sm); }
+.q-list .a { display: flex; flex-direction: column; gap: 2px; font-size: var(--text-sm); color: var(--ink-2); min-width: 0; }
+.q-list .ev { font-size: var(--text-xs); color: var(--faint); }
+.q-list .open { justify-self: end; }
+.q-list .open .btn { gap: var(--s-1); }
+
+/* Summary: what the call achieved, one line each, tag first. */
+.outcomes { list-style: none; margin: 0; padding: var(--s-1) 0; }
+.outcomes li { display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: var(--s-3); align-items: center; padding: var(--s-2) var(--s-4); }
+.outcomes li + li { border-top: 1px solid var(--line-soft); }
+.outcomes .tag { justify-self: start; }
+.outcomes .text { font-size: var(--text-sm); color: var(--ink); min-width: 0; }
+.outcomes .sub { grid-column: 2; font-size: var(--text-xs); color: var(--faint); }
+
+/* Rules: the prompt's versions, newest first, each entry under its row. */
+.versions .n { min-width: 32px; }
+.versions .name { white-space: normal; flex: 1; min-width: 0; }
+.versions .job { flex: none; max-width: 360px; font-size: var(--text-xs); }
+.versions .meta { flex: none; margin-left: auto; font-size: var(--text-xs); color: var(--faint); white-space: nowrap; }
+.versions .version-body { padding: 0 var(--s-4) var(--s-3) calc(var(--s-4) + 52px); font-size: var(--text-sm); color: var(--ink-2); }
+
+/* Cost: the tested stacks as horizontal bars. */
+.hbars { list-style: none; margin: 0; padding: var(--s-2) 0; }
+.hbars li { display: grid; grid-template-columns: 220px minmax(0, 1fr) 84px; column-gap: var(--s-4); align-items: center; padding: 0 var(--s-4); height: var(--row-h); }
+.hbars li[hidden] { display: none; }
+.bar-name { all: unset; cursor: pointer; font-size: var(--text-sm); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-name:focus-visible { box-shadow: var(--focus); border-radius: var(--r-sm); }
+.hbars li.off .bar-name { color: var(--faint); text-decoration: line-through; }
+.bar-track { display: block; height: 10px; border-radius: var(--r-sm); background: var(--line-soft); }
+.hbar { display: block; height: 100%; width: 0; border-radius: var(--r-sm); background: var(--info); transition: width var(--base) var(--ease); }
+.hbar.live { background: var(--ember); }
+.bar-value { text-align: right; font-size: var(--text-sm); color: var(--ink-2); }
+button.chip { font: inherit; font-size: var(--text-sm); cursor: pointer; }
+
+/* Log: one request per row, its JSON under it. */
+.log-rows { list-style: none; margin: 0; padding: 0; }
+.log-rows li + li { border-top: 1px solid var(--line-soft); }
+.log-rows summary { display: flex; align-items: center; gap: var(--s-3); min-height: var(--row-h); padding: 0 var(--s-4); cursor: pointer; list-style: none; font-size: var(--text-sm); }
+.log-rows summary::-webkit-details-marker { display: none; }
+.log-rows summary:hover { background: var(--hover); }
+.log-rows .time { flex: none; width: 64px; }
+.log-rows .say { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.log-rows .end { margin-left: auto; white-space: nowrap; }
+.log-rows .tech-block { margin: 0 var(--s-4) var(--s-3); max-height: 420px; }
 
 @media (max-width: 960px) {
   .shell { grid-template-columns: 1fr; }

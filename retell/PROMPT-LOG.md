@@ -217,15 +217,23 @@ The socket agent ("Summit Air socket (test)", agent_9e575b3fa1457c8d4331a3b80a) 
 | v4 | 05:10 | 965 | 18 | ce89c64 |
 | v5 | 06:02 | 1,035 | 19 | a9e098c |
 | v6 | 06:45 | 1,098 | 20 | daaf602 |
-| v7 | | 1,165 | 21 | 54b7f6a |
+| v7 | 09:22 | 1,165 | 21 | 54b7f6a |
+| v8 | 18:16 | 1,218 | 22 | 182a792 |
+| v9 | 20:32 | 1,304 | 22 | be3c2d4 |
+| v10 | 22:09 | 1,340 | 23 | 49d134d |
+| v11 | 22:39 | 1,354 | 23 | 65e5ab1 |
+| v12 | 23:03 | 1,396 | 23 | 3a4fd6b |
+| v13 | 02:45 (7 Nov) | 1,443 | 24 | 67ef197 |
+| v14 | 03:21 (7 Nov) | 1,501 | 25 | 2206eba |
+| v15 | 03:49 (7 Nov) | 1,591 | 29 | 737b2a5 |
 
-MEASURED: `wc -w` and `grep -oi never` on the file at each commit; times are the commits'. v1 started from arm D's prompt, which had 828 words and 14 "never".
+MEASURED: `wc -w` and `grep -oi never` on the file at each commit (`git show <commit>:<path>`, following the move from `retell/arms/socket/` to `retell/socket/` in 4257da4); times are the commits', in UTC. v13's first commit (805d61d) had 1,433 words and 23 "never"; the row is the one after its "never say the job type" line. v1 started from arm D's prompt, which had 828 words and 14 "never".
 
-### v1 (03:35)
+### v1 (the server says its own sentences)
 
 Arm D's prompt with one section swapped. On Retell's LLM the model had to copy each tool result's `say` word for word, and it reworded about half of them (21 of 40 in arm D's rounds). On the socket the server says those sentences itself. The model now sees them as `said_to_caller`, already heard, and only does what `next` says. Kept. On every socket phone call since, the server's sentences went out word for word (MEASURED, `evals/rounds/socket-buildout-01.md`).
 
-### v2 (03:55)
+### v2 (safety talk from my live agent's rules)
 
 On the gas test in text runs, the model gave its own safety talk ("Once the gas smell has been checked", "I'm not going to treat this as fine just yet"). So I brought over my own rules from my live agent:
 - never repeat the advice;
@@ -235,7 +243,7 @@ On the gas test in text runs, the model gave its own safety talk ("Once the gas 
 
 I added one line of my own for when they ask if it's dangerous: "I can't say from here, but I can get a technician out." Kept. The smoke call ran on this version (call_c2e0ba8b6c3f42de6de512dc62d).
 
-### v3 (04:08)
+### v3 (change set 18, visit questions move to the server)
 
 My change set 18, from call_2fb4e053ba8b76b57c348845990:
 - "And this is for your home, right?" replaces the residential question;
@@ -250,7 +258,7 @@ The visit questions moved out of the prompt and into the server, which asks them
 
 Kept. The fixes went into the server and the socket.
 
-### v4 (05:10)
+### v4 (Brian, connectors, the name question, no ZIP)
 
 Change sets 19 to 22:
 - the assistant is Brian;
@@ -260,7 +268,7 @@ Change sets 19 to 22:
 
 The goodbye came out of the prompt, because the socket says it now. Mostly kept. The model still asked for a ZIP once, and asked for the system type after I'd said air conditioning (call_046f37112cac691a50019893717).
 
-### v5 (06:02)
+### v5 (change sets 24 and 25, and the prompt review)
 
 Change sets 24 and 25, plus the prompt lane's review (issue #183):
 - never thank them for waiting;
@@ -275,7 +283,7 @@ Change sets 24 and 25, plus the prompt lane's review (issue #183):
 
 The two narration rules became one. On call_046f37112cac691a50019893717, "$199" worked. The model still opened with two questions and some narration ("Actually, let's get you booked."), which the socket now cuts in code (6c585f3). Being measured in the done-bar runs.
 
-### v6 (06:45)
+### v6 (sympathy first, a pinned closing)
 
 From call_046f37112cac691a50019893717:
 - It opens with a short line of sympathy in my words ("Oh no, sorry it's leaking.").
@@ -284,7 +292,7 @@ From call_046f37112cac691a50019893717:
 
 In code, once a reply asks something, nothing more of that reply is said. The closing is "Thanks for calling Summit Air today." plus a nicety pinned to the ones measured to fall in Brian's voice: "Have a great day!" fell on 36 of 36 recorded calls, while "Have a good night!" rose on 3 of 3 (MEASURED, `retell/socket/closing_pitch.py`). Not measured on the phone yet.
 
-### v7 (54b7f6a)
+### v7 (a detail asked at most twice)
 
 From the done-bar spot-checks. On the CO false-alarm call (call_d101fce0cddb6792cb6214aaacb) Brian asked "since when" five times, said "What kind of job is this? A safety check?" and "To book the safety check, I need your name first". Two rules: ask for a detail at most twice, then take "not sure" or whatever they said and move on; never say a job type out loud or what the booking needs. The socket also cuts that second kind of line in code now, and the server stopped asking a safety check or tune-up about the fault in the first place. Not on a call yet.
 

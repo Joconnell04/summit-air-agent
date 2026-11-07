@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from prompts import assemble
 
-from . import fixed, logs, rules
+from . import bench_data, fixed, logs, rules
 from .bench import require_admin
 from .db import parse_iso
 from .owner_view import _common, _render, _tenant_q, _user
@@ -188,6 +188,7 @@ def add_routes(app: FastAPI) -> None:
             },
             "defaults": {key: rules.default_line(found, key) for key in rules.EDITABLE_LINES},
             "sections": assemble.sections(sample_call(found, content), services.clock()),
+            "prompt_versions": bench_data.prompt_versions(),
             "jobs": JOBS,
             "max_line": rules.LINE_MAX_CHARS,
             "max_guide": rules.GUIDANCE_MAX_CHARS,

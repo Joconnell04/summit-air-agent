@@ -15,7 +15,7 @@
       {% if call.safety_kind %}<span class="tag urgent">{{ call.safety_kind | upper }}</span>{% endif %}
       {% if label %}<span class="tag {{ 'urgent' if label.label == 'Emergency dispatch' else 'outline' }}" data-tip="{{ label.reason }}">{{ label.label }}</span>{% endif %}
       <div class="actions">
-        <a class="btn" href="/debug/logs?call_id={{ call_id | urlencode }}" data-tip="Needs the debug token">Log</a>
+        <a class="btn" href="/bench/calls/{{ key }}/log">Log</a>
         <a class="btn" href="/bench/calls/{{ key }}/scenario.yaml" download>Replay</a>
       </div>
     </div>
@@ -44,6 +44,24 @@
 
   {# ---- Summary ---- #}
   <section class="pane" id="summary" role="tabpanel">
+    <div class="split wide-side">
+      <section class="panel">
+        <div class="panel-head"><h2>Outcome</h2></div>
+        <ul class="outcomes">
+          {% for o in achieved.lines %}
+          <li><span class="tag {{ o.tone }}">{{ o.tag }}</span><span class="text">{{ mask(o.text) }}</span>{% if o.sub %}<span class="sub">{{ mask(o.sub) }}</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Captured</h2></div>
+        <div class="panel-body">
+          {% if achieved.captured %}<dl class="kv">{% for k, v in achieved.captured %}<dt>{{ k }}</dt><dd>{{ mask(v) }}</dd>{% endfor %}</dl>
+          {% else %}<span class="faint">Nothing taken down.</span>{% endif %}
+        </div>
+      </section>
+    </div>
+
     <div class="kv-grid">
       <section class="panel">
         <div class="panel-head"><h2>Bookings</h2>{{ count(bookings | length) }}</div>
@@ -60,22 +78,22 @@
         {% else %}{{ empty("No booking.") }}{% endif %}
         {% if readback %}
         <div class="panel-foot">Read-back {% if not readback.confirmed %}<span class="tag high">Not confirmed</span>{% elif readback.mismatches %}<span class="tag urgent">Mismatch</span> {{ readback.mismatches | join("; ") }}{% else %}<span class="tag done">Matches</span>{% endif %}
-          <span class="faint">{{ mask(readback.said.street) }}{% if readback.said.unit %}, {{ readback.said.unit }}{% endif %}{% if readback.said.phone %}, ending {{ (readback.said.phone | string)[-4:] }}{% endif %}</span></div>
+          <span class="faint">{{ mask(readback.said.street) }}{% if readback.said.unit %}, {{ readback.said.unit }}{% endif %}{% if readback.said.phone %}, ends in {{ (readback.said.phone | string)[-4:] }}{% endif %}</span></div>
         {% endif %}
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Customer</h2>{{ count(customers | length) }}</div>
+        <div class="panel-head"><h2>On file</h2>{% if customers %}{{ count(customers | length) }}{% endif %}</div>
         {% if customers %}
         <div class="table-wrap"><table class="table dense">
           <thead><tr><th>Name</th><th>Matched by</th><th>Membership</th><th class="right">Open jobs</th></tr></thead>
           <tbody>{% for c in customers %}
-            <tr><td>{{ mask(c.name) or c.id }}<div class="why small">{{ c.type }}</div></td><td class="fit">{{ c.matched_by }}</td>
+            <tr><td>{{ mask(c.name) or "Customer " ~ c.id }}<div class="why small">{{ c.type }}{% if c.id %}, customer {{ c.id }}{% endif %}</div></td><td class="fit">{{ c.matched_by }}</td>
             <td class="fit">{% if c.membership %}<span class="tag done">{{ c.membership }}</span>{% else %}<span class="faint">none</span>{% endif %}</td>
             <td class="fit right num">{{ c.open_jobs if c.open_jobs is not none else "-" }}</td></tr>
           {% endfor %}</tbody>
         </table></div>
-        {% else %}{{ empty("No customer matched.") }}{% endif %}
+        {% else %}{{ empty("The caller's number isn't on any customer.") }}{% endif %}
         {% if trace.identity_checks or trace.address_moves %}
         <div class="panel-foot">{% for c in trace.identity_checks %}Identity check {{ c.status }}{% if not loop.last %}; {% endif %}{% endfor %}{% if trace.address_moves %}; {{ trace.address_moves | length }} address move{{ "s" if trace.address_moves | length != 1 }}{% endif %}</div>
         {% endif %}
@@ -85,23 +103,28 @@
         <div class="panel-head"><h2>For the tech</h2></div>
         <div class="panel-body">
           {% if summary_lines %}<pre class="tech-block scroll">{{ summary_lines | join("\n") }}</pre>
-          {% elif bookings and bookings[0].job_notes %}<pre class="tech-block scroll">{{ bookings[0].job_notes }}</pre>
+          {% elif tech_notes %}<pre class="tech-block scroll">{{ tech_notes | join("\n") }}</pre>
           {% else %}<span class="faint">Nothing written{% if call.summary_status != "none" %}, summary {{ call.summary_status }}{% endif %}.</span>{% endif %}
           {% for n in trace.notes %}<div class="why small">Note on {{ n.attach_to }}: {{ n.text }}</div>{% endfor %}
         </div>
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>People and holds</h2></div>
-        <div class="panel-body">
-          <dl class="kv">
-            <dt>Flags</dt><dd>{% for f in flags %}{{ f.kind | replace("_", " ") }}, {{ f.priority }}, {{ f.status }}<div class="why small">{{ f.reason }}</div>{% else %}<span class="faint">none</span>{% endfor %}</dd>
-            <dt>Callbacks</dt><dd>{% for c in trace.callbacks %}{{ c.status }}, {{ c.owner }}<div class="why small">{{ c.reason }}</div>{% else %}<span class="faint">none</span>{% endfor %}</dd>
-            <dt>Transfers</dt><dd>{% for t in trace.transfers + trace.handoffs %}{{ t.role }}, {{ t.status }}{% if not loop.last %}<br>{% endif %}{% else %}<span class="faint">none</span>{% endfor %}</dd>
-            <dt>Holds</dt><dd>{% if trace.holds %}{{ trace.holds | length }}, after line{{ "s" if trace.holds | length != 1 }} {{ trace.holds | map(attribute="seq") | join(", ") }}{% else %}<span class="faint">none</span>{% endif %}</dd>
-            <dt>Pace</dt><dd>{% if trace.pace %}{{ trace.pace[0].speed if trace.pace[0].speed is defined else "set" }}{% if trace.pace_changes %}, {{ trace.pace_changes | length }} change{{ "s" if trace.pace_changes | length != 1 }}{% endif %}{% else %}<span class="faint">normal</span>{% endif %}</dd>
-            <dt>Safety</dt><dd>{{ call.safety_state | replace("_", " ") }}{% if safety %}, lines in {% if safety.seconds is none %}<span class="tag urgent">never</span>{% else %}{{ "%.1f" | format(safety.seconds) }} s{% endif %}{% endif %}</dd>
-          </dl>
+        <div class="panel-head"><h2>For a person</h2>{% if follow_ups %}{{ count(follow_ups | length) }}{% endif %}</div>
+        {% if follow_ups %}
+        <div class="table-wrap"><table class="table dense">
+          <thead><tr><th>Why</th><th>Priority</th><th>Callback</th></tr></thead>
+          <tbody>{% for f in follow_ups %}
+            <tr><td>{{ mask(f.reason) }}<div class="why small">{{ f.kind }}, {{ f.status }}</div></td>
+            <td class="fit">{% if f.priority in ("Urgent", "High") %}<span class="tag {{ 'urgent' if f.priority == 'Urgent' else 'high' }}">{{ f.priority }}</span>{% else %}{{ f.priority or "-" }}{% endif %}</td>
+            <td class="fit">{% if f.callback %}{{ f.callback.owner }}, by {{ f.callback.due }}<div class="why small">{{ f.callback.status }}</div>{% else %}<span class="faint">none</span>{% endif %}</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+        {% else %}{{ empty("Nothing left for a person.") }}{% endif %}
+        <div class="panel-foot">
+          {% if call.safety_state == "none" %}No safety signal{% else %}Safety {{ call.safety_state | replace("_", " ") }}{% endif %}{% if safety %}, lines in {% if safety.seconds is none %}<span class="tag urgent">never</span>{% else %}{{ "%.1f" | format(safety.seconds) }} s{% endif %}{% endif %};
+          {% if trace.holds %}{{ trace.holds | length }} hold{{ "s" if trace.holds | length != 1 }}{% else %}no holds{% endif %};
+          pace {% if trace.pace %}{{ trace.pace[0].speed if trace.pace[0].speed is defined else "set" }}{% if trace.pace_changes %}, {{ trace.pace_changes | length }} change{{ "s" if trace.pace_changes | length != 1 }}{% endif %}{% else %}normal{% endif %}
         </div>
       </section>
     </div>
@@ -122,15 +145,14 @@
       <div class="panel-head"><h2>Decisions</h2>{{ count(decisions | length) }}</div>
       {% if decisions %}
       <div class="table-wrap"><table class="table dense">
-        <thead><tr><th>At</th><th>Kind</th><th>Decision</th><th>Rule</th><th>Source</th><th>Outcome</th></tr></thead>
+        <thead><tr><th>At</th><th>Kind</th><th>What happened</th><th>Why</th><th>Result</th></tr></thead>
         <tbody>{% for d in decisions %}
           <tr{% if d.alarm %} class="alarm"{% endif %}>
             <td class="time">{{ d.clock or "" }}</td>
             <td class="fit">{% if d.kind == "Refused" %}<span class="tag urgent">Refused</span>{% elif d.kind == "Safety" %}<span class="tag high">Safety</span>{% elif d.kind == "Priority" %}<span class="tag info">Priority</span>{% else %}<span class="tag outline">{{ d.kind }}</span>{% endif %}</td>
-            <td><span class="what{% if d.kind in ('Server line', 'Refused', 'Allowed') %} mono{% endif %}">{{ d.decision }}</span>{% if d.say %}<div class="why small">"{{ mask(d.say) }}"</div>{% endif %}</td>
-            <td class="fit muted">{{ d.rule or "-" }}</td>
-            <td class="fit muted">{{ d.source }}</td>
-            <td class="fit">{{ d.outcome }}</td>
+            <td><span class="what">{{ d.what }}</span>{% if d.say %}<div class="why small">"{{ mask(d.say) }}"</div>{% endif %}</td>
+            <td class="muted">{{ mask(d.why) }}</td>
+            <td class="fit">{{ d.result }}</td>
           </tr>
         {% endfor %}</tbody>
       </table></div>

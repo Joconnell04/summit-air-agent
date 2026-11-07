@@ -1,24 +1,28 @@
 {% extends "bench_base.html" %}
 {% from "_ui.html" import pct, go, empty with context %}
 {% block title %}Bench: evals{% endblock %}
+{% macro href(t=tested, all=everything) -%}/bench/evals{% set qs = [] %}{% if t %}{% set _ = qs.append("tested=" ~ t) %}{% endif %}{% if all %}{% set _ = qs.append("runs=all") %}{% endif %}{% if qs %}?{{ qs | join("&") }}{% endif %}{%- endmacro %}
 {% block body %}
 {% set oldest_first = runs | reverse | list %}
+{% set picked = (choices | selectattr(0, "equalto", tested) | first) if tested else none %}
 <main class="page">
   <div class="page-head">
-    <div class="lead">
-      <h1 class="page-title">Evals</h1>
-    </div>
-    <div class="filters">
-      <div class="seg" role="group" aria-label="Suite">
-        <a href="/bench/evals"{% if suite == "all" %} aria-current="true"{% endif %}>All</a>
-        {% for s in suites %}<a href="/bench/evals?suite={{ s }}"{% if suite == s %} aria-current="true"{% endif %}>{{ s | capitalize }}</a>{% endfor %}
-      </div>
-    </div>
+    <div class="lead"><h1 class="page-title">Evals</h1></div>
   </div>
 
   <section class="panel">
+    <div class="chips" role="group" aria-label="Filter runs">
+      <div class="chip-group"><span class="label">Tested</span>
+        <a class="chip" href="{{ href('', everything) }}"{% if not tested %} aria-current="true"{% endif %}>Everything</a>
+        {% for key, label, n in choices %}<a class="chip" href="{{ href(key, everything) }}"{% if key == tested %} aria-current="true"{% endif %} data-tip="{{ n }} runs">{{ label }}</a>{% endfor %}
+      </div>
+      <div class="chip-group"><span class="label">Runs</span>
+        <a class="chip" href="{{ href(tested, false) }}"{% if not everything %} aria-current="true"{% endif %} data-tip="{{ suite_min }} or more calls">Suites</a>
+        <a class="chip" href="{{ href(tested, true) }}"{% if everything %} aria-current="true"{% endif %} data-tip="With reruns of a scenario or two">All</a>
+      </div>
+    </div>
     <div class="panel-head">
-      <h2>Pass rate by run</h2><span class="count">{{ runs | length }}</span>
+      <h2>Pass rate{% if picked %}, {{ picked[1] | lower }} calls{% endif %}</h2><span class="count">{{ runs | length }}</span>
       <span class="sub">floor {{ pct(floor) }}</span>
       <span class="legend end"><span><i style="--sw: var(--info)"></i>At or over the floor</span><span><i style="--sw: var(--urgent)"></i>Under it</span><span><i style="--sw: var(--neutral)"></i>No verdict</span></span>
     </div>
@@ -26,7 +30,7 @@
     <div class="panel-body">
       <div class="rate-chart" style="--cols: {{ [oldest_first | length, 12] | max }}" role="list" aria-label="Runs, oldest first">
         {% for r in oldest_first %}
-        <a role="listitem" class="{% if r.rate is none %}error{% elif floor and r.rate < floor %}under{% endif %}" href="/bench/evals/{{ r.id }}" style="--h: {{ ((r.rate or 0) * 100) | round(1) }}%" data-tip="{{ r.id }}: {% if r.rate is none %}no verdict{% else %}{{ r.passed }} of {{ r.judged }} passed{% endif %}" aria-label="{{ r.id }}, {{ pct(r.rate) }}"><i></i></a>
+        <a role="listitem" class="{% if r.rate is none %}error{% elif floor and r.rate < floor %}under{% endif %}" href="/bench/evals/{{ r.id }}" style="--h: {{ ((r.rate or 0) * 100) | round(1) }}%" data-tip="{{ r.created.strftime('%b %-d, %H:%M') }}: {% if r.rate is none %}no verdict{% else %}{{ r.passed }} of {{ r.judged }} passed{% endif %}" aria-label="{{ r.id }}, {{ pct(r.rate) }}"><i></i></a>
         {% endfor %}
         {% if floor %}<div class="floor" style="--h: {{ (floor * 100) | round(1) }}%"><span>Floor {{ pct(floor) }}</span></div>{% endif %}
       </div>
@@ -34,39 +38,44 @@
     {% endif %}
   </section>
 
-  <div class="split wide-side">
-    <section class="panel">
-      <div class="panel-head"><h2>Runs</h2></div>
-      {% if runs %}
-      <div class="table-wrap">
-        <table class="table">
-          <thead><tr><th>Run</th><th>Suite</th><th>Stack and profile</th><th class="right">Passed</th><th class="right">Rate</th><th class="right">Must-pass</th><th class="right">Cost</th><th></th></tr></thead>
-          <tbody>
-            {% for r in runs %}
-            <tr data-href="/bench/evals/{{ r.id }}">
-              <td class="time">{{ r.created.strftime("%b %-d, %H:%M") }}</td>
-              <td class="fit">{{ r.suite }}{% if r.id == reference %} <span class="tag ember">Reference</span>{% endif %}{% if r.overlay %} <span class="tag outline">Owner draft</span>{% endif %}</td>
-              <td><span class="what"><a href="/bench/evals/{{ r.id }}">{{ r.stack }}, {{ r.profile }}</a></span>{% if r.transport == "audio" %} <span class="tag info">Audio</span>{% endif %}</td>
-              <td class="fit right num">{{ r.passed }} of {{ r.judged }}{% if r.errors %} <span class="faint">+{{ r.errors }}</span>{% endif %}</td>
-              <td class="fit right num"><span class="what">{{ pct(r.rate) }}</span></td>
-              <td class="fit right num">{% if r.must_pass %}<span class="count alarm">{{ r.must_pass }}</span>{% else %}<span class="faint">0</span>{% endif %}</td>
-              <td class="fit right num muted">${{ "%.2f" | format(r.cost) }}</td>
-              <td class="go">{{ go() }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}{{ empty("No results files.") }}{% endif %}
-    </section>
-    <section class="panel">
-      <div class="panel-head"><h2>Rounds</h2><span class="count">{{ rounds | length }}</span></div>
-      <ul class="list">
-        {% for d in rounds %}
-        <li data-href="/bench/rounds/{{ d.slug }}"><span class="what"><a href="/bench/rounds/{{ d.slug }}">{{ d.title }}</a></span><span class="meta"><code>{{ d.path }}</code></span><span class="end go">{{ go() }}</span></li>
-        {% endfor %}
-      </ul>
-    </section>
-  </div>
+  <section class="panel">
+    <div class="panel-head"><h2>Runs</h2></div>
+    {% if runs %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Run</th><th>Tested</th><th>Stack</th><th class="right">Passed</th><th class="right">Rate</th><th class="right">Must-pass</th><th class="right">Cost</th><th>Round</th><th></th></tr></thead>
+        <tbody>
+          {% for r in runs %}
+          {% set rd = round_of.get(r.id[:15]) %}
+          <tr data-href="/bench/evals/{{ r.id }}">
+            <td class="time">{{ r.created.strftime("%b %-d, %H:%M") }}</td>
+            <td>{{ r.tested | join(", ") or "-" }}{% if r.id == reference %} <span class="tag ember">Reference</span>{% endif %}{% if r.overlay %} <span class="tag outline">Owner draft</span>{% endif %}</td>
+            <td class="fit"><span class="what"><a href="/bench/evals/{{ r.id }}">{{ r.stack_name }}, {{ r.profile }}</a></span>{% if r.transport == "audio" %} <span class="tag info">Audio</span>{% endif %}</td>
+            <td class="fit right num">{{ r.passed }} of {{ r.judged }}{% if r.errors %} <span class="faint">+{{ r.errors }}</span>{% endif %}</td>
+            <td class="fit right num"><span class="what">{{ pct(r.rate) }}</span></td>
+            <td class="fit right num">{% if r.must_pass %}<span class="count alarm">{{ r.must_pass }}</span>{% else %}<span class="faint">0</span>{% endif %}</td>
+            <td class="fit right num muted">${{ "%.2f" | format(r.cost) }}</td>
+            <td class="fit">{% if rd %}<a href="/bench/rounds/{{ rd.slug }}" data-tip="{{ rd.title }}">{{ rd.slug }}</a>{% else %}<span class="faint">-</span>{% endif %}</td>
+            <td class="go">{{ go() }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{{ empty("No run tested that.") }}{% endif %}
+  </section>
+
+  <section class="panel" id="rounds">
+    <div class="panel-head"><h2>Rounds</h2><span class="count">{{ rounds | length }}</span><span class="sub">newest first</span></div>
+    <ul class="q-list rounds">
+      {% for d in rounds %}
+      <li data-href="/bench/rounds/{{ d.slug }}">
+        <span class="q what"><a href="/bench/rounds/{{ d.slug }}">{{ d.slug }}</a></span>
+        <span class="a">{{ d.settled or d.title }}<span class="ev">{{ d.title }}</span></span>
+        <span class="open go">{{ go() }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
 </main>
 {% endblock %}

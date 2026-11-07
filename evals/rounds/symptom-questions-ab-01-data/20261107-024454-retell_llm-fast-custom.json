@@ -1,0 +1,3168 @@
+{
+  "run_id": "20261107-024454-retell_llm-fast-custom",
+  "created": "2026-11-07T02:44:54.676467Z",
+  "suite": "custom",
+  "tags": [
+    "id:ab-boiler-dripping-still-on",
+    "id:ab-no-heat-denies-noise"
+  ],
+  "stack": "retell_llm",
+  "profile": "fast",
+  "hash": "0fa208c687347aa4",
+  "prompt_hash": "9490b9b113a083d6",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "ab-boiler-dripping-still-on",
+      "sample": 1,
+      "persona": "Sam Okafor, homeowner in Bed-Stuy.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The agent asked whether the water was a steady leak or a drip after the caller had already said it was dripping (\"like i said\"). It then asked if they'd tried turning the boiler off only to decline advice on exactly that, and the booking confirmation said \"tomorrow\" without naming the day and date.",
+      "reply_delay_p50_ms": 1183.2285419804975,
+      "reply_delay_p90_ms": 1664.670958998613,
+      "cost_usd": 0.058389,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 42716.80879202904,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "there's water dripping from under my boiler but the heat's still on",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Gotcha, sorry about the water under your boiler. We can get a technician out to take a look. And what's the street address?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "four one two macon street brooklyn one one two three three",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Got it, and is there an apartment or unit number?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no it's the whole house",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Is the water leaking steadily, or just a drip here and there?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "like i said it's dripping and the heat's still on it's a small puddle under the boiler since last night",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. What's the best phone number to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "this number nine one seven five five five oh seven four two",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay. So that's four twelve Macon Street, and the number you're calling from, ending in zero seven four two. That's all correct, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yep that's right and my name's sam okafor in case you need it",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, one moment. Can this wait for a scheduled visit, or do you need someone out right away?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it can wait whatever the first window is i'll take it",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "tomorrow morning works thanks",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Will you be able to approve any repair work the technician recommends?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah i own the house so i can approve whatever he recommends",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes i'll be home there's no gate or buzzer just the front door",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just a moment. Have you tried anything yet, like turning the boiler off or adjusting it?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i haven't touched it i'm not sure if i should turn it off or not so i've left it alone",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "wait should i turn the boiler off until he gets here or leave it running",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I can't give you repair advice, but I can have the technician go over that with you when they arrive. Is there anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay no that's everything thanks for your help",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "street": "412 Macon Street",
+            "borough": "Brooklyn",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "address": {
+              "street": "412 Macon Street",
+              "unit": "",
+              "city": "",
+              "zip": "11233",
+              "spelled": ""
+            },
+            "phone": "9175550742",
+            "phone_for": "",
+            "name": "",
+            "job_type": "no_heat",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "address": {
+              "street": "412 Macon Street",
+              "unit": "",
+              "city": "",
+              "zip": "11233",
+              "spelled": ""
+            },
+            "phone": "9175550742",
+            "phone_for": "",
+            "name": "Sam Okafor",
+            "job_type": "no_heat",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "water dripping from under the boiler, small puddle since last night, heat still on",
+              "since": "since last night",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "water dripping from under the boiler, small puddle since last night, heat still on",
+              "since": "since last night",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under the boiler, small puddle since last night; heat still on",
+              "since": "since last night",
+              "tried": "",
+              "who_home": "not asked yet",
+              "approver": "",
+              "system_type": "boiler",
+              "arrival_notes": "",
+              "also_noted": "not asked yet",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": "High",
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under the boiler, small puddle since last night; heat still on",
+              "since": "since last night",
+              "tried": "",
+              "who_home": "not asked yet",
+              "approver": "Sam Okafor, homeowner",
+              "system_type": "boiler",
+              "arrival_notes": "",
+              "also_noted": "not asked yet",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": "High",
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under the boiler, small puddle since last night; heat still on",
+              "since": "since last night",
+              "tried": "",
+              "who_home": "Homeowner will be home; no gate code or buzzer, front door",
+              "approver": "Sam Okafor, homeowner",
+              "system_type": "boiler",
+              "arrival_notes": "No gate or buzzer, front door only",
+              "also_noted": "not asked yet",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": "High",
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under the boiler, small puddle since last night; heat still on",
+              "since": "since last night",
+              "tried": "Nothing; boiler left alone, not turned off",
+              "who_home": "Homeowner will be home; no gate code or buzzer, front door",
+              "approver": "Sam Okafor, homeowner",
+              "system_type": "boiler",
+              "arrival_notes": "No gate or buzzer, front door only",
+              "also_noted": "not asked yet",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": "High",
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1331.001374986954,
+          "model_first_token_ms": 1331.001374986954,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1479.0430840221234,
+          "model_first_token_ms": 1479.0430840221234,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 998.3635409735143,
+          "model_first_token_ms": 998.3635409735143,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 766.1189999780618,
+          "model_first_token_ms": 766.1189999780618,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1062.5062909675762,
+          "model_first_token_ms": 1062.5062909675762,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1768.1282089906745,
+          "model_first_token_ms": 1768.1282089906745,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1326.4066249830648,
+          "model_first_token_ms": 1326.4066249830648,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1111.6363749606535,
+          "model_first_token_ms": 1111.6363749606535,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1183.2285419804975,
+          "model_first_token_ms": 1183.2285419804975,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1440.0895830476657,
+          "model_first_token_ms": 1440.0895830476657,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1664.670958998613,
+          "model_first_token_ms": 1664.670958998613,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 617.2083329875022,
+          "model_first_token_ms": 617.2083329875022,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 738.3767499704845,
+          "model_first_token_ms": 738.3767499704845,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ab-boiler-dripping-still-on-1-35e77b77",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ab-boiler-dripping-still-on",
+      "sample": 2,
+      "persona": "Sam Okafor, homeowner in Bed-Stuy.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 3,
+      "grader_notes": "The \"Since this is a no-heat issue?\" turn ignored the caller's opening line that the heat was still on, which made them repeat themselves; the agent also asked what they'd tried only after the slot was picked. The booking confirmation said only \"tomorrow between 8 and 8:30\" without naming the day and date.",
+      "reply_delay_p50_ms": 1068.2386250118725,
+      "reply_delay_p90_ms": 1518.1662079994567,
+      "cost_usd": 0.057481,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 41864.01408299571,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "there's water dripping from under my boiler but the heat's still on",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Gotcha, sorry about the dripping. We can get a technician out to take a look at that. And what's the street address?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "four one two macon street brooklyn one one two three three",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Got it, that's in our service area. Is there an apartment or unit number?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no it's the whole house it's a brownstone",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect. Is the water coming from the boiler itself, or from a pipe near it?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i don't know for sure it's pooling on the floor under the gas boiler and i haven't looked closer than that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Since this is a no-heat issue?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no the heat's still on like i said it's dripping and the heat's still on the house is warm",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, the heat's still on. Anything else the technician should know, like banging pipes or it shutting off on its own?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no banging and it hasn't shut off it just started dripping last night and there's a little puddle now",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. What's the best phone number to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "this number nine one seven five five five oh seven four two",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect. So that's four twelve Macon Street, and the number you're calling from, ending in zero seven four two. That's all correct, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's right and my name's sam okafor if you need it",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, one moment. Can this wait for a scheduled visit, or do you need someone out right away?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it can wait whatever the first available window is works for me",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah tomorrow between 8 and 8 30 works thanks",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Will you be able to approve any repair work the technician recommends?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes i own the house so i can approve the repair work",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes i'll be home there's no gate or buzzer just the front door i'll let them in",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just a moment. What have you already tried, if anything?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "nothing yet i haven't touched the boiler or tried to shut anything off i just put a towel down by the puddle",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's everything thanks for getting that booked",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "street": "412 Macon Street",
+            "borough": "Brooklyn",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "address": {
+              "street": "412 Macon Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11233",
+              "spelled": ""
+            },
+            "phone": "9175550742",
+            "phone_for": "",
+            "name": "",
+            "job_type": "no_heat",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "address": {
+              "street": "412 Macon Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11233",
+              "spelled": ""
+            },
+            "phone": "9175550742",
+            "phone_for": "",
+            "name": "Sam Okafor",
+            "job_type": "no_heat",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "water dripping from under gas boiler, pooling on floor, started last night; heat still on",
+              "since": "last night",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "water dripping from under gas boiler, pooling on floor, started last night; heat still on",
+              "since": "last night",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under gas boiler, pooling on floor; started last night. Heat still on.",
+              "since": "last night",
+              "tried": "",
+              "who_home": "not asked yet",
+              "approver": "",
+              "system_type": "boiler",
+              "arrival_notes": "not asked yet",
+              "also_noted": "No banging, has not shut off on its own. Small puddle now.",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under gas boiler, pooling on floor; started last night. Heat still on.",
+              "since": "last night",
+              "tried": "",
+              "who_home": "not asked yet",
+              "approver": "Sam Okafor, owner",
+              "system_type": "boiler",
+              "arrival_notes": "not asked yet",
+              "also_noted": "No banging, has not shut off on its own. Small puddle now.",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under gas boiler, pooling on floor; started last night. Heat still on.",
+              "since": "last night",
+              "tried": "",
+              "who_home": "Sam Okafor will be home",
+              "approver": "Sam Okafor, owner",
+              "system_type": "boiler",
+              "arrival_notes": "No gate or buzzer; front door, caller will let them in",
+              "also_noted": "No banging, has not shut off on its own. Small puddle now.",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under gas boiler, pooling on floor; started last night. Heat still on.",
+              "since": "last night",
+              "tried": "Nothing yet; has not touched the boiler or shut anything off. Put a towel down by the puddle.",
+              "who_home": "Sam Okafor will be home",
+              "approver": "Sam Okafor, owner",
+              "system_type": "boiler",
+              "arrival_notes": "No gate or buzzer; front door, caller will let them in",
+              "also_noted": "No banging, has not shut off on its own. Small puddle now.",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 876.0388750233687,
+          "model_first_token_ms": 876.0388750233687,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1436.9821669533849,
+          "model_first_token_ms": 1436.9821669533849,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 990.7768329721875,
+          "model_first_token_ms": 990.7768329721875,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1068.2386250118725,
+          "model_first_token_ms": 1068.2386250118725,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 732.6167079736479,
+          "model_first_token_ms": 732.6167079736479,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 785.2889589848928,
+          "model_first_token_ms": 785.2889589848928,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 922.3702909657732,
+          "model_first_token_ms": 922.3702909657732,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 2551.860709034372,
+          "model_first_token_ms": 2551.860709034372,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1492.320166027639,
+          "model_first_token_ms": 1492.320166027639,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1211.926875053905,
+          "model_first_token_ms": 1211.926875053905,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1262.7376670134254,
+          "model_first_token_ms": 1262.7376670134254,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1518.1662079994567,
+          "model_first_token_ms": 1518.1662079994567,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1509.7379999933764,
+          "model_first_token_ms": 1509.7379999933764,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 711.6621250170283,
+          "model_first_token_ms": 711.6621250170283,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ab-boiler-dripping-still-on-2-c98b29c6",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ab-boiler-dripping-still-on",
+      "sample": 3,
+      "persona": "Sam Okafor, homeowner in Bed-Stuy.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "grader: The agent ignored the caller's repeated 'today?' question and their 'let me know what it costs first' request. It also asked about symptoms the caller had already described and gave the confusing internal-sounding 'this is a no-heat call only if the heat is out' line; the final confirmation said only 'tomorrow' with no day or date and never turned the buzzer access note into an action, breaking the booking-confirmation standard twice."
+      ],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent ignored the caller's repeated 'today?' question and their 'let me know what it costs first' request. It also asked about symptoms the caller had already described and gave the confusing internal-sounding 'this is a no-heat call only if the heat is out' line; the final confirmation said only 'tomorrow' with no day or date and never turned the buzzer access note into an action, breaking the booking-confirmation standard twice.",
+      "reply_delay_p50_ms": 1107.8547909855843,
+      "reply_delay_p90_ms": 1451.616832986474,
+      "cost_usd": 0.063322,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 36701.932374970056,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "there's water dripping from under my boiler but the heat's still on",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Gotcha, sorry about the dripping under your boiler. We can get a technician out to look at that. And what's the street address?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "four one two macon street brooklyn one one two three three",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Is there an apartment or unit number?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no it's the whole house it's a brownstone",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, thanks. The water is dripping, not the heat, so this is a no-heat call only if the heat is out. Since the heat's still on, I'll book it as a repair. What's the best phone number to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i'm calling from nine one seven five five five oh seven four two so you can reach me there",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect. So that's four twelve Macon Street, and the number you're calling from, ending in zero seven four two. That's all correct, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yep that's right can you get someone out today and is there anything else you need from me",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. And what name should I put the visit under?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "sam okafor",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Anything else the technician should know, like the water getting worse or the boiler shutting off on its own?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "like i said it's dripping and the heat's still on nothing else can someone come by today or what's the first window you have",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Can this wait for a scheduled visit, or do you need someone out right away?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it can wait just give me the first window you have",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah tomorrow morning works thanks",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Will you be able to approve any repair work the technician recommends?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yeah i own the house so i can approve the repair just let me know what it costs first",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i'll be home so i can let them in there's no gate or code just the front door buzzer",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Has anyone tried anything on the boiler yet?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no i haven't touched it i just put a towel under the drip",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's everything thanks see you tomorrow",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "street": "412 Macon Street",
+            "borough": "Brooklyn",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "address": {
+              "street": "412 Macon Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11233",
+              "spelled": ""
+            },
+            "phone": "9175550742",
+            "phone_for": "",
+            "name": "",
+            "job_type": "no_heat",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "address": {
+              "street": "412 Macon Street",
+              "unit": "",
+              "city": "Brooklyn",
+              "zip": "11233",
+              "spelled": ""
+            },
+            "phone": "9175550742",
+            "phone_for": "",
+            "name": "",
+            "job_type": "no_heat",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": "today",
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "water dripping from under the boiler, heat still on",
+              "since": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "water dripping from under the boiler, heat still on",
+              "since": "",
+              "who_home": "",
+              "inside_temp_f": null,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under the boiler; heat still on",
+              "since": "not asked yet",
+              "tried": "",
+              "who_home": "not asked yet",
+              "approver": "",
+              "system_type": "boiler",
+              "arrival_notes": "",
+              "also_noted": "not asked yet",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under the boiler; heat still on",
+              "since": "not asked yet",
+              "tried": "",
+              "who_home": "not asked yet",
+              "approver": "Sam Okafor, owner",
+              "system_type": "boiler",
+              "arrival_notes": "",
+              "also_noted": "not asked yet",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under the boiler; heat still on",
+              "since": "not asked yet",
+              "tried": "",
+              "who_home": "Caller will be home",
+              "approver": "Sam Okafor, owner",
+              "system_type": "boiler",
+              "arrival_notes": "No gate code. Front door buzzer.",
+              "also_noted": "not asked yet",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Water dripping from under the boiler; heat still on",
+              "since": "not asked yet",
+              "tried": "Nothing touched on the boiler; a towel is under the drip",
+              "who_home": "Caller will be home",
+              "approver": "Sam Okafor, owner",
+              "system_type": "boiler",
+              "arrival_notes": "No gate code. Front door buzzer.",
+              "also_noted": "not asked yet",
+              "name": "Sam Okafor",
+              "inside_temp_f": null
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 907.4117090203799,
+          "model_first_token_ms": 907.4117090203799,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1254.451374989003,
+          "model_first_token_ms": 1254.451374989003,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 910.0768329808488,
+          "model_first_token_ms": 910.0768329808488,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 917.5868339953013,
+          "model_first_token_ms": 917.5868339953013,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 935.6204580399208,
+          "model_first_token_ms": 935.6204580399208,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 525.2375419950113,
+          "model_first_token_ms": 525.2375419950113,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1385.999958962202,
+          "model_first_token_ms": 1385.999958962202,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1388.6037499760278,
+          "model_first_token_ms": 1388.6037499760278,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1199.4009999907576,
+          "model_first_token_ms": 1199.4009999907576,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1107.8547909855843,
+          "model_first_token_ms": 1107.8547909855843,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1451.616832986474,
+          "model_first_token_ms": 1451.616832986474,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1533.6006669676863,
+          "model_first_token_ms": 1533.6006669676863,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 670.2519159880467,
+          "model_first_token_ms": 670.2519159880467,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ab-boiler-dripping-still-on-3-ee631b9f",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ab-no-heat-denies-noise",
+      "sample": 1,
+      "persona": "Priya Nair, renter on the Upper West Side. Direct.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 4,
+      "grader_notes": "The equipment question (\"Is it a boiler, a furnace, or a heat pump?\") wasn't softened with \"if you know.\" The final confirmation gave only \"tomorrow between 8 and 8:30\" without naming the day and date; each owner standard slipped only once, so the call passes.",
+      "reply_delay_p50_ms": 1093.9569170004688,
+      "reply_delay_p90_ms": 1481.9036660483107,
+      "cost_usd": 0.060687,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 42092.352084000595,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "my heat isn't working no leaks no weird noises it's just not coming on",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry your heat isn't working. We can get a technician out for that. Can I get your name?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "sure it's priya nair",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. And this is for your home, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes it's my apartment what's the address you need for the visit",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it, and what street is that on?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's three one oh west 86th street apartment 5b new york one oh oh two four",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Got it, thanks. Is it completely out, or just not keeping up?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's completely out nothing has come on since this morning and it's about 60 degrees in here",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Is it a boiler, a furnace, or a heat pump?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i'm not sure it's the building's heat so it's radiators i don't know what the boiler or system is",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, that's fine. Anything else the technician should know, like banging pipes or it shutting off on its own?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no banging or noises and no leaks it just isn't turning on at all",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. What's the best phone number to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "the number i'm calling from nine one seven five five five oh seven four five",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect. So that's three ten West Eighty-Sixth Street, unit five B, and the number you're calling from, ending in zero seven four five. That's all correct, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's all correct",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, one moment. Can this wait for a scheduled visit, or do you need someone out right away?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it can wait for a scheduled visit whatever the first available window is works for me",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes tomorrow between 8 and 8 30 works nothing's urgent beyond the cold so i'll go with that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Will you be able to approve any repair work the technician recommends?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes i can approve repairs on behalf of the landlord",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i'll be home so someone will be there to let them in there's no gate code the buzzer should be fine but i'll be the one answering it",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just a moment. Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's everything thanks for getting that set up",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "street": "310 West 86th Street",
+            "borough": "Manhattan",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "address": {
+              "street": "310 West 86th Street",
+              "unit": "5B",
+              "city": "New York",
+              "zip": "10024",
+              "spelled": ""
+            },
+            "phone": "9175550745",
+            "phone_for": "",
+            "name": "Priya Nair",
+            "job_type": "no_heat",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "address": {
+              "street": "310 West 86th Street",
+              "unit": "5B",
+              "city": "New York",
+              "zip": "10024",
+              "spelled": ""
+            },
+            "phone": "9175550745",
+            "phone_for": "",
+            "name": "Priya Nair",
+            "job_type": "no_heat",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "Heat not coming on at all since this morning, no noises or leaks",
+              "since": "",
+              "who_home": "",
+              "inside_temp_f": 60.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "Heat not coming on at all since this morning, no noises or leaks",
+              "since": "",
+              "who_home": "",
+              "inside_temp_f": 60.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Heat not coming on at all since this morning, completely out, no noises or leaks",
+              "since": "since this morning",
+              "tried": "not asked yet",
+              "who_home": "not asked yet",
+              "approver": "",
+              "system_type": "not sure: radiators, unknown boiler or system",
+              "arrival_notes": "not asked yet",
+              "also_noted": "No banging or noises, no leaks, it just isn't turning on",
+              "name": "Priya Nair",
+              "inside_temp_f": 60.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Heat not coming on at all since this morning, completely out, no noises or leaks",
+              "since": "since this morning",
+              "tried": "not asked yet",
+              "who_home": "not asked yet",
+              "approver": "Priya Nair, on behalf of the landlord",
+              "system_type": "not sure: radiators, unknown boiler or system",
+              "arrival_notes": "not asked yet",
+              "also_noted": "No banging or noises, no leaks, it just isn't turning on",
+              "name": "Priya Nair",
+              "inside_temp_f": 60.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Heat not coming on at all since this morning, completely out, no noises or leaks",
+              "since": "since this morning",
+              "tried": "not asked yet",
+              "who_home": "Caller will be home; no gate code, buzzer should be fine, caller will answer it",
+              "approver": "Priya Nair, on behalf of the landlord",
+              "system_type": "not sure: radiators, unknown boiler or system",
+              "arrival_notes": "Buzzer, no gate code; caller answers",
+              "also_noted": "No banging or noises, no leaks, it just isn't turning on",
+              "name": "Priya Nair",
+              "inside_temp_f": 60.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1328.5463330103084,
+          "model_first_token_ms": 1328.5463330103084,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 934.0359579655342,
+          "model_first_token_ms": 934.0359579655342,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 764.5644159638323,
+          "model_first_token_ms": 764.5644159638323,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1430.8382089948282,
+          "model_first_token_ms": 1430.8382089948282,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 865.0525420089252,
+          "model_first_token_ms": 865.0525420089252,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 916.0654169972986,
+          "model_first_token_ms": 916.0654169972986,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 770.8802500274032,
+          "model_first_token_ms": 770.8802500274032,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1093.9569170004688,
+          "model_first_token_ms": 1093.9569170004688,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1945.404750003945,
+          "model_first_token_ms": 1945.404750003945,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1468.7603329657577,
+          "model_first_token_ms": 1468.7603329657577,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1418.4906669543125,
+          "model_first_token_ms": 1418.4906669543125,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1332.1074999985285,
+          "model_first_token_ms": 1332.1074999985285,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1481.9036660483107,
+          "model_first_token_ms": 1481.9036660483107,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1060.4398750001565,
+          "model_first_token_ms": 1060.4398750001565,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ab-no-heat-denies-noise-1-208785bf",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ab-no-heat-denies-noise",
+      "sample": 2,
+      "persona": "Priya Nair, renter on the Upper West Side. Direct.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "booking: 0 booking(s) made, expected 1"
+      ],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent asked again for things already answered: the unit number right after the caller gave '5B', and repair approval after she had already said she could approve. The close repeated the 8 AM callback line twice and never confirmed the 8–8:30 visit with its day and date, leaving it unclear whether anything was booked.",
+      "reply_delay_p50_ms": 909.4324159668759,
+      "reply_delay_p90_ms": 1575.071166967973,
+      "cost_usd": 0.057105,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 36747.903541021515,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "my heat isn't working no leaks no weird noises it's just not coming on",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry your heat's out. We can get a technician out for that. Can I get your name?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "priya nair",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. And this is for your home, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes it's my apartment i rent it though so the building's landlord handles this kind of thing i'm able to approve the repair for them",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. And what's the street address?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "three one oh west 86th street apartment 5b new york one oh oh two four",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Got it, and what's the unit number?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "that's apartment 5b the 5b i just gave you",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Is it completely out, or just not keeping up?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's completely out nothing's coming on since this morning and it's about 60 degrees in here there are no leaks and no noises",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Is it a boiler, a furnace, or a heat pump?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i'm not sure it's the building's heat with radiators in the apartment i don't know what's in the basement",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. Anything else the technician should know, like banging pipes or it shutting off on its own?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no banging no shutting off on its own it just never came on this morning i also have a little space heater running if that matters",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks, I'll pass that along. What's the best phone number to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "the number i'm calling from nine one seven five five five oh seven four five",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. So that's three ten West Eighty-Sixth Street, unit five B, and the number you're calling from, ending in zero seven four five. That's all correct, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's all correct",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, one moment. Can this wait for a scheduled visit, or do you need someone out right away?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it can wait for a scheduled visit whatever the earliest window is works for me",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes tomorrow between 8 and 8 30 works thanks",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just a moment. Will you be able to approve any repair work the technician recommends?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes i can approve repair work on the landlord's behalf if it's something major like a replacement i may need to check with the landlord first so could you tell the technician that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I've let our team know, and someone will call you tomorrow around 8 AM. Our team will call you tomorrow around 8 AM to confirm who can approve the work. Is there anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's everything thanks for your help",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+            "street": "310 West 86th Street",
+            "borough": "Manhattan",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+            "address": {
+              "street": "310 West 86th Street",
+              "unit": "5B",
+              "city": "New York",
+              "zip": "10024",
+              "spelled": ""
+            },
+            "phone": "9175550745",
+            "phone_for": "",
+            "name": "Priya Nair",
+            "job_type": "no_heat",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+            "address": {
+              "street": "310 West 86th Street",
+              "unit": "5B",
+              "city": "New York",
+              "zip": "10024",
+              "spelled": ""
+            },
+            "phone": "9175550745",
+            "phone_for": "",
+            "name": "Priya Nair",
+            "job_type": "no_heat",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "Heat completely out since this morning, no leaks or noises, about 60 degrees inside, space heater running",
+              "since": "since this morning",
+              "who_home": "",
+              "inside_temp_f": 60.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "Heat completely out since this morning, no leaks or noises, about 60 degrees inside, space heater running",
+              "since": "since this morning",
+              "who_home": "",
+              "inside_temp_f": 60.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Heat completely out since this morning, no leaks or noises, about 60 degrees inside, space heater running",
+              "since": "since this morning",
+              "tried": "not asked yet",
+              "who_home": "not asked yet",
+              "approver": "Caller rents and can approve repair for landlord",
+              "system_type": "not sure: radiators in apartment, unknown whether boiler, furnace or heat pump",
+              "arrival_notes": "",
+              "also_noted": "No banging pipes, not shutting off on its own",
+              "name": "Priya Nair",
+              "inside_temp_f": 60.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "flag_person",
+          "arguments": {
+            "callback_time": "8 AM",
+            "callback_in_minutes": null,
+            "callback_after": null,
+            "callback_before": null,
+            "callback_day": "tomorrow",
+            "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+            "reason": "Renter Priya Nair, 310 West 86th Street apt 5B, no heat since this morning, unit about 60 degrees. Caller can approve minor repairs for the landlord but may need landlord approval for a major replacement. Confirm who approves before the technician's visit tomorrow 8 to 8:30 AM.",
+            "priority": "High",
+            "system_calls_back": false
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 877.8808750212193,
+          "model_first_token_ms": 877.8808750212193,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 808.8827500469051,
+          "model_first_token_ms": 808.8827500469051,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 582.139499951154,
+          "model_first_token_ms": 582.139499951154,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1507.95429199934,
+          "model_first_token_ms": 1507.95429199934,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 776.5137499663979,
+          "model_first_token_ms": 776.5137499663979,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 821.484790998511,
+          "model_first_token_ms": 821.484790998511,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 920.3042919980362,
+          "model_first_token_ms": 920.3042919980362,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 768.4002079768106,
+          "model_first_token_ms": 768.4002079768106,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1060.1092919823714,
+          "model_first_token_ms": 1060.1092919823714,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1542.483750032261,
+          "model_first_token_ms": 1542.483750032261,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1575.071166967973,
+          "model_first_token_ms": 1575.071166967973,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1510.406834015157,
+          "model_first_token_ms": 1510.406834015157,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1699.5848750229925,
+          "model_first_token_ms": 1699.5848750229925,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 909.4324159668759,
+          "model_first_token_ms": 909.4324159668759,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ab-no-heat-denies-noise-2-2e8f8077",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "ab-no-heat-denies-noise",
+      "sample": 3,
+      "persona": "Priya Nair, renter on the Upper West Side. Direct.",
+      "flow": [
+        "booking"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "fail",
+      "must_pass_failures": [],
+      "check_failures": [
+        "grader: The agent asked for the unit number right after the caller gave '5B' in the address, then asked whether she could approve repairs after she had already said she could approve for her landlord. That breaks the owner's no-re-asking standard twice; the confirmation also gave only 'tomorrow' with no date, and the doorman access note was never turned into an action."
+      ],
+      "error": "",
+      "checks": [
+        "booking",
+        "read_back"
+      ],
+      "grader_score": 2,
+      "grader_notes": "The agent asked for the unit number right after the caller gave '5B' in the address, then asked whether she could approve repairs after she had already said she could approve for her landlord. That breaks the owner's no-re-asking standard twice; the confirmation also gave only 'tomorrow' with no date, and the doorman access note was never turned into an action.",
+      "reply_delay_p50_ms": 1010.0872910115868,
+      "reply_delay_p90_ms": 1597.9922499973327,
+      "cost_usd": 0.059034,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 38639.908832963556,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "my heat isn't working no leaks no weird noises it's just not coming on",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Gotcha, sorry your heat isn't coming on. We can get a technician out to take a look. Can I get your name?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "sure it's priya nair",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. And this is for your home, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes it's my apartment i rent it so the landlord would need to okay anything that costs money but i can approve it for him",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Got it. And what's the street address?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "three one oh west 86th street apartment 5b new york one oh oh two four",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Got it, and what's the unit number?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's 5b i just said that with the address",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Sorry about that. Is it completely out, or just not keeping up?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it's completely out it hasn't come on at all since this morning and it's about 60 degrees in here",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks. Is it a boiler, a furnace, or a heat pump?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "i'm not sure it's the building's heat and it runs through radiators i don't know anything about the boiler itself",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Anything else the technician should know, like banging pipes or it shutting off on its own?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no banging no hissing nothing like that it just isn't turning on",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "What's the best phone number to reach you?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "the number i'm calling from nine one seven five five five oh seven four five",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Perfect. So that's three ten West Eighty-Sixth Street, unit five B, and the number you're calling from, ending in zero seven four five. That's all correct, right?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes that's all correct",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, one moment. Can this wait for a scheduled visit, or do you need someone out right away?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "it can wait for a scheduled visit i'd like the first window you have",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "The soonest I have is tomorrow, 8 to 8:30. If anything makes this more urgent for you, just let me know. Does that work?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "tomorrow morning between 8 and 8 30 works it's not an emergency but it's cold in here so please keep it on the first available slot thanks",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Just a moment. Will you be able to approve any repair work the technician recommends?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes i can approve it on the landlord's behalf if it's a big expense i may need to check with him first but routine repairs i can okay on the spot",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Okay, thanks. Will someone be home to let the technician in? If there's a gate code or buzzer they'll need, just let me know.",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "yes i'll be home tomorrow morning the building has a doorman so they can check in at the front desk i don't know of a gate code",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Okay, I've booked it: the technician will arrive tomorrow between 8 and 8:30. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no that's everything thanks for getting that scheduled goodbye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "find_address",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "street": "310 West 86th Street",
+            "borough": "Manhattan",
+            "spelled": ""
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "address": {
+              "street": "310 West 86th Street",
+              "unit": "5B",
+              "city": "New York",
+              "zip": "10024",
+              "spelled": ""
+            },
+            "phone": "9175550745",
+            "phone_for": "",
+            "name": "Priya Nair",
+            "job_type": "no_heat",
+            "confirmed": false
+          }
+        },
+        {
+          "name": "read_back",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "address": {
+              "street": "310 West 86th Street",
+              "unit": "5B",
+              "city": "New York",
+              "zip": "10024",
+              "spelled": ""
+            },
+            "phone": "9175550745",
+            "phone_for": "",
+            "name": "Priya Nair",
+            "job_type": "no_heat",
+            "confirmed": true
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "Heat not coming on at all since this morning, apartment about 60 degrees, building heat through radiators, no banging, hissing or other noises",
+              "since": "since this morning",
+              "who_home": "",
+              "inside_temp_f": 60.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "find_slots",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "job_type": "no_heat",
+            "priority": null,
+            "preferred_days": [],
+            "time_of_day": null,
+            "moving_a_visit": false,
+            "window_minutes": null,
+            "day": null,
+            "arrive_after": null,
+            "arrive_before": null,
+            "facts": {
+              "issue": "Heat not coming on at all since this morning, apartment about 60 degrees, building heat through radiators, no banging, hissing or other noises",
+              "since": "since this morning",
+              "who_home": "",
+              "inside_temp_f": 60.0,
+              "temp_falling_fast": false
+            }
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Heat not coming on at all since this morning; apartment about 60 degrees; building heat through radiators; no banging, hissing or other noises",
+              "since": "since this morning",
+              "tried": "not asked yet",
+              "who_home": "not asked yet",
+              "approver": "",
+              "system_type": "not sure (building heat through radiators)",
+              "arrival_notes": "not asked yet",
+              "also_noted": "No banging, hissing or other noises. Caller rents; landlord must approve any costs.",
+              "name": "Priya Nair",
+              "inside_temp_f": 60.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Heat not coming on at all since this morning; apartment about 60 degrees; building heat through radiators; no banging, hissing or other noises",
+              "since": "since this morning",
+              "tried": "not asked yet",
+              "who_home": "not asked yet",
+              "approver": "Priya Nair, on landlord's behalf for routine repairs",
+              "system_type": "not sure (building heat through radiators)",
+              "arrival_notes": "not asked yet",
+              "also_noted": "No banging, hissing or other noises. Caller rents; can approve routine repairs on the landlord's behalf; may need to check with landlord for big expenses.",
+              "name": "Priya Nair",
+              "inside_temp_f": 60.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "book_appointment",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "job_type": "no_heat",
+            "slot": {
+              "date": "2026-11-07",
+              "window": "0800-0830"
+            },
+            "details": {
+              "issue": "Heat not coming on at all since this morning; apartment about 60 degrees; building heat through radiators; no banging, hissing or other noises",
+              "since": "since this morning",
+              "tried": "not asked yet",
+              "who_home": "Caller will be home tomorrow morning",
+              "approver": "Priya Nair, on landlord's behalf for routine repairs",
+              "system_type": "not sure (building heat through radiators)",
+              "arrival_notes": "Building has a doorman; technician can check in at the front desk. No gate code known.",
+              "also_noted": "No banging, hissing or other noises. Caller rents; can approve routine repairs on the landlord's behalf; may need to check with landlord for big expenses.",
+              "name": "Priya Nair",
+              "inside_temp_f": 60.0
+            },
+            "priority": null,
+            "separate_problem": false,
+            "new_address_account": null
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 839.9089169688523,
+          "model_first_token_ms": 839.9089169688523,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 665.7453749794513,
+          "model_first_token_ms": 665.7453749794513,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 700.2083749976009,
+          "model_first_token_ms": 700.2083749976009,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1432.536416046787,
+          "model_first_token_ms": 1432.536416046787,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 832.2503329836763,
+          "model_first_token_ms": 832.2503329836763,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 695.2203330001794,
+          "model_first_token_ms": 695.2203330001794,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1010.0872910115868,
+          "model_first_token_ms": 1010.0872910115868,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 667.609166004695,
+          "model_first_token_ms": 667.609166004695,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1157.3017920018174,
+          "model_first_token_ms": 1157.3017920018174,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1598.9321660017595,
+          "model_first_token_ms": 1598.9321660017595,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1597.9922499973327,
+          "model_first_token_ms": 1597.9922499973327,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1450.637582980562,
+          "model_first_token_ms": 1450.637582980562,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1595.4687910270877,
+          "model_first_token_ms": 1595.4687910270877,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1442.1559589682147,
+          "model_first_token_ms": 1442.1559589682147,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 866.8884170474485,
+          "model_first_token_ms": 866.8884170474485,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-ab-no-heat-denies-noise-3-05ad989d",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}

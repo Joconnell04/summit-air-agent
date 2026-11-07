@@ -24,7 +24,7 @@ from fastapi.responses import (
 )
 from fastapi.staticfiles import StaticFiles
 
-from . import bench_call, bench_data, bench_pages, failure_grader, nodes, redact, rules, trace
+from . import bench_call, bench_data, bench_pages, failure_grader, logs, nodes, redact, rules, trace
 from .db import parse_iso
 from .owner_view import _common, _need_admin, _render
 
@@ -176,6 +176,18 @@ def _summary_lines(conn, call_id: str) -> list[str]:
     return [str(x) for x in lines] if isinstance(lines, list) else [str(lines)]
 
 
+def _tech_notes(bookings: list[dict]) -> list[str]:
+    """The notes the first booking sent with the job, stored as a JSON list."""
+    raw = bookings[0].get("job_notes") if bookings else None
+    if not raw:
+        return []
+    try:
+        notes = json.loads(raw)
+    except ValueError:
+        return [str(raw)]
+    return [str(n) for n in notes] if isinstance(notes, list) else [str(notes)]
+
+
 def retell_calls(request: Request) -> bench_call.RetellCalls:
     """The app's reader of Retell call objects, made on first use from RETELL_API_KEY."""
     state = request.app.state
@@ -220,6 +232,8 @@ def add_routes(app: FastAPI) -> None:
             tenant = services.tenants.by_slug.get(found["call"]["tenant"]) or services.tenants.default
             stages = [dict(r) for r in conn.execute(
                 "SELECT stage, version_id, at FROM call_stages WHERE call_id = ? ORDER BY at", (call_id,))]
+            customers = bench_call.customers(conn, found, graph["start"],
+                                             services.fsm.get(tenant.slug), tenant)
             return {
                 **_context(request, conn, "bench"),
                 "trace": found,
@@ -229,7 +243,9 @@ def add_routes(app: FastAPI) -> None:
                 "safety": bench_call.safety_summary(found),
                 "timing": bench_call.timing(found),
                 "stage_labels": dict(bench_call.STAGES),
-                "customers": bench_call.customers(conn, found, graph["start"]),
+                "customers": customers,
+                "achieved": bench_call.outcomes(conn, found, customers, tenant),
+                "follow_ups": bench_call.follow_ups(found, tenant),
                 "readback": bench_call.readback(conn, found),
                 "cost": bench_call.call_cost(conn, found),
                 "label": conn.execute("SELECT label, reason FROM call_labels WHERE call_id = ?",
@@ -237,6 +253,7 @@ def add_routes(app: FastAPI) -> None:
                 "flow": (conn.execute("SELECT flow FROM call_flows WHERE call_id = ?",
                                       (call_id,)).fetchone() or {"flow": ""})["flow"],
                 "summary_lines": _summary_lines(conn, call_id),
+                "tech_notes": _tech_notes(found["bookings"]),
                 "grade": conn.execute(
                     "SELECT failure, kind, severity, reason, error FROM grades WHERE call_id = ?",
                     (call_id,)).fetchone(),
@@ -304,6 +321,56 @@ def add_routes(app: FastAPI) -> None:
         finally:
             conn.close()
         return _render(request, "_bench_heard.html", context)
+
+    def call_log(request: Request, key: str) -> tuple[str, list[dict]] | None:
+        """The call's lines of the JSON log (app/logs.py), behind the bench's own sign-in, so the
+        page never needs the debug token that /debug/logs asks for."""
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            call_id = call_for(conn, key)
+        finally:
+            conn.close()
+        if call_id is None:
+            return None
+        return call_id, logs.read(services.settings.log_path, call_id=call_id, limit=logs.MAX_LIMIT)
+
+    @app.get("/bench/calls/{key}/log", response_class=HTMLResponse)
+    def bench_call_log(request: Request, key: str):
+        denied = require_admin(request)
+        if denied:
+            return denied
+        found = call_log(request, key)
+        if found is None:
+            return HTMLResponse("No such call.", 404)
+        call_id, rows = found
+        conn = request.app.state.services.connect()
+        try:
+            context = {
+                **_context(request, conn, "bench"),
+                "call_id": call_id,
+                "key": key,
+                "rows": [{**r, "pretty": json.dumps(r, indent=2, ensure_ascii=False)} for r in rows],
+                "cap": logs.MAX_LIMIT,
+            }
+        finally:
+            conn.close()
+        return _render(request, "bench_log.html", context)
+
+    @app.get("/bench/calls/{key}/log.json")
+    def bench_call_log_json(request: Request, key: str):
+        denied = require_admin(request)
+        if denied:
+            return denied
+        found = call_log(request, key)
+        if found is None:
+            return PlainTextResponse("No such call.", 404)
+        call_id, rows = found
+        return Response(
+            json.dumps({"call_id": call_id, "count": len(rows), "data": rows}, indent=2),
+            media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="log-{key}.json"'},
+        )
 
     @app.get("/bench/calls/{key}/stream")
     def bench_call_stream(request: Request, key: str):
@@ -387,14 +454,12 @@ def add_routes(app: FastAPI) -> None:
             tenant = services.tenants.default
             context = {
                 **_context(request, conn, "bench-settings"),
-                "knobs": bench_data.knobs(),
-                "unset": bench_data.UNSET,
-                "profiles": bench_data.profiles(os.environ.get("MODEL_PROFILE", "")),
-                "stack_note": bench_data.STACK_NOTE,
-                "switches": bench_data.switches(services.settings, os.environ),
+                "knobs": bench_data.voice_knobs(),
+                "models": bench_data.models_in_use(services.settings.side_model,
+                                                   os.environ.get("MODEL_PROFILE", "")),
+                "switches": bench_data.switches(services.settings),
                 "live_rules": rules.live(conn, tenant.slug),
-                "prompts": bench_pages.prompt_files(),
-                "capacity": bench_pages.capacity(),
+                "number": bench_data.live_number(),
                 "after_hours": bench_pages.after_hours(tenant),
             }
         finally:
@@ -425,31 +490,41 @@ def add_routes(app: FastAPI) -> None:
         conn = services.connect()
         try:
             context = {**_context(request, conn, "bench-cost"),
-                       **bench_pages.cost_rows(conn, services.tenants)}
+                       **bench_pages.cost_rows(conn, services.tenants),
+                       "chart": bench_pages.stack_chart()}
         finally:
             conn.close()
         return _render(request, "bench_cost.html", context)
 
     @app.get("/bench/evals", response_class=HTMLResponse)
-    def bench_evals(request: Request, suite: str = "all"):
+    def bench_evals(request: Request, tested: str = "", runs: str = "suites"):
+        """Eval runs, newest first. `tested` keeps the runs that test one thing (a flow label,
+        bench_data.TESTED) and counts only those scenarios; `runs=all` adds the small reruns."""
         denied = require_admin(request)
         if denied:
             return denied
-        runs = [bench_data.run_summary(r) for r in bench_data.runs()]
-        suites = sorted({r["suite"] for r in runs})
-        suite = suite if suite in suites else "all"
-        shown = [r for r in runs if suite == "all" or r["suite"] == suite]
-        baseline = json.loads(bench_data.BASELINE.read_text())
+        every = bench_data.runs()
+        choices = bench_data.tested_choices(every)
+        tested = tested if tested in {key for key, _, _ in choices} else ""
+        everything = runs == "all"
+        summaries = [bench_data.run_summary(r, tested) for r in every]
+        shown = [r for r in summaries
+                 if r["judged"] + r["errors"] and (everything or r["size"] >= bench_data.SUITE_MIN)]
+        baseline = bench_data.baseline()
+        found_rounds = bench_data.rounds()
         conn = request.app.state.services.connect()
         try:
             context = {
                 **_context(request, conn, "bench-evals"),
                 "runs": shown,
-                "suites": suites,
-                "suite": suite,
+                "choices": choices,
+                "tested": tested,
+                "everything": everything,
+                "suite_min": bench_data.SUITE_MIN,
                 "floor": baseline.get("min_eval_pass_rate"),
                 "reference": baseline.get("eval_results", "").rsplit("/", 1)[-1].removesuffix(".json"),
-                "rounds": bench_data.rounds(),
+                "rounds": found_rounds,
+                "round_of": bench_data.round_of(found_rounds),
             }
         finally:
             conn.close()

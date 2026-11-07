@@ -930,6 +930,8 @@ def build() -> dict:
                 ("Staff can't open the questions", "bench/questions", None),
                 ("Staff can't open the bench's cost", "bench/cost", None),
                 ("Staff can't read what Retell heard", "bench/calls/{{call_id}}/heard", None),
+                ("Staff can't read a call's log", "bench/calls/{{call_id}}/log", None),
+                ("Staff can't download a call's log", "bench/calls/{{call_id}}/log.json", None),
                 ("Staff can't open the bench's schedule", "bench/schedule", None),
                 ("Staff can't read what changed", "bench/schedule/changes", None),
                 ("Staff can't open an eval run", "bench/evals/{{eval_run}}", eval_run),
@@ -939,6 +941,9 @@ def build() -> dict:
                  "pm.collectionVariables.set('eval_round', 'model-matrix-01');"),
             )
         ],
+        item("Staff can't cancel a job from the bench", "POST",
+             "bench/schedule/jobs/{{sched_job_id}}/cancel", envelope=False, form={},
+             check=staff_refused),
         item(
             "Sign in to the bench as the admin",
             "POST",
@@ -956,6 +961,9 @@ def build() -> dict:
         item("The bench's cost", "GET", "bench/cost", envelope=False, check=opens),
         item("What Retell heard on a call", "GET", "bench/calls/{{call_id}}/heard", envelope=False,
              check=opens),
+        item("A call's log", "GET", "bench/calls/{{call_id}}/log", envelope=False, check=opens),
+        item("A call's log, as JSON", "GET", "bench/calls/{{call_id}}/log.json", envelope=False,
+             check="pm.test('the call\'s lines', () => pm.expect(pm.response.json().data).to.be.an('array'));"),
         item("The eval runs", "GET", "bench/evals", envelope=False, check=opens),
         item("The bench's schedule", "GET", "bench/schedule", envelope=False, check=opens),
         item(

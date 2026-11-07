@@ -364,33 +364,35 @@ def test_a_draft_from_a_call_id_with_a_number_names_neither_the_number_nor_the_i
 
 # ---- settings and evals --------------------------------------------------------------------
 
-def test_every_documented_knob_names_a_setting_in_models_yaml():
-    rows = bench_data.knobs()
-    assert len(rows) == len(bench_data.KNOBS)
+def test_every_voice_knob_reads_a_value_and_says_why():
+    rows = bench_data.voice_knobs()
+    assert len(rows) == len(bench_data.VOICE_KNOBS)
     for row in rows:
-        assert row["basis"] in ("MEASURED", "SOURCE", "ASSUMED"), row["path"]
-        assert row["source"], row["path"]
+        assert row["value"] is not None, row["where"]
+        assert row["does"] and row["why"] and row["source"], row["label"]
+        assert row["shown"] not in ("", "-"), row["label"]
 
 
 def test_the_settings_page_shows_live_values_and_never_a_secret(agent):
     page = admin(agent).client.get("/bench/settings").text
     config = yaml.safe_load(bench_data.MODELS.read_text())
-    assert f"{config['voice']['endpointing']['normal']['min_delay']}" in page
-    assert "voice.endpointing.digits.max_delay" in page
+    assert f"{config['voice']['hold_phrase_after_s']:g} s" in page
     live = config["profiles"][config["default"]]["model"]
-    assert live in page and "Measured" in page and "Assumed" in page
+    assert live in page and "Voice knobs" in page and "Why this value" in page
     assert "test-token" not in page, "the debug token shows only as set"
 
 
 def test_the_evals_page_shows_each_run_against_the_floor(agent):
     page = admin(agent).client.get("/bench/evals").text
-    newest = bench_data.runs()[0]
-    assert f"/bench/evals/{newest.run_id}" in page
+    suites = [r for r in bench_data.runs() if len(r.scenarios) >= bench_data.SUITE_MIN]
+    assert f"/bench/evals/{suites[0].run_id}" in page
+    small = next(r for r in bench_data.runs() if len(r.scenarios) < bench_data.SUITE_MIN)
+    assert f"/bench/evals/{small.run_id}" not in page, "a rerun of a scenario or two waits for All"
+    assert f"/bench/evals/{small.run_id}" in agent.client.get("/bench/evals?runs=all").text
     assert 'class="floor"' in page and "Floor 90%" in page
     assert "Reference" in page
-    gate = agent.client.get("/bench/evals?suite=gate").text
-    assert "20261103-225314-livekit-fast-gate" in gate
-    assert "20261104-013438-livekit-fast-standard" not in gate
+    commercial = agent.client.get("/bench/evals?tested=commercial").text
+    assert "Pass rate, commercial calls" in commercial
 
 
 def test_a_run_lists_its_failures_with_checks_and_grader_notes(agent):

@@ -55,3 +55,15 @@ Arm-related: #8 #9 = 2 (+ #7 borderline).
 | After hours | 4 (+1 borderline) | 8 |
 | Business hours | 2 (+1 borderline) | 5 |
 | Both | 6 (+2) | 13 |
+
+## Results files
+
+In `symptom-questions-ab-01-data/`, one per pass. Their pass and fail counts are the code checks', which this round doesn't use (see How it was scored).
+
+| Arm and pass | File |
+|---|---|
+| A, after hours | `20261107-011944-retell_llm-fast-custom.json` |
+| B, after hours | `20261107-013703-retell_llm-fast-custom.json` |
+| B, midday | `20261107-015518-retell_llm-fast-custom.json` |
+| A, midday | `20261107-021214-retell_llm-fast-custom.json` |
+| Prompt v13 checks, after the round (retell/PROMPT-LOG.md) | `20261107-023948-…`, `20261107-024454-…`, `20261107-025004-retell_llm-fast-custom.json` |
