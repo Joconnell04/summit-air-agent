@@ -12,6 +12,13 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 139. Owner view tests run on the world the live reset leaves, not the seed alone
+
+Decided: `scripts/reset_live_world.py` runs as one function, `reset()`, and `tests/tool_server/test_ts_live_world.py` drives it on a world that already has calls, then checks what the owner and the agent see: about 20 technicians every day for two weeks, no Paul or Jackson, the schedule page's rows and columns, most daytime windows open, and a new call that books and reaches Today with the old calls kept.
+Why: the live reset's schedule opener put all 40 technicians on every weekday and every test stayed green, because they read the seed. Run on the opener from before PR #198, two of the new tests fail.
+Considered: checking the live server after each deploy (it would catch it later, after the owner sees it).
+Would change if: the live world is built some other way than reset_live_world.py.
+
 ## 138. About 20 technicians work a day out of 40; the owner checks rows off Needs attention; Callbacks lists only booked callbacks
 
 Decided: The seeded shop keeps 40 technicians, each with a first name of their own, and half the service technicians work any one weekday by turns, so a day's schedule is 20 rows with the comfort advisors. No customer or technician is named Paul or Jackson. The schedule's columns read as clock times over the part of the day ("8 to 10 AM", "Morning"). Each Needs attention row has a button that closes the flag with who did it, and the callback it stands for. The Today tray drops Turned away (still a filter on Calls), and its Callbacks tab shows only callbacks the caller booked for a time. Every call shows its ID on the Calls list and its page.
