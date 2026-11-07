@@ -382,7 +382,9 @@ def add_routes(app: FastAPI) -> None:
         if row is None or row["tool"] in bench_call.LIFECYCLE:
             return None
         event = {**dict(row), "args": json.loads(row["args_json"]), "ok": bool(row["ok"])}
-        logged = next((r for r in logs.read(services.settings.log_path,
+        # The request id is the voice layer's x-request-id header, so the read is limited to
+        # this call: another call that sent the same id never lends this page its result.
+        logged = next((r for r in logs.read(services.settings.log_path, call_id=call_id,
                                             request_id=row["request_id"], limit=20)
                        if r["tool"] == row["tool"]), None)
         return call_id, event, logged

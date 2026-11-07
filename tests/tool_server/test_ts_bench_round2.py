@@ -4,6 +4,7 @@ the call Summary's outcomes and the Why tab's plain decisions, the System page c
 call runs, the Questions page, the prompt versions, the evals journey filter and the cost chart."""
 
 import html
+import json
 import re
 import sqlite3
 
@@ -445,14 +446,56 @@ def test_a_flag_opens_to_its_flag_and_callback_rows(agent):
         assert f'<td class="fit num">{flagged["data"]["callback_id"]}</td>' in text
 
 
-def test_without_the_log_the_records_are_found_by_the_requests_time(agent):
+def test_without_the_log_a_booking_alone_in_its_second_is_matched_by_time(agent):
+    from toolkit import book, first_open
+
     sign_in(agent, "admin")
-    call_id = _booked_new_caller(agent)
+    call_id = ready_to_book(agent)
+    slot = first_open(agent, call_id)
+    agent.clock.advance(seconds=5)  # the booking runs in a second of its own
+    assert book(agent, call_id, slot)["ok"]
     agent.app.state.services.settings.log_path.unlink()
     text = agent.client.get(f"/bench/calls/{_key(call_id)}/tools/"
                             f"{_tool_id(agent, call_id, 'book_appointment')}").text
-    assert "Not in this server's log." in text
+    assert "Not in this server&#39;s log." in text or "Not in this server's log." in text
+    assert "Bookings matched by time" in text
     assert "ServiceTitan job" in text and "Found" in text
+
+
+def test_two_writing_tools_in_one_second_without_ids_are_not_guessed(agent):
+    sign_in(agent, "admin")
+    call_id = _booked_new_caller(agent)  # read_back, find_slots and the booking share a second
+    agent.app.state.services.settings.log_path.unlink()
+    key = _key(call_id)
+    for tool in ("book_appointment", "find_slots"):
+        text = html.unescape(agent.client.get(
+            f"/bench/calls/{key}/tools/{_tool_id(agent, call_id, tool)}").text)
+        assert "No record matched by id; more than one tool ran in that second." in text, tool
+        assert "ServiceTitan job" not in text and "<th>Booking</th>" not in text, tool
+
+
+def test_the_result_is_never_another_calls_log_line_with_the_same_request_id(agent):
+    sign_in(agent, "admin")
+    call_id = _booked_new_caller(agent)
+    tool_id = _tool_id(agent, call_id, "book_appointment")
+    conn = agent.db()
+    try:
+        request_id = conn.execute("SELECT request_id FROM tool_calls WHERE id = ?",
+                                  (tool_id,)).fetchone()[0]
+    finally:
+        conn.close()
+    path = agent.app.state.services.settings.log_path
+    lines = [line for line in path.read_text().splitlines()
+             if json.loads(line).get("request_id") != request_id]
+    foreign = {"ts": "2026-11-02T14:00:00Z", "request_id": request_id, "call_id": "someone-else",
+               "tool": "book_appointment", "args": {}, "ok": True, "refused": None, "gate": None,
+               "say": "", "next": "", "result": {"booking_id": 987654}, "replayed": False,
+               "ms": 1.0, "lock_ms": 0.0, "fsm": [], "error": None}
+    path.write_text("\n".join(lines + [json.dumps(foreign)]) + "\n")
+    key = _key(call_id)
+    for page in (f"/bench/calls/{key}/tools/{tool_id}", f"/bench/calls/{key}/tools/{tool_id}/result"):
+        text = html.unescape(agent.client.get(page).text)
+        assert "987654" not in text and "Not in this server's log." in text, page
 
 
 def test_a_tool_call_page_is_for_admins_and_only_for_its_own_call(agent):

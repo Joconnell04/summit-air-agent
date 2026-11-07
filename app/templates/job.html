@@ -48,7 +48,7 @@
       <div class="sched-pop-head"><span class="what">Cancel job {{ job.number }}?</span></div>
       <form method="post" action="/bench/schedule/jobs/{{ job.job_id }}/cancel" class="sched-pop-part">
         <input type="hidden" name="day" value="{{ job.window.split('|')[0] if job.window else '' }}"><input type="hidden" name="next" value="{{ back }}">
-        <span class="hint">The window opens up for find_slots again. ServiceTitan keeps the job as cancelled.</span>
+        <span class="hint">Cancels the job in ServiceTitan only, so its window opens up for find_slots again. The call's booking on the bench keeps its old status.</span>
         <div class="actions"><button class="btn primary" type="submit">Cancel job</button><button class="btn quiet" type="button" popovertarget="cancel-job" popovertargetaction="hide">Keep it</button></div>
       </form>
     </div>

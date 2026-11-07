@@ -37,8 +37,10 @@
   </div>
 
   <section class="panel" id="wrote">
-    <div class="panel-head"><h2>What it wrote</h2><span class="sub">tool server records</span></div>
-    {% if not any_rows %}{{ empty("No record written by this call.") }}{% endif %}
+    {% set by_time = w.matched.items() | selectattr(1, "equalto", "time") | map(attribute=0) | list %}
+    <div class="panel-head"><h2>What it wrote</h2><span class="sub">tool server records</span>{% if by_time %}<span class="end tag outline" data-tip="No id in the result; the only tool that writes these ran in that second">{{ by_time | join(", ") | capitalize }} matched by time</span>{% endif %}</div>
+    {% if w.ambiguous %}<div class="panel-body"><span class="tag high">Not matched</span> <span class="muted">{{ w.ambiguous }}</span></div>{% endif %}
+    {% if not any_rows and not w.ambiguous %}{{ empty("No record written by this call.") }}{% endif %}
     {% if w.bookings %}
     <div class="table-wrap"><table class="table dense">
       <thead><tr><th>Booking</th><th>Status</th><th>Job</th><th>Window</th><th>Priority</th><th>Why</th><th>ServiceTitan</th></tr></thead>

@@ -708,28 +708,63 @@ def _tool_row(start: datetime, e: dict) -> dict:
             "writes": e["tool"] in WRITES}
 
 
+BOOKING_TOOLS = ("book_appointment", "read_back", "find_slots", "reschedule_appointment",
+                 "cancel_appointment", "record_move")
+FLAG_TOOLS = ("flag_person", "request_transfer")
+# The tools that can write each kind of record, for matching a record to a tool call by time.
+WRITERS = {
+    "bookings": BOOKING_TOOLS,
+    "flags": FLAG_TOOLS + BOOKING_TOOLS,
+    "callbacks": FLAG_TOOLS + ("record_lead",) + BOOKING_TOOLS,
+    "leads": ("record_lead",),
+}
+# The result field that names a record of each kind; a booking's is its ServiceTitan job id.
+ID_FIELDS = {"bookings": "booking_id", "flags": "flag_id", "callbacks": "callback_id",
+             "leads": "lead_id"}
+AMBIGUOUS = "No record matched by id; more than one tool ran in that second."
+
+
 def tool_records(conn: sqlite3.Connection, call_id: str, event: dict, result: dict | None,
                  fsm, tenant) -> dict:
-    """What one tool call wrote: the tool server's rows it made, found by the ids its result
-    returned (a booking's ServiceTitan job id, flag_id, callback_id, lead_id) or, when the log
-    no longer holds the result, by being made on this call at the request's own time; and the
-    ServiceTitan job behind each booking, read live so the page proves the write landed."""
+    """What one tool call wrote, and how each kind of record was matched to it. By id first: a
+    booking by the ServiceTitan job id its result returned, a flag, callback or lead by its own
+    id. Without an id (find_slots and read_back return none, and a result may be gone from the
+    log), by time: a record made on this call in the request's second, but only when no other
+    tool that writes that kind of record ran in the same second, since times are kept to the
+    second. Otherwise nothing is shown for that kind, rather than another call's guess. The
+    ServiceTitan job behind each booking is read live, so the page proves the write landed."""
     data = (result or {}).get("data") or {}
     at = event["at"]
+    tool = event["tool"]
 
     def rows(sql: str, params=()) -> list[dict]:
         return [dict(r) for r in conn.execute(sql, params)]
 
-    job_id = data.get("booking_id") if isinstance(data.get("booking_id"), int) else None
-    if job_id is not None:
-        bookings = rows("SELECT * FROM bookings WHERE call_id = ? AND fsm_job_id = ? ORDER BY id",
-                        (call_id, job_id))
-    else:
-        bookings = rows("SELECT * FROM bookings WHERE call_id = ? AND created_at = ? ORDER BY id",
-                        (call_id, at))
-    if event["tool"] not in ("book_appointment", "read_back", "find_slots", "reschedule_appointment",
-                             "cancel_appointment", "record_move"):
-        bookings = []
+    def alone_in_second(kind: str) -> bool:
+        writers = WRITERS[kind]
+        same = conn.execute(
+            f"SELECT count(*) FROM tool_calls WHERE call_id = ? AND at = ? AND tool IN "
+            f"({','.join('?' * len(writers))})", (call_id, at, *writers)).fetchone()[0]
+        return same == 1
+
+    matched: dict[str, str] = {}
+
+    def find(kind: str, table: str, id_column: str = "id") -> list[dict]:
+        value = data.get(ID_FIELDS[kind])
+        if isinstance(value, int):
+            matched[kind] = "id"
+            return rows(f"SELECT * FROM {table} WHERE call_id = ? AND {id_column} = ? ORDER BY id",
+                        (call_id, value))
+        if not alone_in_second(kind):
+            matched[kind] = "ambiguous"
+            return []
+        found = rows(f"SELECT * FROM {table} WHERE call_id = ? AND created_at = ? ORDER BY id",
+                     (call_id, at))
+        if found:
+            matched[kind] = "time"
+        return found
+
+    bookings = find("bookings", "bookings", "fsm_job_id") if tool in BOOKING_TOOLS else []
     for b in bookings:
         b["request"] = json.loads(b.pop("request_json") or "{}")
         b["reasons"] = b["request"].get("priority_reasons") or []
@@ -737,29 +772,17 @@ def tool_records(conn: sqlite3.Connection, call_id: str, event: dict, result: di
     dispatches = rows(
         f"SELECT * FROM dispatches WHERE booking_id IN ({','.join('?' * len(ids))}) ORDER BY id",
         ids) if ids else []
-
-    def by_id(table: str, key: str) -> list[dict]:
-        value = data.get(key)
-        if isinstance(value, int):
-            return rows(f"SELECT * FROM {table} WHERE call_id = ? AND id = ?", (call_id, value))
-        return rows(f"SELECT * FROM {table} WHERE call_id = ? AND created_at = ?", (call_id, at))
-
-    flags = by_id("flags", "flag_id") if event["tool"] in ("flag_person", "request_transfer") else []
-    if event["tool"] in ("flag_person", "request_transfer", "record_lead"):
-        callbacks = by_id("callbacks", "callback_id")
-    elif bookings:
-        # A booking's own callback (an approval check, an urgent visit's follow-up) is made in
-        # the same request and returns no id of its own.
-        callbacks = rows("SELECT * FROM callbacks WHERE call_id = ? AND created_at = ?",
-                         (call_id, at))
-    else:
-        callbacks = []
-    leads = by_id("leads", "lead_id") if event["tool"] == "record_lead" else []
+    flags = find("flags", "flags") if tool in FLAG_TOOLS else []
+    # A booking's own callback (an approval check, an urgent visit's follow-up) has no id in
+    # the result, so it is matched by time.
+    callbacks = find("callbacks", "callbacks") if tool in WRITERS["callbacks"] else []
+    leads = find("leads", "leads") if tool == "record_lead" else []
     for lead in leads:
         lead["request"] = json.loads(lead.pop("request_json") or "{}")
     jobs = [servicetitan_job(fsm, tenant, b["fsm_job_id"]) for b in bookings if b["fsm_job_id"]]
     return {"bookings": bookings, "dispatches": dispatches, "flags": flags,
-            "callbacks": callbacks, "leads": leads, "jobs": jobs}
+            "callbacks": callbacks, "leads": leads, "jobs": jobs, "matched": matched,
+            "ambiguous": AMBIGUOUS if "ambiguous" in matched.values() else ""}
 
 
 def _tag_name(tenant, tag_id: int) -> str:
