@@ -15,7 +15,7 @@ import sqlite3
 import threading
 from datetime import datetime
 
-from . import consistency, cost, failure_grader, logs
+from . import consistency, cost, failure_grader
 from .db import parse_iso
 
 RETELL_PREFIX = failure_grader.RETELL_PREFIX
@@ -266,15 +266,15 @@ def timing(trace: dict) -> dict:
 # ---- records ------------------------------------------------------------------------------
 
 
-def customers(conn: sqlite3.Connection, trace: dict, log_path) -> list[dict]:
+def customers(conn: sqlite3.Connection, trace: dict, start: dict | None) -> list[dict]:
     """The customers matched to the call, how they were matched, and their membership and open
-    jobs as /calls/start returned them (from the JSON log)."""
+    jobs as /calls/start returned them. `start` is that result, from the log rows the step graph
+    already read (app/nodes.py build), so this reads no log of its own."""
     call_id = trace["call"]["id"]
     matched = {r["customer_id"]: dict(r) for r in conn.execute(
         "SELECT customer_id, matched_by, customer_type FROM call_customers WHERE call_id = ?",
         (call_id,))}
-    started = logs.read(log_path, call_id=call_id, tool="calls.start", limit=1) if log_path else []
-    found = ((started[0].get("result") or {}).get("customers") or []) if started else []
+    found = (start or {}).get("customers") or []
     out = []
     for c in found:
         m = matched.pop(c.get("customer_id"), {})

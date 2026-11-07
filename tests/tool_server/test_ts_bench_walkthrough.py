@@ -6,7 +6,7 @@ import pytest
 from test_ts_safety import GAS_LINES
 from toolkit import UNKNOWN, Agent, book, first_open, make_server, ready_to_book, sign_in
 
-from app import bench, bench_call, bench_pages, redact, trace
+from app import bench, bench_call, bench_pages, logs, redact, trace
 
 
 @pytest.fixture
@@ -237,7 +237,7 @@ def test_every_question_has_evidence_and_its_links_open(agent):
     timed_call(agent)
     conn = agent.db()
     try:
-        groups = bench_pages.questions(conn, agent.app.state.services.tenants.default)
+        groups = bench_pages.questions(conn, agent.app.state.services.tenants.default, agent.clock())
     finally:
         conn.close()
     items = [i for g in groups for i in g["items"]]
@@ -307,3 +307,48 @@ def test_the_call_page_shows_the_graders_verdict(agent):
         conn.close()
     page = agent.client.get(f"/bench/calls/{key}").text
     assert "hung up" in page and "Cut off mid-booking" in page
+
+
+# ---- load on the live tool server ---------------------------------------------------------
+
+def test_the_call_page_reads_the_log_once(agent, monkeypatch):
+    call = timed_call(agent)
+    reads = []
+    real = logs.read
+
+    def counted(*args, **kwargs):
+        reads.append(kwargs)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(logs, "read", counted)
+    page = agent.client.get(f"/bench/calls/{redact.call_key(call)}").text
+    assert len(reads) == 1, "the step graph's read; the customers come from the same rows"
+    assert 'id="summary"' in page
+
+
+def test_customers_come_from_the_start_result_with_membership():
+    trace_ = {"call": {"id": "c1"}}
+
+    class Conn:
+        def execute(self, sql, params):
+            return [{"customer_id": 7, "matched_by": "caller_id", "customer_type": "Residential"}]
+
+    start = {"customers": [{"customer_id": 7, "name": "Pat", "type": "Residential",
+                            "membership": {"name": "Comfort Club"}, "open_jobs": [{}], "locations": [{}]}]}
+    found = bench_call.customers(Conn(), trace_, start)
+    assert found[0]["membership"] == "Comfort Club" and found[0]["matched_by"] == "caller id"
+    assert bench_call.customers(Conn(), trace_, None)[0]["name"] == "", "matched, but no log row"
+
+
+def test_question_reply_times_cover_recent_calls_only_and_are_capped(agent, monkeypatch):
+    timed_call(agent)
+    agent.clock.advance(days=bench_pages.WINDOW_DAYS + 1)
+    conn = agent.db()
+    try:
+        assert bench_pages._replies(conn, agent.clock()) == [], "older than the window"
+        timed_call(agent)
+        assert bench_pages._replies(conn, agent.clock()) == [900.0, 1200.0]
+        monkeypatch.setattr(bench_pages, "REPLY_ROWS", 1)
+        assert len(bench_pages._replies(conn, agent.clock())) == 1
+    finally:
+        conn.close()

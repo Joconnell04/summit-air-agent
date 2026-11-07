@@ -8,17 +8,22 @@ All read-only.
 import json
 import re
 import sqlite3
+from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median
 
 from . import bench_call, bench_data, cost, failure_grader, redact
-from .db import parse_iso
+from .db import iso, parse_iso
 from .tenant import Tenant
 
 ROOT = bench_data.ROOT
 PROMPTS = ROOT / "prompts"
 SCALING = ROOT / "docs" / "scaling.md"
 COST_ROWS = 40
+# The window and row cap for the Questions page's reads of per-line rows (ASSUMED: a week is what
+# a walkthrough asks about, and 2,000 lines is about 200 calls).
+WINDOW_DAYS = 7
+REPLY_ROWS = 2000
 # A booking that asked for no hurry: the shape of a maintenance visit, in any trade.
 ROUTINE = "b.priority IN ('Low', 'Normal')"
 
@@ -58,18 +63,30 @@ def _safety(conn: sqlite3.Connection) -> str:
     return "; ".join(parts)
 
 
-def _replies(conn: sqlite3.Connection) -> list[float]:
+def _since(now: datetime) -> str:
+    return iso(now - timedelta(days=WINDOW_DAYS))
+
+
+def _replies(conn: sqlite3.Connection, now: datetime) -> list[float]:
+    """Reply times of agent lines on the last WINDOW_DAYS of calls, at most REPLY_ROWS lines,
+    newest calls first: this runs on the live tool server, so a busy week can't make it slow."""
     out = []
-    for (timings,) in conn.execute("SELECT timings_json FROM turns WHERE speaker = 'agent'"):
+    for (timings,) in conn.execute(
+        "SELECT t.timings_json FROM calls c JOIN turns t ON t.call_id = c.id "
+        "WHERE c.started_at >= ? AND t.speaker = 'agent' ORDER BY c.started_at DESC LIMIT ?",
+        (_since(now), REPLY_ROWS),
+    ):
         reply = json.loads(timings).get("reply_ms")
         if reply is not None:
             out.append(reply)
     return sorted(out)
 
 
-def questions(conn: sqlite3.Connection, tenant: Tenant) -> list[dict]:
+def questions(conn: sqlite3.Connection, tenant: Tenant, now: datetime) -> list[dict]:
     """The walkthrough's scenarios and questions in four groups. Each item: a short name, the
-    evidence from the recorded calls (counted now), and where on the bench it shows."""
+    evidence from the recorded calls (counted now), and where on the bench it shows. The two
+    reads that scan per-line rows (reply times, the booked-out sentence) cover the last
+    WINDOW_DAYS only; the rest are counts over the small per-call tables."""
     count = lambda sql, *p: _one(conn, sql, p)
     routine = f"SELECT count(*) FROM bookings b WHERE b.kind = 'book' AND {ROUTINE}"
     vulnerable = "EXISTS (SELECT 1 FROM bookings b WHERE b.call_id = c.id AND json_extract(b.request_json, '$.priority_rules') LIKE '%vulnerable%')"
@@ -79,13 +96,15 @@ def questions(conn: sqlite3.Connection, tenant: Tenant) -> list[dict]:
     for reason, n in ended.items():
         who = bench_call.ENDED_BY.get(reason or "", ("Other", ""))[0]
         by_who[who] = by_who.get(who, 0) + n
-    replies = _replies(conn)
+    replies = _replies(conn, now)
     p50 = replies[len(replies) // 2] if replies else None
     p95 = replies[min(len(replies) - 1, int(0.95 * len(replies)))] if replies else None
     after = tenant.after_hours_cutoffs
     booked_out_line = tenant.line("fully_booked")
-    booked_out = count("SELECT count(*) FROM tool_calls WHERE tool = 'find_slots' AND say LIKE ?",
-                       f"%{booked_out_line[:40]}%") if booked_out_line else 0
+    booked_out = count(
+        "SELECT count(*) FROM calls c JOIN tool_calls k ON k.call_id = c.id WHERE c.started_at >= ? "
+        "AND k.tool = 'find_slots' AND k.say LIKE ?", _since(now), f"%{booked_out_line[:40]}%",
+    ) if booked_out_line else 0
     runs = bench_data.runs()
     # The newest run big enough to say something: a one-scenario rerun isn't the suite's result.
     sized = [bench_data.run_summary(r) for r in runs[:40]]
@@ -126,7 +145,7 @@ def questions(conn: sqlite3.Connection, tenant: Tenant) -> list[dict]:
             item("2am Sunday", f"{count('SELECT count(*) FROM calls WHERE after_hours = 1')} after hours, "
                  f"{after.get('on_call_technicians', '?')} on call", "/bench?signal=after_hours", "Calls, System"),
             item("200 calls at once", "About 3 at once today; voice streams run out first", "/bench/settings#capacity", "System"),
-            item("Booked out", f"{booked_out} searches found nothing open", "/bench/schedule", "Why, Schedule"),
+            item("Booked out", f"{booked_out} searches found nothing open, last {WINDOW_DAYS} days", "/bench/schedule", "Why, Schedule"),
             item("Quotes a price", "No price tool; the reply filter and prompt hold it", "/bench/settings#prompt", "System"),
             item("Tech's job details", f"{count('SELECT count(*) FROM summaries')} summaries, {count('SELECT count(*) FROM notes')} notes",
                  _call_link(_latest(conn, "EXISTS (SELECT 1 FROM summaries s WHERE s.call_id = c.id)"), "summary"), "Summary"),
@@ -140,7 +159,7 @@ def questions(conn: sqlite3.Connection, tenant: Tenant) -> list[dict]:
             item("Not trusted yet", "docs/later.md", None, "Repo"),
         ]},
         {"group": "Engineering", "items": [
-            item("Stack and latency", f"Reply {p50:,.0f} ms p50, {p95:,.0f} ms p95 over {len(replies)} lines"
+            item("Stack and latency", f"Reply {p50:,.0f} ms p50, {p95:,.0f} ms p95, {len(replies)} lines in {WINDOW_DAYS} days"
                  if replies else "No timed lines", _call_link(any_key, "timing"), "Timing, System"),
             item("Prompt structure", f"{len(prompt_files())} prompt files", "/bench/settings#prompt", "System"),
             item("Invented bookings", "Server gates; rule proof per call", _call_link(any_key, "steps"), "Steps"),

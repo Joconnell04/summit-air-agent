@@ -220,7 +220,6 @@ def add_routes(app: FastAPI) -> None:
             tenant = services.tenants.by_slug.get(found["call"]["tenant"]) or services.tenants.default
             stages = [dict(r) for r in conn.execute(
                 "SELECT stage, version_id, at FROM call_stages WHERE call_id = ? ORDER BY at", (call_id,))]
-            log_path = services.settings.log_path
             return {
                 **_context(request, conn, "bench"),
                 "trace": found,
@@ -230,7 +229,7 @@ def add_routes(app: FastAPI) -> None:
                 "safety": bench_call.safety_summary(found),
                 "timing": bench_call.timing(found),
                 "stage_labels": dict(bench_call.STAGES),
-                "customers": bench_call.customers(conn, found, log_path),
+                "customers": bench_call.customers(conn, found, graph["start"]),
                 "readback": bench_call.readback(conn, found),
                 "cost": bench_call.call_cost(conn, found),
                 "label": conn.execute("SELECT label, reason FROM call_labels WHERE call_id = ?",
@@ -411,7 +410,8 @@ def add_routes(app: FastAPI) -> None:
         conn = services.connect()
         try:
             context = {**_context(request, conn, "bench-questions"),
-                       "groups": bench_pages.questions(conn, services.tenants.default)}
+                       "groups": bench_pages.questions(conn, services.tenants.default,
+                                                       services.clock())}
         finally:
             conn.close()
         return _render(request, "bench_questions.html", context)
