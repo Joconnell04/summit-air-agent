@@ -239,7 +239,8 @@ def add_routes(app: FastAPI) -> None:
                 "trace": found,
                 "ended": bench_call.ended_by(found),
                 "seconds": bench_call.seconds(found["call"]),
-                "decisions": bench_call.decisions(conn, found),
+                "decisions": bench_call.decisions(
+                    conn, found, graph, tenant, services.settings.transfer_numbers or os.environ),
                 "safety": bench_call.safety_summary(found),
                 "timing": bench_call.timing(found),
                 "stage_labels": dict(bench_call.STAGES),

@@ -16,7 +16,7 @@ from toolkit import (
     sign_in,
 )
 
-from app import bench, bench_data, nodes, redact, trace
+from app import bench, bench_call, bench_data, nodes, redact, trace
 from evals.scenario import Scenario
 
 # A number the mock has no customer for, so a booking needs no account choice.
@@ -191,7 +191,7 @@ def test_the_call_page_shows_the_full_phone_number_and_address_to_an_admin(agent
 def test_a_call_becomes_steps_in_lanes_with_their_timings(agent):
     call = timed_call(agent)
     g = graph(agent, call)
-    kinds = [n["kind"] for n in g["nodes"]]
+    kinds = [n["kind"] for n in g["steps"]]
     assert kinds == [
         "start", "spoken",
         "caller_line", "end_of_turn", "turn_check",
@@ -199,7 +199,7 @@ def test_a_call_becomes_steps_in_lanes_with_their_timings(agent):
         "caller_line", "end_of_turn", "turn_check",
     ]
     by_kind = {}
-    for n in g["nodes"]:
+    for n in g["steps"]:
         by_kind.setdefault(n["kind"], []).append(n)
     assert by_kind["caller_line"][0]["ms"] == 240.0
     assert by_kind["end_of_turn"][0]["ms"] == 355.0
@@ -208,33 +208,33 @@ def test_a_call_becomes_steps_in_lanes_with_their_timings(agent):
     assert last["ms"] == 560.0, "first token belongs to the request that wrote the line"
     assert ("Prompt tokens", 9400.0) in first["facts"], "cache numbers belong to the first request"
     assert by_kind["spoken"][1]["ms"] == 210.0
-    assert [n["lane"] for n in g["nodes"][:3]] == ["server", "voice", "caller"]
-    assert g["nodes"][3]["from_col"] == nodes.LANE_INDEX["caller"]
+    assert [n["lane"] for n in g["steps"][:3]] == ["server", "voice", "caller"]
+    assert g["steps"][3]["from_col"] == nodes.LANE_INDEX["caller"]
     # Jackson read "Known number: yes" as a customer on file; it only means the caller ID came through.
-    labels = [k for k, _ in g["nodes"][0]["facts"]]
+    labels = [k for k, _ in g["steps"][0]["facts"]]
     assert "Caller ID shown" in labels and "Known number" not in labels
 
 
 def test_a_model_request_shows_what_the_model_was_given(agent):
     call = timed_call(agent)
     g = graph(agent, call)
-    start = g["nodes"][0]
+    start = g["steps"][0]
     prompt = next(b["text"] for b in start["blocks"] if b["title"] == "System prompt")
     assert "# This call" in prompt and "Summit Air" in prompt
-    request = next(n for n in g["nodes"] if n["kind"] == "model_request")
+    request = next(n for n in g["steps"] if n["kind"] == "model_request")
     assert request["refs"] == [{"node": start["id"], "title": "System prompt",
                                 "text": f"{len(prompt):,} characters, the same on every request"}]
     roles = [m["role"] for m in request["messages"]]
     assert roles == ["system", "assistant", "user"]
     assert "Forest Ave" in request["messages"][-1]["text"]
-    second = [n for n in g["nodes"] if n["kind"] == "model_request"][1]
+    second = [n for n in g["steps"] if n["kind"] == "model_request"][1]
     assert [m["role"] for m in second["messages"]][-2:] == ["assistant", "tool"]
     assert '"ok": true' in second["messages"][-1]["text"]
 
 
 def test_a_tool_step_carries_its_arguments_and_result(agent):
     call = timed_call(agent)
-    tool = next(n for n in graph(agent, call)["nodes"] if n["kind"] == "tool")
+    tool = next(n for n in graph(agent, call)["steps"] if n["kind"] == "tool")
     assert tool["title"] == "check_service_area"
     titles = [b["title"] for b in tool["blocks"]]
     assert titles == ["Arguments", "Result to the model"]
@@ -249,11 +249,11 @@ def test_a_gas_call_shows_the_check_the_spoken_lines_and_the_rule_that_held(agen
     assert held["refused"] == "gate_safety"
     agent.say(call, GAS_LINES)
     g = graph(agent, call)
-    check = [n for n in g["nodes"] if n["kind"] == "turn_check"][-1]
+    check = [n for n in g["steps"] if n["kind"] == "turn_check"][-1]
     assert check["tone"] == "warn" and "gas" in check["summary"]
-    rule = next(n for n in g["nodes"] if n["kind"] == "rule")
+    rule = next(n for n in g["steps"] if n["kind"] == "rule")
     assert rule["summary"] == "Held the booking until the safety lines were said."
-    spoken = g["nodes"][-1]
+    spoken = g["steps"][-1]
     assert spoken["kind"] == "spoken" and "no model" in dict(spoken["facts"])["Source"]
     proof = {p["rule"]: p for p in g["proof"]}
     assert proof["Safety check on every caller line"]["outcome"] == "fired"
@@ -268,17 +268,183 @@ def test_markdown_the_voice_would_drop_is_shown_as_a_filter_step(agent):
     agent.turn(call, "Hello?")
     agent.say(call, "**Sure**, I can help with that.")
     g = graph(agent, call)
-    step = next(n for n in g["nodes"] if n["kind"] == "filter")
+    step = next(n for n in g["steps"] if n["kind"] == "filter")
     assert "*" in step["summary"]
-    assert g["nodes"][-1]["summary"] == "Sure, I can help with that."
+    assert g["steps"][-1]["summary"] == "Sure, I can help with that."
+
+
+def test_the_steps_tab_joins_related_steps_into_rows(agent):
+    """Jackson, 7 November: fewer, plainer rows. A caller line with its end of turn and turn
+    check is one row; a reply with the model's request, what it wrote and what was spoken is one
+    "Agent said" row; a request that only led to a tool joins the tool's row."""
+    call = timed_call(agent)
+    g = graph(agent, call)
+    assert [r["kind"] for r in g["nodes"]] == [
+        "start", "reply", "caller_line", "tool", "reply", "caller_line"]
+    assert len(g["steps"]) == 13
+    caller = g["nodes"][2]
+    assert [j["kind"] for j in caller["joined"]] == ["end_of_turn", "turn_check"]
+    tool = g["nodes"][3]
+    assert [j["kind"] for j in tool["joined"]] == ["model_request"]
+    reply = g["nodes"][4]
+    assert reply["title"] == "Agent said" and reply["lane"] == "model"
+    assert [j["kind"] for j in reply["joined"]] == ["model_request", "model_wrote", "spoken"]
+    assert reply["ms"] == 560.0, "a reply's timing is the model's first token"
+
+
+def test_fragments_of_one_line_and_a_caller_line_said_again_are_one_row(agent):
+    """Call retell_call_44f21506eca3346bd3547be9de8: Retell reported "Hi," and "I'm" as two
+    agent lines and the caller's growing line three times."""
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.turn(call, "Hello?")
+    agent.say(call, "Hi,")
+    agent.say(call, "I'm")
+    agent.turn(call, "Hello? Um, my heat is out.")
+    agent.turn(call, "Hello? Um, my heat is out. It's cold.")
+    rows = graph(agent, call)["nodes"]
+    replies = [r for r in rows if r["kind"] == "reply"]
+    assert len(replies) == 1 and replies[0]["summary"] == "Hi, I'm"
+    callers = [r for r in rows if r["kind"] == "caller_line"]
+    assert [c["summary"] for c in callers] == ["Hello?", "Hello? Um, my heat is out. It's cold."]
+
+
+def test_rules_that_held_are_marked_as_proof_on_their_rows(agent):
+    call = ready_to_book(agent, CALLER)
+    slot = first_open(agent, call)
+    agent.turn(call, "Wait, I smell gas.")
+    book(agent, call, slot)
+    agent.say(call, GAS_LINES)
+    rows = graph(agent, call)["nodes"]
+    marked = {r["kind"]: r["proof"] for r in rows if r.get("proof")}
+    assert "gas" in marked["caller_line"]
+    assert marked["tool"] == "Held the booking until the safety lines were said."
+    assert marked["reply"] == "Safety lines, word for word"
+
+
+def test_a_server_note_says_why_it_was_added_and_shows_the_note_once(agent):
+    """Jackson: the note step showed the same text twice with no reason."""
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.say(call, "Thanks for calling, how can I help?")
+    agent.turn(call, "Hang on one sec, let me grab my glasses.")
+    note = next(r for r in graph(agent, call)["nodes"] if r["kind"] == "server_note")
+    assert note["summary"] == "Server added a note to the caller's line before the model saw it"
+    assert dict(note["facts"])["Because"] == "the caller asked the agent to wait"
+    assert [b["title"] for b in note["blocks"]] == ["Caller's line", "Note added"]
+    assert note["blocks"][0]["text"] == "Hang on one sec, let me grab my glasses."
+
+
+def test_what_was_cut_from_a_reply_is_struck_with_the_rule_that_cut_it(agent):
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.turn(call, "Hello?")
+    body = {"speaker": "agent", "text": "What's the best number", "timings": {},
+            "said": "What's the best number to reach you?",
+            "cuts": [{"text": "I'm booking that now.", "reason": "narrates"}]}
+    assert agent.client.post(f"/calls/{call}/turn", json=body).status_code == 200
+    reply = next(r for r in graph(agent, call)["nodes"] if r["kind"] == "reply")
+    assert reply["view"]["cut"] == [
+        {"text": "to reach you?", "reason": "interrupted", "struck": True,
+         "tag": "Caller talked over it"},
+        {"text": "I'm booking that now.", "reason": "narrates", "struck": True,
+         "tag": "Reply filter: narrated its own steps"}]
+    page = admin(agent).client.get(f"/bench/calls/{key(call)}").text
+    assert '<s class="cut">to reach you?</s> <span class="cut-tag">Caller talked over it</span>' in page
+
+
+def test_an_older_call_rebuilds_its_greeting_to_show_where_it_was_cut(agent):
+    """Call retell_call_44f21506eca3346bd3547be9de8, from before the socket posted `said`: the
+    greeting was heard only as "Hi there, thanks for"."""
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.say(call, "Hi there, thanks for")
+    agent.turn(call, "there.")
+    reply = next(r for r in graph(agent, call)["nodes"] if r["kind"] == "reply")
+    cut = reply["view"]["cut"][0]
+    assert cut["reason"] == "interrupted" and cut["text"].startswith("calling Summit Air")
+    assert "rebuilt" in reply["view"]["note"]
+
+
+def test_the_rule_proof_counts_transfers_and_the_server_led_read_back(agent):
+    """Rule proof on live calls: call_480748620a2ad8cec45d7c26c71's refused transfer and the
+    server-led read-back were missing from the list."""
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.turn(call, "Can you route my call to the billing team?")
+    refused = agent.tool("request_transfer", call, reason="person", summary="Caller asked.")
+    assert not refused["ok"]
+    proof = {p["rule"]: p for p in graph(agent, call)["proof"]}
+    assert proof["Person only when asked"]["outcome"] == "fired"
+
+
+DEMAND = "this is ridiculous the furnace you fixed died again put me through to a real person right now"
+
+
+def why_rows(agent: Agent, call: str) -> list[dict]:
+    import os
+
+    conn = agent.db()
+    try:
+        found = trace.timeline(conn, call)
+        g = nodes.build(conn, found, agent.app.state.services.settings.log_path)
+        return bench_call.decisions(conn, found, g, agent.app.state.services.tenants.default,
+                                    os.environ)
+    finally:
+        conn.close()
+
+
+def test_the_why_tab_shows_the_transfer_to_a_person(agent, monkeypatch):
+    """Jackson, call retell_call_e2d08b8735893e12274237d845e: the Why tab showed only the label
+    and the end, not the transfer."""
+    monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", "+12125550100")
+    monkeypatch.setenv("TRANSFER_ON_CALL_NUMBER", "+12125550111")
+    monkeypatch.delenv("TRANSFER_HOLD_NUMBER", raising=False)
+    call = agent.start(CALLER)["data"]["call_id"]
+    plan = agent.turn(call, DEMAND)["data"]["handoff"]["transfer"]
+    agent.client.post(f"/calls/{call}/handoff/{plan['id']}/done", json={"outcome": "handed_off"})
+    rows = {r["what"]: r for r in why_rows(agent, call)}
+    asked = rows["Caller asked for a person"]
+    assert asked["why"].startswith("A demand") and asked["say"] == DEMAND
+    rang = next(r for w, r in rows.items() if w.startswith("Rang "))
+    assert rang["what"].endswith(("number ending 0100", "number ending 0111"))
+    assert "no hold number was set" in rang["why"] and "Warm transfer on" in rang["why"]
+    assert any(w.startswith("Person flag raised") for w in rows)
+    assert any(w.startswith("Callback promised by ") for w in rows)
+    assert rows["Handoff finished"]["result"].startswith("Handed off")
+    page = admin(agent).client.get(f"/bench/calls/{key(call)}").text
+    assert "Caller asked for a person" in page and "Handoff finished" in page
+
+
+def test_with_the_hold_line_on_the_why_says_the_hold_line_rang(agent, monkeypatch):
+    monkeypatch.setenv("TRANSFER_OFFICE_NUMBER", "+12125550100")
+    monkeypatch.setenv("TRANSFER_ON_CALL_NUMBER", "+12125550111")
+    monkeypatch.setenv("TRANSFER_HOLD_NUMBER", "+12125550122")
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.turn(call, DEMAND)
+    rang = next(r for r in why_rows(agent, call) if r["what"].startswith("Rang "))
+    assert rang["what"] == "Rang the hold line, number ending 0122"
+    assert "Hold line on for this call" in rang["why"]
+
+
+def test_a_refused_transfer_is_a_why_row_with_the_rules_plain_reason(agent):
+    call = agent.start(CALLER)["data"]["call_id"]
+    agent.turn(call, "Can you route my call to the billing team?")
+    agent.tool("request_transfer", call, reason="person", summary="Caller asked.")
+    held = next(r for r in why_rows(agent, call) if r["kind"] == "Refused")
+    assert held["why"] == nodes.GATE_TEXT["transfer_not_asked"][0]
+
+
+def test_a_turn_takes_at_most_twenty_cuts(agent):
+    call = agent.start(CALLER)["data"]["call_id"]
+    body = {"speaker": "agent", "text": "Hi.", "timings": {},
+            "cuts": [{"text": "x", "reason": "narrates"}] * 21}
+    answer = agent.client.post(f"/calls/{call}/turn", json=body).json()
+    assert answer["ok"] is False and answer["refused"] == "invalid_arguments"
 
 
 def test_the_call_page_draws_the_graph_and_says_what_is_missing(agent):
     call = timed_call(agent)
     page = admin(agent).client.get(f"/bench/calls/{key(call)}").text
     assert 'data-node-graph' in page and 'id="d-n1"' in page
-    assert '<span class="ms missing">missing</span>' in page
     assert "560 ms" in page
+    steps = page[page.index("data-node-graph"):page.index("data-node-detail")]
+    assert "missing" not in steps, "a timing the worker didn't send is a blank, not a word"
     assert "Rule proof" in page
 
 
@@ -438,3 +604,15 @@ def test_the_design_specimen_shows_the_node_graph(agent):
     page = admin(agent).client.get("/owner/design").text
     assert "Node graph" in page and 'aria-label="Specimen steps"' in page
     assert "Rate chart" in page
+
+
+def test_a_model_reply_joined_after_the_safety_lines_keeps_the_safety_proof():
+    """Review of PR #194: a joined row whose later part came from the model lost the proof tag."""
+    def part(source, text, tone):
+        return {"kind": "spoken", "source": source, "summary": text, "tone": tone, "view": {},
+                "ms": None, "ms_label": "", "lane": "voice", "col": 1}
+
+    row = nodes._reply_row([part("fixed", "If you're smelling gas, get everyone outside.", "warn"),
+                            part("model", "Do you want me to connect you?", "")])
+    assert row["proof"] == "Safety lines, word for word"
+    assert ("Source", "the server's fixed words, then the model") in row["facts"]

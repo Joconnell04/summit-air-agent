@@ -12,13 +12,18 @@ Values are shown as recorded: the bench is admin only and admins see everything 
 """
 
 import json
+import os
+import re
 from datetime import datetime
+from pathlib import Path
 
+from prompts.assemble import greeting as built_greeting
 from prompts.assemble import instructions, server_notes
 
 from . import logs
 from .db import parse_iso
 from .plain import REFUSED
+from .tenant import voice_lines
 from .tools import TOOLS
 
 
@@ -45,6 +50,46 @@ SAFETY_TEXT = {
     "lines_said": "The agent line carried the fixed safety lines",
 }
 LOG_LIMIT = 1000
+TENANTS_DIR = Path(os.environ.get("TENANTS_DIR") or Path(__file__).resolve().parents[1] / "tenants")
+
+# Why the Retell socket cut a sentence the model wrote (voice/retell_llm/call.py _dropped), in
+# the words the bench shows beside the struck text.
+CUT_REASONS = {
+    "repeats_said": "Repeat guard: already said in this reply",
+    "narrates": "Reply filter: narrated its own steps",
+    "explains_gate": "Reply filter: explained a server rule",
+    "thanks_for_waiting": "Reply filter: thanked the caller for waiting",
+    "after_question": "One question a reply",
+    "ack_after_hold": "Second opener after the hold phrase",
+    "goodbye_with_end_call": "Goodbye left to the hang-up",
+    "lead_in_before_tool": "Lead-in before a tool call, never said",
+    "interrupted": "Caller talked over it",
+}
+# Logged as a drop, but the reply was then said whole rather than leave the caller in silence.
+NOT_CUT = {"fallback_spoke_whole_reply"}
+# Why the server added a note to a caller's line (prompts/assemble.py SERVER_NOTES), by hint.
+NOTE_REASONS = {
+    "commercial": "the caller is a business, so this call can't book",
+    "do_not_call": "the caller may not want calls from the company",
+    "safety_check_cleared": "the caller said no to the safety check",
+    "electrical_said": "the electrical advice had just been said",
+    "electrical_answered": "the electrical advice was said a moment ago",
+    "caller_holding": "the caller asked the agent to wait",
+    "safety_stood_down": "the caller took back the smell or alarm",
+    "safety_call": "the safety lines had been said and a person was flagged",
+    "pace_slower": "the caller asked the agent to slow down",
+    "pace_faster": "the caller asked the agent to speed up",
+    "pace_address": "the caller wants the address said more slowly",
+    "priority_pushed": "the caller pressed to be seen first with no new fact",
+    "priority_pushed_asked": "the caller pressed to be seen first with no new fact",
+    "preferred_name": "the caller asked to be called by another name",
+    "preferred_name_refused": "the caller asked for a name the company doesn't use",
+    "readback_changed": "the caller changed a detail after confirming the read-back",
+    "technician_requested": "the caller asked for a particular technician",
+    "approval_unclear": "who can approve the work isn't settled",
+    "stage_booking": "the owner's guidance for booking applies",
+    "stage_closing": "the owner's guidance for closing applies",
+}
 
 # LiveKit's default speech filter drops markdown and emoji before the voice speaks a line
 # (livekit.agents DEFAULT_TTS_TEXT_TRANSFORMS). Its patterns, applied to a whole line, say what it
@@ -99,6 +144,10 @@ class Graph:
         self.system_note = ""
         self.start_id = ""
         self.turn_requests: list[dict] = []
+        # The greeting as the bridge builds it, for a call from before the socket sent `said`.
+        self.greeting = ""
+        # The caller's line set off the safety lines, so the fixed line that follows is them.
+        self.safety_next = False
 
     def add(self, lane: str, kind: str, title: str, summary: str, at: str | None,
             ms: float | None = None, ms_label: str = "", tone: str = "", **detail) -> dict:
@@ -159,8 +208,10 @@ def build(conn, trace: dict, log_path) -> dict:
             if event["speaker"] == "caller":
                 scripted, need_request = _caller(g, event, row)
             else:
-                _agent(g, event, scripted, need_request)
-                scripted, need_request = False, False
+                _agent(g, event, scripted, need_request, (row or {}).get("args") or {})
+                # Retell reports one spoken line in fragments: a fixed line stays fixed until the
+                # caller speaks again.
+                need_request = False
             continue
         row = by_request.get(event["request_id"])
         if event["tool"] == "calls.start":
@@ -180,12 +231,20 @@ def build(conn, trace: dict, log_path) -> dict:
         need_request = True
     return {
         "lanes": LANES,
-        "nodes": g.nodes,
+        "nodes": join(g.nodes),
+        "steps": g.nodes,
         "proof": proof(trace, turn_rows),
         "logged": bool(rows),
         # What /calls/start returned (customers matched, membership, open jobs), from the same log
         # read, so the bench's call page reads the log once.
         "start": next((r.get("result") or {} for r in rows if r["tool"] == "calls.start"), None),
+        # Each handoff the server started from a caller's line: the line, and the plan it sent the
+        # voice layer (who it rings and the number), for the Why tab.
+        "handoffs": [
+            {"line": (r.get("args") or {}).get("text", ""),
+             "plan": ((r.get("result") or {}).get("handoff") or {}).get("transfer") or {}}
+            for r in rows if r["tool"] == "turn" and (r.get("result") or {}).get("handoff")
+        ],
     }
 
 
@@ -205,6 +264,11 @@ def _start(g: Graph, event: dict, row: dict | None) -> None:
         ("Tools offered", f"{len(TOOLS)}: " + ", ".join(TOOLS)),
     ]
     blocks = [_args_block(event)]
+    try:
+        slug = (data.get("tenant") or {}).get("slug") or ""
+        g.greeting = built_greeting(data, voice_lines(TENANTS_DIR / slug)) if slug else ""
+    except (OSError, KeyError, TypeError, ValueError):
+        g.greeting = ""
     if row is None:
         g.system_note = "The /calls/start result is not in the log, so the prompt can't be rebuilt."
     else:
@@ -254,9 +318,19 @@ def _caller(g: Graph, event: dict, row: dict | None) -> tuple[bool, bool]:
           row["ms"] if row else None, "server", tone=tone, facts=facts, blocks=blocks)
     notes = server_notes(hints)
     if notes:
-        g.add("server", "server_note", "Note to the model", notes[0], event["at"],
-              blocks=[{"title": "Added to the caller's line", "text": _as_recorded("\n".join(notes)),
-                       "open": True}])
+        reasons = [NOTE_REASONS[h] for h in hints if h in NOTE_REASONS]
+        if any(h.startswith("units:") for h in hints):
+            reasons.append("the caller named more than one unit")
+        if any(h.startswith("not_offered:") for h in hints):
+            reasons.append("the caller asked for work the company doesn't do")
+        why = "; ".join(dict.fromkeys(reasons)) or "the turn check returned " + ", ".join(hints)
+        g.add("server", "server_note", "Note to the model",
+              "Server added a note to the caller's line before the model saw it", event["at"],
+              facts=[("When", "Before the model's next request, on this caller line"),
+                     ("Because", why)],
+              blocks=[{"title": "Caller's line", "text": _as_recorded(event["text"]), "open": True},
+                      {"title": "Note added", "text": _as_recorded("\n".join(notes)), "open": True}])
+    g.safety_next = action in ("speak_lines", "speak_variant")
     content = event["text"] + ("\n" + "\n".join(notes) if notes else "")
     g.messages.append({"role": "user", "text": _as_recorded(content)})
     spoken = action in SPOKEN_ACTIONS and bool(safety.get("text"))
@@ -280,7 +354,8 @@ def _tool(g: Graph, event: dict, row: dict | None) -> None:
     g.add("server", "tool", event["tool"], summary, event["at"], event["ms"], "server",
           tone=tone, facts=facts, blocks=blocks)
     if event["gate"]:
-        text, rule_tone = REFUSED.get(event["gate"], (f"Gate {event['gate']} fired", "hold"))
+        text, rule_tone = GATE_TEXT.get(event["gate"]) or REFUSED.get(
+            event["gate"], (f"Gate {event['gate']} fired", "hold"))
         if event["ok"]:
             text, rule_tone = "Allowed past a gate: " + event["gate"].replace("_", " "), "warn"
         g.add("server", "rule", "Rule", text, event["at"], tone=rule_tone,
@@ -290,15 +365,53 @@ def _tool(g: Graph, event: dict, row: dict | None) -> None:
     g.messages.append({"role": "tool", "text": output or "(not in the log)"})
 
 
-def _agent(g: Graph, event: dict, scripted: bool, need_request: bool) -> None:
+def _words(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9']+", text.lower())
+
+
+def cut_view(heard: str, said: str, cuts: list[dict]) -> dict:
+    """What the caller heard against what was sent and written: the heard text, then each cut
+    part with the reason. A line Retell heard shorter than what was sent, word for word up to
+    where it stops, was talked over; anything else Retell heard differently isn't a cut."""
+    parts = []
+    heard_words, said_words = _words(heard), _words(said)
+    if said and heard_words and len(said_words) > len(heard_words) \
+            and said_words[: len(heard_words)] == heard_words:
+        tail = said.split()[len(heard.split()):]
+        if tail:
+            parts.append({"text": " ".join(tail), "reason": "interrupted"})
+    for cut in cuts or []:
+        parts.append({"text": cut.get("text", ""), "reason": cut.get("reason", "")})
+    return {
+        "heard": heard,
+        "said": said,
+        "cut": [{**p, "struck": p["reason"] not in NOT_CUT,
+                 "tag": CUT_REASONS.get(p["reason"], p["reason"].replace("_", " "))}
+                for p in parts if p["text"]],
+    }
+
+
+def _agent(g: Graph, event: dict, scripted: bool, need_request: bool, args: dict) -> None:
     timings = event["timings"] or {}
     text = event["text"]
+    said = args.get("said") or ""
+    recorded = bool(said or args.get("cuts"))
+    if not said and scripted and g.greeting and not any(n["kind"] == "spoken" for n in g.nodes):
+        said = g.greeting
+    view = cut_view(text, said, args.get("cuts") or [])
+    if not recorded:
+        view["note"] = ("What was sent before Retell heard it is only recorded on calls after the "
+                        "socket started posting it" + ("; the greeting is rebuilt from the "
+                                                       "tenant's lines" if said else ""))
     if scripted:
-        g.add("voice", "spoken", "Spoken", text, event["at"], timings.get("tts_first_byte_ms"),
-              "first audio", tone="warn" if event["safety_action"] else "",
-              facts=[("Source", "fixed text from the server or the tenant's lines, no model"),
-                     ("Line", event["seq"])],
-              blocks=[{"title": "Spoken", "text": _as_recorded(text), "open": True}])
+        safety_lines = bool(event["safety_action"]) or g.safety_next
+        node = g.add("voice", "spoken", "Spoken", text, event["at"], timings.get("tts_first_byte_ms"),
+                     "first audio", tone="warn" if safety_lines else "",
+                     facts=[("Source", "fixed text from the server or the tenant's lines, no model"),
+                            ("Line", event["seq"])],
+                     blocks=[{"title": "Spoken", "text": _as_recorded(text), "open": True}])
+        node["view"] = view
+        node["source"] = "server"
         g.messages.append({"role": "assistant", "text": _as_recorded(text)})
         return
     if need_request or not g.turn_requests:
@@ -310,9 +423,10 @@ def _agent(g: Graph, event: dict, scripted: bool, need_request: bool) -> None:
         if key in timings:
             first["facts"].append((label, timings[key]))
     last["ms"] = timings.get("llm_first_token_ms")
-    g.add("model", "model_wrote", "Model wrote", text, event["at"],
-          facts=[("Line", event["seq"]), ("Characters", len(text))],
-          blocks=[{"title": "Text", "text": _as_recorded(text), "open": True}])
+    wrote = " ".join([said or text, *(c["text"] for c in view["cut"] if c["reason"] != "interrupted")])
+    g.add("model", "model_wrote", "Model wrote", wrote, event["at"],
+          facts=[("Line", event["seq"]), ("Characters", len(wrote))],
+          blocks=[{"title": "Text", "text": _as_recorded(wrote), "open": True}])
     filtered = speech_filter(text)
     if filtered is not None and filtered != text:
         g.add("voice", "filter", "Speech filter", f"Dropped markdown or emoji: {_dropped(text, filtered)}",
@@ -320,13 +434,165 @@ def _agent(g: Graph, event: dict, scripted: bool, need_request: bool) -> None:
               blocks=[{"title": "After the filter", "text": _as_recorded(filtered), "open": True}],
               facts=[("How it's known", "LiveKit's default filter patterns, applied to the line")])
     reply = timings.get("reply_ms")
-    g.add("voice", "spoken", "Spoken", text if filtered is None else filtered, event["at"],
-          timings.get("tts_first_byte_ms"), "first audio",
-          tone="warn" if event["safety_action"] else "",
-          facts=[("Reply delay", f"{reply:.0f} ms" if reply is not None else "missing"),
-                 ("Tool time on the worker", timings.get("tool_ms", "missing")),
-                 ("Bridge line played", bool(timings.get("bridge")))])
+    node = g.add("voice", "spoken", "Spoken", text if filtered is None else filtered, event["at"],
+                 timings.get("tts_first_byte_ms"), "first audio",
+                 tone="warn" if event["safety_action"] else "",
+                 facts=[("Reply delay", f"{reply:.0f} ms" if reply is not None else "missing"),
+                        ("Tool time on the worker", timings.get("tool_ms", "missing")),
+                        ("Bridge line played", bool(timings.get("bridge")))])
+    node["view"] = view
+    node["source"] = "model"
     g.messages.append({"role": "assistant", "text": _as_recorded(text)})
+
+
+# What a gate the server-led flow and the transfer rules hold means, for the bench's rule steps
+# (app/plain.py REFUSED has the owner view's codes).
+GATE_TEXT = {
+    "transfer_not_asked": (
+        "Held a transfer: the caller hadn't asked for a person in words the server knows.", "hold"),
+    "transfer_safety": (
+        "Held a transfer the model asked for on a safety call; the server decides those.", "hold"),
+    "flow_visit_questions": ("Held until the visit questions were asked.", "hold"),
+    "flow_read_back_first": ("Held until the address and phone were read back.", "hold"),
+    "confirm_first": ("Held until the caller confirmed the read-back.", "hold"),
+    "anything_else_first": ("Held until the agent asked if there was anything else.", "hold"),
+    "move_first": ("Held: the visit is moved before anything else.", "hold"),
+    "on_call_first": ("Held: after hours the on-call technician is tried first.", "hold"),
+    "open_job": ("The caller already has an open job; asked about it first.", "hold"),
+    "identity_mismatch": ("The name didn't match the record; asked again.", "hold"),
+    "identity_check": ("Checked who's calling before changing a record.", "hold"),
+    "read_back_confirmed": ("Already confirmed, so no second read-back.", "hold"),
+    "already_booked": ("Already booked on this call.", "hold"),
+}
+
+# Steps the Steps tab shows as one row, opened to see each step inside.
+CALLER_PARTS = ("end_of_turn", "turn_check")
+REPLY_PARTS = ("model_request", "model_wrote", "filter", "spoken")
+# Successful tools that are a proof point on their own.
+PROOF_OK = {
+    "book_appointment": "Booked",
+    "reschedule_appointment": "Moved",
+    "cancel_appointment": "Cancelled",
+    "calls.handoff_done": "Handed to a person",
+    "request_transfer": "Transfer allowed",
+    "flag_person": "Person flagged",
+}
+
+
+def join(nodes: list[dict]) -> list[dict]:
+    """The steps as the Steps tab lists them: a caller line with its end of turn and turn check
+    is one row, a reply (the model's requests, what it wrote, any filter and what was spoken) is
+    one "Agent said" row, a run of fragments of one reply is one row, and a tool with the rule it
+    met is one row. A model request that led to a tool joins that tool's row. Each row keeps the
+    steps inside it, and marks a rule that held or fired as a proof point."""
+    rows: list[dict] = []
+    i = 0
+    while i < len(nodes):
+        n = nodes[i]
+        kind = n["kind"]
+        if kind == "caller_line":
+            parts = [n]
+            while i + 1 < len(nodes) and nodes[i + 1]["kind"] in CALLER_PARTS:
+                i += 1
+                parts.append(nodes[i])
+            row = _caller_row(parts)
+            earlier = rows[-1] if rows else None
+            if earlier and earlier["kind"] == "caller_line" \
+                    and _words(n["summary"])[: len(_words(earlier["summary"]))] == _words(earlier["summary"]):
+                # Retell sent the caller's line again as they kept talking: one row, the last text.
+                row["joined"] = [dict(earlier, joined=[]), *earlier["joined"], *row["joined"]]
+                row["at"] = earlier["at"]
+                row["proof"] = row.get("proof") or earlier.get("proof", "")
+                row["tone"] = row["tone"] or earlier["tone"]
+                rows[-1] = row
+            else:
+                rows.append(row)
+        elif kind in REPLY_PARTS:
+            parts = [n]
+            while i + 1 < len(nodes) and nodes[i + 1]["kind"] in REPLY_PARTS:
+                i += 1
+                parts.append(nodes[i])
+            if not any(p["kind"] == "spoken" for p in parts):
+                # Requests that only led to a tool: they join the tool's row.
+                if i + 1 < len(nodes) and nodes[i + 1]["kind"] == "tool":
+                    i += 1
+                    tool_parts = [nodes[i]]
+                    if i + 1 < len(nodes) and nodes[i + 1]["kind"] == "rule":
+                        i += 1
+                        tool_parts.append(nodes[i])
+                    rows.append(_tool_row(tool_parts, parts))
+                else:
+                    rows.extend(dict(p, joined=[]) for p in parts)
+            else:
+                rows.append(_reply_row(parts))
+        elif kind == "tool":
+            parts = [n]
+            if i + 1 < len(nodes) and nodes[i + 1]["kind"] == "rule":
+                i += 1
+                parts.append(nodes[i])
+            rows.append(_tool_row(parts, []))
+        else:
+            row = dict(n, joined=[])
+            if kind == "server_note":
+                row["proof"] = "Server note"
+            rows.append(row)
+        i += 1
+    # A row keeps its first step's id, so links to a step (the system prompt on the call's start)
+    # still land; its edge comes from the row above.
+    previous = None
+    for row in rows:
+        row["from_col"] = previous if previous is not None else row["col"]
+        previous = row["col"]
+    return rows
+
+
+def _caller_row(parts: list[dict]) -> dict:
+    line, *rest = parts
+    check = next((p for p in rest if p["kind"] == "turn_check"), None)
+    row = dict(line, joined=rest)
+    if check and check["tone"]:
+        row["tone"] = check["tone"]
+        row["proof"] = check["summary"]
+    return row
+
+
+def _reply_row(parts: list[dict]) -> dict:
+    spoken = [p for p in parts if p["kind"] == "spoken"]
+    requests = [p for p in parts if p["kind"] == "model_request"]
+    model = any(p.get("source") == "model" for p in spoken)
+    fixed = any(p.get("source") != "model" for p in spoken)
+    text = " ".join(p["summary"] for p in spoken)
+    cuts = [c for p in spoken for c in (p.get("view") or {}).get("cut", [])]
+    notes = [p["view"]["note"] for p in spoken if (p.get("view") or {}).get("note")]
+    first = requests[0] if requests and requests[0]["ms"] is not None else spoken[0]
+    lane = "model" if model else "voice"
+    row = dict(spoken[0], lane=lane, col=LANE_INDEX[lane], kind="reply", title="Agent said",
+               summary=text, ms=first["ms"], ms_label=first["ms_label"],
+               tone=next((p["tone"] for p in spoken if p["tone"]), ""),
+               facts=[("Source", "the server's fixed words, then the model" if model and fixed
+                       else "the model" if model else "the server's or the company's fixed words"),
+                      ("Spoken in", f"{len(spoken)} part{'s' if len(spoken) != 1 else ''}"),
+                      ("Model requests", len(requests))],
+               blocks=[], messages=None, refs=[], joined=parts,
+               view={"heard": text, "cut": cuts, "note": notes[0] if notes else ""})
+    # A model reply joined after the safety lines must not hide that the lines were said.
+    if any(p["tone"] == "warn" and p.get("source") != "model" for p in spoken):
+        row["proof"] = "Safety lines, word for word"
+    return row
+
+
+def _tool_row(parts: list[dict], requests: list[dict]) -> dict:
+    tool, *rest = parts
+    rule = next((p for p in rest if p["kind"] == "rule"), None)
+    row = dict(tool, joined=[*requests, *rest])
+    if rule:
+        row["proof"] = rule["summary"]
+        row["tone"] = rule["tone"] or row["tone"]
+    elif tool["title"] in PROOF_OK and "refused" not in tool["summary"]:
+        row["proof"] = PROOF_OK[tool["title"]]
+    if requests:
+        row["facts"] = [*tool["facts"], ("Asked for by", "the model")]
+    return row
 
 
 def _dropped(text: str, filtered: str) -> str:
@@ -344,13 +610,24 @@ RULES = (
     ("Safety lines first", "No booking while a safety signal is open and the lines aren't said",
      {"gate_safety"}, {"book_appointment", "reschedule_appointment"}),
     ("Read-back before booking", "The address and phone are read back and confirmed first",
-     {"gate_read_back"}, {"book_appointment"}),
+     {"gate_read_back", "flow_read_back_first", "read_back_first", "confirm_first"},
+     {"book_appointment", "read_back"}),
+    ("Questions before booking", "The visit questions are asked before a time is offered",
+     {"flow_visit_questions", "visit_questions_first"}, {"find_slots", "book_appointment"}),
+    ("Address heard and found", "Only a street and ZIP the caller said, found on the map",
+     {"address_not_heard", "address_several", "address_not_found", "zip_not_heard",
+      "zip_mismatch", "address_lookup_down"}, {"find_address", "read_back"}),
+    ("Person only when asked",
+     "A transfer needs the caller to ask; a safety call is put through by the server",
+     {"transfer_not_asked", "transfer_safety", "transfer_closed", "transfer_unavailable",
+      "transfer_commercial"}, {"request_transfer", "calls.handoff_done"}),
     ("Service area", "Only ZIPs the company serves are booked",
      {"out_of_area"}, {"check_service_area", "book_appointment"}),
     ("Homes only", "A commercial caller is never booked",
      {"customer_type"}, {"book_appointment", "find_slots"}),
     ("Caller's own records", "Lookups and changes stay on the customers matched to this call",
-     {"not_owner", "scope", "ownership"}, {"get_customer_history", "reschedule_appointment",
+     {"not_owner", "scope", "ownership", "identity_mismatch", "identity_check"},
+     {"get_customer_history", "reschedule_appointment",
                                            "cancel_appointment"}),
     ("Per-call limits", "One booking and a few lookups per call, then a person",
      {"limit"}, {"book_appointment", "find_customer", "get_customer_history"}),

@@ -982,3 +982,30 @@ def test_the_greeting_cannot_be_cut_off_by_a_stray_word(socket):
         ws.send_text(json.dumps(DETAILS))
         begin = json.loads(ws.receive_text())
     assert begin["response_id"] == 0 and begin["no_interruption_allowed"] is True
+
+
+def test_server_led_the_line_posted_carries_what_was_sent_and_what_the_filter_cut(server_led):
+    """The bench shows what the model proposed against what the caller heard: the socket posts
+    each agent line with what it sent (`said`) and the sentences its filter cut, with why."""
+    server, make = server_led
+    client, _ = make([(["I'm booking that now. ", "What's the best number?"], []),
+                      (["Thanks."], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        ask(ws, 1, ["Hi.", "Sure."])
+        ask(ws, 2, ["Hi.", "Sure.", "What's the best number?", "It's 212 555 0100."])
+    posted = [b for p, b in server.posts
+              if p.endswith("/turn") and b["speaker"] == "agent" and b["text"] == "What's the best number?"]
+    assert posted and posted[0]["said"] == "What's the best number?"
+    assert posted[0]["cuts"] == [{"text": "I'm booking that now.", "reason": "narrates"}]
+
+
+def test_the_greeting_is_posted_with_what_was_sent(socket):
+    server, make = socket
+    client, _ = make()
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        ask(ws, 1, ["Thanks for calling", "Hi."])
+    greeting = next(b for p, b in server.posts if p.endswith("/turn") and b["speaker"] == "agent")
+    assert greeting["text"] == "Thanks for calling"
+    assert greeting["said"] == "Thanks for calling Summit Air, this is Katie."

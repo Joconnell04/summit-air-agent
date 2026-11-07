@@ -63,8 +63,15 @@ class ToolServer:
         }
         return await self._post("/calls/start", body)
 
-    async def turn(self, speaker: str, text: str, timings: dict[str, float]) -> dict:
+    async def turn(self, speaker: str, text: str, timings: dict[str, float], said: str = "",
+                   cuts: list[dict] | None = None) -> dict:
         body = {"speaker": speaker, "text": text, "timings": timings}
+        # An agent line from the Retell socket: what it sent, against what Retell heard (`text`),
+        # and the sentences its reply filter cut, for the bench.
+        if said:
+            body["said"] = said
+        if cuts:
+            body["cuts"] = cuts
         return await self._post(f"/calls/{self.call_id}/turn", body)
 
     async def end(self, reason: str) -> dict:

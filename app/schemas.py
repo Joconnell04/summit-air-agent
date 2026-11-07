@@ -66,6 +66,21 @@ class TurnIn(Body):
     timings: dict[str, float] = Field(
         default_factory=dict, description="Stage timings in ms, docs/latency.md"
     )
+    said: str = Field(
+        "",
+        max_length=4000,
+        description="An agent line: what the voice layer sent, where `text` is what was heard",
+    )
+    cuts: list["Cut"] = Field(
+        default_factory=list,
+        max_length=20,
+        description="An agent line: the sentences the voice layer's reply filter cut, and why",
+    )
+
+
+class Cut(Body):
+    text: str = Field(max_length=1000)
+    reason: str = Field(max_length=40)
 
 
 class EndIn(Body):
