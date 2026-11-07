@@ -62,3 +62,15 @@ def test_the_live_socket_serves_the_live_world_on_its_own_port():
     assert "RETELL_LLM_SERVER_LED=1" in llm
     assert "handle /retell-llm/*" in (ROOT / "deploy" / "retell" / "Caddyfile").read_text()
     assert " llm; do" in (ROOT / "deploy" / "retell" / "deploy.sh").read_text()
+
+
+def test_make_live_stops_before_deploying_when_a_call_is_on_the_line_and_pushes_the_live_agent():
+    """make live is the one deploy command: the line check comes before any deploy, and push.py
+    runs with --live, because without it the demo number is pointed at the test agent."""
+    script = (ROOT / "deploy" / "summit-air" / "live.sh").read_text()
+    check = script.index("line.py busy")
+    assert check < script.index("deploy/summit-air/deploy.sh")
+    assert check < script.index("deploy/retell/deploy.sh")
+    assert "push.py --live" in script
+    assert "git status --porcelain" in script and "= main ]" in script
+    assert "sh deploy/summit-air/live.sh" in (ROOT / "Makefile").read_text()

@@ -1,5 +1,5 @@
 .PHONY: retell-tools-check setup test lint check ci release-check ratchet ratchet-update eval eval-pairs eval-decisions replay langsmith eval-upload seed-st mock-st postman-st server postman trace \
-	owner-demo owner-user design-export rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
+	live owner-demo owner-user design-export rules-gate summary-check voice-livekit phone-setup deploy test-call measure-delay \
 	retell-push retell-flow-push retell-bridge retell-deploy retell-report rig rig-report sim listen lanes stt-bench
 
 setup:
@@ -169,6 +169,10 @@ phone-setup:
 # Copy, install and restart everything on the summit-air server: make deploy [ENV=path/to/.env]
 deploy:
 	sh deploy/summit-air/deploy.sh $(ENV)
+
+# Makes committed main live: server, socket and Retell agent settings; stops if a call is on the line
+live:
+	sh deploy/summit-air/live.sh
 
 # One real call to the agent's number from a simulated caller (a few cents)
 test-call:

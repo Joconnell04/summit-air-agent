@@ -129,6 +129,7 @@ make server   # the tool server on :8100, talking to the mock on :8101
 make eval SUITE=smoke   # paid: simulated callers against the agent (evals/README.md)
 make trace CALL=<id>    # a call's timeline in plain text
 make lanes    # rewrite docs/ai-process/lanes.md from GitHub
+make live     # make committed main live; stops if a call is on the line
 ```
 
 The rest are in the Makefile, each with a one-line comment.
