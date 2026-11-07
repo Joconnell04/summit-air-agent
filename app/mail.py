@@ -18,11 +18,12 @@ class Mailer:
         self.settings = settings
         self.client = client
 
-    def send(self, to: str, subject: str, body: str) -> str:
-        """Returns "sent" or "held". Raises OSError or smtplib.SMTPException when sending fails."""
+    def send(self, to: str, subject: str, body: str, html: str = "") -> str:
+        """Returns "sent" or "held". Raises OSError or smtplib.SMTPException when sending fails.
+        `html`, when given, goes beside the plain text; mail clients show whichever they can."""
         s = self.settings
         if s.agentmail_api_key and s.mail_from:
-            return self._agentmail(to, subject, body)
+            return self._agentmail(to, subject, body, html)
         if not s.smtp_host:
             return "held"
         message = EmailMessage()
@@ -30,6 +31,8 @@ class Mailer:
         message["To"] = to
         message["Subject"] = subject
         message.set_content(body)
+        if html:
+            message.add_alternative(html, subtype="html")
         with smtplib.SMTP(s.smtp_host, s.smtp_port, timeout=10) as smtp:
             smtp.starttls()
             if s.smtp_user:
@@ -37,13 +40,13 @@ class Mailer:
             smtp.send_message(message)
         return "sent"
 
-    def _agentmail(self, to: str, subject: str, body: str) -> str:
+    def _agentmail(self, to: str, subject: str, body: str, html: str = "") -> str:
         client = self.client or httpx.Client(timeout=10)
         try:
             response = client.post(
                 AGENTMAIL_URL.format(inbox=self.settings.mail_from),
                 headers={"Authorization": f"Bearer {self.settings.agentmail_api_key}"},
-                json={"to": [to], "subject": subject, "text": body},
+                json={"to": [to], "subject": subject, "text": body, **({"html": html} if html else {})},
             )
             response.raise_for_status()
         except httpx.HTTPError as exc:

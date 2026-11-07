@@ -14,6 +14,7 @@ from pathlib import Path
 
 from . import (
     booking,
+    call_report,
     failure_grader,
     outbound,
     owner_settings,
@@ -352,9 +353,10 @@ def alert_on_call(
     mailer: Mailer,
     now: datetime,
     owner_view_url: str = "",
+    fsm=None,
 ) -> dict:
-    """Email the on-call person about each urgent flag raised while the company is closed: what,
-    where, who and why (journey 11). A send that fails is tried again on the next runs. With the
+    """Email the on-call person about each urgent flag raised while the company is closed, as a
+    report they can act on from the inbox (app/call_report.py; journey 11). A send that fails is tried again on the next runs. With the
     owner's on-call alerts setting off for the call, only safety flags are sent."""
     cfg = tenant.on_call_alerts
     since = iso(now - timedelta(minutes=cfg["max_age_minutes"]))
@@ -382,8 +384,8 @@ def alert_on_call(
             and not owner_settings.for_call(conn, tenant, flag["call_id"])["on_call_alerts"]
         ):
             continue
-        subject, body = _alert_text(conn, tenant, flag, owner_view_url)
-        status, error = _send(mailer, cfg["email"], subject, body)
+        subject, body, html = call_report.build(conn, tenant, flag, owner_view_url, fsm)
+        status, error = _send(mailer, cfg["email"], subject, body, html)
         with tx(conn):
             conn.execute(
                 "INSERT INTO alerts (flag_id, to_address, subject, body, status, attempts, error, "
@@ -392,7 +394,9 @@ def alert_on_call(
             )
         counts[status] += 1
     for alert in retry:
-        status, error = _send(mailer, alert["to_address"], alert["subject"], alert["body"])
+        flag = conn.execute("SELECT * FROM flags WHERE id = ?", (alert["flag_id"],)).fetchone()
+        html = call_report.build(conn, tenant, flag, owner_view_url, fsm)[2] if flag else ""
+        status, error = _send(mailer, alert["to_address"], alert["subject"], alert["body"], html)
         with tx(conn):
             conn.execute(
                 "UPDATE alerts SET status = ?, attempts = attempts + 1, error = ?, updated_at = ? "
@@ -403,38 +407,13 @@ def alert_on_call(
     return counts
 
 
-def _send(mailer: Mailer, to: str, subject: str, body: str) -> tuple[str, str | None]:
+def _send(
+    mailer: Mailer, to: str, subject: str, body: str, html: str = ""
+) -> tuple[str, str | None]:
     try:
-        return mailer.send(to, subject, body), None
+        return mailer.send(to, subject, body, html), None
     except (OSError, ValueError, smtplib.SMTPException) as exc:
         return "failed", f"{type(exc).__name__}: {exc}"
-
-
-def _alert_text(
-    conn: sqlite3.Connection, tenant: Tenant, flag: sqlite3.Row, owner_view_url: str
-) -> tuple[str, str]:
-    call = records.get_call(conn, flag["call_id"])
-    readback = records.readback(call) or {}
-    where = ", ".join(p for p in (readback.get("street"), readback.get("zip")) if p)
-    callback = conn.execute(
-        "SELECT due_at FROM callbacks WHERE call_id = ? AND status IN ('pending', 'overdue') "
-        "ORDER BY due_at LIMIT 1",
-        (call["id"],),
-    ).fetchone()
-    local = tenant.local(parse_iso(flag["created_at"]))
-    lines = [
-        f"What: {flag['reason']}",
-        f"Where: {where or 'no address confirmed on the call'}",
-        f"Who: {call['caller_id']}",
-        f"Why urgent: {flag['kind'].replace('_', ' ')}, raised {local.strftime('%-I:%M %p')}",
-    ]
-    if callback:
-        due = tenant.local(parse_iso(callback["due_at"])).strftime("%-I:%M %p")
-        lines.append(f"Caller was told: someone will call by {due}")
-    if owner_view_url:
-        lines.append(f"Call: {owner_view_url.rstrip('/')}/owner/calls/{call['id']}")
-    subject = " ".join(f"{tenant.name} urgent: {flag['reason']}".split())[:120]
-    return subject, "\n".join(lines)
 
 
 def purge(
@@ -502,7 +481,7 @@ def run_once(services) -> dict:
                 "callbacks_done": _guarded(confirm_callbacks, conn, tenant, fsm, now),
                 "kept": check_kept(conn, tenant, fsm, now),
                 "alerts": alert_on_call(
-                    conn, tenant, services.mailer, now, services.settings.owner_view_url
+                    conn, tenant, services.mailer, now, services.settings.owner_view_url, fsm
                 ),
                 "reports": reports.file_held(conn, tenant, services.report_poster, now),
                 "search_indexed": _guarded(search.refresh, conn, tenant),

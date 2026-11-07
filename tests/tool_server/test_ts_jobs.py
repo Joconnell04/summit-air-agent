@@ -16,6 +16,7 @@ from toolkit import (
 )
 
 from app import jobs
+from app.text import phone_display
 
 TOMORROW_MORNING = {"date": "2026-11-03", "window": "0800-1200"}
 
@@ -328,12 +329,14 @@ def test_a_booking_moved_later_waits_for_its_new_window(agent, clock):
 class FakeMailer:
     def __init__(self, fail: bool = False):
         self.sent: list[tuple[str, str, str]] = []
+        self.html: list[str] = []
         self.fail = fail
 
-    def send(self, to: str, subject: str, body: str) -> str:
+    def send(self, to: str, subject: str, body: str, html: str = "") -> str:
         if self.fail:
             raise smtplib.SMTPException("relay refused")
         self.sent.append((to, subject, body))
+        self.html.append(html)
         return "sent"
 
 
@@ -359,10 +362,14 @@ def test_an_urgent_flag_after_hours_emails_the_on_call_person_what_where_who_and
     to, subject, body = mailer.sent[0]
     assert to == tenant(agent).on_call_alerts["email"]
     assert "Elderly caller" in subject
-    assert "What: Elderly caller, no heat, 48 F inside" in body
-    assert "Where: 101 Union St, 11231" in body
-    assert f"Who: {UNKNOWN}" in body
-    assert "Caller was told: someone will call by 9:20 PM" in body
+    # A report the on-call person can act on from the inbox (Jackson, 6 November).
+    assert "URGENT: Elderly caller, no heat, 48 F inside" in body
+    assert "Address: 101 Union St, 11231" in body
+    assert f"Phone: {phone_display(UNKNOWN)}" in body
+    assert "Customer type: Residential" in body and "Membership: " in body
+    assert "Caller was told: Someone would do their best to call back by 9:20 PM." in body
+    html = mailer.html[0]
+    assert "urgent call report" in html and "At a glance" in html and "101 Union St" in html
     assert alert(agent) == {"sent": 0, "held": 0, "failed": 0}, "one email per flag"
 
 
@@ -480,7 +487,7 @@ def test_a_flag_reason_with_a_newline_doesnt_stop_the_jobs(agent, clock):
 
 def test_a_header_error_from_the_mail_server_is_recorded_not_raised(agent, clock):
     class Broken:
-        def send(self, to, subject, body):
+        def send(self, to, subject, body, html=""):
             raise ValueError("bad header")
 
     services(agent).mailer = Broken()
@@ -532,3 +539,21 @@ def test_a_job_servicetitan_no_longer_has_is_asked_for_less_and_less_then_not_at
     # Missed at once, not again a minute later, then after 5, 10, 20 and 40 minutes, then never.
     assert asked == [1, 1, 2, 3, 4, 5, 5, 5]
     assert count(agent, "SELECT COUNT(*) FROM kept") == 0, "kept stays unknown"
+
+
+def test_the_alert_report_carries_the_booked_visit_and_the_technicians_details(agent, clock):
+    """Jackson, 6 November: the email reads as a report, with the visit, the job, the priority and
+    why, how to get in and who approves, from the booking the call made."""
+    services(agent).mailer = mailer = FakeMailer()
+    clock.advance(hours=12)
+    late = ready_to_book(agent, "(212) 555-0907")
+    agent.turn(late, "My 84-year-old parent lives with me and it's 52 in here.")
+    agent.tool("flag_person", late, reason="On-call: 84 at home, 52 F", priority="Urgent")
+    assert book(agent, late, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=52)["ok"]
+    alert(agent)
+    body, html = mailer.sent[0][2], mailer.html[0]
+    assert "Job: " in body and "nothing booked" not in body
+    assert "Priority: Urgent" in body and "Visit: " in body and "none booked" not in body
+    assert "Inside: 52 F" in body and "Approves work: " in body
+    for title in ("At a glance", "The problem", "Getting in", "Technician summary"):
+        assert title in html

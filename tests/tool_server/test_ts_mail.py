@@ -35,6 +35,9 @@ def test_with_an_agentmail_key_it_sends_from_the_inbox_in_mail_from():
     assert Mailer(s, client).send("on-call@example.com", "Gas call", "body") == "sent"
     assert seen["url"].endswith("/v0/inboxes/alerts@agentmail.to/messages/send")
     assert seen["auth"] == "Bearer k" and '"on-call@example.com"' in seen["json"]
+    assert '"html"' not in seen["json"]
+    assert Mailer(s, client).send("on-call@example.com", "Gas call", "body", "<p>report</p>") == "sent"
+    assert '"html":"<p>report</p>"' in seen["json"]
 
 
 def test_a_failed_agentmail_send_raises_an_oserror_so_the_job_retries():
