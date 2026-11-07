@@ -45,6 +45,32 @@ def test_the_world_has_the_promised_shape(world):
     assert scenarios["activeMemberWithAdultChild"]["adultChildPhone"]
 
 
+def test_each_technician_has_their_own_first_name_and_about_20_work_a_weekday(world):
+    """A day's schedule is about 20 rows, each a name a dispatcher can say on its own
+    (owner view feedback). The shop is still 40 technicians."""
+    api, _ = world
+    conn = sqlite3.connect(api.app.state.db_path)
+    names = [r[0] for r in conn.execute("SELECT name FROM technicians")]
+    firsts = [name.split()[0] for name in names]
+    assert len(names) == 40 and len(set(firsts)) == 40
+    per_day = conn.execute(
+        "SELECT substr(start, 1, 10), COUNT(*) FROM technician_shifts WHERE shift_type != 'OnCall' "
+        "GROUP BY 1"
+    ).fetchall()
+    weekdays = [n for day, n in per_day if date.fromisoformat(day).weekday() < 5]
+    assert weekdays and all(n == 20 for n in weekdays), per_day
+
+
+def test_no_seeded_customer_or_technician_is_named_paul_or_jackson(world):
+    """Paul plays the owner in the demo and Jackson is the caller, so neither name is anyone in
+    the world: a lookup on either would find a stranger."""
+    api, _ = world
+    conn = sqlite3.connect(api.app.state.db_path)
+    for table in ("customers", "technicians"):
+        names = [r[0] for r in conn.execute(f"SELECT name FROM {table}")]
+        assert not [n for n in names if "Paul" in n.split() or "Jackson" in n.split()], table
+
+
 def test_a_shared_phone_number_returns_every_customer(world):
     api, scenarios = world
     shared = scenarios["sharedPhone"]

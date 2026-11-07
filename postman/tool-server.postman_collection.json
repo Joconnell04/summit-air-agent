@@ -2307,6 +2307,29 @@
           }
         },
         {
+          "name": "Check the safety flag off Needs attention",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('goes back to Today', () => pm.expect(pm.response.code).to.be.oneOf([200, 303]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/owner/flags/{{safety_flag_id}}/done",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            }
+          }
+        },
+        {
           "name": "Results for seven days",
           "event": [
             {

@@ -78,7 +78,7 @@ FIRST = [
     "Elena",
     "Jamal",
     "Kimberly",
-    "Paul",
+    "Rafael",
     "Ananya",
     "George",
     "Tamika",
@@ -100,7 +100,7 @@ LAST = [
     "Singh",
     "Garcia",
     "Ivanov",
-    "Jackson",
+    "Moreno",
     "Lopez",
     "Murphy",
     "Hernandez",
@@ -423,11 +423,9 @@ class World:
 
     def technicians(self) -> None:
         rng = self.rng
-        names = set()
-        while len(names) < SERVICE_TECHS + ADVISORS:
-            names.add(self.name())
-        names = sorted(names)
-        rng.shuffle(names)
+        # Every technician has a first name of their own, so a dispatcher can say "send Omar".
+        firsts = rng.sample(FIRST, SERVICE_TECHS + ADVISORS)
+        names = [f"{first} {rng.choice(LAST)}" for first in firsts]
         for i in range(SERVICE_TECHS + ADVISORS):
             tech_id = FIRST_TECH_ID + i
             phone = f"(917) 555-{200 + i:04d}"
@@ -460,7 +458,7 @@ class World:
                 self.advisors.append(tech_id)
 
     def shifts(self) -> None:
-        rng, cfg, conn = self.rng, self.cfg, self.conn
+        cfg, conn = self.cfg, self.conn
         days = [self.start + timedelta(days=d) for d in range(DAYS_OF_CAPACITY)]
         all_skilled = [
             t
@@ -476,11 +474,15 @@ class World:
         ]
         for day in days:
             for i, tech_id in enumerate(self.service_techs):
-                if day.weekday() == 6 or (day.weekday() < 5 and rng.random() < 0.05):
+                if day.weekday() == 6:
                     continue
                 if day.weekday() == 5:
                     if i % 3 == 0:
                         wk.add_shift(conn, cfg, tech_id, day, "08:00", "16:00")
+                    continue
+                # Half the service technicians work any one weekday, by turns, so a day's
+                # schedule is about 20 rows with the comfort advisors (owner view feedback).
+                if (i + day.toordinal()) % 2:
                     continue
                 group = i % 10
                 start, end = (
@@ -493,7 +495,7 @@ class World:
                 wk.add_shift(conn, cfg, tech_id, day, start, end)
             if day.weekday() < 6:
                 for i, tech_id in enumerate(self.advisors):
-                    if day.weekday() < 5 or i < 2:
+                    if (i + day.toordinal()) % 2 == 0:
                         wk.add_shift(conn, cfg, tech_id, day, "08:00", "16:00")
             # One technician carries the phone for the whole Monday-to-Sunday week.
             week = (day - timedelta(days=day.weekday())).toordinal() // 7

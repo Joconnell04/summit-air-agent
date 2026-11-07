@@ -12,6 +12,13 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 138. About 20 technicians work a day out of 40; the owner checks rows off Needs attention; Callbacks lists only booked callbacks
+
+Decided: The seeded shop keeps 40 technicians, each with a first name of their own, and half the service technicians work any one weekday by turns, so a day's schedule is 20 rows with the comfort advisors. No customer or technician is named Paul or Jackson. The schedule's columns read as clock times over the part of the day ("8 to 10 AM", "Morning"). Each Needs attention row has a button that closes the flag with who did it, and the callback it stands for. The Today tray drops Turned away (still a filter on Calls), and its Callbacks tab shows only callbacks the caller booked for a time. Every call shows its ID on the Calls list and its page.
+Why: Jackson's review of the owner view (7 November): 40 rows with repeated first names was hard to read, "0800-1000" read as a code, and a person ask showing as a late callback mixed two different things. The demo has Paul playing the owner and Jackson calling, so either name in the CRM would find a stranger.
+Considered: cutting the roster to 20 (the brief says a 40-tech shop, so the roster stays and the shifts thin out); a separate kind column on callbacks (the link to a transfer, a handoff or a person flag with the same words already tells them apart).
+Would change if: a real ServiceTitan roster replaces the seed, or the owner wants person asks back in the Callbacks tab.
+
 ## 137. Background noise is an owner switch on the live Retell agent; asking to be routed or patched through to a person counts as an ask
 
 Decided: Settings gets a Background noise switch, off by default, that sets Retell's "call-center" ambient sound (volume 0.5, ASSUMED) on the company's live Retell agent, named in its agent.yaml under `retell`. If Retell refuses the change, the switch is put back and the page says why; push.py never copies the sound, so a push leaves the switch alone. The transfer phrases add "route me to", "patch me through to", "send me to", "pass me to", "a live agent", "a real human" and "can I get" a person. The Hold line row on Settings says where a transfer rings either way, by the last four digits of each number.

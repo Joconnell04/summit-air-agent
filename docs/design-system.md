@@ -140,7 +140,7 @@ The day from 7 AM to 9 PM, widening to the hour for any call outside it (`owner.
 Positions are computed in Python (`owner.position`) so the board is right before any script runs, and the script only re-places marks when the range changes.
 
 ### Tray
-A panel with tabs (Callbacks, Leads, Turned away), each with its count, and a list under each. The tabs scroll sideways when they don't fit, as the eight topics of the bench's Rules page do on a phone. Late items are washed red and sort first. A callback says who calls back and by when ("The office calls back by 1:40 PM", "The agent called back").
+A panel with tabs (Callbacks, Leads), each with its count, and a list under each. Callbacks holds only the callbacks a caller booked for a time; one promised because the caller asked for a person stays on Needs attention. The tabs scroll sideways when they don't fit, as the eight topics of the bench's Rules page do on a phone. Late items are washed red and sort first. A callback says who calls back and by when ("The office calls back by 1:40 PM", "The agent called back").
 
 ### List
 Rows of a bold heading, a meta line and an end column for a tag and the chevron. The whole row opens its call. Used in the tray, the Results turned-away list and the reports.

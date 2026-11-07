@@ -176,6 +176,14 @@ a.figure:hover .label { color: var(--ink); }
 .btn.quiet { border-color: transparent; background: transparent; color: var(--muted); }
 .btn.quiet:hover { background: var(--hover); color: var(--ink); }
 .btn.icon { width: var(--control-h); padding: 0; }
+/* Needs attention: the round button that checks a row off. */
+.check-off {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0;
+  border: 1px solid var(--line-strong); border-radius: 50%; background: var(--surface);
+  color: var(--line-strong); cursor: pointer;
+}
+.check-off svg { width: 14px; height: 14px; }
+.check-off:hover, .check-off:focus-visible { border-color: var(--done-ink); background: var(--done-wash); color: var(--done-ink); }
 .btn[disabled], .btn[aria-disabled="true"] { color: var(--disabled); cursor: default; background: var(--surface); }
 .btn.primary[disabled], .btn.primary[aria-disabled="true"] { border-color: var(--line-strong); font-weight: var(--medium); }
 .btn svg { width: 16px; height: 16px; flex: none; }
@@ -861,3 +869,8 @@ details.raw summary { cursor: pointer; color: var(--muted); font-size: var(--tex
   .cost-body .figure { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
   .cost-body .figure:first-child { border-top: 0; }
 }
+
+/* The call ID on a call page, with its copy button. */
+.call-id { display: inline-flex; align-items: center; gap: var(--s-2); }
+.call-id code { user-select: all; }
+.call-id .copy { height: 24px; padding: 0 var(--s-2); }

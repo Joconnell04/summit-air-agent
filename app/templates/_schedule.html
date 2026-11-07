@@ -79,10 +79,10 @@
       {% for w in g.windows %}
       {% set pid = "w-" ~ w.id %}
       <th class="win" id="{{ pid }}-head">
-        <span class="w-name">{{ "After hours" if w.after_hours else w.id | capitalize }}</span>
-        <span class="w-time">{{ w.label }}</span>
+        <span class="w-name">{{ w.heading }}</span>
+        <span class="w-time">{{ w.part }}</span>
         <span class="w-open">{% if w.started %}Started{% else %}{% set normal = w.offered.get("Normal", 0) %}{% set urgent = w.offered.get("Urgent", 0) %}{% if bench %}Agent offers: {{ normal }} normal, {{ urgent }} urgent{% elif normal %}{{ normal }} open to book{% elif urgent %}Urgent only{% else %}Full{% endif %}{% endif %}</span>
-        {% if not w.started %}<button class="btn quiet sched-all" type="button" popovertarget="{{ pid }}">Block all</button>{{ slot_pop(pid, ("After hours" if w.after_hours else w.id | capitalize) ~ ", " ~ w.label ~ ", every free technician", g.day, w.id, none, here, none) }}{% endif %}
+        {% if not w.started %}<button class="btn quiet sched-all" type="button" popovertarget="{{ pid }}">Block all</button>{{ slot_pop(pid, w.heading ~ (", " ~ w.part if w.after_hours else "") ~ ", every free technician", g.day, w.id, none, here, none) }}{% endif %}
       </th>
       {% endfor %}
     </tr>
@@ -101,12 +101,12 @@
         {% for b in c.blocks %}
         {% set bid = pid ~ "-b" ~ b.id %}
         {% if b.ours %}<button class="sched-item block" type="button" popovertarget="{{ bid }}"><span class="name">{{ b.name }}</span></button>
-        {{ block_pop(bid, r.name ~ ", " ~ w.label, b, g.day, here, g.groups.get(b.ref, 1)) }}
+        {{ block_pop(bid, r.name ~ ", " ~ w.heading, b, g.day, here, g.groups.get(b.ref, 1)) }}
         {% else %}<span class="sched-item block" title="Made in ServiceTitan"><span class="name">{{ b.name }}</span></span>{% endif %}
         {% endfor %}
         {% if c.state == "free" %}
           {% if w.started %}<span class="sched-item free"><span class="sub">Free</span></span>
-          {% else %}<button class="sched-item open" type="button" popovertarget="{{ pid }}"><span class="sub">Free</span></button>{{ slot_pop(pid, r.name ~ ", " ~ w.label, g.day, w.id, r.id, here, job_types) }}{% endif %}
+          {% else %}<button class="sched-item open" type="button" popovertarget="{{ pid }}"><span class="sub">Free</span></button>{{ slot_pop(pid, r.name ~ ", " ~ w.heading, g.day, w.id, r.id, here, job_types) }}{% endif %}
         {% elif c.state == "off" %}<span class="sched-item off"><span class="sub">Off</span></span>{% endif %}
       </td>
       {% endfor %}

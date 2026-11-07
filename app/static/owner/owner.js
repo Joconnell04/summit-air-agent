@@ -306,6 +306,21 @@
     draw(select ? select.value : "all");
   }
 
+  // Copy buttons: the value goes to the clipboard, or is selected for the person to copy.
+  function setupCopy() {
+    document.addEventListener("click", function (e) {
+      var button = e.target.closest("[data-copy]");
+      if (!button) return;
+      var done = function () { button.textContent = "Copied"; setTimeout(function () { button.textContent = "Copy"; }, 1500); };
+      var select = function () {
+        var text = button.parentNode.querySelector("[data-copy-text]");
+        if (text && window.getSelection) { var range = document.createRange(); range.selectNodeContents(text); var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+      };
+      if (navigator.clipboard) navigator.clipboard.writeText(button.dataset.copy).then(done, select);
+      else select();
+    });
+  }
+
   // Rows that open a call. The name in the row is the real link; this makes the rest of the row
   // act the same, and leaves other controls in the row alone.
   function setupRowLinks() {
@@ -590,6 +605,7 @@
     each(document, "form.search[data-suggest]", setupSuggest);
     each(document, "table[data-resize]", setupResize);
     setupRowLinks();
+    setupCopy();
     setupTips();
     each(document, "#board", setupBoard);
     each(document, "[data-tray]", setupTray);

@@ -666,9 +666,10 @@ def test_a_callback_after_an_unmatched_answer_goes_to_the_number_on_file(agent, 
 
 
 def test_a_number_that_matches_nobody_falls_back_to_the_address(agent, scenarios):
-    call = agent.start("(212) 555-0151")["data"]["call_id"]
+    # UNKNOWN sits outside the seed's pool of random numbers, so no customer can have it.
+    call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "It's 620 Bedford Avenue, 11249.")
-    found = agent.tool("find_customer", call, phone="(212) 555-0151",
+    found = agent.tool("find_customer", call, phone=UNKNOWN,
                        address={"street": "620 Bedford Ave", "unit": "", "zip": "11249"})
     assert [m["customer_id"] for m in found["data"]["matches"]] == [
         scenarios["repeatCallerOpenJob"]["customerId"]

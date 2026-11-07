@@ -116,6 +116,13 @@ CREATE TABLE IF NOT EXISTS flags (
     created_at TEXT NOT NULL
 );
 
+-- Who checked a flag off on the owner view's Needs attention list, and when.
+CREATE TABLE IF NOT EXISTS flag_checks (
+    flag_id INTEGER PRIMARY KEY REFERENCES flags (id) ON DELETE CASCADE,
+    by_name TEXT NOT NULL,
+    at TEXT NOT NULL
+);
+
 -- Every promised callback has a time and an owner, and is tracked until done (spec S-32).
 CREATE TABLE IF NOT EXISTS callbacks (
     id INTEGER PRIMARY KEY,

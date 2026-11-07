@@ -336,6 +336,23 @@ def add_routes(app: FastAPI) -> None:
             conn.close()
         return JSONResponse({"items": items})
 
+    @app.post("/owner/flags/{flag_id}/done")
+    def owner_flag_done(request: Request, flag_id: int, tenant: str = "", day: date | None = None):
+        """Check a row off the Needs attention list: the flag closes, with who did it."""
+        if not _signed_in(request):
+            return _login(request)
+        found = tenant_for(request, tenant)
+        if found is None:
+            return HTMLResponse("No such company.", 404)
+        services = request.app.state.services
+        conn = services.connect()
+        try:
+            owner.check_off(conn, found, flag_id, _user(request)["name"], services.clock())
+        finally:
+            conn.close()
+        back = f"{_tenant_q(tenant)}{_amp(tenant)}day={day.isoformat()}" if day else _tenant_q(tenant)
+        return RedirectResponse(f"/owner{back}#attention", 303)
+
     @app.post("/owner/calls/{call_id}/report")
     def owner_report(request: Request, call_id: str, text: str = Form(""), turn: str = Form("")):
         """Store what the owner says went wrong on the call (story O-8). The jobs loop files it."""

@@ -68,6 +68,21 @@ def _day_range(tenant: Tenant, day: date) -> tuple[datetime, datetime]:
     return start, max(end, start + timedelta(days=1))
 
 
+def _clock_written(at: time) -> tuple[str, str]:
+    hour = at.hour % 12 or 12
+    return (f"{hour}:{at.minute:02d}" if at.minute else str(hour)), ("AM" if at.hour < 12 else "PM")
+
+
+def heading(start: time, end: time) -> str:
+    """A window as the schedule writes it: "8 to 10 AM", "10 AM to 12 PM", "8 PM to 8 AM"."""
+    (a, a_half), (b, b_half) = _clock_written(start), _clock_written(end)
+    return f"{a} to {b} {b_half}" if a_half == b_half and start < end else f"{a} {a_half} to {b} {b_half}"
+
+
+def _part(start: time) -> str:
+    return "Morning" if start.hour < 12 else "Afternoon" if start.hour < 17 else "Evening"
+
+
 def _window_at(tenant: Tenant, day: date, start: str, end: str) -> Window | None:
     """The window an appointment is in: a configured one, or the run of blocks it covers."""
     for window in tenant.windows:
@@ -149,6 +164,8 @@ def day(
             {
                 "id": window.id,
                 "label": window.label(),
+                "heading": "After hours" if window.after_hours else heading(window.start, window.end),
+                "part": heading(window.start, window.end) if window.after_hours else _part(window.start),
                 "after_hours": window.after_hours,
                 "start": start,
                 "end": end,

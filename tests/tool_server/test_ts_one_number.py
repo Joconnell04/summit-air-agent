@@ -215,6 +215,24 @@ def test_the_callback_day_the_caller_named_wins_over_the_models(agent, tool):
     assert due.startswith("2026-11-05"), due
 
 
+def test_monday_morning_said_in_pieces_still_books_monday(agent, clock):
+    """Retell call retell_call_360c4fe0ec61e0339879858f61d, Thursday 10 PM: the caller said "My"
+    then "Monday morning.", the model passed "tomorrow before 12 PM", and the agent promised
+    Friday. The grader marked it Callback wrong, rightly; this pins the server's fix."""
+    clock.advance(days=3, hours=13)
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    for line in ("Okay, can someone call me about signing up?", "My", "Monday morning."):
+        agent.turn(call, line)
+    result = agent.tool("record_lead", call, kind="membership", details={
+        "contact_name": "Morgan Diaz", "company": "", "callback_day": "tomorrow",
+        "callback_before": "12 PM",
+        "need": "Interested in signing up for Summit Standard Membership; requested a callback."})
+    assert result["ok"], result
+    assert "Monday" in result["say"] and "tomorrow" not in result["say"], result["say"]
+    due = agent.db().execute("SELECT due_at FROM callbacks").fetchone()[0]
+    assert due.startswith("2026-11-09"), due
+
+
 def test_the_part_of_day_the_caller_named_wins_over_the_models(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     agent.turn(call, "Tomorrow afternoon works for a call back.")
