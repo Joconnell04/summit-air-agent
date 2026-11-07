@@ -946,3 +946,4 @@ def test_the_prompt_says_a_problem_that_still_runs_is_not_a_tune_up():
     text = (Path(__file__).resolve().parents[2] / "retell" / "socket" / "prompt.md").read_text()
     assert "even when it still runs" in text
     assert "`tune_up` is routine maintenance with nothing wrong" in text
+    assert "Never say the job type or how you chose it." in text
