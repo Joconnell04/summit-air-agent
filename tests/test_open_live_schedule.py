@@ -38,6 +38,19 @@ def free(db: Path, day: date) -> dict[str, tuple[int, int]]:
         conn.close()
 
 
+def on_shift(db: Path, day: date) -> int:
+    """Technicians with a daytime shift on the day: the rows its schedule shows."""
+    conn = sqlite3.connect(db)
+    try:
+        return conn.execute(
+            "SELECT COUNT(DISTINCT technician_id) FROM technician_shifts "
+            "WHERE shift_type = 'Normal' AND substr(start, 1, 10) = ?",
+            (day.isoformat(),),
+        ).fetchone()[0]
+    finally:
+        conn.close()
+
+
 def test_most_windows_open_weekends_included_and_named_visits_stay(seeded, tmp_path):
     db = tmp_path / "live.db"
     db.write_bytes(seeded[0].read_bytes())
@@ -63,6 +76,7 @@ def test_most_windows_open_weekends_included_and_named_visits_stay(seeded, tmp_p
         conn.close()
     assert maria == ("Scheduled",)
     assert kept > 0, "a few filler visits stay for Jackson's own runs"
+    assert on_shift(db, date(2026, 11, 6)) <= 20 and on_shift(db, date(2026, 11, 8)) <= 20
     assert open_schedule(db, TENANT, date(2026, 11, 4)) == {
         "shifts_added": 0, "fillers_cancelled": 0
     }
