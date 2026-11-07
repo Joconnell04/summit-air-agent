@@ -560,6 +560,7 @@ def _reply_row(parts: list[dict]) -> dict:
     spoken = [p for p in parts if p["kind"] == "spoken"]
     requests = [p for p in parts if p["kind"] == "model_request"]
     model = any(p.get("source") == "model" for p in spoken)
+    fixed = any(p.get("source") != "model" for p in spoken)
     text = " ".join(p["summary"] for p in spoken)
     cuts = [c for p in spoken for c in (p.get("view") or {}).get("cut", [])]
     notes = [p["view"]["note"] for p in spoken if (p.get("view") or {}).get("note")]
@@ -568,12 +569,14 @@ def _reply_row(parts: list[dict]) -> dict:
     row = dict(spoken[0], lane=lane, col=LANE_INDEX[lane], kind="reply", title="Agent said",
                summary=text, ms=first["ms"], ms_label=first["ms_label"],
                tone=next((p["tone"] for p in spoken if p["tone"]), ""),
-               facts=[("Source", "the model" if model else "the server's or the company's fixed words"),
+               facts=[("Source", "the server's fixed words, then the model" if model and fixed
+                       else "the model" if model else "the server's or the company's fixed words"),
                       ("Spoken in", f"{len(spoken)} part{'s' if len(spoken) != 1 else ''}"),
                       ("Model requests", len(requests))],
                blocks=[], messages=None, refs=[], joined=parts,
                view={"heard": text, "cut": cuts, "note": notes[0] if notes else ""})
-    if row["tone"] == "warn" and not model:
+    # A model reply joined after the safety lines must not hide that the lines were said.
+    if any(p["tone"] == "warn" and p.get("source") != "model" for p in spoken):
         row["proof"] = "Safety lines, word for word"
     return row
 

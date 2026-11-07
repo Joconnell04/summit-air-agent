@@ -336,7 +336,6 @@ def decisions(conn: sqlite3.Connection, trace: dict, graph: dict | None = None,
             why="The fixed lines come before anything else on a hazard",
             result=f"{took} after the signal" if lines_at else "Never said")
 
-    turn = 0
     _person_rows(conn, trace, graph, tenant, add, environ if environ is not None else os.environ)
 
     for b in trace["bookings"]:

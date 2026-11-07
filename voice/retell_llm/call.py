@@ -406,7 +406,8 @@ class LlmCall:
 
     def _stage(self, out: "Response", stage: dict) -> None:
         self.stages.append(stage)
-        self.sent.append({"said": " ".join(out.sent), "cuts": self.cuts})
+        # The tool server caps `said` at 4000 characters; a longer line would lose its whole post.
+        self.sent.append({"said": " ".join(out.sent)[:4000], "cuts": self.cuts})
         self.cuts = []
 
     async def begin(self, greeting: str) -> None:

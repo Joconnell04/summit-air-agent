@@ -604,3 +604,15 @@ def test_the_design_specimen_shows_the_node_graph(agent):
     page = admin(agent).client.get("/owner/design").text
     assert "Node graph" in page and 'aria-label="Specimen steps"' in page
     assert "Rate chart" in page
+
+
+def test_a_model_reply_joined_after_the_safety_lines_keeps_the_safety_proof():
+    """Review of PR #194: a joined row whose later part came from the model lost the proof tag."""
+    def part(source, text, tone):
+        return {"kind": "spoken", "source": source, "summary": text, "tone": tone, "view": {},
+                "ms": None, "ms_label": "", "lane": "voice", "col": 1}
+
+    row = nodes._reply_row([part("fixed", "If you're smelling gas, get everyone outside.", "warn"),
+                            part("model", "Do you want me to connect you?", "")])
+    assert row["proof"] == "Safety lines, word for word"
+    assert ("Source", "the server's fixed words, then the model") in row["facts"]
