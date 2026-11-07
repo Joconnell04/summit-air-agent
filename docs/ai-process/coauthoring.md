@@ -376,7 +376,7 @@ Commit: (this PR)
 Status: open
 
 ## live call 1 (issue #149: wait time, voice, holding line, callback day, schedule, ending)
-Feedback (verbatim, Jackson, relayed by the coordinating session, after call `call-_+16784774024_qSVS59jLcAPP`):
+Feedback (verbatim, Jackson, relayed by the coordinating session, after call `call-_+1678XXXXXXX_qSVS59jLcAPP`):
 > the wait time was way too long, like very long. And I didn't like the voice as well. So if we can just change the voice from that like weird like girl voice to something else... Just choose any other one... It said got it, but wasn't telling me that it would need a second to do a task. Like it should just be like, okay, I'm gonna do that. Just give me 1 second. You know, something very human, with like the proper swing of the voice... I asked for an appointment Friday. It said, I'll book you tomorrow, anywhere from whatever it said, like 3 to 5 p.m.... Tomorrow would be Thursday. So that's just completely wrong. And that's not what I asked for... there should be no active appointments right now... Actually, no, that's not true, because the eval set needs to test for active appointments. So keep whatever active appointments would be in on the eval set. And then a few extra ones in case I want to do like my own run of the eval set. But most times should be available... Saturday and Sunday should also be available... It also just abruptly ended the call. There should always be a 1 second wait before ending the call to at least ensure in case the person said anything else.
 Changed:
 - The turn detector's longest wait after the caller stops: left to the issue #150 lane, whose audio rig can put pauses inside a caller's line.
@@ -391,7 +391,7 @@ Commit: (this PR)
 Status: open
 
 ## live call 2 (issue #149: half replies, refused move, name echo, ZIP, callbacks, scheduling)
-Feedback (verbatim, Jackson, relayed by the coordinating session, after call `call-_+16784774024_MXJ5xsvpZQ5H`):
+Feedback (verbatim, Jackson, relayed by the coordinating session, after call `call-_+1678XXXXXXX_MXJ5xsvpZQ5H`):
 > didnt like how it said my name right back....and just say the zip code is, not just zip 11201....then when i asked it something, it just said sorry about that and stopped. terrible... too fast on the readback of address and phone. then a weird repeat on the call the right number thing. and then it repeat it trying to call again. also i say 2pm, and it says 1-3pm. just let it say it can do it exactly... it just like pauses...like when i asked for a second task....and then asked it if it was going to ask me a question. and then it says 'yes' and then pauses....and doesn't say anything... and why is it saying it doesn't have openings for a tune-up wtf. why didn't it check friday first?... and too many double booking questions....like it asking me two sets of multi-options for the booking stuff.
 Changed:
 - "Sorry about that.", "Sure, I can set up an AC tune-up." and "Yes." alone are asked again at once (DECISIONS.md 096).

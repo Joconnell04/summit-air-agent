@@ -10,6 +10,7 @@ what every company in that trade shares (merge() says how). docs/template.md has
 """
 
 import copy
+import os
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
@@ -302,7 +303,10 @@ class Tenant:
         self.weather: dict | None = agent.get("weather")
         self.lines: dict = agent["lines"]
         self.callbacks: dict = agent["callbacks"]
-        self.on_call_alerts: dict = agent["on_call_alerts"]
+        self.on_call_alerts: dict = dict(agent["on_call_alerts"])
+        # The real inbox comes from the server's environment, never the repository.
+        if os.environ.get("ON_CALL_ALERT_EMAIL"):
+            self.on_call_alerts["email"] = os.environ["ON_CALL_ALERT_EMAIL"]
         self.repeat: dict = agent["repeat_callers"]
         # Speaking rate (app/pace.py). None leaves the voice at its default speed.
         self.pace: dict | None = clamped_config(agent.get("pace"))

@@ -542,14 +542,14 @@ def test_a_reply_the_caller_heard_nothing_of_is_asked_again(monkeypatch):
 def test_a_promise_that_calls_its_tool_is_not_asked_again(monkeypatch):
     text, replies = _follow_ups(
         monkeypatch, _asked_to_cancel, "Got it. ", "One moment.",
-        ("find_customer", {"phone": "+16784774024"}),
+        ("find_customer", {"phone": "+16785550147"}),
     )
     assert text == "Got it. One moment."
     assert replies == []
 
 
 def test_a_reply_that_only_acknowledges_is_asked_to_take_the_next_step(monkeypatch):
-    """The second live call (call-_+16784774024_MXJ5xsvpZQ5H): "Sure, I can set up an AC tune-up."
+    """The second live call (call-_+1678XXXXXXX_MXJ5xsvpZQ5H): "Sure, I can set up an AC tune-up."
     and later "Yes.", each followed by about 20 s of silence."""
     for line in ("Sure, I can set up an AC tune-up.", "Yes.", "Got it."):
         _, replies = _follow_ups(monkeypatch, lambda reply: None, line)
@@ -603,7 +603,7 @@ def test_live_call_1_got_it_before_a_look_up_ends_with_a_holding_line(monkeypatc
     text, replies = _follow_ups(
         monkeypatch, _with_holding(_asked_to_cancel), "Got it. ",
         "I'll look up the tune-up at 142 Main Street now.",
-        ("find_customer", {"phone": "+16784774024"}),
+        ("find_customer", {"phone": "+16785550147"}),
     )
     assert text == "Got it. Just give me one second."
     assert replies == []
@@ -612,7 +612,7 @@ def test_live_call_1_got_it_before_a_look_up_ends_with_a_holding_line(monkeypatc
 def test_a_look_up_after_the_models_own_words_gets_no_holding_line(monkeypatch):
     text, _ = _follow_ups(
         monkeypatch, _with_holding(_asked_to_cancel), "Okay, let me find that visit for you.",
-        ("find_customer", {"phone": "+16784774024"}),
+        ("find_customer", {"phone": "+16785550147"}),
     )
     assert text == "Okay, let me find that visit for you."
 

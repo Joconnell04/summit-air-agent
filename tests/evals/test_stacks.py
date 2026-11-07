@@ -241,7 +241,7 @@ def test_the_harness_asks_again_after_a_promise_with_no_tool_call():
     model = ScriptedModel(
         [
             say("Got it. I'll look up the visit now."),
-            use("find_customer", "", phone="+16784774024"),
+            use("find_customer", "", phone="+16785550147"),
         ]
     )
     agent = InProcessAgent(StubServer(), model, "c1", "(212) 555-0999")

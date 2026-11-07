@@ -49,7 +49,7 @@ def test_only_our_own_scripted_calls_are_hung_up():
     for caller in line.TEST_CALLERS:
         assert line.ours({"agent_id": agent, "from_number": caller}, agent)
     # A person calling the line, or any call on another agent, is never ended.
-    assert not line.ours({"agent_id": agent, "from_number": "+16784774024"}, agent)
+    assert not line.ours({"agent_id": agent, "from_number": "+16785550147"}, agent)
     assert not line.ours({"agent_id": "agent_a3e38e6aa3d4e75dfac12aafc8",
                           "from_number": line.TEST_CALLERS[0]}, agent)
 

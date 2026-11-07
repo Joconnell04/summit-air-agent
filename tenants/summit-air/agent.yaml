@@ -259,10 +259,11 @@ callbacks:
   fsm_down_minutes: 60
 
 # Email to the on-call person when an urgent flag is raised after hours (journey 11). ASSUMED
-# address until Summit Air gives one. seek_earlier is left out: that booking already has a time,
+# address until Summit Air gives one; ON_CALL_ALERT_EMAIL in the server's .env overrides it, so
+# the demo's real inbox stays out of the repository. seek_earlier is left out: that booking already has a time,
 # and the office looks for an earlier one in the morning.
 on_call_alerts:
-  email: Joeshmow2020@gmail.com
+  email: on-call@summit-air.example
   priorities: [Urgent]
   skip_kinds: [seek_earlier]
   # A flag older than this when the job first sees it is not emailed: the moment has passed.

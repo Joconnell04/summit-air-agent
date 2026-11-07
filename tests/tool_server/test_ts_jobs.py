@@ -557,3 +557,14 @@ def test_the_alert_report_carries_the_booked_visit_and_the_technicians_details(a
     assert "Inside: 52 F" in body and "Approves work: " in body
     for title in ("At a glance", "The problem", "Getting in", "Technician summary"):
         assert title in html
+
+
+def test_the_on_call_inbox_comes_from_the_environment_not_the_repository(monkeypatch):
+    """The demo's real inbox stays out of the repository; the server's .env sets it."""
+    from toolkit import TENANT_DIR
+
+    from app.tenant import Tenant
+
+    assert Tenant.load(TENANT_DIR).on_call_alerts["email"].endswith(".example")
+    monkeypatch.setenv("ON_CALL_ALERT_EMAIL", "on-call@example.com")
+    assert Tenant.load(TENANT_DIR).on_call_alerts["email"] == "on-call@example.com"

@@ -596,7 +596,7 @@ Each bake-off states its hypothesis and decision rule before it runs. The voice 
 So the $30 would get down to about $5. No other subscriptions are needed beyond the Cartesia Pro plan you're getting.
 
 **What needs you now: texting registration, [docs/decisions/15-texting-registration.md](../../decisions/15-texting-registration.md).**
-- The terms and privacy pages are live at https://joconnell04.github.io/summit-air-demo-line/, with your name and jt272004@gmail.com.
+- The terms and privacy pages are live at https://joconnell04.github.io/summit-air-demo-line/, with your name and the project owner's Gmail.
 - I recommend starting option A today. That's a Twilio sole proprietor registration in your own name.
 - You have to do the identity steps yourself (photo ID, a selfie, and a code texted to your personal mobile). I can't enter those for you.
 - Approval takes about 1 to 3 weeks, so it probably won't land before the Nov 9 interview. The build therefore puts texting behind an on/off switch, and the owner view always shows the confirmation either way.
@@ -624,7 +624,7 @@ $48.85 covers registration (about $21.50 the first month) plus all the testing, 
 
 Order:
 1. **Pick "Sole Proprietor."** You have no EIN for this.
-2. **Create the individual profile.** It asks for your legal name, jt272004@gmail.com, your personal mobile (not a Twilio number), your address, a photo ID and a selfie. Use your exact legal name, because it has to match the terms page and everything after it.
+2. **Create the individual profile.** It asks for your legal name, the project owner's Gmail, your personal mobile (not a Twilio number), your address, a photo ID and a selfie. Use your exact legal name, because it has to match the terms page and everything after it.
 3. **Register the brand.** Twilio texts a code to your mobile, and you have to reply within 24 hours.
 4. **Stop at the campaign step and send me a message.** I'll set up the Messaging Service with only the 646 number and the opt-out replies, then give you the campaign fields to paste. All of them are drafted in [docs/decisions/15-texting-registration.md](../../decisions/15-texting-registration.md) under "Fields to paste."
 
@@ -651,7 +651,7 @@ You're one click away. On the second screen (Trust Hub → Registrations), click
 
 On the A2P 10DLC Brands page:
 1. Start a new brand registration and choose the **Sole Proprietor** type. You may need to answer "No" to "Do you have a Tax ID / EIN?" first.
-2. It asks you to create or select a customer profile. Create one as an **individual**: your exact legal name, jt272004@gmail.com, your personal mobile, your address, and the photo ID and selfie if it asks.
+2. It asks you to create or select a customer profile. Create one as an **individual**: your exact legal name, the project owner's Gmail, your personal mobile, your address, and the photo ID and selfie if it asks.
 3. Submit the brand, then reply to the code Twilio texts your mobile within 24 hours.
 4. Stop at **A2P 10DLC Campaigns**, the second item on that same list. It only unlocks once the brand is approved. Tell me when it does and I'll set up the 646 number's messaging service and give you the campaign fields to paste.
 

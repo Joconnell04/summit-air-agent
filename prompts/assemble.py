@@ -466,7 +466,7 @@ REPEAT_MIN_WORDS = 6
 LOOKUPS = ("find_customer", "get_customer_history", "find_slots")
 # A sentence that only acknowledges the caller ("Got it.", "Yes.", "Sure, I can set up an AC
 # tune-up."). A reply of nothing else, with no tool call and no question, leaves the caller waiting
-# for the agent's next step (the second live call, call-_+16784774024_MXJ5xsvpZQ5H: 20 s of silence
+# for the agent's next step (the second live call, call-_+1678XXXXXXX_MXJ5xsvpZQ5H: 20 s of silence
 # after each of those two lines).
 ONLY_ACKNOWLEDGES = re.compile(
     r"(?:(?:sure|okay|ok|got it|yes|yeah|yep|alright|all right|of course|absolutely|no problem|"

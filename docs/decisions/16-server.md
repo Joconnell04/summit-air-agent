@@ -41,7 +41,7 @@ B, a new Vultr server in New Jersey: the cheapest option in the New York area, n
 
 ## Research notes
 
-- Existing server, MEASURED over ssh: Ubuntu 24.04, 2 vCPU, 1.9 GiB memory, Atlanta (ipinfo for 96.30.198.9), runs another project's services, user account without sudo, automatic reboots at 09:30 UTC set by another project.
+- Existing server, MEASURED over ssh: Ubuntu 24.04, 2 vCPU, 1.9 GiB memory, Atlanta (ipinfo for its address), runs another project's services, user account without sudo, automatic reboots at 09:30 UTC set by another project.
 - Memory per call and the 2 to 3 call estimate: docs/explorations/003-capacity-and-cost.md (ASSUMED; LiveKit publishes no memory figure for its turn-detector model).
 - ngrok free plan: 20,000 requests a month (from the earlier practice agent's notes); account balance $0 (FROM JACKSON).
 - Hetzner 2026 price changes (SECONDARY): https://findstack.com/resources/hetzner-price-increase-2026, https://wz-it.com/en/blog/hetzner-price-increase-june-2026-cpx-ccx-alternatives/
