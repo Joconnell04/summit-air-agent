@@ -62,16 +62,17 @@ def test_nobody_in_the_reset_world_is_named_paul_or_jackson(live):
         assert not [n for n in names if {"Paul", "Jackson"} & set(n.split())], table
 
 
-def test_the_schedule_page_shows_about_20_rows_with_their_own_first_names(live, clock):
-    agent, _, _, _ = live
+def test_the_schedule_page_lists_all_32_with_their_own_first_names(live, clock):
+    """Everyone who takes jobs has a row, working or off; about 20 work any one day."""
+    agent, mock_db, _, _ = live
     for offset in (0, 3, 5, 6):  # today, a weekday, Saturday and Sunday
         day = clock().date() + timedelta(days=offset)
         html = agent.client.get(f"/owner/schedule?day={day.isoformat()}").text
         names = [cell.split("</td>")[0] for cell in html.split('<td class="what">')[1:]]
         firsts = [name.split()[0] for name in names]
-        # 18 service technicians and 2 advisors on a weekday, plus the night's on-call technician.
-        assert 12 <= len(names) <= 21, (day, len(names))
-        assert len(set(firsts)) == len(firsts), (day, firsts)
+        assert len(names) == 32, (day, len(names))
+        assert len(set(firsts)) == 32, (day, firsts)
+        assert 12 <= on_shift(mock_db, day) <= 20, day
         assert '<span class="w-name">8 to 10 AM</span>' in html, day
 
 

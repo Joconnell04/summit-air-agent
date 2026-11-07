@@ -1,4 +1,4 @@
-"""The Summit Air world: 300 customers, 40 technicians, two weeks of capacity.
+"""The Summit Air world: 300 customers, 32 technicians and advisors, two weeks of capacity.
 
 Deterministic: the random seed is fixed, and everything is placed relative to the start date, so
 the same start date always gives the same world. Names, addresses and 555 phone numbers are
@@ -22,7 +22,9 @@ SERVICE_UNIT, INSTALL_UNIT = 11, 12
 NO_HEAT, NO_COOLING, TUNE_UP, SAFETY_CHECK, ESTIMATE = 201, 202, 203, 204, 205
 MEMBERSHIP = 601
 FIRST_TECH_ID = 5001
-SERVICE_TECHS, ADVISORS = 36, 4
+# 32 people take jobs: the rest of the 40-person shop is the office and leadership (owner view
+# feedback, 7 November).
+SERVICE_TECHS, ADVISORS = 28, 4
 
 AREA_CODES = ["718", "347", "929", "917", "646", "212"]
 CITY_BY_COUNTY = {"Kings": "Brooklyn", "Queens": "Queens", "Richmond": "Staten Island"}
@@ -480,9 +482,9 @@ class World:
                     if i % 3 == 0:
                         wk.add_shift(conn, cfg, tech_id, day, "08:00", "16:00")
                     continue
-                # Half the service technicians work any one weekday, by turns, so a day's
-                # schedule is about 20 rows with the comfort advisors (owner view feedback).
-                if (i + day.toordinal()) % 2:
+                # 18 of the 28 service technicians work any one weekday, by turns, so about 20
+                # work a day with the comfort advisors (owner view feedback).
+                if (i + day.toordinal()) % 14 >= 9:
                     continue
                 group = i % 10
                 start, end = (

@@ -25,7 +25,7 @@ FILLER_SUMMARIES = ("Booked by phone.", "Replacement estimate.")
 SERVICE_UNIT, INSTALL_UNIT = 11, 12
 CANCEL_REASON = 401  # "Customer cancelled" (config.yaml cancel_reasons)
 WEEKEND_HOURS = ("08:00", "20:00")
-# Service technicians on a day's schedule: half the 36, as the seed staffs a weekday.
+# Service technicians working a day: as the seed staffs a weekday.
 ON_SHIFT = 18
 
 
@@ -59,7 +59,12 @@ def weekday_hours(i: int) -> tuple[str, str]:
 
 
 def on_rota(i: int, day: date) -> bool:
-    """The seed's rota: half the service technicians (and advisors) work a day, by turns."""
+    """The seed's rota for service technicians: 18 of the 28 work a day, by turns."""
+    return (i + day.toordinal()) % 14 < 9
+
+
+def advisor_on_rota(i: int, day: date) -> bool:
+    """Half the comfort advisors work a weekday, by turns."""
     return (i + day.toordinal()) % 2 == 0
 
 
@@ -88,7 +93,7 @@ def add_shifts(conn: sqlite3.Connection, cfg: TenantConfig, first: date, days: i
             added += 1
         if not weekend:
             for i, tech in enumerate(advisors):
-                if on_rota(i, day) and not has_shift(conn, cfg, tech["id"], day, "Normal"):
+                if advisor_on_rota(i, day) and not has_shift(conn, cfg, tech["id"], day, "Normal"):
                     wk.add_shift(conn, cfg, tech["id"], day, "08:00", "16:00")
                     added += 1
         # One on-call technician a night, rotating weekly like the seed.
