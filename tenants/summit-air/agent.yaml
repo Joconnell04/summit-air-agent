@@ -606,8 +606,8 @@ lines:
   ask_system_type_cooling: Is it central air, a mini-split, or a window or wall unit?
   # How bad, in the caller's words, when they named a symptom (Jackson's call 046f37).
   # Leak replays t1 and t5, 6 November: "Is it still cooling" on a heating call let the model
-  # ask "Is the leak still happening?" after "it's leaking right now". {symptom} is "the leak".
-  ask_how_bad_symptom: You mentioned {symptom}. Is the system still working, or has it stopped?
+  # ask "Is the leak still happening?" after "it's leaking right now". One sentence for both.
+  ask_how_bad_symptom: Is the system still working, or has it stopped?
   # Ends a booking sentence instead of after_confirmation when the caller named another unit that
   # has no booking yet (DECISIONS.md 085). {unit} is "5C".
   next_unit: Now let's set up apartment {unit}.

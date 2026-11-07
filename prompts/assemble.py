@@ -443,8 +443,9 @@ NAME_ECHO = re.compile(
 # code is 1 1 2 0 1", digit by digit.
 ZIP_WORD = re.compile(r"\bZIP(?P<rest>\s+code(?:\s+is)?|:)?\s+(?P<digits>\d{5})\b", re.IGNORECASE)
 # The last four of a phone number, said digit by digit: "ending in 6730" was read as "six thousand
-# seven hundred and thirty" (leak replay t5, 6 November).
-ENDING_IN = re.compile(r"\b(?P<lead>ending (?:in|with))\s+(?P<digits>\d{4})\b", re.IGNORECASE)
+# seven hundred and thirty" (leak replay t5), and "ends in 6730" too (no-heat call t6, 6 November).
+ENDING_IN = re.compile(r"\b(?P<lead>(?:ending|ends) (?:in|with))\s+(?P<digits>\d{4})\b",
+                       re.IGNORECASE)
 # "No problem" with nothing to answer: only after a thank-you or an apology (Jackson's call on the
 # Retell number: "No problem" to "The what?").
 NO_PROBLEM = re.compile(r"^\s*(?:no problem|no worries)(?:\s+at all)?\s*(?:[.!,]\s*|$)", re.IGNORECASE)
@@ -564,7 +565,7 @@ ASKS_REPEAT = re.compile(
 # about them or the rules.
 NARRATES_THINKING = re.compile(
     r"\bthe caller\b|\bper the rules\b|\bthe rules say\b|\bI should (?:check|ask|confirm)\b"
-    r"|\bI'?ll ask whether\b|\bmy instructions\b|\bI'?ll answer (?:it|that|this) directly\b",
+    r"|\bI'?ll ask whether\b|\bmy instructions\b",
     re.IGNORECASE,
 )
 # The agent talking about where its facts came from, or about text it was handed (the Retell

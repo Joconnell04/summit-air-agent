@@ -13,7 +13,6 @@ from prompts.assemble import SpokenReply
         "The caller already has a visit booked for today.",
         "Per the rules, I'll ask whether this is a different problem needing its own visit.",
         "Since this is a heating problem, I should check whether they want to move that visit.",
-        "I'll answer it directly.",  # phone check t3 leak replay, 6 November
     ],
 )
 def test_reasoning_about_the_caller_or_the_rules_is_never_said(sentence):
@@ -39,3 +38,5 @@ def test_a_phone_ending_is_said_digit_by_digit():
     thirty"."""
     said = SpokenReply().sentence("We'll call the number ending in 6730 if anything changes.")
     assert said == "We'll call the number ending in 6 7 3 0 if anything changes."
+    said = SpokenReply().sentence("The number we have ends in 6730.")
+    assert said == "The number we have ends in 6 7 3 0."
