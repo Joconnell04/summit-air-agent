@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from app.text import PLACEHOLDER_NAME, number_tokens, says_goodbye, words
+from app.text import PLACEHOLDER_NAME, no_name, number_tokens, says_goodbye, words
 from app.tools import TOOLS
 
 PROMPTS = Path(__file__).resolve().parent
@@ -219,7 +219,7 @@ def tool_specs(job_types: list[str]) -> list[dict]:
 
 
 def first_name(full_name: str) -> str:
-    if not full_name.strip() or full_name.startswith(PLACEHOLDER_NAME):
+    if no_name(full_name) or full_name.startswith(PLACEHOLDER_NAME):
         return ""
     return full_name.split()[0]
 

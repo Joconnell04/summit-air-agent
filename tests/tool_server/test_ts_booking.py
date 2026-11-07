@@ -557,6 +557,9 @@ def test_a_caller_with_an_open_visit_is_sent_to_reschedule_not_a_second_booking(
     assert refused["refused"] == "open_job"
     assert refused["data"]["job_id"] == maria["jobId"]
     assert "reschedule_appointment" in refused["data"]["use"]
+    # Not said for the model, so a caller who already said "a different problem" isn't asked
+    # again (Jackson's call call_4b2bd3ced61ccb35a2cf910c98f heard it twice).
+    assert refused["say"] == "" and "already said this is a different problem" in refused["data"]["need"]
     assert fsm_jobs(mock) == before
 
 
@@ -1377,6 +1380,17 @@ def test_a_booking_with_no_name_asks_with_the_booking_name_line(agent):
     agent.confirm_read_back(call, in_area_address())
     refused = book(agent, call, first_open(agent, call), name="")
     assert refused["refused"] == "invalid_arguments"
+    assert refused["say"] == "Thanks. And what name should I put the visit under?"
+
+
+def test_not_asked_yet_is_never_saved_as_the_callers_name(agent):
+    """Jackson's call call_55b467b41ae58e725fa142d29b7 booked with name "not asked yet"; his next
+    call was greeted "Hi not". The placeholder counts as no name, so the name is asked for."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I'd like to book my furnace's yearly tune-up, please.")
+    agent.confirm_read_back(call, in_area_address())
+    refused = book(agent, call, first_open(agent, call), name="not asked yet")
+    assert refused["refused"] == "invalid_arguments", refused
     assert refused["say"] == "Thanks. And what name should I put the visit under?"
 
 

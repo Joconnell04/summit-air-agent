@@ -76,6 +76,7 @@ from .text import (
     digits_spoken,
     has_phrase,
     kidding,
+    no_name,
     number_tokens,
     number_words,
     phone_display,
@@ -2718,7 +2719,7 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
     phone = _resolve_phone(ctx, args.phone)
     # The name the caller already gave (Jackson's Retell agent asks at the start): kept for the
     # call, so the confirmed read-back doesn't ask "what name should I put the visit under?" again.
-    if args.name.strip():
+    if not no_name(args.name):
         with tx(ctx.conn):
             ctx.conn.execute(
                 "INSERT INTO booking_names (call_id, name, at) VALUES (?, ?, ?) "
@@ -3310,7 +3311,7 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     job_type = _job_type(ctx, args.job_type)
     details = args.details.model_dump()
     _repair_intake(ctx, args.job_type, details)
-    if not details["name"].strip():
+    if no_name(details["name"]):
         details["name"] = _booking_name(ctx)
     if not details["also_noted"].strip():
         details["also_noted"] = _catch_all_answer(ctx)
@@ -3747,10 +3748,16 @@ def _open_job_here(ctx: Ctx, readback: dict) -> None:
             for job in ctx.fsm.jobs(customer_id, lookup.OPEN_JOB_STATUSES):
                 if job["locationId"] in here and job["id"] not in booked_here:
                     _passed_visit(ctx, job)
+                    # Not said for the model: Jackson's call call_4b2bd3ced61ccb35a2cf910c98f
+                    # answered "This is a different problem" and still heard this question twice.
                     raise Refused(
                         "open_job",
-                        "You already have a visit booked there. Should I move that one instead?",
+                        "",
                         job_id=job["id"],
+                        need="if the caller already said this is a different problem, call "
+                        "book_appointment again with separate_problem true, saying nothing; if "
+                        "they haven't said, ask 'You already have a visit booked there. Should I "
+                        "move that one instead?'",
                         use="reschedule_appointment with this job_id as booking_id, or "
                         "book_appointment with separate_problem true if the caller confirms a "
                         "different problem",

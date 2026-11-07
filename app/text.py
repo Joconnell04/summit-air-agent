@@ -513,3 +513,10 @@ def unit_settled(lines: list[str]) -> str:
 # The name the server gives an account it opened for a dispatch before the caller said one
 # (app/tools.py `_dispatch`): never said to the caller ("Hi, caller" on phone check p3, 6 November).
 PLACEHOLDER_NAME = "Caller ending"
+
+
+def no_name(value: str) -> bool:
+    """A name field that holds no name: empty, or the "not asked yet" the agent puts in a detail it
+    hasn't asked. Saved as a name, it greeted Jackson's next call with "Hi not"
+    (call_4b2bd3ced61ccb35a2cf910c98f)."""
+    return value.strip().lower() in ("", "not asked yet", "not asked", "unknown", "n/a", "none")

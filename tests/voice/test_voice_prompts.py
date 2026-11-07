@@ -54,6 +54,9 @@ def test_server_hints_become_notes_and_unknown_hints_are_dropped():
 def test_first_name():
     assert assemble.first_name("Maria Lopez") == "Maria"
     assert assemble.first_name("  ") == ""
+    # The agent's placeholder for an unasked detail is never a name: Jackson's call
+    # call_4b2bd3ced61ccb35a2cf910c98f was greeted "Hi not".
+    assert assemble.first_name("not asked yet") == ""
 
 
 def test_booking_tools_say_the_window_is_the_code_not_the_spoken_label():
