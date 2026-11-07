@@ -165,3 +165,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Hyphenated spoken numbers | "Twenty-five hundred" is 2500, so a yes that repeats the house number in words confirms the read-back | DECISIONS.md 139 |
 | Visit answers given early | Who approves, the gate or buzzer and being home as a habit count from anywhere in the call; being home now still waits for the offer | DECISIONS.md 140 |
 | Remote evals on a live-like world | The test mocks open the schedule after a reset; checks that need the scratch ServiceTitan are not run on a remote stack | DECISIONS.md 141 |
+| Repeated question in one reply | The socket cuts the model's copy of a question the server already asked in the same reply | DECISIONS.md 142 |

@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 142. A question the caller already heard in the same reply is cut
+
+Decided: the socket's filter cuts a sentence of the model's that repeats one already said in the same reply, questions included. Before, a question was never cut, so the model's copy of the server's question got through.
+Why: on the socket run 20261107-230923, all four no-heat dispatch calls heard "Will someone be home to let the technician in?" twice in one turn. The dispatch sentence ends on "just let me know.", not a question, so the model carries on, and it asked the arrival question again. The rule that a question is never cut (DECISIONS.md 112) is there so the filter can't remove the only question; a repeat in the same reply leaves the first one in place.
+Considered: ending the turn on any server sentence that contains a question (changes every flow whose sentence asks and then adds a line); rewording the arrival question to end on the question (the wording is Jackson's, change set 19).
+Would change if: a call shows a needed question cut as a repeat (the drop is logged as repeats_said).
+Discussion: this session; tests/voice_retell/test_rt_llm_socket.py
+Issue: #195
+
 ## 141. A remote eval runs on a world opened like the live one, and a check it can't run isn't a failure
 
 Decided: the eval and server-led test mocks open the schedule after each reset the way the live world is opened (`ST_MOCK_RESET_OPEN=1`, scripts/open_live_schedule.py: shifts on the seed's rota of about 20 technicians a day, weekends included, and five in six filler visits cancelled). A check that reads the scratch ServiceTitan file, which only the in-process stack has, is reported as not run on a remote stack instead of failing the call. The booking check counts a visit the server booked at the read-back (a High no-heat dispatch, DECISIONS.md 123) for its job type.
