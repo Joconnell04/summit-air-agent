@@ -10,7 +10,7 @@ from evals.scenario import Scenario
 # The worker says the greeting from the tenant's `voice` lines with no model step, so the in-process
 # agent does too and the scripted agent model is never asked for one.
 GREETING = (
-    "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. "
+    "Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. "
     "How can I help?"
 )
 
@@ -413,7 +413,7 @@ def test_a_transfer_that_fails_brings_the_agent_back_with_the_callback_line(seed
     assert result.outcome == "pass", result.check_failures
     assert result.transcript[2].text == (
         "Got it, transferring you now. I couldn't reach anyone just now, so I've let the team "
-        "know and someone will call you by 9:30 AM."
+        "know and someone will do their best to call you back by 9:30 AM."
     )
 
 

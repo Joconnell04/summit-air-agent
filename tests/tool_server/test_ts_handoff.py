@@ -60,7 +60,7 @@ def test_an_angry_demand_in_office_hours_goes_straight_to_the_office(agent, numb
     assert (plan["role"], plan["phone"], plan["ring_seconds"]) == ("office", OFFICE, 20)
     # Stored before anything is dialed: the flag, and the callback kept if the transfer fails.
     assert result["data"]["handoff"]["fallback"] == (
-        "I've let our team know, and someone will call you by 9:30 AM."
+        "I've let our team know, and someone will do their best to call you back by 9:30 AM."
     )
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'person' AND priority = 'High'") == 1
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
@@ -126,13 +126,13 @@ def test_after_hours_a_demand_goes_to_the_on_call_technician(agent, clock, numbe
     assert (plan["role"], plan["phone"]) == ("on_call", ON_CALL)
     # The on-call technician's own callback time, if the transfer fails.
     assert result["data"]["handoff"]["fallback"] == (
-        "I've let our team know, and someone will call you by 10:20 PM."
+        "I've let our team know, and someone will do their best to call you back by 10:20 PM."
     )
 
 
 def test_with_no_number_set_the_caller_hears_the_callback_line(agent):
     call, result = call_with(agent, "Put me through to a manager right now.")
-    assert result["say"] == "I've let our team know, and someone will call you by 9:30 AM."
+    assert result["say"] == "I've let our team know, and someone will do their best to call you back by 9:30 AM."
     assert result["data"]["handoff"]["transfer"] is None
     assert handoff(agent, call)["status"] == "not_dialed"
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
@@ -149,7 +149,7 @@ def test_with_the_owners_transfer_switch_off_nothing_is_dialed(agent, numbers):
     finally:
         conn.close()
     call, result = call_with(agent, "Put me through to a manager right now.")
-    assert result["say"] == "I've let our team know, and someone will call you by 9:30 AM."
+    assert result["say"] == "I've let our team know, and someone will do their best to call you back by 9:30 AM."
     assert result["data"]["handoff"]["transfer"] is None
     assert handoff(agent, call)["status"] == "not_dialed"
 
@@ -167,7 +167,7 @@ def test_a_failed_transfer_gives_the_stored_callback_time(agent, numbers):
     plan = result["data"]["handoff"]["transfer"]
     after = done(agent, call, plan["id"], "failed")
     assert after["say"] == (
-        "I couldn't reach anyone just now, so I've let the team know and someone will call you "
+        "I couldn't reach anyone just now, so I've let the team know and someone will do their best to call you back "
         "by 9:30 AM."
     )
     assert handoff(agent, call)["status"] == "failed"

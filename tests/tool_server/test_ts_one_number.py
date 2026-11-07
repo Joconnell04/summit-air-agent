@@ -414,8 +414,8 @@ def test_the_assistants_name_is_one_tenant_setting():
     from app.tenant import load_agent, voice_lines
 
     raw = (TENANT_DIR / "agent.yaml").read_text()
-    assert "I'm {assistant_name}" in raw and "I'm Brian" not in raw and "Brooke" not in raw
+    assert "this is {assistant_name}" in raw and "this is Brian" not in raw and "Brooke" not in raw
     voice = voice_lines(TENANT_DIR)
-    assert "I'm Brian, the virtual assistant" in voice["greeting_unknown"]
-    assert "I'm Brian, the virtual assistant" in voice["greeting_known"]
+    assert "this is Brian, the virtual assistant" in voice["greeting_unknown"]
+    assert "this is Brian, the virtual assistant" in voice["greeting_known"]
     assert load_agent(Path(TENANT_DIR))[0]["voice"]["greeting_unknown"] == voice["greeting_unknown"]

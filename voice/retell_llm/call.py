@@ -868,6 +868,12 @@ class LlmCall:
                     # After "One sec." or the model's own "Okay, thanks.", the server's "Perfect."
                     # would stack two openers.
                     say = CONNECTOR.sub("", say, count=1)
+                    # The model already said this sentence itself before the tool answered (it
+                    # can work out "by 11:17 PM" from the time and "in 10 minutes"): Jackson's call
+                    # call_23b95cb04fd6cc9ea0cc084380e heard the callback line twice.
+                    say = " ".join(
+                        p for p in SENTENCE_END.split(say) if p.strip() and not out.repeats(p)
+                    )
                 # Interruptible, so the caller can correct a read-back; a safety refusal is not.
                 await out.say(say, fixed=envelope.get("refused") == "gate_safety")
                 if line or ends_turn(envelope):

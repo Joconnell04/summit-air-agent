@@ -19,7 +19,7 @@ from servicetitan_mock.seed import build_world
 from voice.retell_llm import llm_socket
 
 AGENT_CFG = load_agent(TENANT_DIR)[0]
-GREETING = "Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can I help?"
+GREETING = "Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. How can I help?"
 
 
 @pytest.fixture(scope="module")
@@ -190,7 +190,7 @@ def test_the_models_copy_of_the_servers_sentence_is_not_said_twice(tmp_path, wor
     flag = {"id": "f1", "name": "flag_person", "input": {
         "reason": "Billing question", "callback_day": "tomorrow", "callback_after": "12 PM",
         "callback_before": "5 PM"}}
-    echo = ("I've let our team know, and someone will call you tomorrow between 12 PM and 5 PM. "
+    echo = ("I've let our team know, and someone will do their best to call you back tomorrow between 12 PM and 5 PM. "
             "Anything else?")
     live = Live(tmp_path, world, monkeypatch, [
         (["What can I help with today?"], []), ([], [flag]), ([echo], [])])

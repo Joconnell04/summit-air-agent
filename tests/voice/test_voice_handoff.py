@@ -23,7 +23,7 @@ CALLER = "sip_caller"
 DEMAND = "Put me through to a manager right now. This is ridiculous."
 HANDOFF_LINE = "Got it, transferring you now."
 CALLBACK = (
-    "I couldn't reach anyone just now, so I've let the team know and someone will call you by "
+    "I couldn't reach anyone just now, so I've let the team know and someone will do their best to call you back by "
     "9:30 AM."
 )
 
@@ -157,7 +157,7 @@ def test_with_no_number_set_the_caller_hears_the_callback_line_and_nothing_is_se
     worker = Worker(connect("call-1"))
     assert worker.hear(DEMAND) is None
     assert worker.session.said == [
-        ("I've let our team know, and someone will call you by 9:30 AM.", False)
+        ("I've let our team know, and someone will do their best to call you back by 9:30 AM.", False)
     ]
     assert not worker.lk.sip.transfers
     assert status(agent) == "not_dialed"
@@ -184,7 +184,7 @@ def test_an_error_mid_handoff_takes_the_caller_off_hold_with_the_callback_line(
     assert worker.hear(DEMAND) == "failed"
     assert worker.holds[-1] is False
     assert worker.session.said[-1] == (
-        "I've let our team know, and someone will call you by 9:30 AM.",
+        "I've let our team know, and someone will do their best to call you back by 9:30 AM.",
         False,
     )
     assert worker.ended["reason"] == "caller_hangup"
@@ -198,7 +198,7 @@ def test_with_nothing_to_send_the_call_the_caller_hears_the_callback_line(
     worker.call.handoff = None
     assert worker.hear(DEMAND) is None
     assert worker.session.said == [
-        ("I've let our team know, and someone will call you by 9:30 AM.", False)
+        ("I've let our team know, and someone will do their best to call you back by 9:30 AM.", False)
     ]
     assert not worker.lk.sip.transfers
     assert status(agent) == "failed"

@@ -756,7 +756,7 @@ def test_a_caller_on_a_safety_call_can_ask_for_a_callback_at_their_time(agent):
         "flag_person", call, reason="Gas smell; wants a callback", callback_after="5 PM"
     )
     assert flagged["ok"], flagged
-    assert flagged["say"] == "I've let our team know, and someone will call you around 5:30 PM."
+    assert flagged["say"] == "I've let our team know, and someone will do their best to call you back around 5:30 PM."
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
 
 
@@ -1024,7 +1024,7 @@ def test_the_greetings_name_brooke():
     """Jackson's gas test call: the assistant is Brooke, and a touch warmer."""
     voice = load_agent(TENANT_DIR)[0]["voice"]
     assert voice["greeting_unknown"] == (
-        "Hi there, thanks for calling Summit Air! I'm Brian, the virtual "
+        "Hi there, thanks for calling Summit Air, this is Brian, the virtual "
         "assistant. How can I help?"
     )
-    assert "I'm Brian" in voice["greeting_known"]
+    assert "this is Brian" in voice["greeting_known"]

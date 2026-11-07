@@ -47,7 +47,7 @@ def test_a_caller_who_asks_for_a_person_in_office_hours_is_put_through(agent, nu
     assert data["transfer"]["number"] == OFFICE and data["transfer"]["role"] == "office"
     # A transfer nobody answers leaves a named callback, stored before anything is dialed.
     assert data["fallback"] == (
-        "I couldn't reach anyone just now, so I've let the team know and someone will call you "
+        "I couldn't reach anyone just now, so I've let the team know and someone will do their best to call you back "
         "by 9:30 AM."
     )
     flag = row(agent, "SELECT * FROM flags WHERE id = ?", data["flag_id"])

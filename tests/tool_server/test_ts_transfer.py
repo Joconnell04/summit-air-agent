@@ -215,7 +215,7 @@ def test_nobody_answers_and_the_caller_hears_the_callback_time(agent, numbers):
     result = report(agent, call, plan["id"], "no_answer")
     assert result["ok"]
     assert result["say"] == (
-        "I couldn't reach anyone just now, so I've let the team know and someone will call you "
+        "I couldn't reach anyone just now, so I've let the team know and someone will do their best to call you back "
         "by 9:30 AM."
     )
     # The flag and its callback are still there for a person.

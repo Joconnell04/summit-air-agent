@@ -188,7 +188,7 @@ def test_a_billing_dispute_gets_a_callback_from_the_office(agent):
     result = agent.turn(call_id, "Hi, I was charged twice for the tune-up last week.")
     spoken = result["data"]["spoken"]
     assert spoken["kind"] == "billing"
-    assert "office" in spoken["text"] and "call you by" in spoken["text"]
+    assert "office" in spoken["text"] and "call you back by" in spoken["text"]
     conn = agent.db()
     try:
         callback = conn.execute("SELECT * FROM callbacks WHERE call_id = ?", (call_id,)).fetchone()

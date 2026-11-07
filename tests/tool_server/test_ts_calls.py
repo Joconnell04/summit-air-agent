@@ -214,7 +214,7 @@ def test_a_flag_returns_its_sentence_only_once_stored_and_names_a_time(agent):
     )
     assert flagged["ok"]
     # A time the caller named is said back as theirs (issue #149).
-    assert flagged["say"] == "I've let our team know, and someone will call you around 4:30 PM."
+    assert flagged["say"] == "I've let our team know, and someone will do their best to call you back around 4:30 PM."
     assert count(agent, "SELECT COUNT(*) FROM flags WHERE kind = 'person'") == 1
     assert count(agent, "SELECT COUNT(*) FROM callbacks WHERE status = 'pending'") == 1
     urgent = agent.tool(
@@ -226,7 +226,7 @@ def test_a_flag_returns_its_sentence_only_once_stored_and_names_a_time(agent):
     )
     # Eval round 3: "top priority", and no on-call team in office hours.
     assert urgent["say"] == (
-        "I've let our team know this call is top priority, and someone will call you by 9:20 AM."
+        "I've let our team know this call is top priority, and someone will do their best to call you back by 9:20 AM."
     )
 
 
@@ -234,11 +234,11 @@ def test_a_flag_returns_its_sentence_only_once_stored_and_names_a_time(agent):
     "window,spoken",
     [
         # Eval round 3: "after 5" is promised as a time inside it.
-        ({"callback_after": "5 PM"}, "someone will call you around 5:30 PM."),
-        ({"callback_before": "3 PM"}, "someone will call you before 3 PM."),
+        ({"callback_after": "5 PM"}, "someone will do their best to call you back around 5:30 PM."),
+        ({"callback_before": "3 PM"}, "someone will do their best to call you back before 3 PM."),
         (
             {"callback_after": "1 PM", "callback_before": "3:30 PM"},
-            "someone will call you between 1 PM and 3:30 PM.",
+            "someone will do their best to call you back between 1 PM and 3:30 PM.",
         ),
     ],
 )
@@ -248,7 +248,7 @@ def test_a_window_the_caller_asked_for_is_said_by_the_server_as_asked(agent, win
     flagged = agent.tool("flag_person", call, reason="Unhappy about a bill", **window)
     assert flagged["ok"], flagged
     assert flagged["say"] == f"I've let our team know, and {spoken}"
-    assert flagged["data"]["callback_spoken"] == spoken.removeprefix("someone will call you ")[:-1]
+    assert flagged["data"]["callback_spoken"] == spoken.removeprefix("someone will do their best to call you back ")[:-1]
 
 
 def test_an_after_window_is_due_at_the_time_promised_and_dialed_from_its_start(agent):
@@ -298,7 +298,7 @@ def test_a_callback_tomorrow_not_before_noon_is_due_tomorrow_and_keeps_the_windo
     lead = agent.tool("record_lead", call, kind="membership", details=details)
     assert lead["ok"], lead
     assert lead["say"] == (
-        "Someone from our team will call you tomorrow around 12:30 PM to tell you more."
+        "Someone from our team will do their best to call you tomorrow around 12:30 PM to tell you more."
     )
     conn = agent.db()
     try:
@@ -344,7 +344,7 @@ def test_live_call_1_friday_at_two_is_booked_for_friday_around_two(agent):
         "flag_person", call, reason="Call me back", callback_time="2 PM", callback_day="friday"
     )
     assert flagged["ok"], flagged
-    assert flagged["say"] == "I've let our team know, and someone will call you Friday around 2 PM."
+    assert flagged["say"] == "I've let our team know, and someone will do their best to call you back Friday around 2 PM."
     conn = agent.db()
     try:
         due = conn.execute("SELECT due_at FROM callbacks").fetchone()["due_at"]
@@ -359,7 +359,7 @@ def test_a_weekday_window_names_the_day(agent):
         "flag_person", call, reason="Call me back", callback_after="1 PM", callback_before="3 PM",
         callback_day="saturday",
     )
-    assert flagged["say"].endswith("call you Saturday between 1 PM and 3 PM.")
+    assert flagged["say"].endswith("call you back Saturday between 1 PM and 3 PM.")
 
 
 def test_a_named_time_outside_calling_hours_gets_the_nearest_one(agent):
@@ -383,7 +383,7 @@ def test_a_lead_says_the_window_the_caller_asked_for(agent):
     call = agent.start(UNKNOWN)["data"]["call_id"]
     details = {"contact_name": "Ana Ruiz", "need": "Wants to join the plan", "callback_after": "4 PM"}
     lead = agent.tool("record_lead", call, kind="membership", details=details)
-    assert lead["say"] == "Someone from our team will call you around 4:30 PM to tell you more."
+    assert lead["say"] == "Someone from our team will do their best to call you around 4:30 PM to tell you more."
 
 
 def test_an_after_window_near_closing_is_promised_no_later_than_closing(agent):
@@ -534,7 +534,7 @@ def test_a_membership_lead_needs_a_named_callback_time(agent, mock):
         "record_lead", call, kind="membership", details={**details, "callback_time": "2 PM"}
     )
     assert lead["ok"]
-    assert lead["say"] == "Someone from our team will call you around 2 PM to tell you more."
+    assert lead["say"] == "Someone from our team will do their best to call you around 2 PM to tell you more."
     assert count(agent, "SELECT COUNT(*) FROM callbacks") == 1
     row = (
         sqlite3.connect(mock[0].state.db_path)
@@ -557,7 +557,7 @@ def test_a_booking_while_the_fsm_is_down_is_queued_said_honestly_and_retried_onc
     queued = book(agent, call, slot, key="b1")
     assert queued["refused"] == "fsm_unavailable"
     assert queued["say"] == (
-        "I can't book that right now, but I've written it all down and someone will call you by "
+        "I can't book that right now, but I've written it all down and someone will do their best to call you back by "
         "10 AM to confirm."
     )
     assert count(agent, "SELECT COUNT(*) FROM bookings WHERE status = 'queued'") == 1
@@ -751,7 +751,7 @@ def test_live_call_2_tomorrow_at_two_is_said_as_around_two_not_a_window(agent):
         callback_day="tomorrow",
     )
     assert flagged["ok"], flagged
-    assert flagged["say"].endswith("call you tomorrow around 2 PM.")
+    assert flagged["say"].endswith("call you back tomorrow around 2 PM.")
 
 
 def test_a_window_the_caller_asked_for_stays_a_window(agent):
@@ -761,7 +761,7 @@ def test_a_window_the_caller_asked_for_stays_a_window(agent):
         "flag_person", call, reason="Call me back", callback_after="1 PM", callback_before="3 PM",
         callback_day="tomorrow",
     )
-    assert flagged["say"].endswith("call you tomorrow between 1 PM and 3 PM.")
+    assert flagged["say"].endswith("call you back tomorrow between 1 PM and 3 PM.")
 
 
 def test_an_iso_time_with_no_offset_is_local_and_gets_the_nearest_time(agent):

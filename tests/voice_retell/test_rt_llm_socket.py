@@ -340,7 +340,7 @@ def test_the_rig_agent_runs_on_the_socket_with_no_webhook():
 # ---- the server-led arm (issue #176): every sentence a tool result carries is spoken as written
 
 READ_BACK = "So that's forty-five Forest Avenue, ending in zero one one eight. That's all correct, right?"
-FLAGGED = "I've let our team know, and someone will call you tomorrow before 12 PM."
+FLAGGED = "I've let our team know, and someone will do their best to call you back tomorrow before 12 PM."
 
 
 @pytest.fixture
@@ -817,7 +817,7 @@ def test_server_led_no_lone_got_it_after_a_hold_phrase(monkeypatch):
 
 CONNECTING = "Got it, transferring you now."
 FALLBACK = (
-    "I couldn't reach anyone just now, so I've let the team know and someone will call you by "
+    "I couldn't reach anyone just now, so I've let the team know and someone will do their best to call you back by "
     "9:30 AM."
 )
 ALLOWED = envelope(say=CONNECTING, data={
@@ -863,7 +863,7 @@ def test_server_led_a_transfer_says_its_sentence_once(server_led, phone):
     assert said(events) == (CONNECTING if phone else FALLBACK)
 
 
-CALLBACK = "I've let our team know, and someone will call you by 10:20 PM."
+CALLBACK = "I've let our team know, and someone will do their best to call you back by 10:20 PM."
 FLAG = {"id": "f1", "name": "flag_person", "input": {"reason": "Wants a person"}}
 
 
@@ -955,3 +955,18 @@ def test_the_prompt_thanks_the_caller_after_the_name_and_asks_to_spell_a_garbled
     text = (Path(__file__).resolve().parents[2] / "retell" / "socket" / "prompt.md").read_text()
     assert 'say "Thanks." before your next question; never move on in silence' in text
     assert "Could you spell your last name for me?" in text
+
+
+def test_server_led_a_server_sentence_the_model_already_said_is_not_said_again(server_led):
+    """Jackson's call call_23b95cb04fd6cc9ea0cc084380e: the model worked out "by 11:17 PM" itself
+    and said the callback line before the tool answered, then the server's identical line came
+    after it, so the caller heard it twice."""
+    server, make = server_led
+    flag = {"id": "t1", "name": "flag_person", "input": {"reason": "callback"}}
+    server.tools["flag_person"] = envelope(say=FLAGGED, data={"flag_id": 3})
+    server.tools["flag_person"]["next"] = "If the sentence didn't ask already, ask 'Anything else?'."
+    client, _brain = make([([FLAGGED + " "], [flag]), (["Anything else? "], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        events = ask(ws, 1, ["Hi.", "Call me back tomorrow morning."])
+    assert said(events).count("someone will do their best to call you back") == 1, said(events)

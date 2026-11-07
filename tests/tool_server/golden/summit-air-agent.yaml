@@ -244,10 +244,10 @@ lines:
   address_which_direction: Is that {east} or {west}?
   after_confirmation: Anything else?
   anything_else_first: Is there anything else I can help with?
-  approval_callback: Before the technician heads out, someone from our team will call you {when} to confirm
-    who can approve the work.
-  approval_callback_late: Someone from our team will call you {when} to confirm who can approve the work,
-    and the technician won't start until that's settled.
+  approval_callback: Before the technician heads out, someone from our team will do their best to call
+    you {when} to confirm who can approve the work.
+  approval_callback_late: Someone from our team will do their best to call you {when} to confirm who can
+    approve the work, and the technician won't start until that's settled.
   arrival_no_fit: Our arrival windows are {length}, and the technician can come any time in the window,
     so I can't promise an exact time.
   arrival_outside_hours: Our visits run from {hours}.
@@ -267,7 +267,7 @@ lines:
   ask_system_type_cooling: Is it central air, a mini-split, or a window or wall unit?
   ask_system_type_heating: Is it a boiler, a furnace, or a heat pump?
   billing_callback: I'm sorry about that. Billing goes through our office, so I've asked them to look
-    into the charge, and someone from the office will call you {when}.
+    into the charge, and someone from the office will do their best to call you back {when}.
   booking_name: Thanks. And what name should I put the visit under?
   callback_after: around {time}
   callback_asap: as soon as they can
@@ -301,14 +301,15 @@ lines:
   do_not_call_with_callback: Understood, we won't call you. Give us a call any time you need us.
   earlier_slot_offer: Hi, this is Summit Air calling about your appointment. We've had an opening {day}
     at {window}, would you like it?
-  flag_stored: I've let our team know, and someone will call you {when}.
+  flag_stored: I've let our team know, and someone will do their best to call you back {when}.
   flag_stored_no_callback: I've let our team know.
-  flag_stored_on_call: I've let our on-call team know this call is top priority, and someone will call
-    you {when}.
+  flag_stored_on_call: I've let our on-call team know this call is top priority, and someone will do their
+    best to call you back {when}.
   flag_stored_on_file: I've let our team know, and someone will call the number we have on file {when}.
-  flag_stored_urgent: I've let our team know this call is top priority, and someone will call you {when}.
-  fsm_unavailable: I can't book that right now, but I've written it all down and someone will call you
-    by {time} to confirm.
+  flag_stored_urgent: I've let our team know this call is top priority, and someone will do their best
+    to call you back {when}.
+  fsm_unavailable: I can't book that right now, but I've written it all down and someone will do their
+    best to call you back by {time} to confirm.
   fsm_unavailable_no_callback: I can't get to that right now, but I've written it all down for the team.
   fully_booked: Unfortunately we're fully booked for the next two weeks. I can have someone call you back
     as soon as an opening comes up. When's a good time to reach you?
@@ -327,7 +328,7 @@ lines:
     is it under?
   identity_mismatch: Unfortunately I'm not able to make that change from this number. I can have someone
     from our office call the number we have on file for it. Would that help?
-  lead_stored: Someone from our team will call you {when} to tell you more.
+  lead_stored: Someone from our team will do their best to call you {when} to tell you more.
   limit: I've already got that taken care of on this call, so let me have someone from the team follow
     up.
   location_superseded: That visit is still set for your old address, so let me have someone from our office
@@ -375,8 +376,8 @@ lines:
     call you back. When's a good time?
   transfer_connecting: Got it, transferring you now.
   transfer_handoff: Got it, transferring you now.
-  transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will call
-    you {when}.
+  transfer_no_answer: I couldn't reach anyone just now, so I've let the team know and someone will do
+    their best to call you back {when}.
   transfer_prompt: Summit Air has a caller for the {role}. Press 1 to take the call.
   transfer_summary: '{priority}Caller at {phone}: {reason}. Putting you through now.'
   transfer_unavailable: I can't put you through right now, but I can have someone call you back. When's
@@ -1787,12 +1788,12 @@ voice:
     take your call right now. Please leave your name, number and what's going on after the tone, and we'll
     call you back.
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.
-  greeting_known: Hi {first_name}, thanks for calling Summit Air! I'm Brian, the virtual assistant. How
+  greeting_known: Hi {first_name}, thanks for calling Summit Air, this is Brian, the virtual assistant.
+    How can I help?
+  greeting_member: Hi {first_name}, thanks for calling Summit Air, this is Brian, the virtual assistant,
+    and thanks for being a member. How can I help?
+  greeting_unknown: Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. How
     can I help?
-  greeting_member: Hi {first_name}, thanks for calling Summit Air, and thanks for being a member! I'm
-    Brian, the virtual assistant. How can I help?
-  greeting_unknown: Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can
-    I help?
   hold_phrases:
   - One sec.
   - Okay, one moment.

@@ -186,7 +186,7 @@ def test_nobody_answers_and_the_agent_comes_back_with_the_callback_time(agent, c
     assert worker.outcome == "no_answer"
     assert worker.holds == [True, False]
     assert worker.voice.said[-1] == (
-        "I couldn't reach anyone just now, so I've let the team know and someone will call you "
+        "I couldn't reach anyone just now, so I've let the team know and someone will do their best to call you back "
         "by 9:30 AM."
     )
     assert not worker.handed_over and not worker.lk.room.moved
@@ -206,7 +206,7 @@ def test_a_voicemail_that_never_presses_1_is_not_put_through(agent, connect, num
     ]
     # The person's leg is hung up, and the caller hears the callback time.
     assert worker.lk.room.deleted == ["call-1-transfer"]
-    assert worker.voice.said[-1].endswith("someone will call you by 9:30 AM.")
+    assert worker.voice.said[-1].endswith("someone will do their best to call you back by 9:30 AM.")
     assert status(agent) == "not_accepted"
 
 
@@ -230,7 +230,7 @@ def test_with_no_number_set_the_model_reads_the_flag_as_before(agent, connect):
             {"reason": "Caller wants to talk to someone", "callback_time": "11 AM"}, Turn()
         )
     )
-    assert json.loads(reply)["say"] == "I've let our team know, and someone will call you around 11 AM."
+    assert json.loads(reply)["say"] == "I've let our team know, and someone will do their best to call you back around 11 AM."
     assert worker.transfer.task is None and not worker.lk.sip.requests
 
 
@@ -256,7 +256,7 @@ def test_an_error_mid_transfer_takes_the_caller_off_hold_with_the_callback_time(
     assert worker.outcome == "failed"
     # Back off hold, and the flag's own sentence: the callback stored before anyone was dialed.
     assert worker.holds[-1] is False
-    assert worker.voice.said[-1] == "I've let our team know, and someone will call you by 9:30 AM."
+    assert worker.voice.said[-1] == "I've let our team know, and someone will do their best to call you back by 9:30 AM."
 
 
 def test_an_error_before_the_report_tells_the_server_it_failed(agent, connect, numbers):

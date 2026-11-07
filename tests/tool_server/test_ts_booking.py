@@ -447,7 +447,7 @@ def test_after_hours_a_cold_house_alerts_the_on_call_technician_before_booking(a
     booked = book(agent, call, TOMORROW_MORNING, job_type="no_heat", inside_temp_f=48)
     assert booked["ok"], booked
     assert booked["say"].startswith(
-        "I've let our on-call team know this call is top priority, and someone will call you"
+        "I've let our on-call team know this call is top priority, and someone will do their best to call you back"
     )
     assert "Okay, I've booked it" in booked["say"]
     assert booked["say"].count("top priority") == 1
