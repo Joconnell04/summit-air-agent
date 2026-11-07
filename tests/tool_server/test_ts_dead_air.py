@@ -147,3 +147,17 @@ def test_a_hold_with_the_answer_in_the_same_breath_is_no_hold(agent):
     agent.say(call_id, "Is it completely out, or just not keeping up?")
     answer = agent.turn(call_id, "Yes, it's completely out. Nothing at all since last night.")
     assert (answer["data"].get("hold") or {}).get("state") != "aside"
+
+
+@pytest.mark.parametrize("line", [
+    "Hold on. Let me check with my wife.",
+    "One sec. I'll go ask my husband.",
+    "Hang on. Let me grab my phone, it's on floor 2.",
+])
+def test_a_hold_split_into_sentences_is_still_a_hold(agent, line):
+    """Review of tick 1, 6 November: a second sentence of four words or more counted as an answer,
+    so "Hold on. Let me check with my wife." was no hold and Brian talked to an empty phone."""
+    call_id = agent.start(call_id="call-1")["data"]["call_id"]
+    held = agent.turn(call_id, line)
+    assert (held["data"].get("hold") or {}).get("state") == "holding" or "caller_holding" in held[
+        "data"]["hints"], held["data"]

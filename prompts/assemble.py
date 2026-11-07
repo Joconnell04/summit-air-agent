@@ -442,6 +442,9 @@ NAME_ECHO = re.compile(
 # "ZIP 11201" read as a word and a number (Jackson: "just say the zip code is"): said as "the ZIP
 # code is 1 1 2 0 1", digit by digit.
 ZIP_WORD = re.compile(r"\bZIP(?P<rest>\s+code(?:\s+is)?|:)?\s+(?P<digits>\d{5})\b", re.IGNORECASE)
+# The last four of a phone number, said digit by digit: "ending in 6730" was read as "six thousand
+# seven hundred and thirty" (leak replay t5, 6 November).
+ENDING_IN = re.compile(r"\b(?P<lead>ending (?:in|with))\s+(?P<digits>\d{4})\b", re.IGNORECASE)
 # "No problem" with nothing to answer: only after a thank-you or an apology (Jackson's call on the
 # Retell number: "No problem" to "The what?").
 NO_PROBLEM = re.compile(r"^\s*(?:no problem|no worries)(?:\s+at all)?\s*(?:[.!,]\s*|$)", re.IGNORECASE)
@@ -875,7 +878,8 @@ class SpokenReply:
                 return f"and the ZIP code is {digits}"
             return f"ZIP code {digits}"
 
-        return ZIP_WORD.sub(spell, sentence)
+        sentence = ZIP_WORD.sub(spell, sentence)
+        return ENDING_IN.sub(lambda m: f"{m['lead']} {' '.join(m['digits'])}", sentence)
 
     def _filtered(self, sentence: str) -> str:
         after_restatement, self._dropped_restatement = self._dropped_restatement, False

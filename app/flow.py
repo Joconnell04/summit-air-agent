@@ -342,7 +342,11 @@ def _after_address(ctx, needs_unit: bool) -> str:
         )
     said = words(records.caller_text(ctx.conn, ctx.call["id"])) if getattr(ctx, "call", None) else ""
 
+    named = _symptoms_named(said)
+
     def line(key: str) -> str:
+        if key == "ask_how_bad_symptom":
+            return ctx.tenant.line(key, symptom=named[0] if named else "the problem")
         text = ctx.tenant.line(key)
         return _catch_all(text, said) if key.startswith("ask_catch_all") else text
 
@@ -350,16 +354,18 @@ def _after_address(ctx, needs_unit: bool) -> str:
         "Ask the next of these you don't have yet, one a turn, built from what the caller already "
         "said and never asking for anything they told you: "
         f"{unit}only on a no-heat or no-cooling call (never a tune-up, maintenance visit or quote), "
-        f"how bad it is: when they named a symptom, in their words ('{line('ask_how_bad_symptom')}'), "
-        "otherwise 'Is it completely out, or just not keeping up?', and then, still only on a "
+        + (f"how bad it is, word for word: '{line('ask_how_bad_symptom')}', " if named else
+           "how bad it is: 'Is it completely out, or just not keeping up?', ")
+        + "and then, still only on a "
         "no-heat or no-cooling call, 'Since when?'; if they haven't said "
         f"what system it is, for heating '{line('ask_system_type_heating')}', for cooling "
         f"'{line('ask_system_type_cooling')}'; when heating, cooling or airflow isn't working (not "
         "a maintenance visit or a quote), one catch-all in its own turn, never with an example "
         f"they already gave: heating '{line('ask_catch_all_heating')}', cooling "
         f"'{line('ask_catch_all_cooling')}', vents or airflow '{line('ask_catch_all_airflow')}' "
-        "(word for word: never add an example), with the answer in the job's issue; then 'What's the best phone number to reach you?'. Once you have the "
-        "phone number, call read_back with the job type."
+        "(word for word: never add an example), with the answer in the job's issue; then "
+        "'What's the best phone number to reach you?'. Once you have the phone number, call "
+        "read_back with the job type."
     )
 
 
@@ -440,22 +446,29 @@ def _record(ctx, tool: str, result: Result) -> None:
 
 
 # What the caller already described, named back in the catch-all ("Besides the leak and the
-# banging, anything else ..."), keyed by the first four letters of the word they used. Leak
+# banging, anything else ..."), by the start of the word they used. Leak
 # replay t5, 6 November: told to start "Besides the leak", the model added "like the banging"
 # back after the server had taken it out of the examples.
-SYMPTOMS = {"leak": "the leak", "drip": "the leak", "bang": "the banging", "knoc": "the banging",
-            "clan": "the banging", "grin": "the grinding", "sque": "the squealing",
-            "ratt": "the rattling", "hiss": "the hissing", "scre": "the screeching"}
+SYMPTOMS = (("leak", "the leak"), ("bang", "the banging"), ("knock", "the banging"),
+            ("clank", "the banging"), ("clang", "the banging"), ("grind", "the grinding"),
+            ("squeal", "the squealing"), ("rattl", "the rattling"), ("hiss", "the hissing"),
+            ("screech", "the screeching"))
+# Words within three before a symptom that deny it: "it doesn't leak", "no banging at all".
+DENIES = {"no", "not", "isnt", "never", "dont", "doesnt", "didnt", "without", "wasnt", "arent"}
+
+
+def _symptoms_named(said: str) -> list[str]:
+    heard = said.split()
+    return list(dict.fromkeys(
+        name for i, w in enumerate(heard) for stem, name in SYMPTOMS
+        if w.startswith(stem) and not DENIES & set(heard[max(0, i - 3):i])
+    ))
 
 
 def _catch_all(question: str, said: str) -> str:
     """The catch-all as said: without an example the caller gave, and after what they described."""
     question = _without_said_examples(question, said)
-    heard = said.split()
-    named = list(dict.fromkeys(
-        SYMPTOMS[w[:4]] for i, w in enumerate(heard)
-        if w[:4] in SYMPTOMS and not (i and heard[i - 1] in ("no", "not", "isnt", "never"))
-    ))
+    named = _symptoms_named(said)
     if not named or not question.startswith("Anything else"):
         return question
     return f"Besides {' and '.join(named)}, anything else{question[len('Anything else'):]}"

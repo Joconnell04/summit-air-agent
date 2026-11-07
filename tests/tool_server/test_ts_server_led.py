@@ -446,3 +446,26 @@ def test_the_catch_all_names_what_the_caller_described_and_adds_no_example():
         "shutting off on its own?"
     )
     assert flow._catch_all(q, " my heat is out and its not leaking ") == q
+    # Review of tick 5: loose stems and a one-word negation named what the caller never said.
+    assert flow._catch_all(q, " the thermostat screen is blank ") == q
+    assert not flow._catch_all(q, " i dont hear any banging but the drip pan is full ").startswith(
+        "Besides")
+
+
+def test_how_bad_after_a_symptom_is_one_sentence_from_the_server(led):
+    """Leak replays t1 and t5, 6 November: the line said "Is it still cooling" on a heating call,
+    so the model asked "Is the leak still happening?" after "it's actually leaking right now"."""
+    from app.envelope import Result
+
+    call = led.start()["data"]["call_id"]
+    led.turn(call, "My boiler is making a banging noise. It's actually leaking right now.")
+    conn = led.db()
+    try:
+        ctx = type("Ctx", (), {"tenant": Tenant.load(TENANT_DIR), "conn": conn,
+                               "call": {"id": call}})()
+        text = flow._next(ctx, "find_address", None, Result(ok=True, data={"needs_unit": False}))
+    finally:
+        conn.close()
+    assert "word for word: 'You mentioned the banging. Is the system still working, or has it " \
+        "stopped?'" in text
+    assert "Is it still cooling" not in text

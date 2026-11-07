@@ -110,3 +110,4 @@ def test_after_a_dispatch_getting_in_is_asked_when_it_wasnt_said(agent):
     sent = read_back(agent, call)
     assert sent["data"]["dispatched"], sent
     assert agent.start(UNKNOWN)["data"]["tenant"]["arrival_question"] in sent["data"]["next"]
+    assert "also when the caller asks what the technician needs" in sent["data"]["next"]

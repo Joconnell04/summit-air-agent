@@ -1937,10 +1937,22 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
     )
 
 
+# A caller saying the home is a house, on this call. Narrower than text.NO_UNIT: "the whole house
+# is freezing" is said from apartments too (review of tick 2, 6 November).
+SAID_HOUSE = re.compile(
+    r"\b(it'?s|its|it is) (a|just a|just the|a stand ?alone|a single[- ]family) (house|home)\b"
+    r"|\bsingle[- ]family\b|\bstand ?alone house\b|\bno (unit|apartment|apt)\b",
+    re.IGNORECASE,
+)
+
+
 def _said_no_unit(ctx: Ctx) -> bool:
     if getattr(ctx, "call", None) is None:
         return False
-    return unit_settled([records.caller_text(ctx.conn, ctx.call["id"])]) == "none"
+    rows = ctx.conn.execute(
+        "SELECT text FROM turns WHERE call_id = ? AND speaker = 'caller'", (ctx.call["id"],)
+    )
+    return any(SAID_HOUSE.search(r["text"]) for r in rows)
 
 
 WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
@@ -3167,10 +3179,13 @@ def _after_dispatch(ctx: Ctx) -> str:
     # November) heard "Someone will be home, no gate code" with the address, then was asked again.
     missing = [k for k in flow.visit_questions_missing(ctx) if k != "ask_approval"]
     if missing:
+        # A caller who asks what the technician needs ("is there a gate code I need to give?")
+        # is asking this question: Brian dodged it twice (leak replays t3 and t5, 6 November).
         ask = (
-            f'Then ask only "{flow.question_line(ctx, missing)}" A plain yes means someone is home '
-            "and there is no code; if no one will be home, ask how the technician can get in. Save "
-            "what they say with add_note (attach_to job), then say "
+            f'Then ask only "{flow.question_line(ctx, missing)}", also when the caller asks what '
+            "the technician needs to get in. A plain yes means someone is home and there is no "
+            "code; if no one will be home, ask how the technician can get in. Save what they say "
+            "with add_note (attach_to job), then say "
         )
     else:
         ask = (

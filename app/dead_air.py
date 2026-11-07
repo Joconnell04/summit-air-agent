@@ -50,6 +50,9 @@ OTHERS = {"honey", "hon", "babe", "baby", "sweetie", "sweetheart", "dear", "kids
 QUESTION_WORDS = {"what", "whats", "which", "when", "where", "who", "how", "why", "can", "could",
                   "do", "did", "does", "is", "are", "was", "will", "would", "should"}
 NUMBER = re.compile(r"\d")
+# How a caller says what they are going off to do, not an answer.
+STEPPING_AWAY = (" let me ", " lemme ", " ill ", " i will ", " i need to ", " i have to ",
+                 " i gotta ", " give me ", " im going to ", " im gonna ")
 SENTENCES = re.compile(r"(?<=[.!?])\s+|\n")
 
 
@@ -99,7 +102,9 @@ def _answers_too(text: str) -> bool:
     for sentence in SENTENCES.split(text):
         if not sentence.strip() or _starts_with_hold(sentence):
             continue
-        if NUMBER.search(sentence) or len(words(sentence).split()) >= 4:
+        # A number is the answer (an address, a phone, a model number). Length alone isn't:
+        # "Hold on. Let me check with my wife." is still a hold (review of tick 1, 6 November).
+        if NUMBER.search(sentence) and not words(sentence).startswith(STEPPING_AWAY):
             return True
     return False
 

@@ -790,6 +790,14 @@ def test_a_caller_who_said_its_a_house_isnt_flagged_for_a_unit(located, answers)
     assert found["ok"] and found["data"]["needs_unit"] is False
 
 
+def test_the_whole_house_being_cold_still_asks_for_a_unit(located, answers):
+    """Review of tick 2, 6 November: "whole house" is said from apartments too."""
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "There's no heat in the whole house. It's 248 Duffield St, Brooklyn.")
+    found = located.tool("find_address", call, street="248 Duffield St")
+    assert found["ok"] and found["data"]["needs_unit"] is True
+
+
 def test_the_units_come_from_the_lot_in_the_city_directory():
     features = [{"properties": {"housenumber": "199", "street": "EAST 4 STREET",
                                 "postalcode": "10009", "borough": "Manhattan",
