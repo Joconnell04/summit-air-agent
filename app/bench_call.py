@@ -31,7 +31,7 @@ ENDED_BY = {
 }
 
 # The stage timings the voice layers store on an agent line (voice/retell_llm/call.py, the socket;
-# voice/archive/livekit, the earlier LiveKit worker), in the order they happen, with a short label.
+# voice/livekit, the earlier LiveKit worker), in the order they happen, with a short label.
 STAGES = (
     ("server_ms", "Server"),
     ("llm_first_token_ms", "Model"),
