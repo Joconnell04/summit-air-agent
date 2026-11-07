@@ -60,6 +60,11 @@ SAFETY_HEARD = {
 SIDE_MODEL_RULE = "side_model"
 QUOTE = re.compile(r'caller said "(.*)"')
 LIFECYCLE = {"calls.start", "calls.end", "calls.transfer", "calls.recording", "turn"}
+# The tools that write a record the tool call page can show (bookings, dispatches, flags,
+# callbacks, leads, notes), and with them a job in ServiceTitan.
+WRITES = {"book_appointment", "read_back", "find_slots", "reschedule_appointment",
+          "cancel_appointment", "record_move", "flag_person", "request_transfer", "record_lead",
+          "add_note", "mark_do_not_call"}
 # Each tool as the Why tab says it: what the agent asked the server to do.
 TOOL_WORDS = {
     "find_customer": "Look up the caller",
@@ -663,15 +668,20 @@ def heard(trace: dict, retell: dict | None) -> list[dict]:
     agent, when an agent line was split by the caller's words, and when the two texts differ."""
     start = parse_iso(trace["call"]["started_at"])
     server_runs: list[dict] = []
+    before: list[dict] = []  # tool calls made before anyone spoke (the call's start)
     for e in trace["events"]:
         if e["type"] != "turn":
+            if e["tool"] not in LIFECYCLE:
+                (server_runs[-1]["tools"] if server_runs else before).append(_tool_row(start, e))
             continue
         role = e["speaker"]
         if server_runs and server_runs[-1]["role"] == role:
             server_runs[-1]["text"] += f" {e['text']}"
             continue
         server_runs.append({"role": role, "text": e["text"], "clock": clock(start, e["at"]),
-                            "safety": e.get("safety_action") or ""})
+                            "safety": e.get("safety_action") or "", "tools": []})
+    if server_runs and before:
+        server_runs[0]["tools"] = before + server_runs[0]["tools"]
     retell_runs = _runs((retell or {}).get("transcript_object") or []) if retell else []
     rows = []
     for i in range(max(len(server_runs), len(retell_runs))):
@@ -684,9 +694,104 @@ def heard(trace: dict, retell: dict | None) -> list[dict]:
         rows.append({"role": role, "server": s["text"] if s else "", "clock": s["clock"] if s else "",
                      "retell": r["text"] if r else "", "retell_at": _mmss(r["at"]) if r else "",
                      "over": bool(r and r["over"]), "tail": bool(r and r["tail"]),
-                     "differs": differs, "safety": s["safety"] if s else ""})
+                     "differs": differs, "safety": s["safety"] if s else "",
+                     "tools": s["tools"] if s else []})
     return rows
 
+
+def _tool_row(start: datetime, e: dict) -> dict:
+    """A tool call as the transcript lists it, under the line it followed."""
+    return {"id": e.get("id"), "tool": e["tool"], "label": _tool(e["tool"]), "ok": e["ok"],
+            "refused": e["refused"] or "", "gate": e["gate"] or "", "say": e["say"] or "",
+            "error": e["error"] or "", "ms": e["ms"], "clock": clock(start, e["at"]),
+            "args": json.dumps(e["args"], indent=2, ensure_ascii=False),
+            "writes": e["tool"] in WRITES}
+
+
+def tool_records(conn: sqlite3.Connection, call_id: str, event: dict, result: dict | None,
+                 fsm, tenant) -> dict:
+    """What one tool call wrote: the tool server's rows it made, found by the ids its result
+    returned (a booking's ServiceTitan job id, flag_id, callback_id, lead_id) or, when the log
+    no longer holds the result, by being made on this call at the request's own time; and the
+    ServiceTitan job behind each booking, read live so the page proves the write landed."""
+    data = (result or {}).get("data") or {}
+    at = event["at"]
+
+    def rows(sql: str, params=()) -> list[dict]:
+        return [dict(r) for r in conn.execute(sql, params)]
+
+    job_id = data.get("booking_id") if isinstance(data.get("booking_id"), int) else None
+    if job_id is not None:
+        bookings = rows("SELECT * FROM bookings WHERE call_id = ? AND fsm_job_id = ? ORDER BY id",
+                        (call_id, job_id))
+    else:
+        bookings = rows("SELECT * FROM bookings WHERE call_id = ? AND created_at = ? ORDER BY id",
+                        (call_id, at))
+    if event["tool"] not in ("book_appointment", "read_back", "find_slots", "reschedule_appointment",
+                             "cancel_appointment", "record_move"):
+        bookings = []
+    for b in bookings:
+        b["request"] = json.loads(b.pop("request_json") or "{}")
+        b["reasons"] = b["request"].get("priority_reasons") or []
+    ids = [b["id"] for b in bookings]
+    dispatches = rows(
+        f"SELECT * FROM dispatches WHERE booking_id IN ({','.join('?' * len(ids))}) ORDER BY id",
+        ids) if ids else []
+
+    def by_id(table: str, key: str) -> list[dict]:
+        value = data.get(key)
+        if isinstance(value, int):
+            return rows(f"SELECT * FROM {table} WHERE call_id = ? AND id = ?", (call_id, value))
+        return rows(f"SELECT * FROM {table} WHERE call_id = ? AND created_at = ?", (call_id, at))
+
+    flags = by_id("flags", "flag_id") if event["tool"] in ("flag_person", "request_transfer") else []
+    callbacks = by_id("callbacks", "callback_id") if event["tool"] in (
+        "flag_person", "request_transfer", "record_lead") else []
+    leads = by_id("leads", "lead_id") if event["tool"] == "record_lead" else []
+    for lead in leads:
+        lead["request"] = json.loads(lead.pop("request_json") or "{}")
+    jobs = [servicetitan_job(fsm, tenant, b["fsm_job_id"]) for b in bookings if b["fsm_job_id"]]
+    return {"bookings": bookings, "dispatches": dispatches, "flags": flags,
+            "callbacks": callbacks, "leads": leads, "jobs": jobs}
+
+
+def _tag_name(tenant, tag_id: int) -> str:
+    """A job tag by the label the company gave it (agent.yaml fsm.label_tag_ids), else its id."""
+    names = {v: k for k, v in (tenant.fsm.get("label_tag_ids") or {}).items()}
+    return names.get(tag_id, f"tag {tag_id}")
+
+
+def servicetitan_job(fsm, tenant, job_id: int) -> dict:
+    """A job as ServiceTitan holds it now, with its appointments, customer and location. Reads
+    only; a read that fails says why instead."""
+    try:
+        job = fsm.job(job_id)
+        appointments = fsm.appointments(job_id)
+        customer = fsm.customer(job["customerId"])
+        location = fsm.location(job["locationId"])
+    except (FsmUnavailable, FsmRejected) as exc:
+        return {"id": job_id, "error": str(exc) or exc.__class__.__name__}
+    address = location.get("address") or {}
+    return {
+        "id": job_id,
+        "number": job.get("jobNumber"),
+        "status": job.get("jobStatus"),
+        "type": tenant.job_type_codes.get(job.get("jobTypeId"), job.get("jobTypeId")),
+        "priority": job.get("priority"),
+        "summary": job.get("summary") or "",
+        "tags": [_tag_name(tenant, t) for t in job.get("tagTypeIds") or []],
+        "customer": f"{customer.get('name', '')}, customer {customer.get('id')}",
+        "location": ", ".join(str(p) for p in (address.get("street"), address.get("unit"),
+                                               address.get("zip")) if p),
+        "appointments": [
+            {"id": a["id"], "status": a.get("status"),
+             "window": f"{_when(tenant, a.get('arrivalWindowStart'))} to "
+                       f"{tenant.local(parse_iso(a['arrivalWindowEnd'])).strftime('%-I:%M %p')}"
+             if a.get("arrivalWindowStart") and a.get("arrivalWindowEnd") else ""}
+            for a in appointments
+        ],
+        "raw": json.dumps(job, indent=2, ensure_ascii=False),
+    }
 
 def _norm(text: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9 ]", " ", text.lower()).split())

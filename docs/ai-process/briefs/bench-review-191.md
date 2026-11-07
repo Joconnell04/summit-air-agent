@@ -12,6 +12,7 @@ Follow-up to #188 from Jackson's review of the deployed bench. The bench is Jack
 6. **Rules.** Prompt versions v1 to v15 of the live socket prompt (`retell/socket/prompt.md`), from `retell/PROMPT-LOG.md` and the file's git history, beside the owner-rule versions. The log's table is backfilled for v8 to v15 (words and "never" counts, MEASURED from git).
 7. **Evals.** The suite chips go; the filter is by call journey (docs/call-journeys.md), which counts only that journey's scenarios in each run. Rounds show what each settled (evals/rounds/README.md). The symptom-questions A/B results files are added so its runs show, and the reliability loop gets a round entry.
 8. **Cost.** A small interactive bar chart of the stacks we tested: pick stacks and a measure (typical wait, slowest 10%, cost per call). Every number comes from evals/rounds or docs/latency.md, with its source in the bar's tooltip.
+9. **Tool calls in the transcript** (added mid-lane): each tool call sits under the line it followed and opens to its arguments; its result page shows the result from the log and the rows it wrote (bookings, dispatches, flags, callbacks, leads), with the ServiceTitan job, appointment, customer, location, summary and tags read live, to confirm a booking landed.
 
 ## Done when
 

@@ -932,6 +932,8 @@ def build() -> dict:
                 ("Staff can't read what Retell heard", "bench/calls/{{call_id}}/heard", None),
                 ("Staff can't read a call's log", "bench/calls/{{call_id}}/log", None),
                 ("Staff can't download a call's log", "bench/calls/{{call_id}}/log.json", None),
+                ("Staff can't open a tool call's records", "bench/calls/{{call_id}}/tools/{{tool_id}}",
+                 "pm.collectionVariables.set('tool_id', '1');"),
                 ("Staff can't open the bench's schedule", "bench/schedule", None),
                 ("Staff can't read what changed", "bench/schedule/changes", None),
                 ("Staff can't open an eval run", "bench/evals/{{eval_run}}", eval_run),

@@ -3437,6 +3437,34 @@
           }
         },
         {
+          "name": "Staff can't open a tool call's records",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('tool_id', '1');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admins only', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/bench/calls/{{call_id}}/tools/{{tool_id}}"
+          }
+        },
+        {
           "name": "Staff can't open the bench's schedule",
           "event": [
             {

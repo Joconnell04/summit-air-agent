@@ -3,6 +3,7 @@ find_slots offers, cancelling a job from the bench, the call log behind the benc
 the call Summary's outcomes and the Why tab's plain decisions, the System page cut to what the live
 call runs, the Questions page, the prompt versions, the evals journey filter and the cost chart."""
 
+import html
 import re
 import sqlite3
 
@@ -382,3 +383,83 @@ def test_the_cost_chart_has_a_source_for_every_bar(agent):
     shown = _visible(page)
     for label in ("ASSUMED", "MEASURED", "Measured", "Assumed"):
         assert label not in shown, label
+
+
+# ---- a tool call, its result and the records it wrote ----------------------------------------
+
+
+def _tool_id(agent, call_id: str, tool: str) -> int:
+    conn = agent.db()
+    try:
+        return conn.execute("SELECT id FROM tool_calls WHERE call_id = ? AND tool = ? AND ok = 1 "
+                            "ORDER BY id DESC LIMIT 1", (call_id, tool)).fetchone()[0]
+    finally:
+        conn.close()
+
+
+def test_a_booking_in_the_transcript_opens_to_its_bookings_row_and_the_servicetitan_job(agent, mock):
+    sign_in(agent, "admin")
+    call_id = _booked_new_caller(agent)
+    key = _key(call_id)
+    tool_id = _tool_id(agent, call_id, "book_appointment")
+    page = agent.client.get(f"/bench/calls/{key}").text
+    transcript = page.split('id="transcript"')[1].split('id="timing"')[0]
+    assert 'class="tool-call"' in transcript and "book_appointment" in transcript
+    assert f'href="/bench/calls/{key}/tools/{tool_id}"' in transcript and "Result and records" in transcript
+
+    conn = agent.db()
+    try:
+        booking = conn.execute("SELECT * FROM bookings WHERE call_id = ?", (call_id,)).fetchone()
+    finally:
+        conn.close()
+    shown = agent.client.get(f"/bench/calls/{key}/tools/{tool_id}")
+    assert shown.status_code == 200
+    text = html.unescape(shown.text)
+    assert f'"booking_id": {booking["fsm_job_id"]}' in text, "the result from the log"
+    assert f"job {booking['fsm_job_id']}" in text and '<td class="fit">booked' in text
+    assert "Found" in text
+    db = sqlite3.connect(mock[0].state.db_path)
+    try:
+        job = db.execute("SELECT job_number, summary FROM jobs WHERE id = ?",
+                         (booking["fsm_job_id"],)).fetchone()
+        appointment = db.execute("SELECT id FROM appointments WHERE job_id = ?",
+                                 (booking["fsm_job_id"],)).fetchone()
+    finally:
+        db.close()
+    assert f"ServiceTitan job {job[0]}" in text, "read live from the mock"
+    assert f">{appointment[0]}, " in text, "the appointment the booking made"
+    assert "Pat Caller" in text
+
+
+def test_a_flag_opens_to_its_flag_and_callback_rows(agent):
+    sign_in(agent, "admin")
+    call_id = ready_to_book(agent)
+    flagged = agent.tool("flag_person", call_id, reason="Wants the owner about a refund",
+                         callback_time="2 PM")
+    assert flagged["ok"], flagged
+    tool_id = _tool_id(agent, call_id, "flag_person")
+    text = agent.client.get(f"/bench/calls/{_key(call_id)}/tools/{tool_id}").text
+    assert "Wants the owner about a refund" in text
+    assert f'<td class="fit num">{flagged["data"]["flag_id"]}</td>' in text
+    if flagged["data"].get("callback_id"):
+        assert f'<td class="fit num">{flagged["data"]["callback_id"]}</td>' in text
+
+
+def test_without_the_log_the_records_are_found_by_the_requests_time(agent):
+    sign_in(agent, "admin")
+    call_id = _booked_new_caller(agent)
+    agent.app.state.services.settings.log_path.unlink()
+    text = agent.client.get(f"/bench/calls/{_key(call_id)}/tools/"
+                            f"{_tool_id(agent, call_id, 'book_appointment')}").text
+    assert "Not in this server's log." in text
+    assert "ServiceTitan job" in text and "Found" in text
+
+
+def test_a_tool_call_page_is_for_admins_and_only_for_its_own_call(agent):
+    sign_in(agent, "admin")
+    first = _booked_new_caller(agent)
+    other = agent.start()["data"]["call_id"]
+    tool_id = _tool_id(agent, first, "book_appointment")
+    assert agent.client.get(f"/bench/calls/{_key(other)}/tools/{tool_id}").status_code == 404
+    sign_in(agent, "staff")
+    assert agent.client.get(f"/bench/calls/{_key(first)}/tools/{tool_id}").status_code == 403

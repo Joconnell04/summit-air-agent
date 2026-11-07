@@ -1,0 +1,123 @@
+{% extends "bench_base.html" %}
+{% from "_ui.html" import empty, count with context %}
+{% block title %}Bench: {{ t.tool }}{% endblock %}
+{% macro tone(p) %}{% if p in ("Urgent", "High") %}<span class="tag {{ 'urgent' if p == 'Urgent' else 'high' }}">{{ p }}</span>{% else %}{{ p or "-" }}{% endif %}{% endmacro %}
+{% block body %}
+{% set w = wrote %}
+{% set any_rows = w.bookings or w.dispatches or w.flags or w.callbacks or w.leads %}
+<main class="page">
+  <div class="page-head">
+    <div class="lead">
+      <div class="crumbs"><a href="/bench">Calls</a><span>/</span><a href="/bench/calls/{{ key }}#transcript">{{ mask(call_id) }}</a><span>/</span><span>Transcript</span></div>
+      <div class="actions">
+        <h1 class="page-title">{{ label }}</h1>
+        <code class="muted">{{ t.tool }}</code>
+        {% if t.error %}<span class="tag urgent">Error</span>{% elif not t.ok %}<span class="tag high">Refused</span>{% elif t.gate %}<span class="tag outline">{{ t.gate | replace("_", " ") }}</span>{% else %}<span class="tag done">Done</span>{% endif %}
+      </div>
+    </div>
+    <div class="actions"><a class="btn" href="/bench/calls/{{ key }}/log">Log</a></div>
+  </div>
+
+  <dl class="ledger">
+    <div><dt>At</dt><dd class="num">{{ clock }}</dd></div>
+    <div><dt>Took</dt><dd class="num">{{ "{:,.0f}".format(t.ms) }} ms</dd></div>
+    {% if t.refused %}<div><dt>Refused</dt><dd>{{ t.refused | replace("_", " ") }}</dd></div>{% endif %}
+    <div><dt>Request</dt><dd><code>{{ t.request_id }}</code></dd></div>
+  </dl>
+
+  {% if t.say %}
+  <section class="panel">
+    <div class="panel-head"><h2>Said to the caller</h2></div>
+    <div class="panel-body">{{ mask(t.say) }}</div>
+  </section>
+  {% endif %}
+
+  <div class="kv-grid">
+    <section class="panel">
+      <div class="panel-head"><h2>Arguments</h2></div>
+      <div class="panel-body"><pre class="tech-block scroll">{{ args }}</pre></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Result</h2></div>
+      <div class="panel-body">{% if result %}<pre class="tech-block scroll">{{ result }}</pre>{% else %}<span class="faint">Not in this server's log.</span>{% endif %}</div>
+    </section>
+  </div>
+
+  <section class="panel" id="wrote">
+    <div class="panel-head"><h2>What it wrote</h2><span class="sub">tool server records</span></div>
+    {% if not any_rows %}{{ empty("No record written by this call.") }}{% endif %}
+    {% if w.bookings %}
+    <div class="table-wrap"><table class="table dense">
+      <thead><tr><th>Booking</th><th>Status</th><th>Job</th><th>Window</th><th>Priority</th><th>Why</th><th>ServiceTitan</th></tr></thead>
+      <tbody>{% for b in w.bookings %}
+        <tr>
+          <td class="fit num">{{ b.id }}<div class="why small">{{ b.kind }}</div></td>
+          <td class="fit">{{ b.status }}{% if b.attempts > 1 %}<div class="why small">{{ b.attempts }} attempts</div>{% endif %}</td>
+          <td>{{ (b.job_type or "-") | replace("_", " ") }}<div class="why small">{{ mask(b.request.details.name if b.request.details else "") }}{% if b.request.address %}, {{ mask(b.request.address.street) }}{% endif %}</div></td>
+          <td class="fit num">{{ local(b.window_start) }}</td>
+          <td class="fit">{{ tone(b.priority) }}</td>
+          <td class="muted small">{{ b.reasons | join("; ") or "-" }}</td>
+          <td class="fit num">{% if b.fsm_job_id %}job {{ b.fsm_job_id }}{% else %}<span class="faint">not yet</span>{% endif %}</td>
+        </tr>
+        {% if b.request.details %}<tr><td></td><td colspan="6"><details class="raw"><summary>Request sent</summary><pre class="tech-block scroll">{{ b.request | tojson(indent=2) }}</pre></details></td></tr>{% endif %}
+      {% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+    {% if w.dispatches %}
+    <div class="table-wrap"><table class="table dense">
+      <thead><tr><th>Dispatch</th><th>Booking</th><th>Job</th><th>At</th><th>Status</th></tr></thead>
+      <tbody>{% for d in w.dispatches %}
+        <tr><td class="fit num">{{ d.id }}</td><td class="fit num">{{ d.booking_id }}</td><td>{{ d.job_type | replace("_", " ") }}</td><td class="fit num">{{ local(d.at) }}</td><td class="fit">{{ "Replaced" if d.replaced_at else "Sent" }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+    {% if w.flags %}
+    <div class="table-wrap"><table class="table dense">
+      <thead><tr><th>Flag</th><th>Kind</th><th>Priority</th><th>Why</th><th>Status</th></tr></thead>
+      <tbody>{% for f in w.flags %}
+        <tr><td class="fit num">{{ f.id }}</td><td class="fit">{{ f.kind | replace("_", " ") }}</td><td class="fit">{{ tone(f.priority) }}</td><td>{{ mask(f.reason) }}</td><td class="fit">{{ f.status }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+    {% if w.callbacks %}
+    <div class="table-wrap"><table class="table dense">
+      <thead><tr><th>Callback</th><th>Who calls</th><th>By</th><th>Number</th><th>Status</th></tr></thead>
+      <tbody>{% for c in w.callbacks %}
+        <tr><td class="fit num">{{ c.id }}</td><td class="fit">{{ c.owner | capitalize }}</td><td class="fit num">{{ local(c.due_at) }}</td><td class="fit num">{{ mask(c.phone) }}</td><td class="fit">{{ c.status }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+    {% if w.leads %}
+    <div class="table-wrap"><table class="table dense">
+      <thead><tr><th>Lead</th><th>Kind</th><th>Summary</th><th>Status</th><th>ServiceTitan</th></tr></thead>
+      <tbody>{% for l in w.leads %}
+        <tr><td class="fit num">{{ l.id }}</td><td class="fit">{{ l.kind | replace("_", " ") }}</td><td>{{ mask(l.summary) }}</td><td class="fit">{{ l.status }}</td><td class="fit num">{% if l.fsm_lead_id %}lead {{ l.fsm_lead_id }}{% else %}<span class="faint">not yet</span>{% endif %}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+  </section>
+
+  {% for j in w.jobs %}
+  <section class="panel" id="job-{{ j.id }}">
+    <div class="panel-head"><h2>ServiceTitan job {{ j.number or j.id }}</h2><span class="sub">read now, {{ read_at }}</span>{% if not j.error %}<span class="end tag done">Found</span>{% endif %}</div>
+    {% if j.error %}<div class="panel-body"><span class="error">Couldn't read it: {{ j.error }}</span></div>
+    {% else %}
+    <div class="panel-body">
+      <dl class="kv">
+        <dt>Job id</dt><dd class="num">{{ j.id }}</dd>
+        <dt>Status</dt><dd>{{ j.status }}</dd>
+        <dt>Type</dt><dd>{{ (j.type or "-") | string | replace("_", " ") }}</dd>
+        <dt>Priority</dt><dd>{{ tone(j.priority) }}</dd>
+        <dt>Customer</dt><dd>{{ mask(j.customer) }}</dd>
+        <dt>Location</dt><dd>{{ mask(j.location) }}</dd>
+        {% for a in j.appointments %}<dt>{% if loop.first %}Appointment{{ "s" if j.appointments | length > 1 }}{% endif %}</dt><dd class="num">{{ a.id }}, {{ a.window }}, {{ a.status }}</dd>{% endfor %}
+        <dt>Tags</dt><dd>{{ j.tags | join(", ") or "none" }}</dd>
+        <dt>Summary</dt><dd><pre class="tech-block scroll">{{ mask(j.summary) or "-" }}</pre></dd>
+      </dl>
+      <details class="raw"><summary>As ServiceTitan returns it</summary><pre class="tech-block scroll">{{ j.raw }}</pre></details>
+    </div>
+    {% endif %}
+  </section>
+  {% endfor %}
+</main>
+{% endblock %}

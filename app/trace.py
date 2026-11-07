@@ -43,6 +43,7 @@ def timeline(conn: sqlite3.Connection, call_id: str) -> dict | None:
                 "at": row["at"],
                 "order": (seq, 1, row["id"]),
                 "type": "tool",
+                "id": row["id"],
                 "tool": row["tool"],
                 "args": json.loads(row["args_json"]),
                 "ok": bool(row["ok"]),

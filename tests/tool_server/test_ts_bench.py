@@ -66,8 +66,15 @@ def bench_paths(agent: Agent, call: str) -> list[str]:
     """Every GET route under /bench, with real values in place of its parameters, so a route added
     later is checked too."""
     run = bench_data.runs()[0]
+    agent.tool("find_slots", call, job_type="tune_up")  # a tool call for the tool call page
+    conn = agent.db()
+    try:
+        tool_id = conn.execute("SELECT max(id) FROM tool_calls WHERE call_id = ? AND tool = "
+                               "'find_slots'", (call,)).fetchone()[0]
+    finally:
+        conn.close()
     values = {"key": key(call), "run_id": run.run_id, "scenario": run.scenarios[0].key,
-              "slug": "model-matrix-01"}
+              "slug": "model-matrix-01", "tool_id": str(tool_id)}
     paths = []
     for route in agent.app.routes:
         if route.path.startswith("/bench") and "GET" in getattr(route, "methods", ()):

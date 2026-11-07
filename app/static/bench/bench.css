@@ -272,6 +272,18 @@ body.bench { background: var(--page); color: var(--ink); font-family: var(--font
 .bar-value { text-align: right; font-size: var(--text-sm); color: var(--ink-2); }
 button.chip { font: inherit; font-size: var(--text-sm); cursor: pointer; }
 
+/* Transcript: a tool call under the line it followed, opening to its arguments. */
+.heard tr.tool td { background: var(--sunken); padding-top: var(--s-1); padding-bottom: var(--s-1); }
+.tool-call summary { display: flex; align-items: center; gap: var(--s-2); min-height: 28px; cursor: pointer; list-style: none; font-size: var(--text-sm); }
+.tool-call summary::-webkit-details-marker { display: none; }
+.tool-call summary:hover .what { color: var(--ember-ink); }
+.tool-call .say { color: var(--muted); min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tool-call[open] .say { white-space: normal; }
+.tool-body { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-2) 0; }
+.tool-body .tech-block { max-height: 240px; margin: 0; }
+.tool-body .actions { justify-content: flex-end; }
+details.raw summary { cursor: pointer; font-size: var(--text-xs); color: var(--muted); padding: var(--s-1) 0; }
+
 /* Log: one request per row, its JSON under it. */
 .log-rows { list-style: none; margin: 0; padding: 0; }
 .log-rows li + li { border-top: 1px solid var(--line-soft); }
