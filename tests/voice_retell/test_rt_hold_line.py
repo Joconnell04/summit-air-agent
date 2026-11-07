@@ -10,7 +10,7 @@ def test_it_opens_with_the_hold_line_and_never_waits_for_the_caller():
 
 
 def test_the_prompt_holds_every_line_it_may_say_word_for_word():
-    for line in (hold.AGAIN, hold.GOODBYE):
+    for line in (hold.AGAIN, hold.GOODBYE, hold.ASIDE):
         assert line in hold.PROMPT
 
 
@@ -26,3 +26,11 @@ def test_it_repeats_the_hold_line_for_about_six_minutes_then_hangs_up():
 
 def test_it_never_touches_the_demo_lines_or_the_other_projects_number():
     assert hold.NUMBER not in {"+15162129051", "+16466240418", "+16787376865"}
+
+
+def test_it_stays_quiet_on_chatter_and_waits_at_least_45_seconds_between_reminders():
+    """call_ac439f0ed2852a993282281c66c: every "okay" and "you're welcome" got the hold line back,
+    five times in 22 seconds. Chatter now gets Retell's silent reply."""
+    assert f"answer exactly {hold.SILENT}" in hold.PROMPT
+    assert hold.SILENT == "NO_RESPONSE_NEEDED"
+    assert hold.agent_body("llm_x", "voice_x")["reminder_trigger_ms"] >= 45_000

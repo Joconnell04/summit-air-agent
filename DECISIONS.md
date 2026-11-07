@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 136. After the safety lines, taking the offer of a person is handed off; the hold line stays quiet on chatter
+
+Decided: once the gas, carbon monoxide or general hazard lines have been said, a caller line that asks for a person ("connect me", "connect me with someone on your team") is handed off as the menu's "someone on our team right now", without needing the insistence a demand needs elsewhere. Bare "connect me" now counts as an ask, like "transfer me". The Retell hold line answers chatter with Retell's silent reply, says its one aside only to a question, and reminds every 45 s (was 40 s).
+Why: on Jackson's test call call_420a919e8d863ea61b471c97e64 the menu offered a person, the caller said "connect me right now", and the server didn't see an ask (no "to someone"), so the model tried request_transfer, was refused on the safety call and said "I can't transfer you right now"; the next line was handed off correctly. On the same call's hold leg the hold line answered every "okay" with the hold line, five times in 22 seconds.
+Considered: letting request_transfer put safety calls through (the server, not the model, decides handoffs); hold music (Retell's ambient sounds are only room noise such as a coffee shop, with no custom audio).
+Would change if: callers on a safety call are handed off when they meant a technician visit (narrow the phrases), or the hold line goes quiet when a caller needs the aside.
+Discussion: this conversation; tests/tool_server/test_ts_handoff.py, tests/voice_retell/test_rt_hold_line.py
+
 ## 135. Members are thanked in the greeting; a non-member hears about the membership once, after a routine booking
 
 Decided: a caller whose one matched account has an active membership is greeted "Hi Maria, thanks for calling Summit Air, and thanks for being a member!", and the model is told not to thank them again. A routine booking for anyone else ends with "One more thing before you go. It looks like you're not a member with us yet, is that right?" in place of "Anything else?", once a call, never on a safety call, an urgent visit or for a member. On a no, "No worries, your visit's all set either way", an offer to hear more, a short description, and a callback or the technician at the visit to sign up; no transfer and no price. The perks are two tune-ups a year, fifteen percent off repairs, a longer parts-and-labor warranty and no after-hours fee; members are scheduled by urgency like everyone else, so "priority scheduling" is gone from the plan. A member who asks whether a tune-up is included is answered from their job history and the plan's tune-ups a year.

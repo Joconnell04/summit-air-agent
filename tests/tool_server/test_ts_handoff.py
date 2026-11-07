@@ -233,6 +233,32 @@ def test_on_a_gas_call_the_lines_come_first_then_a_demand_is_handed_off(agent, n
     assert reasons == ["Caller demanded a person after the safety lines"]
 
 
+@pytest.mark.parametrize(
+    "line",
+    [
+        # Jackson's call call_420a919e8d863ea61b471c97e64: the menu offered someone on the team
+        # right now, and this line was told "I can't transfer you right now".
+        "Okay, connect me right now. Connect me right now.",
+        # Taking the offer calmly is enough after the menu; no demand is needed.
+        "Can you connect me with someone on your team?",
+        "Just connect me, please.",
+    ],
+)
+def test_after_the_gas_lines_taking_the_menus_offer_of_a_person_is_handed_off(agent, numbers, line):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I smell gas and the unit sparked.")
+    agent.say(call, GAS_LINES)
+    result = agent.turn(call, line)
+    assert result["say"] == HANDOFF_LINE
+    assert result["data"]["handoff"]["transfer"]["role"] == "office"
+
+
+def test_a_calm_connect_me_off_a_safety_call_is_still_only_a_request(agent, numbers):
+    call, result = call_with(agent, "My AC stopped cooling.", "Can you connect me, please?")
+    assert "handoff" not in result["data"]
+    assert handoff(agent, call) is None
+
+
 def test_on_a_gas_call_after_hours_the_demand_goes_to_on_call(agent, clock, numbers):
     clock.now = EVENING
     call = agent.start(UNKNOWN)["data"]["call_id"]

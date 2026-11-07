@@ -1,7 +1,7 @@
 """The hold line on a Retell number, for the owner's Hold line switch (app/owner_settings.py).
 
 While the switch is on, every transfer rings TRANSFER_HOLD_NUMBER instead of a person. This puts a
-Retell agent on that number that answers with a hold message and repeats it every 40 seconds for
+Retell agent on that number that answers with a hold message and repeats it every 45 seconds for
 about six minutes, then says someone will call back and hangs up. It replaces the Twilio hold line
 (scripts/phone/hold_line.py, Twilio) while the Twilio account's voice is suspended.
 
@@ -34,18 +34,27 @@ JACKSON_AGENT = "agent_a3e38e6aa3d4e75dfac12aafc8"
 FIRST = "Thanks for holding. Someone from Summit Air will be with you shortly."
 AGAIN = "Thanks for holding, someone will be with you shortly."
 GOODBYE = "Sorry, nobody is free to take your call right now. Someone from Summit Air will call you back."
+SILENT = "NO_RESPONSE_NEEDED"
+ASIDE = "I'm just the hold line, so I can't help with that, but someone will be with you shortly."
+# Retell stays quiet when the model answers with SILENT (docs.retellai.com/build/no-response). On
+# call_ac439f0ed2852a993282281c66c the hold line answered every "okay" and "you're welcome" with the
+# hold line, five times in 22 seconds; only a question or the silence reminder gets a line now.
 PROMPT = f"""You are the hold line for Summit Air, a home heating and cooling company. The caller is
 waiting for a team member. You never help, ask questions, give information or make anything up.
 
-Each time you speak, say exactly one of these, word for word, and nothing else:
-- "{AGAIN}"
-- If the caller asks something: "I'm just the hold line, so I can't help with that, but someone will be with you shortly."
+You speak only in two cases, and each time you say exactly one line, word for word:
+- The caller has been quiet for a while (a reminder): "{AGAIN}"
+- The caller asks you a question or asks for something: "{ASIDE}" Say this at most once in a row.
+
+Anything else the caller says (okay, thanks, you're welcome, talking to someone else, noise, or a
+second question right after the first) gets no spoken reply: answer exactly {SILENT}
 
 If the call has gone on for about six minutes, say "{GOODBYE}" and end the call."""
-# ASSUMED: a reminder every 40 s, as the Twilio hold line did; Retell hangs up after six minutes of
-# silence from the caller.
-REMINDER_MS = 40_000
-REMINDERS = 8
+# ASSUMED: a reminder every 45 s, a little longer than the Twilio hold line's 40 s, so the line
+# feels like a hold and not a conversation; seven of them fill the six minutes before Retell hangs
+# up on silence.
+REMINDER_MS = 45_000
+REMINDERS = 7
 SILENCE_HANG_UP_MS = 360_000
 
 

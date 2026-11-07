@@ -70,7 +70,7 @@ ASK_WHO = PEOPLE + ("someone", "somebody", "the office")
 ASKED_PHRASES = (
     tuple(f"{verb} {who}" for verb in ASK_VERBS for who in ASK_WHO)
     + tuple(f"{verb} {who}" for verb in ("get me", "give me", "i want", "i need") for who in PEOPLE)
-    + ("transfer me", "put me through")
+    + ("transfer me", "put me through", "connect me")
 )
 # What may come before an ask in the same sentence for it to be a request. "I need to talk to
 # someone" is one; "last time I talked to someone it took a week" and "my landlord said to talk to
@@ -308,7 +308,11 @@ def handoff_role(
             (call["id"], call["turn_seq"]),
         )
     ]
-    if not demands_person(text, earlier, tenant.equipment_words):
+    # After the safety lines, whose menu offers "someone on our team right now", a plain ask is the
+    # caller taking that offer, not just a request: "connect me" there is answered with the
+    # handoff (call_420a919e8d863ea61b471c97e64 was told "I can't transfer you" instead).
+    took_the_offer = call["safety_state"] == "lines_said" and asks_for_person(text)
+    if not took_the_offer and not demands_person(text, earlier, tenant.equipment_words):
         return None
     return "on_call" if call["after_hours"] else "office"
 
