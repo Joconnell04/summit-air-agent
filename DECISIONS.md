@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 135. Members are thanked in the greeting; a non-member hears about the membership once, after a routine booking
+
+Decided: a caller whose one matched account has an active membership is greeted "Hi Maria, thanks for calling Summit Air, and thanks for being a member!", and the model is told not to thank them again. A routine booking for anyone else ends with "One more thing before you go. It looks like you're not a member with us yet, is that right?" in place of "Anything else?", once a call, never on a safety call, an urgent visit or for a member. On a no, "No worries, your visit's all set either way", an offer to hear more, a short description, and a callback or the technician at the visit to sign up; no transfer and no price. The perks are two tune-ups a year, fifteen percent off repairs, a longer parts-and-labor warranty and no after-hours fee; members are scheduled by urgency like everyone else, so "priority scheduling" is gone from the plan. A member who asks whether a tune-up is included is answered from their job history and the plan's tune-ups a year.
+Why: Jackson asked for both (6 November). The server decides when the question comes so it can't loop or land on a safety call, and the wording lives in the tenant's lines. Membership never touches priority, so none of the urgency rules change.
+Considered: a live transfer to sign up (dropped by Jackson: a callback or the technician is enough); asking at the start of the call (it delays the problem the caller called about).
+Would change if: callers find the question pushy (move it to the technician's visit only), or the owner wants a price said.
+Discussion: this conversation; docs/call-journeys.md (joining) still lists priority scheduling and changes only through /round.
+
 ## 134. The dropped voice stacks move to a branch, and only the Retell path runs on the server
 
 Decided: the ElevenLabs, OpenAI Realtime, Gemini Live and Retell-native code and their tests move to branch `archive/voice-stacks`; `voice/archive/livekit` moves back to `voice/livekit`, since the text evals, the rules gate and the live socket still use it; the server stops starting the LiveKit worker and its outbound poller, and the watchdog's health ping follows the tool server and the Retell socket that answers (516) 212-9051. Eval rounds stay where a decision cites them; the uncited `retell-suite-01` notes and three raw-data folders go to the branch.

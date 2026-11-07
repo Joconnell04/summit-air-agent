@@ -122,8 +122,9 @@ def call_notes(start: dict) -> list[str]:
         if membership.get("status") == "Active":
             plan = membership.get("plan") or "maintenance"
             notes.append(
-                f"They're on an active {plan} plan. Thank them for being a member once, early in "
-                "the call, and mention the plan's benefit that applies."
+                f"They're on an active {plan} plan, and the greeting already thanked them for "
+                "being a member: don't thank them again. Mention a benefit from the membership "
+                "page only when it applies."
             )
     visits = [
         job for c in customers for job in c.get("open_jobs") or [] if job.get("window")
@@ -258,8 +259,14 @@ def greeting(start: dict, voice: dict) -> str:
             return voice[key].format(first_name=name)
         return voice[f"{key}_unknown"]
     if name:
-        return voice["greeting_known"].format(first_name=name)
+        key = "greeting_member" if _active_member(customers) and "greeting_member" in voice else (
+            "greeting_known")
+        return voice[key].format(first_name=name)
     return voice["greeting_unknown"]
+
+
+def _active_member(customers: list[dict]) -> bool:
+    return len(customers) == 1 and (customers[0].get("membership") or {}).get("status") == "Active"
 
 
 SERVER_NOTES = {

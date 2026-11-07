@@ -616,6 +616,17 @@ lines:
   next_unit: Now let's set up apartment {unit}.
   # Ends a booking, reschedule or cancel sentence, which the voice layer speaks with no model step.
   after_confirmation: Anything else?
+  # A routine booking for someone who isn't a member ends with these instead, once a call; never
+  # on a safety call, an urgent visit or for a member (Jackson, 6 November; app/tools.py
+  # _offers_membership). No price on the phone, and nothing about faster service.
+  membership_check: One more thing before you go. It looks like you're not a member with us yet, is that right?
+  membership_no_worries: No worries, your visit's all set either way. Would you like to hear a little about our membership?
+  membership_pitch: >-
+    Sure. Our Summit Standard Membership covers two tune-ups a year, fifteen percent off repairs,
+    a longer warranty on the parts and work we do, and no after-hours fee.
+  membership_next_step: >-
+    If you'd like to sign up, I can have someone from our team call you back, or your technician
+    can go over it with you at the visit. Which would you prefer?
   # Added to an urgent booking with no window today; the server has flagged a person to move it up.
   seek_earlier_note: I've also asked our team to look for an earlier opening.
   # The first line of a call the system places (journey 12). {day} is "today", "tomorrow" or a
@@ -635,6 +646,8 @@ voice:
   # call_7727509d3289c4434b27efdad5b).
   greeting_known: Hi {first_name}, thanks for calling Summit Air! I'm {assistant_name}, the virtual assistant. How can I help?
   greeting_unknown: Hi there, thanks for calling Summit Air! I'm {assistant_name}, the virtual assistant. How can I help?
+  # One matched caller on an active membership is thanked for it here, once, early (Jackson).
+  greeting_member: Hi {first_name}, thanks for calling Summit Air, and thanks for being a member! I'm {assistant_name}, the virtual assistant. How can I help?
   # Two-party consent (the owner's Settings page, app/owner_settings.py): said just before the
   # greeting, and by the worker when a caller objects and the recording stops. Off by default:
   # New York needs only one party's consent to record.

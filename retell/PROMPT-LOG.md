@@ -324,3 +324,7 @@ On the verification call after the final fixes, my leaking-boiler replay was boo
 
 From my call call_55b467b41ae58e725fa142d29b7. I said my name three times; the transcription heard "Uh, okay", "Okay" and "Okay, none", and after the third Brian moved on to "Is this tune-up for your home?" with no thanks at all. The name step now says "Thanks." after whatever the caller answers, and when what came through doesn't sound like a name it asks once to spell the last name, then goes on. The rule on the name itself is looser now: at most once in a call, never right after the caller says it (people don't like hearing it back; issue #149). The same call asked "Is this a tune-up on a system you already have, or is it for a heating or cooling system?"; the server's step now hands a tune-up one plain question, word for word: "Is that a boiler, a furnace, central air or a mini-split?". The evening request was a server bug, fixed in app/tools.py.
 
+### v15 (membership)
+
+Members are thanked in the greeting now, so the call note tells Brian not to thank them again. The membership line drops "priority scheduling" (members are scheduled by urgency like everyone else) for fifteen percent off repairs, a longer warranty and no after-hours fee. After a routine booking the server asks a non-member once; Brian follows its next step and never brings membership up again. A member asking whether a tune-up is included gets an answer from their job history.
+

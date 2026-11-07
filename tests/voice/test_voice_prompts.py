@@ -326,7 +326,7 @@ def test_an_active_member_is_told_to_be_thanked(agent, scenarios):
     linda = scenarios["activeMemberWithAdultChild"]
     start = agent.start(linda["phone"])["data"]
     text = assemble.instructions(start, datetime(2026, 11, 2, 14, 0, tzinfo=UTC))
-    assert "Thank them for being a member once" in text
+    assert "the greeting already thanked them for being a member" in text
     assert "For this caller:" in text
 
 
@@ -553,3 +553,16 @@ def test_the_now_line_is_the_tool_servers_clock_not_the_bridges():
     text = assemble.instructions(start)
     assert "Now: Thursday 5 November 2026, 11:26 AM (America/New_York)." in text
     assert '"now"' not in text
+
+
+def test_an_active_member_is_thanked_in_the_greeting_and_not_again():
+    """Jackson, 6 November: a member hears thanks for being a member, once and early."""
+    voice = {"greeting_known": "Hi {first_name}!", "greeting_unknown": "Hi there!",
+             "greeting_member": "Hi {first_name}, and thanks for being a member!"}
+    member = {"caller": {"known_number": True}, "customers": [
+        {"residential": True, "name": "Maria Lopez", "membership": {"status": "Active"}}]}
+    plain = {"caller": {"known_number": True}, "customers": [
+        {"residential": True, "name": "Maria Lopez", "membership": None}]}
+    assert assemble.greeting(member, voice) == "Hi Maria, and thanks for being a member!"
+    assert assemble.greeting(plain, voice) == "Hi Maria!"
+    assert any("don't thank them again" in n for n in assemble.call_notes(member))

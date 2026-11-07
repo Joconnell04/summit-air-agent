@@ -3533,8 +3533,12 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
     # A unit the caller named that has no booking yet comes next instead, so the second job isn't
     # lost to a goodbye (DECISIONS.md 085; eval run 20261104-201025, super-two-units).
     next_unit = _unit_not_booked(ctx)
+    membership_next = ""
     if next_unit:
         say += " " + ctx.tenant.line("next_unit", unit=next_unit)
+    elif _offers_membership(ctx, args.job_type, decided.level, override):
+        say += " " + ctx.tenant.line("membership_check")
+        membership_next = _membership_next(ctx)
     else:
         say += " " + ctx.tenant.line("after_confirmation")
     result = ok(
@@ -3552,9 +3556,49 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
         approval_callback_at=approval_callback_at,
         return_visit_review=bool(returning),
     )
+    if membership_next:
+        result.next = membership_next
     if override:
         result.gate = "safety_override"
     return result
+
+
+def _offers_membership(ctx: Ctx, job_type: str, level: str, override: bool) -> bool:
+    """Whether a routine booking ends by checking membership, once a call: never on a safety call
+    or an urgent visit, never to a member (they were thanked in the greeting), and only where the
+    tenant has the lines (Jackson, 6 November; docs/call-journeys.md, joining)."""
+    if "membership_check" not in ctx.tenant.lines or override or level == "Urgent":
+        return False
+    if job_type == ctx.tenant.safety.get("dispatch_job_type"):
+        return False
+    call = ctx.call
+    if "safety_signal_at" in call.keys() and call["safety_signal_at"]:  # noqa: SIM118
+        return False
+    try:
+        for customer_id in records.scoped_customers(ctx.conn, call["id"]):
+            summary = lookup.membership_summary(ctx.tenant, ctx.fsm.memberships(customer_id))
+            if summary and summary.get("status") == "Active":
+                return False
+    except (FsmUnavailable, FsmRejected):
+        return False
+    return _hand_out_once(ctx, ctx.tenant.line("membership_check"))
+
+
+def _membership_next(ctx: Ctx) -> str:
+    return (
+        "Wait for the answer. If they're not a member, or don't know, say "
+        f'"{ctx.tenant.line("membership_no_worries")}" If they want to hear it, say '
+        f'"{ctx.tenant.line("membership_pitch")}" and answer a question or two only from the '
+        "membership page in your knowledge, never a price; then ask "
+        f'"{ctx.tenant.line("membership_next_step")}": for a '
+        "call back, ask when and call record_lead with kind membership, their name, the need "
+        "'wants to hear about the membership' and that time; for the technician, add_note "
+        "(attach_to job) that they'd like to hear about the membership at the visit. If "
+        "they don't want to hear it, or once that's settled, say \"Anything else I can help "
+        'with?" If they say they are a member, say "Thanks for being a member! I\'ll make a note '
+        'so the office can check your account.", call add_note (attach_to customer), then '
+        'ask "Anything else I can help with?". Ask about membership only this once.'
+    )
 
 
 def _second_job(ctx: Ctx, existing: list[sqlite3.Row], readback: dict, args: BookIn) -> None:

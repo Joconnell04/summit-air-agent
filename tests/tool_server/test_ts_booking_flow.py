@@ -530,12 +530,14 @@ def test_two_units_named_together_get_a_note_and_the_first_booking_moves_on_to_t
     agent.turn(call, "Yes.")
     assert agent.tool("read_back", call, address=second, phone="caller_id", confirmed=True)["ok"]
     done = book(agent, call, first_open(agent, call, "no_heat"), job_type="no_heat")
-    assert done["say"].endswith("Anything else?")
+    # Or the membership check, once, for a caller who isn't a member (test_ts_booking.py).
+    assert done["say"].endswith(("Anything else?", "not a member with us yet, is that right?"))
 
 
 def test_one_unit_booking_still_ends_with_anything_else(agent):
     call = ready_to_book(agent)
-    assert book(agent, call, first_open(agent, call))["say"].endswith("Anything else?")
+    said = book(agent, call, first_open(agent, call))["say"]
+    assert said.endswith(("Anything else?", "not a member with us yet, is that right?"))
 
 
 OCEAN_LINE = ("Almost, the address is one one two oh Ocean Ave, not one one two three zero Ocean "

@@ -74,7 +74,8 @@ def test_no_match_by_phone_then_a_match_by_address(agent, mock, scenarios):
     assert match["customer_id"] == park["customerId"]
     assert match["membership"]["status"] == "Active"
     assert match["membership"]["plan"] == "Summit Standard Membership"
-    assert match["membership"]["perks"]["prioritySched"] is True
+    # Members are scheduled by urgency like everyone else (Jackson, 6 November).
+    assert match["membership"]["perks"]["prioritySched"] is False
 
 
 def test_an_expired_plan_reads_as_expired_not_missing(agent, scenarios):

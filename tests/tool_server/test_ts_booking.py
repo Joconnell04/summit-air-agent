@@ -1140,7 +1140,38 @@ def test_the_booking_confirmation_is_the_whole_turn_and_asks_anything_else(agent
     booked = book(agent, call, first_open(agent, call))
     assert booked["ok"], booked
     assert booked["say"].startswith("Okay, I've booked it: ")
-    assert booked["say"].endswith(" Anything else?")
+    # A caller who isn't a member hears the membership check instead, once (next test).
+    assert booked["say"].endswith((" Anything else?", MEMBERSHIP_CHECK))
+
+
+MEMBERSHIP_CHECK = (
+    "One more thing before you go. It looks like you're not a member with us yet, is that right?"
+)
+
+
+def test_a_routine_booking_for_a_non_member_asks_about_membership_once(agent):
+    """Jackson, 6 November: a caller who isn't a member hears once, at the end of a routine
+    booking, whether they'd like to hear about the membership; the next step never loops."""
+    call = ready_to_book(agent)
+    booked = book(agent, call, first_open(agent, call))
+    assert booked["say"].endswith(MEMBERSHIP_CHECK), booked["say"]
+    assert "Ask about membership only this once" in booked["next"]
+    assert "record_lead" in booked["next"] and "transfer_call" not in booked["next"]
+    agent.say(call, booked["say"])
+    agent.turn(call, "Right, I'm not. Can I also book a second visit for the AC next week?")
+    again = book(agent, call, first_open(agent, call), job_type="tune_up")
+    if again["ok"]:
+        assert MEMBERSHIP_CHECK not in again["say"]
+
+
+def test_a_member_never_hears_the_membership_check(agent, scenarios):
+    park = scenarios["activeMemberWithAdultChild"]
+    call = agent.start(park["phone"])["data"]["call_id"]
+    agent.turn(call, "I'd like to book my yearly tune-up.")
+    agent.confirm_read_back(call, in_area_address())
+    booked = book(agent, call, first_open(agent, call))
+    if booked["ok"]:
+        assert MEMBERSHIP_CHECK not in booked["say"]
 
 
 @pytest.mark.parametrize(

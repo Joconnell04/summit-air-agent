@@ -332,6 +332,14 @@ lines:
     up.
   location_superseded: That visit is still set for your old address, so let me have someone from our office
     sort it out with you.
+  membership_check: One more thing before you go. It looks like you're not a member with us yet, is that
+    right?
+  membership_next_step: If you'd like to sign up, I can have someone from our team call you back, or your
+    technician can go over it with you at the visit. Which would you prefer?
+  membership_no_worries: No worries, your visit's all set either way. Would you like to hear a little
+    about our membership?
+  membership_pitch: Sure. Our Summit Standard Membership covers two tune-ups a year, fifteen percent off
+    repairs, a longer warranty on the parts and work we do, and no after-hours fee.
   move_done: Thanks for letting us know. I've updated your address to {street}.
   move_out_of_area: Thanks for letting us know. Unfortunately the new address is outside the area we cover,
     so we won't be able to come out there, and I've made a note on your account.
@@ -1781,6 +1789,8 @@ voice:
   goodbye: Thanks for calling Summit Air. Have a great rest of your day.
   greeting_known: Hi {first_name}, thanks for calling Summit Air! I'm Brian, the virtual assistant. How
     can I help?
+  greeting_member: Hi {first_name}, thanks for calling Summit Air, and thanks for being a member! I'm
+    Brian, the virtual assistant. How can I help?
   greeting_unknown: Hi there, thanks for calling Summit Air! I'm Brian, the virtual assistant. How can
     I help?
   hold_phrases:

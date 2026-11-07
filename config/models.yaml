@@ -119,7 +119,8 @@ voice:
   # tool work hasn't finished this long after the caller's last word (Retell's word timings), never
   # on two turns in a row and never on the fast steps (Jackson: only on genuinely long waits; from
   # Retell's request at 0.7 s it fired on 12 of 13 tool waits, at 1.0 s on 3 of 6).
-  hold_phrase_after_s: 1.4
+  # 1.2 after Jackson's call of 6 November: a few tool waits wanted it slightly sooner.
+  hold_phrase_after_s: 1.2
   # Counted from the caller's turn ("caller", Jackson's ask) or from the tool's own start ("tool").
   hold_phrase_from: caller
   # The pause after the goodbye before the line drops; a caller who speaks in it keeps the call
