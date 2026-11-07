@@ -35,8 +35,9 @@ app/                 tool server (template code)
   fsm/               FSM adapter interface and the ServiceTitan adapter
 servicetitan_mock/   the mock customer system
 voice/
-  livekit/           LiveKit worker (only if LiveKit is built)
-  retell/            Retell agent config as code and push script (only if Retell is built)
+  retell_llm/        the custom-LLM socket the live number runs on
+  retell/, retell_flow/  the bridge between Retell and the tool server, and agent config as code
+  livekit/           the first phone stack; now runs the agent in process for the text evals
 prompts/             prompt files by job, shared by both voice layers
 trades/hvac/         what any residential HVAC shop shares; each tenant extends it
 tenants/summit-air/  everything specific to Summit Air (docs/template.md)
@@ -52,7 +53,7 @@ If both voice layers are built, the rule is that everything except the two folde
 - Both layers call the same tool server endpoints with the same payloads and load the same prompt files.
 - Each layer is one folder plus one Makefile target (`make voice-livekit`, `make voice-retell`) and one entry in the deploy config.
 - The evals run against the tool server and prompts, so the same scenarios score both layers; only the 10 audio calls differ.
-- Picking the winner: delete the losing folder and its Makefile target, set the Twilio trunk's destination, record the decision. Nothing else changes. A test checks that no file outside `voice/` imports from either layer (`from voice.retell`, `from voice import retell`, `import voice.retell` or a literal `import_module("voice.retell...")`, and the same for `voice.archive.livekit`), so the delete stays clean. The eval harness reaches a layer's text-chat side through `voice/<stack>/eval_adapter.py`, loaded by name (`evals/stacks.py` `load_adapter`), and the audio rig reaches each entrant through `voice/<name>/rig_adapter.py` the same way (`evals/audio_rig/rig.py`). The bake-off 6 entrants (`voice/archive/elevenlabs/`, `voice/archive/openai_realtime/`, `voice/archive/gemini_live/`) follow the same rule and are covered by the same test.
+- Picking the winner: delete the losing folder and its Makefile target, set the Twilio trunk's destination, record the decision. Nothing else changes. A test checks that no file outside `voice/` imports from either layer (`from voice.retell`, `from voice import retell`, `import voice.retell` or a literal `import_module("voice.retell...")`, and the same for `voice.livekit`), so the delete stays clean. The eval harness reaches a layer's text-chat side through `voice/<stack>/eval_adapter.py`, loaded by name (`evals/stacks.py` `load_adapter`), and the audio rig reaches each entrant through `voice/<name>/rig_adapter.py` the same way (`evals/audio_rig/rig.py`). The bake-off 6 entrants (`voice/archive/elevenlabs/`, `voice/archive/openai_realtime/`, `voice/archive/gemini_live/`) follow the same rule and are covered by the same test.
 
 ## What the agent is allowed to do
 
@@ -78,8 +79,8 @@ Four ideas came out of working with the running agent at the end of phase 2. The
 
 ## Moved into V1 after the ideas round
 
-- **Warm transfer to a person (C-11).** The server decides whether a person flag goes to a person now: the office in hours when the caller asked for one, the on-call technician after hours when the server's own priority says they're needed tonight, never on a safety call, and never when the number for that role is unset in the server's `.env` (app/transfer.py). The LiveKit worker dials the person into a room of their own, gives them a summary, and joins them to the caller only when they press 1; nobody answering brings the agent back with the flag's named callback (voice/archive/livekit/README.md). Retell can't be gated this way, so its calls keep the flag and callback.
-- **Cold handoff to a person.** A caller who demands a person is sent straight through, decided by the server on the caller's own turn, not after a flag the model raises: the agent says one line and the worker sends the caller's call leg to the role's number with a SIP transfer, no summary or key press (app/transfer.py, voice/archive/livekit/README.md). On a gas or carbon monoxide call the fixed lines come first. The flag and callback are stored before anything is sent, so a failed transfer or an unset number gives the caller the stored callback line.
+- **Warm transfer to a person (C-11).** The server decides whether a person flag goes to a person now: the office in hours when the caller asked for one, the on-call technician after hours when the server's own priority says they're needed tonight, never on a safety call, and never when the number for that role is unset in the server's `.env` (app/transfer.py). The LiveKit worker dials the person into a room of their own, gives them a summary, and joins them to the caller only when they press 1; nobody answering brings the agent back with the flag's named callback (voice/livekit/README.md). Retell can't be gated this way, so its calls keep the flag and callback.
+- **Cold handoff to a person.** A caller who demands a person is sent straight through, decided by the server on the caller's own turn, not after a flag the model raises: the agent says one line and the worker sends the caller's call leg to the role's number with a SIP transfer, no summary or key press (app/transfer.py, voice/livekit/README.md). On a gas or carbon monoxide call the fixed lines come first. The flag and callback are stored before anything is sent, so a failed transfer or an unset number gives the caller the stored callback line.
 - **Call recordings (story O-6).** The LiveKit worker records each call with egress into an S3-compatible bucket, because LiveKit Cloud can't write to our disk; the tool server's jobs loop copies each file into `data/recordings/`, deletes it from the bucket, and deletes the copy with the transcript after 30 days. The call page plays it (app/recordings.py, docs/design-system.md).
 
 ## Logging and traces
@@ -106,6 +107,6 @@ The server installs security updates on its own and reboots only when an update 
 ### Knowing it's back
 
 - Services start on boot (`@reboot` in the user crontab, no root needed) and a watchdog run every minute restarts anything that has stopped.
-- A health endpoint (`GET /healthz`) checks the tool server, the database and that the voice worker is registered with LiveKit.
-- An outside monitor (Healthchecks.io free plan, set up; voice/archive/livekit/README.md) expects a ping from the watchdog every minute and alerts by email if pings stop for 5 minutes. The watchdog pings only when the worker and tool server both pass, so the monitor hears silence for any failure. Every reboot therefore shows up as a short gap, and a server that doesn't come back raises an alert.
-- If the worker is down while LiveKit is up, Twilio won't fail over on its own (docs/explorations/004-call-control-and-numbers.md), so the watchdog also switches the Twilio number to its backup destination when the health check fails twice in a row, and back when it passes.
+- A health endpoint (`GET /healthz`) checks the tool server and the database. The phone side (the Retell bridge and the custom-LLM socket) runs as systemd units that restart on their own (`deploy/retell/`).
+- An outside monitor (Healthchecks.io free plan, set up; voice/livekit/README.md) expects a ping from the watchdog every minute and alerts by email if pings stop for 5 minutes. The watchdog pings only when the tool server's health page passes and the Retell socket that answers (516) 212-9051 answers, so the monitor hears silence for any failure. Every reboot therefore shows up as a short gap, and a server that doesn't come back raises an alert.
+- The LiveKit worker no longer runs on the server: no number rings it since the move to Retell (DECISIONS.md 112). The watchdog's old Twilio fail-over for it stays off (`PHONE_FALLBACK`).

@@ -10,7 +10,7 @@ Read first: CLAUDE.md, docs/call-journeys.md, docs/spec.md (Eval, grader and Liv
 
 ## Scope
 
-- `voice/archive/livekit/`: a LiveKit Agents worker (Python). Model and voice chosen by profile from config/models.yaml; Anthropic default, OpenAI and Gemini switchable. Thinking off.
+- `voice/livekit/`: a LiveKit Agents worker (Python). Model and voice chosen by profile from config/models.yaml; Anthropic default, OpenAI and Gemini switchable. Thinking off.
 - Calls `/calls/start` before the greeting, `/calls/{id}/turn` on every final transcript and agent line, and the model tools in docs/tools.md. Our own end-call and transfer tools that ask the server first; no built-in end-call tool.
 - Safety lines spoken from the text the server returns, never generated.
 - Turn handling: adaptive interruptions, a minimum-words threshold so noise doesn't interrupt, resume after false interruptions, a longer end-of-turn wait right after asking for digits (docs/latency.md, C-48).

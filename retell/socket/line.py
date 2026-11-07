@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 from voice.retell.api import Retell
 
 NUMBER = "+15162129051"
-# The scripted callers' caller IDs: the Twilio test trunk (voice/archive/livekit/test_call.py), then our
+# The scripted callers' caller IDs: the Twilio test trunk (voice/livekit/test_call.py), then our
 # Retell number the test-caller agent dials from (retell_caller.py).
 TEST_CALLERS = ("+16466240418", "+16783366730")
 SOCKET_AGENT_NAME = "Summit Air socket (test)"

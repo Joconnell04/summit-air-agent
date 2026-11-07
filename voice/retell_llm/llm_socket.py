@@ -29,9 +29,9 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from app.tenant import voice_lines
 from prompts.assemble import job_types, tool_specs
-from voice.archive.livekit.server import ToolServer
-from voice.archive.livekit.settings import config_path as models_config_path
-from voice.archive.livekit.settings import load_profile
+from voice.livekit.server import ToolServer
+from voice.livekit.settings import config_path as models_config_path
+from voice.livekit.settings import load_profile
 
 from .call import LlmCall, QualityReply
 from .model import Brain

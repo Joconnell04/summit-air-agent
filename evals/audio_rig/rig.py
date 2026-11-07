@@ -1,6 +1,6 @@
 """The simulated audio bake-off (DECISIONS.md 026, docs/bakeoffs.md bake-off 6).
 
-    uv run --env-file .env python -m evals.audio_rig --stack elevenlabs [--suite smoke]
+    uv run --env-file .env python -m evals.audio_rig --stack retell_llm [--suite smoke]
         [--repeats 3] [--samples 1] [--max-cost 3.0] [--only id,id] [--tags t,t] [--no-upload]
         [--no-record] [--no-store]
 
@@ -64,9 +64,6 @@ ENTRANTS = (
     "retell",
     "retell_flow",
     "retell_llm",
-    "elevenlabs",
-    "openai_realtime",
-    "gemini_live",
 )
 
 

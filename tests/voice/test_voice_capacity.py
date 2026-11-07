@@ -3,7 +3,7 @@
 import os
 import time
 
-from voice.archive.livekit.capacity import Lines
+from voice.livekit.capacity import Lines
 
 
 def test_calls_up_to_the_cap_get_a_line_and_the_next_does_not(tmp_path):

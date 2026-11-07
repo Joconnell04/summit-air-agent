@@ -10,7 +10,7 @@ trunk itself untouched, so going back is one field.
 - `retell`: the number on its own trunk, "summit-air-retell", whose origination is Retell's SIP
   server, with the number imported into Retell on the production voice agent and the bridge's
   inbound webhook (SOURCE: https://docs.retellai.com/deploy/custom-telephony.md).
-- `retell_native`: the same, on the native Retell agent (voice/archive/retell_native).
+- `retell_native`: the same, on the native Retell agent (voice/archive/retell_native on branch archive/voice-stacks).
 - `deepgram`: no trunk; the number's voice URL returns TwiML that streams the call to the Deepgram
   Voice Agent bridge on the server (voice/deepgram_agent/).
 - `vapi`: no trunk; the voice URL is Vapi's Twilio inbound endpoint, once the number is imported
@@ -39,7 +39,7 @@ SNAPSHOT = ROOT / "deploy" / "phone" / "routing-before.json"
 RETELL = "https://api.retellai.com"
 RETELL_SIP = "sip:sip.retellai.com;transport=tcp"
 RETELL_AGENT = "agent_5c00ceef6a443a4ffa7f7cbeed"
-# The native Retell entry (voice/archive/retell_native), found by name since push.py may recreate it.
+# The native Retell entry (voice/archive/retell_native on branch archive/voice-stacks), found by name since push.py may recreate it.
 RETELL_NATIVE_NAME = "Summit Air (Retell native)"
 VAPI_INBOUND = "https://api.vapi.ai/twilio/inbound_call"
 # The Deepgram entry's own hostname (deploy/deepgram_agent/Caddyfile).

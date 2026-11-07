@@ -39,7 +39,7 @@ livekit = [
 ]
 
 [tool.uv]
-# The LiveKit worker's packages are their own group, so deleting voice/archive/livekit after the bake-off
+# The LiveKit worker's packages are their own group, so deleting voice/livekit after the bake-off
 # (docs/architecture.md) also drops them; they install by default so its tests run in make check.
 default-groups = ["dev", "livekit"]
 # livekit-plugins-anthropic 1.8 still declares anthropic<2, but the eval harness needs 2.x. The

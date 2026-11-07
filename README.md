@@ -2,6 +2,13 @@
 
 An AI phone agent that answers inbound calls for Summit Air, a 40-tech residential HVAC company in NYC. It works out what's wrong, checks whether the caller is residential and a member, collects what a technician needs, separates routine visits from urgent ones, and books the visit or sets the next step.
 
+## Start here
+
+- **What's live.** Call (516) 212-9051. Retell hears the caller and speaks; the turn runs on our server through Retell's custom-LLM socket (`voice/retell_llm/`), which calls the tool server (`app/`), which books into a mock ServiceTitan (`servicetitan_mock/`). Claude Haiku 5.5 writes the replies; the server speaks every sentence that has to be exact.
+- **Where the rules live.** In layers, each with one job: the server's code holds every rule that must happen (safety lines, priority, the read-back before booking, dispatch); company and trade config hold the wording, seasons and roster; the prompt holds how Brian talks; a side model only ever raises priority; the socket and a reply filter guard what gets said. One caller line through every layer, and the if-then tree on a no-heat or gas call: [docs/rule-layers.md](docs/rule-layers.md).
+- **How it's tested.** Each bug found on a phone call became a test that names the call, so the suite (about 3,700 tests, `make check`) reads as the list of things that went wrong once. Above it: simulated callers through the real socket ([evals/](evals/README.md)), scripted phone calls on the live number, and A/B comparisons judged by hand ([evals/rounds/](evals/rounds/README.md)).
+- **What it doesn't do yet.** Spanish, quoting prices (never, by design), commercial bookings (taken as a lead for a person), and outbound callbacks dialed by the agent itself. Known rough edges from the last test round: it sometimes asks the system type after the caller named it, and about one symptom call in six hears "is it still working?" after already saying so. The full list: [docs/later.md](docs/later.md).
+
 **How it's built.** Retell runs the phone line: listening, turn-taking, backchannels and the voice ("Brian"). Our tool server owns the facts and the rules: lookups, the read-back before booking, the service area, the residential check, priority, emergency dispatch, identity checks and the safety lines. The turn itself runs on our server through Retell's custom-LLM socket (DECISIONS.md 121, `voice/retell_llm/` and `app/flow.py`): the server speaks the sentences that must be exact (the read-back, slot offers, the booking line, safety, the greeting and the goodbye) and Claude Haiku 5.5 writes the rest. The socket build passed the done bar on 24 scripted phone calls, 23 of them clean, with no safety errors (DECISIONS.md 119 and 126, [evals/rounds/socket-buildout-01.md](evals/rounds/socket-buildout-01.md)). The hosted single-prompt Retell agent it replaced stays as the fallback, one phone-number switch away. Two small OpenAI calls sit beside the conversation: a side model (OpenAI Decisions) answers one yes-or-no question about a caller's line (is someone at risk at home, is there a danger right now), and only ever raises priority or brings the safety lines; and an embedding index finds the passage that answers an equipment question (DECISIONS.md 131, 132).
 
 ```
@@ -27,7 +34,7 @@ Call it at (516) 212-9051 (DECISIONS.md 127). A caller who asks for a person is 
 | Tell residential from commercial | `record_lead` kind `commercial` and the booking gate in `app/tools.py`; the company's rule in `tenants/summit-air/` | `test_ts_booking.py`, `test_ts_calls.py` |
 | Know whether the caller is a member | Caller-ID lookup before hello (`app/lookup.py`, `prompts/assemble.py` call notes) and `find_customer` | `test_ts_lookup.py`, `test_ts_accounts.py` |
 | Collect what a technician needs | `book_appointment`'s required details and the job summary (`app/booking.py`), the access question and the catch-all answer | `test_ts_booking.py`, `test_ts_summary.py` |
-| Separate routine from urgent (no heat in winter, no AC with a medical condition or an older person, gas) | Priority from the caller's own words (`app/priority.py`), safety lines and gates (`app/safety.py`), emergency dispatch, and one Routine, Urgent or No visit label per call (`app/labels.py`) | `test_ts_priority.py`, `test_ts_priority_caller_words.py`, `test_ts_safety.py`, `test_ts_dispatch.py`, `test_ts_labels.py` |
+| Separate routine from urgent (no heat in winter, no AC with a medical condition or an older person, gas) | Priority from the caller's own words (`app/priority.py`), safety lines and gates (`app/safety.py`), emergency dispatch, and one Emergency dispatch, Scheduled or No visit label per call (`app/labels.py`) | `test_ts_priority.py`, `test_ts_priority_caller_words.py`, `test_ts_safety.py`, `test_ts_dispatch.py`, `test_ts_labels.py` |
 | Book the visit or confirm next steps | `read_back`, `find_slots`, `book_appointment` against the CRM, with `flag_person`, `record_lead` and the warm transfer for everything else | `test_ts_booking.py`, `test_ts_handoff.py`, `test_ts_transfer.py` |
 
 Every rule that must happen lives in server code, never only in the prompt; a flag the model can set is not a gate.
@@ -46,7 +53,7 @@ Every rule that must happen lives in server code, never only in the prompt; a fl
 3. The bench's **Checks** tab runs the Opus failure grader on one call, the past hour or the past day, and flags only real failures (DECISIONS 120).
 4. Retell's own record of the call (`GET /v2/get-call/<id>`) has the audio, per-turn latency and the transcript with tool calls.
 
-## Start here
+## Find your way
 
 | If you want | Read |
 |---|---|
@@ -92,7 +99,7 @@ Every rule that must happen lives in server code, never only in the prompt; a fl
 
 ## Code
 
-The agent first, then the server it calls, then how it's tested and run. Anything retired is kept in an `archive/` folder beside what replaced it, so nothing was deleted.
+The agent first, then the server it calls, then how it's tested and run. Earlier agent arms are kept in `retell/archive/`; the voice stacks that were tried and dropped (ElevenLabs, OpenAI Realtime, Gemini Live, Retell native) are on branch `archive/voice-stacks`.
 
 | Folder | What it is |
 |---|---|
@@ -101,7 +108,8 @@ The agent first, then the server it calls, then how it's tested and run. Anythin
 | [voice/retell_llm/](voice/retell_llm/README.md) | The custom-LLM socket Retell talks to: speaks the server's exact sentences, Haiku writes the rest |
 | [voice/retell/](voice/retell/README.md), `voice/retell_flow/` | The bridge between Retell and the tool server: caller ID and call context before hello, the call's start and end |
 | `retell/summit-air-jackson/` | The hosted single-prompt agent kept as the fallback, snapshotted after every change, with its prompt log in [retell/PROMPT-LOG.md](retell/PROMPT-LOG.md) |
-| `retell/archive/`, `voice/archive/` | Earlier agent arms (Sonnet, behavioral Haiku, server-led) and voice stacks (LiveKit, ElevenLabs, OpenAI Realtime, Gemini Live, Retell native), kept as the reference (DECISIONS.md 112, 121, 124) |
+| `retell/archive/` | Earlier agent arms (Sonnet, behavioral Haiku, server-led), kept as the reference (DECISIONS.md 112, 121, 124) |
+| [voice/livekit/](voice/livekit/README.md) | The first phone stack (LiveKit, Deepgram, Claude, Cartesia). No number rings it now; it runs the agent in process for the text evals and the rules gate |
 | **The server** | |
 | [app/](app/README.md) | The tool server every call talks to: gates, priority, safety, booking, transfers, the owner view and the debug bench |
 | `tenants/summit-air/`, `trades/hvac/` | The company's own facts, area and wording, over the HVAC trade's rules |

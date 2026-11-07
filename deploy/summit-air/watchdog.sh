@@ -13,10 +13,12 @@ set -a; . "$BASE/.env"; set +a
 
 sh deploy/summit-air/run.sh
 
-# The worker's own health page answers 200 only once it is registered with LiveKit.
-if curl -fsS -m 5 http://127.0.0.1:8081/ >/dev/null 2>&1 \
-   && curl -fsS -m 5 http://127.0.0.1:8100/healthz >/dev/null 2>&1; then
-  curl -fsS -m 5 -X POST -H 'Content-Type: application/json' -d '{"worker":"livekit"}' \
+# The phone path is up when the tool server answers its health page and the Retell socket that
+# answers the demo number (port 8114, a systemd unit) answers at all; it has no health page, so
+# any HTTP status counts.
+socket=$(curl -s -o /dev/null -m 5 -w '%{http_code}' http://127.0.0.1:8114/ 2>/dev/null)
+if curl -fsS -m 5 http://127.0.0.1:8100/healthz >/dev/null 2>&1 && [ "${socket:-000}" != 000 ]; then
+  curl -fsS -m 5 -X POST -H 'Content-Type: application/json' -d '{"worker":"retell"}' \
     http://127.0.0.1:8100/healthz/heartbeat >/dev/null 2>&1
   [ -n "${HEALTHCHECK_URL:-}" ] && curl -fsS -m 10 "$HEALTHCHECK_URL" >/dev/null 2>&1
   if [ "${PHONE_FALLBACK:-off}" = on ] && [ "$(cat "$STATE" 2>/dev/null)" = "fallback" ]; then
@@ -27,7 +29,7 @@ else
   failures=$(cat "$STATE" 2>/dev/null)
   case "$failures" in fallback) exit 0 ;; ''|*[!0-9]*) failures=0 ;; esac
   failures=$((failures + 1))
-  echo "$(date -u +%FT%TZ) worker check failed ($failures)" >>"$BASE/logs/watchdog.log"
+  echo "$(date -u +%FT%TZ) phone path check failed ($failures)" >>"$BASE/logs/watchdog.log"
   if [ "${PHONE_FALLBACK:-off}" = on ] && [ "$failures" -ge 2 ] \
      && uv run python -m scripts.phone.fallback on >>"$BASE/logs/watchdog.log" 2>&1; then
     failures=fallback

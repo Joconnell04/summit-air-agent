@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from servicetitan_mock.app import create_app as create_mock
 from servicetitan_mock.seed import build_world
 from tests.tool_server.toolkit import START, TENANT_DIR, Agent, Clock, make_server
-from voice.archive.livekit.server import ToolServer
+from voice.livekit.server import ToolServer
 
 
 @pytest.fixture(scope="session")

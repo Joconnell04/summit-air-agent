@@ -10,10 +10,10 @@ from app import side_model
 from app.tenant import load_agent
 from prompts import assemble
 from tests.voice.test_voice_call import ENDPOINTING, Session, _stream
-from voice.archive.livekit.call import Call, SummitAgent
-from voice.archive.livekit.settings import load_voice
-from voice.archive.livekit.tools import ToolLog
-from voice.archive.livekit.worker import agent_instructions, is_stripped
+from voice.livekit.call import Call, SummitAgent
+from voice.livekit.settings import load_voice
+from voice.livekit.tools import ToolLog
+from voice.livekit.worker import agent_instructions, is_stripped
 
 TENANT = Path(__file__).resolve().parents[2] / "tenants" / "summit-air"
 START = {

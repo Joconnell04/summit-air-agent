@@ -123,8 +123,8 @@ make eval-pairs PAIRS=two-callers-last-slot SAMPLES=3
 The text harness can't compare reply delay across platforms, because each one reports it differently (the Retell row above times a whole chat reply). The audio rig in `evals/audio_rig/` measures every entrant the same way, on the audio itself, for the bake-off in DECISIONS.md 026 (docs/bakeoffs.md, bake-off 6).
 
 ```
-make rig STACK=elevenlabs                     # smoke suite, each must-pass scenario three times
-make rig STACK=openai_realtime MAX_COST=5     # stops once the run has cost $5
+make rig STACK=retell_llm                     # smoke suite, each must-pass scenario three times
+make rig STACK=retell_llm MAX_COST=5          # stops once the run has cost $5
 make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
 ```
 
@@ -141,9 +141,8 @@ make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
 |---|---|---|---|
 | `livekit` | `livekit-rig` | A scratch world per scenario, through the rig's router | The real worker runs locally under its own agent name; the rig joins each call's room as the SIP caller |
 | `retell` | `retell-rig` | The eval instance, reset before each call | A Retell web call (WebRTC) on a voice agent named as a rig test agent, using the eval LLM and bridge |
-| `elevenlabs` | `elevenlabs` | A scratch world, through the rig's router | ElevenLabs' conversation WebSocket; its model is our brain (`voice/archive/elevenlabs/brain.py`) behind a temporary ngrok tunnel; the test agent is deleted after the run |
-| `openai_realtime` | `openai-realtime` | A scratch world, in process | OpenAI's Realtime WebSocket; function calls forwarded to the tool server |
-| `gemini_live` | `gemini-live` | A scratch world, in process | Gemini's Live WebSocket; function calls forwarded to the tool server |
+
+The ElevenLabs, OpenAI Realtime and Gemini Live entrants from the first bake-off (`evals/rounds/bakeoff-audio-01.md`) are on branch `archive/voice-stacks`.
 
 **Results.** The same results file as the text harness, with `transport: audio`, and per turn `caller_speech_ms`, `agent_speech_ms` and, where the voice program logs one, `platform_reply_ms` (our worker's own measure of the same gap) and `model_first_token_ms`, plus `platform_stages` (every stage timing the voice program logged for the caller's line and the reply, such as LiveKit's `end_of_turn_ms`) and `over_caller_ms` (how long before the caller finished the agent made a sound, when it did: on a stack that never backchannels, a cut-off). Agent lines in the transcript are what the caller heard, with the platform's own text in `said`. Each scenario has `silent_turns` and `cost_parts` (caller voice, agent ears, platform, brain model, caller model, grader). `make rig-report` prints the bake-off table, the safety calls one by one (the server's check, the platform's text against the signed-off lines, and what the caller heard against them) and the decision 026 verdict. A stack is chosen only from runs that scored six safety calls and three runs of every must-pass scenario in a named suite, so a run stopped by `MAX_COST` can only tie.
 

@@ -13,9 +13,9 @@ from tests.tool_server.toolkit import in_area_address
 from tests.voice.replies import no_reply
 from tests.voice.test_voice_call import make_call
 from tests.voice.test_voice_tools import JOB_TYPES, Hangups, Voice
-from voice.archive.livekit.bridge import Bridge
-from voice.archive.livekit.call import SummitAgent
-from voice.archive.livekit.tools import ToolLog, build_tools
+from voice.livekit.bridge import Bridge
+from voice.livekit.call import SummitAgent
+from voice.livekit.tools import ToolLog, build_tools
 
 
 def caller(text: str) -> ChatMessage:

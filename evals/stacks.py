@@ -325,7 +325,7 @@ class InProcessAgent:
         return turn
 
     def _hand_off(self, line: str, handoff: dict, t0: float) -> AgentTurn:
-        """What the worker does with a caller the server handed off (voice/archive/livekit/transfer.py):
+        """What the worker does with a caller the server handed off (voice/livekit/transfer.py):
         say the server's line, then report the transfer as the scenario's phone company would.
         Sent ends the call; failed says the stored callback line and the call carries on."""
         turn = self._speak_from_code(line, t0)
@@ -384,7 +384,7 @@ class InProcessAgent:
                     first_word = hop_start + reply.first_token_ms / 1000
             if not reply.tool_uses:
                 # A reply that would leave the caller waiting in silence is asked again at once,
-                # as the worker does (voice/archive/livekit/call.py follow_up).
+                # as the worker does (voice/livekit/call.py follow_up).
                 follow = (
                     self.reply.dead_end(reply.text or "", said or "", []) if self.reply else None
                 )

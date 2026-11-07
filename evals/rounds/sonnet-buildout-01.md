@@ -1,5 +1,7 @@
 # Sonnet build-out 1: arm B against the done bar
 
+Raw run data (`sonnet-buildout-01-data/`) is on branch `archive/voice-stacks`; the findings below stand on their own.
+
 Issue #175, brief `docs/ai-process/briefs/sonnet-buildout.md`. Arm B of the side-by-side (agent_871ef6fafe2636244c4bbaca67, Jackson's agent on Claude Sonnet 5.5, eval world, line (678) 336-6730) run against the done bar in DECISIONS 119 with varied, seeded callers, and tuned between batches. Every number is MEASURED from `sonnet-buildout-01-data/` (how is in Method) unless it says otherwise.
 
 **In short.** B met the bar's safety half everywhere. Across 36 done-bar journey runs on five prompt versions it made no safety error, and it passed 35 of the 36 journeys:

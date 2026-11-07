@@ -37,7 +37,7 @@ Kinds: **G** hard gate in server code; **W** exact wording line in tenant config
 | 19 | Booking | Offer the shape of availability, then exact windows | S | spine.md:15 |
 | 20 | Closing | No hang-up in the turn that confirms a booking; "anything else?" first | G, W | tools.py:1098-1107; agent.yaml:344 |
 | 21 | Closing | A safety call ends with the sign-off, and hangs up only after goodbye | G, W | tools.py:1075-1096; agent.yaml:109-111 |
-| 22 | Closing | Goodbye line when the model gives none | W | agent.yaml:361; voice/archive/livekit/worker.py:179-190 |
+| 22 | Closing | Goodbye line when the model gives none | W | agent.yaml:361; voice/livekit/worker.py:179-190 |
 | 23 | Closing | Offer membership only at the natural end of a routine call | S | journeys.md:27 |
 | 24 | After call | Outcome from records; dropped safety call gets an Urgent flag and a callback in 10 min | G, P | lifecycle.py:274-319; agent.yaml:282 |
 | 25 | After call | Outbound callbacks 08:00 to 21:00, one attempt, only to the caller, never to do-not-call | G, P | records.py:256-282; agent.yaml:279-280 |

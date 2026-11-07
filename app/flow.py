@@ -66,7 +66,7 @@ OUTCOME_TOOLS = (
 # Share of a sentence's words the agent's lines after it must hold to count as having said it. The
 # gate is for a sentence never said at all (end_call in the same turn as the booking), which shares
 # almost no words. Haiku's rewordings of the booking sentence shared 0.62 to 0.94 of its words
-# (MEASURED, evals/rounds/server-led-01-data), and 0.7 held one back.
+# (MEASURED, evals/rounds/server-led-01-data on branch archive/voice-stacks), and 0.7 held one back.
 SAID_SHARE = 0.5
 
 

@@ -1,5 +1,7 @@
 # Server-led arm, round 1: the server runs the steps, the model talks
 
+Raw run data (`server-led-01-data/`) is on branch `archive/voice-stacks`; the findings below stand on their own.
+
 Issue #171, brief `docs/ai-process/briefs/server-led-flow.md`. Arm D of the agent side-by-side: Jackson's Retell agent with the call flow moved out of the prompt and into the tool server. Every number here is MEASURED from the files in `server-led-01-data/` unless it says otherwise.
 
 **In short.** The order now holds in code on every call: no opening before a confirmed read-back, no booking before the three visit questions, no goodbye while a booking sentence is unsaid. The prompt is 828 words, 37% of Jackson's 2,254 (MEASURED with `wc -w`). But on simulated chats Haiku still breaks the voice-level checks the arm was meant to fix: it reworded about half of the server's sentences, narrated its steps on 8 of 12 calls and said a caller's name on 3 of 12. Prompt wording stopped moving those numbers after the second round. The ceiling here is the model writing every word, not where the flow lives.

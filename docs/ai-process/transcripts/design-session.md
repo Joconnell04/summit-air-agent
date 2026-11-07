@@ -12,7 +12,7 @@ Read the brief and inputs; writing users.md version 1 now.
 
 **Claude:**
 
-I've written version 1 of [docs/users.md](docs/users.md), logged it as round 1 in coauthoring.md and committed it on main. Nothing is pushed. Here's the short version:
+I've written version 1 of [docs/users.md](../../users.md), logged it as round 1 in coauthoring.md and committed it on main. Nothing is pushed. Here's the short version:
 
 **Callers**
 1. **No heat or no cooling:** the most common call. They want someone out soon and a real arrival window.
@@ -57,7 +57,7 @@ Both research reports are in. Revising users.md now.
 
 Users is revised from your feedback and the research, and now locked at round 2. Everything is pushed to main: round 2 with your words logged verbatim in coauthoring.md, the lock, and the ticked step in phases.md.
 
-**What changed in [docs/users.md](docs/users.md)**
+**What changed in [docs/users.md](../../users.md)**
 - **Staff roles are now based on research.** At a 40-tech shop the person answering the phone and the dispatcher are different people. A service manager runs the techs, and comfort advisors sell replacement systems. The on-call person is a technician who keeps the after-hours phone for a week at a time and decides whether to go out tonight. That last point is still an assumption, though it's the most common setup. Each role now says what it judges success by.
 - **New section on how the agent tells callers apart.**
   - Facts the server already has: the phone number, membership, open jobs, and whether the ZIP has a surge.
@@ -72,7 +72,7 @@ Users is revised from your feedback and the research, and now locked at round 2.
 - **Languages:** one agent handles Spanish on the call, and other languages get a callback.
 - **Also new:** a caller type for replacement and install quotes, which are common in NYC because of the state Clean Heat program. The renter section now reflects the NYC heat law, and the tune-up surge line is rewritten in plain words.
 
-Your playbook and repeat-caller ideas went into [docs/considerations.md](docs/considerations.md) as C-32 and C-33, with new points on five existing items. The research is in [docs/explorations/001-hvac-shop-operations.md](docs/explorations/001-hvac-shop-operations.md) and [docs/explorations/002-nyc-callers.md](docs/explorations/002-nyc-callers.md).
+Your playbook and repeat-caller ideas went into [docs/considerations.md](../../considerations.md) as C-32 and C-33, with new points on five existing items. The research is in [docs/explorations/001-hvac-shop-operations.md](../../explorations/001-hvac-shop-operations.md) and [docs/explorations/002-nyc-callers.md](../../explorations/002-nyc-callers.md).
 
 **/next**
 1. Phase 1, Design: users is done, call journeys is next.
@@ -122,7 +122,7 @@ Your feedback is applied and the readout system is in place. Research on #4, #5 
 - This is now a repo rule in CLAUDE.md, the needs-decision issue template and `/next`. GitHub issues stay as the tracker and link to the file.
 - I saved two memories: your mid-step ideas are things to look into, not decisions, and the readout format.
 
-**Ready now:** [docs/decisions/10-considerations-triage.md](docs/decisions/10-considerations-triage.md) gives a proposed in, later or out for every consideration. I propose seven items for later and none out. Read it whenever you like and tell me what to change.
+**Ready now:** [docs/decisions/10-considerations-triage.md](../../decisions/10-considerations-triage.md) gives a proposed in, later or out for every consideration. I propose seven items for later and none out. Read it whenever you like and tell me what to change.
 
 **Still researching:** #4 voice platform, #5 pipeline and models, #6 eval design. Each will land in `docs/decisions/`, and I'll tell you as each one is ready. Then we go through them in order: #4, #5, #6, then #10.
 
@@ -130,8 +130,8 @@ Your feedback is applied and the readout system is in place. Research on #4, #5 
 
 The #4 voice platform and #6 eval design readouts are ready and pushed. #5 (pipeline and models) is still researching.
 
-- [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md) recommends LiveKit as the main platform with Retell on standby. It adds the $50/mo LiveKit plan, because the free one takes 10 to 20 s to wake an idle agent, and a written rule for switching the demo number to Retell. The idea that Revin uses LiveKit rests on one job post that has since been taken down.
-- [docs/decisions/06-eval-design.md](docs/decisions/06-eval-design.md) recommends our own text-mode harness, scored by code checks against the server, with an LLM grader for call quality and about 10 audio calls added after #4 is decided. A quick run costs about $1 and a full run about $15 (ASSUMED).
+- [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md) recommends LiveKit as the main platform with Retell on standby. It adds the $50/mo LiveKit plan, because the free one takes 10 to 20 s to wake an idle agent, and a written rule for switching the demo number to Retell. The idea that Revin uses LiveKit rests on one job post that has since been taken down.
+- [docs/decisions/06-eval-design.md](../../decisions/06-eval-design.md) recommends our own text-mode harness, scored by code checks against the server, with an LLM grader for call quality and about 10 audio calls added after #4 is decided. A quick run costs about $1 and a full run about $15 (ASSUMED).
 
 You can start reading #4 now. I'll tell you when #5 is ready.
 
@@ -139,13 +139,13 @@ You can start reading #4 now. I'll tell you when #5 is ready.
 
 All four readouts are ready and pushed. Each one is linked on its GitHub issue, and you can open them in split view.
 
-1. **[#4 Voice platform](docs/decisions/04-voice-platform.md):** I recommend LiveKit as the main platform, with a Retell number on standby using the same tool server. That means LiveKit's $50/mo plan, plus a written rule for when the demo number switches to Retell. The only evidence that Revin uses LiveKit is one job post, which has since been taken down.
-2. **[#5 Pipeline and models](docs/decisions/05-pipeline-and-models.md):** I recommend separate speech-to-text, LLM and text-to-speech stages, and the safety script is spoken straight from code with no model involved. A single speech-to-speech model was no faster than Bobert's measured 1.0 s and can't guarantee the safety wording word for word.
+1. **[#4 Voice platform](../../decisions/04-voice-platform.md):** I recommend LiveKit as the main platform, with a Retell number on standby using the same tool server. That means LiveKit's $50/mo plan, plus a written rule for when the demo number switches to Retell. The only evidence that Revin uses LiveKit is one job post, which has since been taken down.
+2. **[#5 Pipeline and models](../../decisions/05-pipeline-and-models.md):** I recommend separate speech-to-text, LLM and text-to-speech stages, and the safety script is spoken straight from code with no model involved. A single speech-to-speech model was no faster than Bobert's measured 1.0 s and can't guarantee the safety wording word for word.
    - "Jev" is TypeSafe AI's hosted decision model.
    - We launch with the fixed phrase list and the server rules. OpenAI Decisions and Jev then get tested in the evals on two questions: whether the caller agreed to the read-back, and whether someone vulnerable is in the home. One gets kept only if it beats the phrase list.
    - Laya is dropped.
-3. **[#6 Eval design](docs/decisions/06-eval-design.md):** I recommend our own harness. A simulated caller talks in text to the real tool server, code checks decide pass or fail, and an LLM grader scores how the call felt. About 10 real audio calls get added after #4 is decided. A quick run costs about $1 and a full run about $15 (ASSUMED).
-4. **[#10 Considerations triage](docs/decisions/10-considerations-triage.md):** a proposed in, later or out for each of the 36 considerations. Seven are later, none are out.
+3. **[#6 Eval design](../../decisions/06-eval-design.md):** I recommend our own harness. A simulated caller talks in text to the real tool server, code checks decide pass or fail, and an LLM grader scores how the call felt. About 10 real audio calls get added after #4 is decided. A quick run costs about $1 and a full run about $15 (ASSUMED).
+4. **[#10 Considerations triage](../../decisions/10-considerations-triage.md):** a proposed in, later or out for each of the 36 considerations. Seven are later, none are out.
 
 The #5 readout runs a bit past one screen because it covers two questions: the pipeline and the side models. The order is #4 first, because #5 and #6 partly depend on it.
 
@@ -273,7 +273,7 @@ Cleaning up the earlier practice agent:
 - On Vultr, its servers, tunnel and auto-restart job are stopped. The files are kept, and a note on the server says how to bring it back.
 - Its two Postman monitors were still failing every day and emailing you. Both are paused.
 
-**What needs you now: #4, the voice platform.** The full readout is [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md). Here's the simple version.
+**What needs you now: #4, the voice platform.** The full readout is [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md). Here's the simple version.
 
 A phone agent has four jobs:
 - **Ears:** turn the caller's voice into text.
@@ -296,7 +296,7 @@ Three things to know before you pick:
 - **No $50 LiveKit plan.** Our program runs on the Vultr server you already pay for, so it's always awake. Whether that server can handle 5 calls at once, and what happens to call number 6, is still being researched.
 - **Backup isn't automatic.** Twilio only switches to a backup if LiveKit's phone connection is completely dead. If our program crashes while LiveKit stays up, calls won't move over on their own, so we need a health check that switches the number to the backup. That's in the plan.
 
-The #5 pipeline readout is rewritten in plainer words and its early "decided" entry is undone ([docs/decisions/05-pipeline-and-models.md](docs/decisions/05-pipeline-and-models.md)). We'll pick it up after #4.
+The #5 pipeline readout is rewritten in plainer words and its early "decided" entry is undone ([docs/decisions/05-pipeline-and-models.md](../../decisions/05-pipeline-and-models.md)). We'll pick it up after #4.
 
 Three things are still running in the background: the capacity and cost research, the mock ServiceTitan build, and the decision-model test plan.
 
@@ -315,13 +315,13 @@ The capacity and cost research is back and committed. It doesn't change my recom
   - about $388 for the half-budget setup
   - about $1,566 for running everything on Retell
 
-  A missed call is worth about $165 to $570. That's [docs/cost.md](docs/cost.md), and it answers the owner's "what if we halved the budget" question.
+  A missed call is worth about $165 to $570. That's [docs/cost.md](../../cost.md), and it answers the owner's "what if we halved the budget" question.
 
-The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md).
+The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md).
 
 **Claude:**
 
-I've committed the plan for testing decision models later: [evals/decision-models/PLAN.md](evals/decision-models/PLAN.md). It's a design only, and nothing has been run.
+I've committed the plan for testing decision models later: [evals/decision-models/PLAN.md](../../../evals/decision-models/PLAN.md). It's a design only, and nothing has been run.
 
 - **What it tests:** four questions on 480 labelled lines.
   - "Is a vulnerable person in the home" is the main one.
@@ -336,7 +336,7 @@ I've committed the plan for testing decision models later: [evals/decision-model
 - **Cost:** about $0.08 for a quick run and $1.10 for a full run.
 - **Your input later:** the pass bars are placeholders for you to confirm before the first full run.
 
-The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md).
+The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md).
 
 **Claude:**
 
@@ -350,7 +350,7 @@ The mock ServiceTitan is built and open as [PR #14](https://github.com/Joconnell
 
 A review agent is checking the PR against its brief now. I'll merge it once the review findings are fixed.
 
-The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md).
+The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md).
 
 **Claude:**
 
@@ -362,13 +362,13 @@ The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md
 
 All 62 tests still pass, and GitHub now shows the PR as mergeable. The review agent is still checking it.
 
-The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md).
+The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md).
 
 **Claude:**
 
 That comment on [PR #14](https://github.com/Joconnell04/summit-air-agent/pull/14) is only Codex's status banner saying its review is still running. It contains no feedback, so I haven't changed or replied to anything. If Codex posts actual findings, I'll fix them then. Our own review agent is still running too.
 
-The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md).
+The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md).
 
 **Claude:**
 
@@ -386,7 +386,7 @@ Our own review agent finished and asked for changes before merge. A background a
 
 I'll merge once those land and checks pass.
 
-The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md).
+The question waiting on you is still #4, in [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md).
 
 **Claude:**
 
@@ -397,7 +397,7 @@ The review fixes were the last step before merging:
 - **README:** it now states plainly that one database lock decides which of two simultaneous bookings wins, and the unique slot rule is a second safeguard behind it. A new test shows that a booking that fails can be retried with the same key once a slot frees up.
 - **Log reader:** it now rejects a bad `limit` value and skips any log line it can't read instead of crashing.
 
-The only thing waiting on you is #4. The readout is [docs/decisions/04-voice-platform.md](docs/decisions/04-voice-platform.md).
+The only thing waiting on you is #4. The readout is [docs/decisions/04-voice-platform.md](../../decisions/04-voice-platform.md).
 
 ## 7. Jackson
 
@@ -436,7 +436,7 @@ I bought the new number: **(646) 624-0418**. 646 is the Manhattan overlay of 212
 - **Server reboots, measured:** the server reboots only on days an update needs it, 5 times between Sep 5 and Oct 14, at 4:30 a.m. (5:30 a.m. in summer). It's down 10 to 12 seconds each time, and our services should be taking calls again within about a minute (an estimate until we see a real reboot).
   - An outside monitor alerts you if the server doesn't come back.
   - The watchdog also moves the number to the backup if our program is down while LiveKit is still up.
-  - This is all in [docs/architecture.md](docs/architecture.md).
+  - This is all in [docs/architecture.md](../../architecture.md).
 
 **Balances**
 - **Cartesia: top up.** I recommend the Pro plan at $5 a month. The free plan's 20,000 credits are about 27 minutes of agent speech, which runs out during the bake-off. Pro gives about 133 minutes.
@@ -449,7 +449,7 @@ I bought the new number: **(646) 624-0418**. 646 is the Manhattan overlay of 212
 
 **Texting compliance:** a research agent is preparing a submission meant to pass the first time ([#15](https://github.com/Joconnell04/summit-air-agent/issues/15)). It covers which registration path fits, the most common rejection reasons, every form field drafted for you, and the privacy and texting-terms page that has to be live first. One constraint already: the registration has to be in your name as an individual. Registering the fictional "Summit Air" would be misrepresentation and gets rejected. I'll bring it to you when it's ready.
 
-**What needs you now: [docs/decisions/16-server.md](docs/decisions/16-server.md).** The choice is the current shared server or a new one for Summit Air. I recommend a new 2 CPU, 4 GB server in Vultr's New Jersey data center for about $20 a month, billed by the hour. That gets rid of ngrok and any risk to [another client]'s client services, it sits next to New York instead of in Atlanta, and you can delete it after the interview. That's new spend, so I need your yes.
+**What needs you now: [docs/decisions/16-server.md](../../decisions/16-server.md).** The choice is the current shared server or a new one for Summit Air. I recommend a new 2 CPU, 4 GB server in Vultr's New Jersey data center for about $20 a month, billed by the hour. That gets rid of ngrok and any risk to [another client]'s client services, it sits next to New York instead of in Atlanta, and you can delete it after the interview. That's new spend, so I need your yes.
 
 ## 8. Jackson
 
@@ -461,7 +461,7 @@ Server readout is updated. Now revising #5 with your notes.
 
 **Claude:**
 
-**Server ([docs/decisions/16-server.md](docs/decisions/16-server.md)):** I recommend a new Vultr server in New Jersey: 2 CPUs and 4 GB for $20 a month, billed by the hour. If you delete it after the interview, it comes to about $5 to $10 in total (assuming about 10 days). The alternatives:
+**Server ([docs/decisions/16-server.md](../../decisions/16-server.md)):** I recommend a new Vultr server in New Jersey: 2 CPUs and 4 GB for $20 a month, billed by the hour. If you delete it after the interview, it comes to about $5 to $10 in total (assuming about 10 days). The alternatives:
 - DigitalOcean (New York) and Linode (Newark) are about $24 a month for the same size and need new accounts.
 - Hetzner used to be the cheapest, but it raised prices twice this year and the small plans are being retired. It's also in Virginia or Oregon, not near New York.
 - Usage-billed platforms like Fly.io or Railway don't save money here, because the voice program has to stay running all day.
@@ -473,7 +473,7 @@ To set it up, either add a Vultr API key to the vault and I'll create the server
 - Ubuntu 24.04
 - the `vultr_personal` SSH key
 
-**#5, rewritten from your notes ([docs/decisions/05-pipeline-and-models.md](docs/decisions/05-pipeline-and-models.md)):** read it after the server.
+**#5, rewritten from your notes ([docs/decisions/05-pipeline-and-models.md](../../decisions/05-pipeline-and-models.md)):** read it after the server.
 - **Section 4, the brain's harness** (new). The model never reaches into ServiceTitan itself; our server does the work:
   - It looks up the caller's number before the agent says hello.
   - It gives the model about six small tools.
@@ -482,13 +482,13 @@ To set it up, either add a Vultr API key to the vault and I'll create the server
   - It puts time limits on every lookup, with a fallback line so the caller never hears dead air.
 - **Option C** is now rejected for your reason: every part of the call has two of something, so there are more ways for it to fail, and the safety check would still only catch "gas" after the agent has started answering.
 - **Side models:** launch with none and a slot for one. The rule for adding one is to find a real bottleneck first, then test whether a side model fixes it.
-- **Bake-offs:** listed in the new [docs/bakeoffs.md](docs/bakeoffs.md).
+- **Bake-offs:** listed in the new [docs/bakeoffs.md](../../bakeoffs.md).
   - A small speech-to-speech check of OpenAI Realtime and Gemini Live, a few dollars.
   - Side models: none against a second Haiku call against Jev, a post-trained Laya and OpenAI Decisions.
   - The model matrix (Haiku, Sonnet, Opus and so on), designed later.
 - **Spanish** is left out of everything for now.
 
-**Waiting after that:** the texting registration readout ([docs/decisions/15-texting-registration.md](docs/decisions/15-texting-registration.md)) is done. The short version: register as a Twilio sole proprietor in your own name, with "Summit Air" described only as a demo, because a fictional company as the brand gets rejected. It costs about $19.50 up front and takes roughly 1 to 3 weeks. Texts from the 646 number are blocked until it's approved. It also needs a public privacy and terms page to be live before you submit. Every form field is drafted. We'll go through it once #5 is settled.
+**Waiting after that:** the texting registration readout ([docs/decisions/15-texting-registration.md](../../decisions/15-texting-registration.md)) is done. The short version: register as a Twilio sole proprietor in your own name, with "Summit Air" described only as a demo, because a fictional company as the brand gets rejected. It costs about $19.50 up front and takes roughly 1 to 3 weeks. Texts from the 646 number are blocked until it's approved. It also needs a public privacy and terms page to be live before you submit. Every form field is drafted. We'll go through it once #5 is settled.
 
 ## 9. Jackson
 
@@ -559,7 +559,7 @@ Decision #5 is recorded, the new server is running, and the terms and privacy pa
 - There's no side model at launch, but there's a slot for one. A decision model only goes in where a bottleneck has been measured and the bake-off shows it fixes it.
 - The side-model test (Jev, a post-trained Laya, OpenAI Decisions) is on the come-back-later list.
 
-**Harness additions, in [docs/architecture.md](docs/architecture.md) under "What the agent is allowed to do":**
+**Harness additions, in [docs/architecture.md](../../architecture.md) under "What the agent is allowed to do":**
 - The same slot can't be booked twice.
 - The agent can only do what a phone intake person could, and only on the caller's own records. It has no delete or bulk tools, and every input is checked on the server.
 - There are per-call limits, and the scheduling-system credentials only allow the calls the tools need.
@@ -567,7 +567,7 @@ Decision #5 is recorded, the new server is running, and the terms and privacy pa
 - A caller saying "delete everything" can at worst get the model to ask for a tool the server refuses.
 - There are eval callers for prompt injection and for "delete everything".
 
-**Bake-offs ([docs/bakeoffs.md](docs/bakeoffs.md)):** every bake-off is judged on one scorecard:
+**Bake-offs ([docs/bakeoffs.md](../../bakeoffs.md)):** every bake-off is judged on one scorecard:
 - safety gates hold, and a single failure rules a candidate out
 - books correctly
 - feels like a person
@@ -577,7 +577,7 @@ Decision #5 is recorded, the new server is running, and the terms and privacy pa
 
 Each bake-off states its hypothesis and decision rule before it runs. The voice platform comparison is still on.
 
-**Following the reasoning:** [docs/ai-process/design-trail.md](docs/ai-process/design-trail.md) lists every decision in order, with links to the research, readouts and logged rounds. Adding a row each time a decision lands is now a repo rule. [docs/later.md](docs/later.md) holds everything you've set aside, Spanish first. The phase plan has a step to go through it with you before V1 is done.
+**Following the reasoning:** [docs/ai-process/design-trail.md](../design-trail.md) lists every decision in order, with links to the research, readouts and logged rounds. Adding a row each time a decision lands is now a repo rule. [docs/later.md](../../later.md) holds everything you've set aside, Spanish first. The phase plan has a step to go through it with you before V1 is done.
 
 **New server:** `summit-air`, 45.77.105.247, in New Jersey.
 - You have admin rights. Login is by SSH key only, and root login is off.
@@ -595,7 +595,7 @@ Each bake-off states its hypothesis and decision rule before it runs. The voice 
 
 So the $30 would get down to about $5. No other subscriptions are needed beyond the Cartesia Pro plan you're getting.
 
-**What needs you now: texting registration, [docs/decisions/15-texting-registration.md](docs/decisions/15-texting-registration.md).**
+**What needs you now: texting registration, [docs/decisions/15-texting-registration.md](../../decisions/15-texting-registration.md).**
 - The terms and privacy pages are live at https://joconnell04.github.io/summit-air-demo-line/, with your name and jt272004@gmail.com.
 - I recommend starting option A today. That's a Twilio sole proprietor registration in your own name.
 - You have to do the identity steps yourself (photo ID, a selfie, and a code texted to your personal mobile). I can't enter those for you.
@@ -626,7 +626,7 @@ Order:
 1. **Pick "Sole Proprietor."** You have no EIN for this.
 2. **Create the individual profile.** It asks for your legal name, jt272004@gmail.com, your personal mobile (not a Twilio number), your address, a photo ID and a selfie. Use your exact legal name, because it has to match the terms page and everything after it.
 3. **Register the brand.** Twilio texts a code to your mobile, and you have to reply within 24 hours.
-4. **Stop at the campaign step and send me a message.** I'll set up the Messaging Service with only the 646 number and the opt-out replies, then give you the campaign fields to paste. All of them are drafted in [docs/decisions/15-texting-registration.md](docs/decisions/15-texting-registration.md) under "Fields to paste."
+4. **Stop at the campaign step and send me a message.** I'll set up the Messaging Service with only the 646 number and the opt-out replies, then give you the campaign fields to paste. All of them are drafted in [docs/decisions/15-texting-registration.md](../../decisions/15-texting-registration.md) under "Fields to paste."
 
 The terms and privacy pages are already live, so nothing blocks steps 1 to 3.
 
@@ -655,7 +655,7 @@ On the A2P 10DLC Brands page:
 3. Submit the brand, then reply to the code Twilio texts your mobile within 24 hours.
 4. Stop at **A2P 10DLC Campaigns**, the second item on that same list. It only unlocks once the brand is approved. Tell me when it does and I'll set up the 646 number's messaging service and give you the campaign fields to paste.
 
-If anything on the brand form doesn't match what's in [docs/decisions/15-texting-registration.md](docs/decisions/15-texting-registration.md), or Twilio shows an option I didn't mention, send a screenshot and I'll tell you which to pick.
+If anything on the brand form doesn't match what's in [docs/decisions/15-texting-registration.md](../../decisions/15-texting-registration.md), or Twilio shows an option I didn't mention, send a screenshot and I'll tell you which to pick.
 
 ## 14. Jackson
 
@@ -676,7 +676,7 @@ On your options:
 - **Putting this demo's calls on the [another client] number** would mix client work with an interview demo for no gain. The 646 number already handles calls, and calls don't need any of this registration.
 - **A new Twilio account** could in principle hold a second sole proprietor brand with the same ID. It would still take 1 to 3 weeks and might not land before Nov 9. Not worth it.
 
-So: don't click Next on that form. In V1 the agent confirms the booking out loud and the owner view shows it. Texting moves to [docs/later.md](docs/later.md) and becomes part of the rollout story you tell Paul: before going live, Summit Air registers its own business texting brand with its tax ID, the normal path for a real company, and confirmations switch on. The public terms page and all the drafted fields stay ready for that.
+So: don't click Next on that form. In V1 the agent confirms the booking out loud and the owner view shows it. Texting moves to [docs/later.md](../../later.md) and becomes part of the rollout story you tell Paul: before going live, Summit Air registers its own business texting brand with its tax ID, the normal path for a real company, and confirmations switch on. The public terms page and all the drafted fields stay ready for that.
 
 **Elastic SIP Trunking:** yes, we covered it in explorations 003 and 004, and it's already the plan. It's how the 646 number sends calls to LiveKit, at about $0.0034 a minute, and how Retell could be a fallback on the same number. It isn't what limits how many callers we can take; none of our research flagged Twilio as a limit at this size. The caps we did find:
 - LiveKit's free plan takes 5 calls at once.
@@ -731,13 +731,13 @@ You're right. I sent you down the wrong path on texting and then made you ask wh
 - **What it doesn't do:** Twilio can't hang up a trunk call from its API. That's fine, because the hang-up and transfer rules live in our own code.
 - **What it isn't:** the reason we can take only a few calls at once. Those limits come from LiveKit's free plan (5), the server (about 5) and Cartesia Pro (3 voices speaking at the same instant).
 
-**Next for you to read and speak to:** [docs/decisions/10-considerations-triage.md](docs/decisions/10-considerations-triage.md), the table under "Context". For every consideration it proposes in, later or out, refreshed with today's decisions. My recommendation is option A: build what the six requirements and Paul's likely tests touch, and put the rest in the rollout story. Go row by row and flag anything you'd move.
+**Next for you to read and speak to:** [docs/decisions/10-considerations-triage.md](../../decisions/10-considerations-triage.md), the table under "Context". For every consideration it proposes in, later or out, refreshed with today's decisions. My recommendation is option A: build what the six requirements and Paul's likely tests touch, and put the rest in the rollout story. Go row by row and flag anything you'd move.
 
 After that comes call journeys version 1, the step-by-step path each kind of call takes. I'm drafting it in the background now, and it will have your open choices marked inline.
 
 **Claude:**
 
-Call journeys version 1 is ready: [docs/call-journeys.md](docs/call-journeys.md). It's logged as round 1 and pushed.
+Call journeys version 1 is ready: [docs/call-journeys.md](../../call-journeys.md). It's logged as round 1 and pushed.
 
 It opens with the routine every call follows: lookup before hello, an AI disclosure in the greeting, listening first, a safety check on every turn, read-back before booking, and "anything else?" before ending. Then come 11 journeys, each naming the server check that fires.
 
@@ -749,7 +749,7 @@ It marks six open choices with my recommendation:
 5. **Install and replacement quotes:** a comfort advisor calls back. No booked estimate in V1.
 6. **After-hours urgent calls:** flag the on-call tech, and never promise a visit tonight.
 
-**Read next:** the triage first ([docs/decisions/10-considerations-triage.md](docs/decisions/10-considerations-triage.md)), since it sets scope. Then the call journeys. For the journeys, answer the six "Open:" items and flag anything that sounds wrong for a real call.
+**Read next:** the triage first ([docs/decisions/10-considerations-triage.md](../../decisions/10-considerations-triage.md)), since it sets scope. Then the call journeys. For the journeys, answer the six "Open:" items and flag anything that sounds wrong for a real call.
 
 ## 18. Jackson
 
@@ -781,7 +781,7 @@ Now making every Bobert mention clear that it was an earlier personal project.
 
 Every consideration now has a status, and the considerations step is ticked in the phase plan.
 
-**Scaling ([docs/scaling.md](docs/scaling.md)):**
+**Scaling ([docs/scaling.md](../../scaling.md)):**
 - **Today's cap is Cartesia Pro.** It allows 3 voices speaking at the same instant. A call only uses one while the agent talks, so 4 to 5 calls usually fit.
 - **The other limits:**
   - The server handles about 5 calls, until we load-test it.
@@ -793,7 +793,7 @@ Every consideration now has a status, and the considerations step is ticked in t
 
 **Correction:** I said earlier that LiveKit's free plan caps us at 5 calls at once. That cap applies only to agents LiveKit hosts. We run our own worker, so the real limit is monthly minutes.
 
-**Decision #6:** you're right that we never really went through it. I had recorded "own harness" from a one-line yes. It's now revised from your notes ([docs/decisions/06-eval-design.md](docs/decisions/06-eval-design.md), [evals/README.md](evals/README.md)):
+**Decision #6:** you're right that we never really went through it. I had recorded "own harness" from a one-line yes. It's now revised from your notes ([docs/decisions/06-eval-design.md](../../decisions/06-eval-design.md), [evals/README.md](../../../evals/README.md)):
 - One harness scores both stacks. The Retell baseline runs through Retell's text chat, not its own simulator.
 - Test callers sound like real people: they stutter, correct themselves straight away or only after the read-back, split phone numbers, and get mangled by speech-to-text.
 - Every scenario is labelled by flow and by difficulty (easy, standard, rigorous, adversarial). A run like `make eval TAGS=flow:safety,difficulty:rigorous` or a bake-off across stacks is a single command.
@@ -806,7 +806,7 @@ Every consideration now has a status, and the considerations step is ticked in t
 
 **Bobert:** each doc now says on first mention that it was an earlier personal practice project, not a person. The copied evidence files are left unchanged, and their folder README explains the name.
 
-**Next to read and speak to: [docs/call-journeys.md](docs/call-journeys.md).** Answer its six "Open:" items:
+**Next to read and speak to: [docs/call-journeys.md](../../call-journeys.md).** Answer its six "Open:" items:
 1. Vulnerable household with nothing urgent open today.
 2. Follow-up for a safety caller.
 3. Tenant with no heat.
@@ -841,11 +841,11 @@ Writing call journeys round 2 from your feedback.
 
 **Claude:**
 
-**LangSmith:** your key works. I loaded it into `.env` from the vault, not from your message, so it doesn't appear in any repo file or in the round log. A build agent is adding the viewer on its own branch ([#17](https://github.com/Joconnell04/summit-air-agent/issues/17)). Our eval results stay the source of truth, and each run is copied to LangSmith as an experiment so bake-off setups sit side by side. It also works with LangSmith switched off, and it comes with offline tests and a section in [evals/README.md](evals/README.md).
+**LangSmith:** your key works. I loaded it into `.env` from the vault, not from your message, so it doesn't appear in any repo file or in the round log. A build agent is adding the viewer on its own branch ([#17](https://github.com/Joconnell04/summit-air-agent/issues/17)). Our eval results stay the source of truth, and each run is copied to LangSmith as an experiment so bake-off setups sit side by side. It also works with LangSmith switched off, and it comes with offline tests and a section in [evals/README.md](../../../evals/README.md).
 
 **Revin blog:** a research agent is reading revin.ai/blog for real-world HVAC call patterns and flows we haven't covered. I'll bring you its findings, eight insights at most.
 
-**Call journeys round 2 is done** ([docs/call-journeys.md](docs/call-journeys.md), logged verbatim):
+**Call journeys round 2 is done** ([docs/call-journeys.md](../../call-journeys.md), logged verbatim):
 
 - **Opening a call**
   - The greeting always names Summit Air: "Hi, this is Summit Air. Is this Maria?"
@@ -890,7 +890,7 @@ Once you've answered, read round 2 and say "lock" or give more notes.
 
 **Claude:**
 
-The Revin blog research is in: [docs/explorations/005-revin-blog.md](docs/explorations/005-revin-blog.md). It's based on 22 of their 110 posts, and every figure in it is Revin's own claim. I added the five useful findings as open considerations (C-42 to C-46):
+The Revin blog research is in: [docs/explorations/005-revin-blog.md](../../explorations/005-revin-blog.md). It's based on 22 of their 110 posts, and every figure in it is Revin's own claim. I added the five useful findings as open considerations (C-42 to C-46):
 
 - **Kept bookings and kill criteria (C-42):** Revin measures booked jobs still on the schedule when the tech arrives, not just bookings made, and runs pilots with stop criteria agreed up front. Both fit our success measures and the rollout story.
 - **After-hours thresholds (C-43):** each after-hours no-heat call ends as one of three outcomes: someone goes out tonight, the first morning slot, or a callback. Inside temperature and how fast it's falling decide which. I'd make those cutoffs Summit Air settings, marked as assumed.
@@ -942,7 +942,7 @@ You already answered it. "Your recommendation for journey 12 looks good" was the
 - **The system dials itself:** "an earlier slot opened up" and "you asked us to call you back".
 - **A person makes it:** the follow-up after a gas or carbon monoxide call.
 
-Call journeys round 3 is committed: [docs/call-journeys.md](docs/call-journeys.md). The five Revin findings (C-42 to C-46) are in, each with its reason and the blog post it comes from, marked as vendor practice:
+Call journeys round 3 is committed: [docs/call-journeys.md](../../call-journeys.md). The five Revin findings (C-42 to C-46) are in, each with its reason and the blog post it comes from, marked as vendor practice:
 - **Owner view:** booking rate by call type, callbacks promised against callbacks done, and "booked and kept" (bookings still on the schedule when the tech arrives).
 - **After-hours no-heat** ends in one of three named outcomes:
   - Tonight, if the on-call tech agrees: below 50 F inside, falling fast, or someone at risk.
@@ -969,7 +969,7 @@ The LangSmith results viewer is merged into main ([PR #18](https://github.com/Jo
 - **Results format:** each test result is now pass, fail or error. Error means the simulator itself broke, so it never counts as a failed call. Labels are checked against the README's list. Test calls only show a duration once the harness records one, so nothing shows a false 0 ms.
 - **The demo test experiment** (`livekit-fast-demo-demo-1`) is still in LangSmith under the `summit-air-scenarios` dataset. You can delete it there whenever you like.
 
-The question waiting on you is still whether to lock call journeys at round 3 ([docs/call-journeys.md](docs/call-journeys.md)). Once it's locked, I'll draft the spec.
+The question waiting on you is still whether to lock call journeys at round 3 ([docs/call-journeys.md](../../call-journeys.md)). Once it's locked, I'll draft the spec.
 
 ## 21. Jackson
 
@@ -987,14 +987,14 @@ Now the assumptions in the brief.
 
 Call journeys is locked and #2 is closed.
 
-Spec version 1 is ready for you: [docs/spec.md](docs/spec.md).
+Spec version 1 is ready for you: [docs/spec.md](../../spec.md).
 - **What it is:** 47 statements a test can check, grouped under the six requirements plus rules that apply to every call. Each one says how it's tested (code test, eval scenario tags, grader, or the live calls) and where it comes from.
 - **Must-pass:** 10 are marked with an M. A single miss on any of them fails a run. They cover the safety lines and gates, no 911 tool, the read-back gate, idempotent booking, no commercial or out-of-area bookings, and least privilege.
 - **Numbers to sanity-check:**
   - S-36 sets reply delay at under 1.2 s median on normal replies and under 2.5 s when there's a lookup or booking. That's assumed until the latency budget (#7) is set.
   - S-45 sets retention at transcripts 30 days, call records 12 months.
 
-[docs/brief.md](docs/brief.md) now has the assumptions table, each with what changes if it's wrong:
+[docs/brief.md](../../brief.md) now has the assumptions table, each with what changes if it's wrong:
 - counties: Brooklyn, Queens and Staten Island
 - hours
 - arrival windows
@@ -1053,9 +1053,9 @@ What changed from your notes:
 
 I also updated the users and call journeys docs for the new plan name, the joining flow, the gas trigger and do-not-call, and logged the changes in the spec round.
 
-On your question: [docs/brief.md](docs/brief.md) was already done as part of the spec (the assumptions table, with the new plan names), so nothing more is needed there.
+On your question: [docs/brief.md](../../brief.md) was already done as part of the spec (the assumptions table, with the new plan names), so nothing more is needed there.
 
-**What to read next: [docs/latency.md](docs/latency.md) (#7).** It's a short skim and there's nothing you need to decide in seconds. It splits each reply's wait into stages, each with a source or marked assumed:
+**What to read next: [docs/latency.md](../../latency.md) (#7).** It's a short skim and there's nothing you need to decide in seconds. It splits each reply's wait into stages, each with a source or marked assumed:
 - phone network
 - detecting that the caller has finished
 - the model's first words
@@ -1090,13 +1090,13 @@ Nothing in the assignment argues for more than one plan. It only asks the agent 
   - Each call also costs more.
 - **Where it does belong:** after the call (the technician summary) and in the eval grader, where nobody is waiting. The model bake-off can test a small thinking budget later to confirm.
 
-**On-prem estimate:** running speech-to-text and the voice on a GPU server next to the phone line would save about 0.1 to 0.2 s per reply. That costs about $1,000 to $1,500 a month to rent the server, or $10,000 to $15,000 to buy one, plus quote-only enterprise licenses from Deepgram and Cartesia. All of those numbers are assumed. Moving the model on-prem too saves another 0.1 to 0.3 s but means giving up Claude for an open model. It's not worth it for Summit Air; it's an option for a very high-volume client. It's a short section in [docs/latency.md](docs/latency.md) and nowhere else.
+**On-prem estimate:** running speech-to-text and the voice on a GPU server next to the phone line would save about 0.1 to 0.2 s per reply. That costs about $1,000 to $1,500 a month to rent the server, or $10,000 to $15,000 to buy one, plus quote-only enterprise licenses from Deepgram and Cartesia. All of those numbers are assumed. Moving the model on-prem too saves another 0.1 to 0.3 s but means giving up Claude for an open model. It's not worth it for Summit Air; it's an option for a very high-volume client. It's a short section in [docs/latency.md](../../latency.md) and nowhere else.
 
 **Bridge lines:** the agent says "Okay, let me check that now" only when a lookup takes longer than about 0.7 s, at most once every few turns, and never the same line twice in a call. It's a pre-recorded clip that plays while the lookup runs. That's the difference from the earlier practice agent, where the model spoke "one moment" as its own reply and pushed the real answer back 7 to 10 s. The bridge line stays only if the live calls show it shortens the silence.
 
 **Latency logging and evals:** every turn logs its stage timings. Each eval run is compared with the previous run of the same suite, and delay changes per turn type are printed next to pass rate and cost. Any change over 100 ms or 10% is flagged, and it shows in LangSmith next to the earlier run. So a model or prompt that only slows the agent down still gets caught. This is new spec items S-37a and S-37b.
 
-**Assumed values:** every assumed latency number gets replaced with a measured one after the first real calls. That's now on [docs/later.md](docs/later.md), and the latency doc says so up top.
+**Assumed values:** every assumed latency number gets replaced with a measured one after the first real calls. That's now on [docs/later.md](../../later.md), and the latency doc says so up top.
 
 If you approve the latency budget, the last design step is the build briefs (#8): one per build lane. After that the build starts.
 
@@ -1114,14 +1114,14 @@ The latency budget is approved and #7 is closed. Your add-on is now in config ra
 
 **Last design step: the build briefs (#8).** These define the build, so they're worth a skim before anything starts.
 
-- **[docs/tools.md](docs/tools.md), the shared contract.** It lists:
+- **[docs/tools.md](../../tools.md), the shared contract.** It lists:
   - every endpoint the voice layer calls: call start, each turn, call end, health
   - every tool the model can call, with the server check on each
   - one reply format, always HTTP 200 with a sentence to say, so a refusal never becomes dead air
   - no tool that deletes, bulk-changes or dials an outside number
 
   Because every lane codes against this one page, they can run in parallel.
-- **[Five briefs](docs/ai-process/briefs/), one issue each:**
+- **[Five briefs](../briefs), one issue each:**
   - **02 Tool server (#19).** Every gate, the safety check, priority, the tool-failure queue, do-not-call, logging and the Postman collection. Builds first.
   - **03 LiveKit voice agent (#20).**
     - The worker, prompts, turn handling and bridge lines.
@@ -1150,7 +1150,7 @@ The tool contract now has history and notes, and the stale texting wording is fi
 
 I've updated the tool contract and the briefs from your notes. Nothing is built yet; lane 02 starts when you say go.
 
-**Your tool questions ([docs/tools.md](docs/tools.md)):**
+**Your tool questions ([docs/tools.md](../../tools.md)):**
 - **Membership check:** there's no separate tool on purpose, and you're right that `find_customer` should do it. Both the lookup before hello and `find_customer` return membership status and perks, open jobs, last service date, the last few calls and customer notes, all in one round trip. One richer lookup is faster than two calls.
 - **Customer notes:** now in V1, not later. The agent reads the CRM's notes at the start of the call, and they shape how it acts. "Prefers a warm, unhurried pace" changes its manner, a gate code goes into the job, and "tenant, landlord approves" saves a question. A note can never get around a gate: "book without read-back" in a note does nothing.
 - **Last service, last call, older history:** the first lookup already has the recent ones. For anything older, the new `get_customer_history` reads past jobs, calls or equipment, only for the customer already matched on this call.

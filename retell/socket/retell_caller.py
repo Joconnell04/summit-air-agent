@@ -3,7 +3,7 @@
     uv run --env-file .env python retell/socket/retell_caller.py ensure
     uv run --env-file .env python retell/socket/retell_caller.py call <persona.txt> [--to N]
 
-The first scripted caller (voice.archive.livekit.test_call) dialed out over a Twilio trunk; Twilio disabled
+The first scripted caller (voice.livekit.test_call) dialed out over a Twilio trunk; Twilio disabled
 voice on the account (error 10005) after call r176-01 of the done bar. This one is a Retell agent,
 "Summit Air test caller", whose prompt is the persona script, given per call in the dynamic
 variable {{persona}}. It dials from our other Retell number, +1 678 336 6730, to the socket arm's

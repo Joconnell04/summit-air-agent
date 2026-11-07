@@ -628,7 +628,7 @@ lines:
   callback_opening: Hi, this is Summit Air calling back for {first_name}. Is that you?
   callback_opening_unknown: Hi, this is Summit Air calling you back, like we said we would.
 
-# What the voice worker says on its own, without the model (voice/archive/livekit). {first_name} is the
+# What the voice worker says on its own, without the model (voice/livekit). {first_name} is the
 # matched customer's first name; {phone} is our number, on outbound calls.
 voice:
   # Summit Air never ends a sentence, so the voice doesn't lift on it (Jackson, call
@@ -688,7 +688,7 @@ voice:
     - Let me pull that up.
     - One moment.
   # Pre-recorded, so they need no voice stream (docs/scaling.md). Regenerate the clips after a change:
-  # uv run python -m voice.archive.livekit.clips. Each bridge clip must stay under 1.6 seconds (voice/archive/livekit/bridge.py).
+  # uv run python -m voice.livekit.clips. Each bridge clip must stay under 1.6 seconds (voice/livekit/bridge.py).
   clips:
     bridge_one_sec: Okay, just give me one second.
     bridge_pull_up: Sure, let me pull that up.

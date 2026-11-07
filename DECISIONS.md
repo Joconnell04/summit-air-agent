@@ -12,6 +12,14 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 134. The dropped voice stacks move to a branch, and only the Retell path runs on the server
+
+Decided: the ElevenLabs, OpenAI Realtime, Gemini Live and Retell-native code and their tests move to branch `archive/voice-stacks`; `voice/archive/livekit` moves back to `voice/livekit`, since the text evals, the rules gate and the live socket still use it; the server stops starting the LiveKit worker and its outbound poller, and the watchdog's health ping follows the tool server and the Retell socket that answers (516) 212-9051. Eval rounds stay where a decision cites them; the uncited `retell-suite-01` notes and three raw-data folders go to the branch.
+Why: code that no longer runs made the repository harder to read, and live code importing from a folder named archive said the wrong thing about it. No number rang the LiveKit worker since DECISIONS.md 112.
+Considered: deleting tests to lower the count (no: they are the record of real failures); leaving everything in place with a note (the reader still has to work out what is live).
+Would change if: a stack on the branch comes back for a bake-off; it returns with its tests.
+Discussion: README.md, Start here
+
 ## 133. The server keeps writing the symptom questions; tested against fixed sentences
 
 Decided: keep the word map in `app/flow.py` that names what the caller described in the catch-all ("Besides the banging and the leak, anything else ...") and in the how-bad question, and add one instruction: skip how bad when the caller already said whether it is still working. The dispatch sentence no longer asks "Is that the right address?" once the caller confirmed the read-back.
@@ -218,7 +226,7 @@ Decided: the Retell agents run `stt_mode` accurate with noise cancellation, `res
 Why: replaying Jackson's own replies from live call 3 into Retell (voice/retell/turn_probe.py): fast transcription missed his quiet "sure" 2 of 2 times and answered into his mid-sentence pause; accurate heard 12 of 12 and waited, median 1.70 s (MEASURED). The conversational personality split replies with a pause in 3 of 6, against 0 of 6 without it, at no speed cost (MEASURED). Retell puts knowledge-base text inside the caller's turn, and the model kept answering it aloud ("reference material", three times on one call); with the facts in the prompt, none (MEASURED, call_411b6aa0d8810886254f4d3e558). Retell's End Call hangs up 0.02 to 0.07 s after the goodbye, which Jackson found rushed, and skips the server's gate; ours waits 1.5 s.
 Considered: Retell's Code tool for letter questions (it takes no arguments, and the model narrated the extra step aloud), a stricter knowledge-base threshold (0.75 still leaked), the professional and conversational Handbook presets, sonic-3.6 (questions fell at the end), Expressive mode on Retell's own Max (closest to Jackson's "Max happy" pick, kept on the native copy).
 Would change if: a live call shows accurate transcription too slow on long answers, or Retell lets a knowledge base answer outside the caller's turn.
-Discussion: docs/retell-knobs.md, voice/archive/retell_native/README.md, evals/results/retell-turn-probe/
+Discussion: docs/retell-knobs.md, voice/archive/retell_native/README.md (branch archive/voice-stacks), evals/results/retell-turn-probe/
 Issue: #154
 
 ## 108. Arrival windows are any run of 30-minute blocks, two hours unless the caller asks
@@ -297,7 +305,7 @@ Issue: #149
 Decided: the agent speaks with Cartesia's "Max" (voice id `3945925b-9143-4b7d-9ab5-cc4878001106`, listed by Cartesia as "Conversational Support", a warm, natural American male) on sonic-3, replacing Katie (`f786b574-daa5-4673-aa0c-cbe3e8534c02`), the LiveKit plugin's default. The bridge clips and the at-capacity message are re-recorded in it, and `voice.tts.name` carries the name for the Retell push.
 Why: Jackson after live call 1: "I didn't like the voice... Just choose any other one." Max is clearly different from Katie (a man's voice rather than a young woman's), and Cartesia describes it for customer service conversations (SOURCE: Cartesia's voice list, `GET /voices`, read 2026-11-04).
 Considered: Jameson ("easygoing support", male), Harlow ("warm support", female), Skylar ("friendly guide", female). Any of them would do; a woman's voice risked sounding like the same complaint.
-Would change if: Jackson or Paul prefers another after a listen; one line in config/models.yaml and `python -m voice.archive.livekit.clips` change it.
+Would change if: Jackson or Paul prefers another after a listen; one line in config/models.yaml and `python -m voice.livekit.clips` change it.
 Discussion: Jackson after live call 1, docs/ai-process/coauthoring.md
 Issue: #149
 

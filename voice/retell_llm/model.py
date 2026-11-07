@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 import anthropic
 
-from voice.archive.livekit.settings import Profile, load_profile
+from voice.livekit.settings import Profile, load_profile
 
 
 @dataclass
@@ -26,7 +26,7 @@ class Reply:
 
 
 def thinking_request(profile: Profile) -> dict:
-    """As voice/archive/livekit/brain.py: thinking left on put 1 to 2 s before the first word."""
+    """As voice/livekit/brain.py: thinking left on put 1 to 2 s before the first word."""
     if profile.thinking:
         return {"type": "adaptive"}
     return {"type": profile.thinking_off}

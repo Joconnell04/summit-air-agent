@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 from app import knowledge_search
 from prompts.assemble import SpokenReply, for_model, job_types, tool_specs
-from voice.archive.livekit.settings import load_profile
+from voice.livekit.settings import load_profile
 
 from .call import LOOKUP_ANSWER
 from .model import Brain, Reply

@@ -53,8 +53,8 @@ eval-pairs:
 	uv run $(EVAL_ENV) python -m evals.run --pairs $(or $(PAIRS),all) $(if $(SAMPLES),--samples $(SAMPLES))
 
 # Paid: the simulated audio bake-off, one stack per run (evals/README.md, "Audio rig").
-# make rig STACK=elevenlabs [SUITE=smoke] [MAX_COST=5]   stacks: livekit, retell, elevenlabs,
-# openai_realtime, gemini_live. make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
+# make rig STACK=retell_llm [SUITE=smoke] [MAX_COST=5]   stacks: livekit, retell, retell_flow,
+# retell_llm (ElevenLabs, OpenAI Realtime and Gemini Live are on branch archive/voice-stacks). make rig-report RUNS="evals/results/<a>.json evals/results/<b>.json"
 rig:
 	@test -n "$(STACK)" || { echo "usage: make rig STACK=<stack>"; exit 2; }
 	uv run $(EVAL_ENV) python -m evals.audio_rig --stack $(STACK) $(if $(SUITE),--suite $(SUITE)) \
@@ -75,7 +75,7 @@ sim:
 # config/models.yaml voice.stt_candidates on the same scripted 8 kHz caller turns.
 # make stt-bench [STT=ink-2] [REPS=2] [ONLY=digits-phone,safety-co]
 stt-bench:
-	uv run $(EVAL_ENV) python -m voice.archive.livekit.stt_bench $(if $(STT),--stt $(STT)) \
+	uv run $(EVAL_ENV) python -m voice.livekit.stt_bench $(if $(STT),--stt $(STT)) \
 	  $(if $(REPS),--reps $(REPS)) $(if $(ONLY),--only $(ONLY))
 
 # The local listening page for the newest batch in data/sim: http://127.0.0.1:8130
@@ -158,9 +158,9 @@ rules-gate:
 summary-check:
 	uv run $(EVAL_ENV) python -m scripts.summary_check
 
-# The LiveKit voice worker (voice/archive/livekit/README.md), against make server and make mock-st
+# The LiveKit voice worker (voice/livekit/README.md), against make server and make mock-st
 voice-livekit:
-	uv run --env-file .env python -m voice.archive.livekit.worker dev
+	uv run --env-file .env python -m voice.livekit.worker dev
 
 # Twilio trunk, LiveKit trunks and dispatch rule for the phone number (scripts/phone/setup.py)
 phone-setup:
@@ -172,13 +172,13 @@ deploy:
 
 # One real call to the agent's number from a simulated caller (a few cents)
 test-call:
-	uv run --env-file .env python -m voice.archive.livekit.test_call
+	uv run --env-file .env python -m voice.livekit.test_call
 
 # The model's first token and prompt cache hits on a scripted call, no phone and no LiveKit (a few cents)
 PROFILE ?= fast
 
 measure-delay:
-	uv run --env-file .env python -m voice.archive.livekit.measure --profile $(PROFILE)
+	uv run --env-file .env python -m voice.livekit.measure --profile $(PROFILE)
 
 # The Retell baseline (voice/retell/README.md). The bridge's public URL defaults to the server.
 RETELL_BRIDGE_URL ?= https://45-77-105-247.sslip.io

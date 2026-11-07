@@ -86,7 +86,7 @@ class FlowBridge(Bridge):
         if not caller:
             if said and said[-1].speaker == "caller" and not self.ledger.posted_all(call_id, said):
                 # The server didn't take the caller's line: say so and end, as our worker does
-                # (voice/archive/livekit/call.py), rather than answer with no safety check.
+                # (voice/livekit/call.py), rather than answer with no safety check.
                 return routed("end_line", self.server_down_line()) | {"stage": stage, "notes": ""}
             return routed() | {"stage": stage, "notes": ""}
         hints, known = [], {}
@@ -123,7 +123,7 @@ class FlowBridge(Bridge):
         spoken = data.get("spoken") or {}
         if spoken.get("text"):
             # The card stop, the billing callback or the electrical lines: the server's words, said
-            # with interruptions off, as on our worker (voice/archive/livekit/call.py).
+            # with interruptions off, as on our worker (voice/livekit/call.py).
             return routed("firm", spoken["text"], stage=stage, notes=notes)
         if recording.get("action") == "stop" and recording.get("text") and not kept:
             # The line is said, then the model answers the rest of what the caller said. If Retell

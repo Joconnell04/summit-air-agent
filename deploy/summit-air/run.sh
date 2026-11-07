@@ -1,6 +1,8 @@
 #!/bin/sh
-# Start any of the four services that isn't running: the mock ServiceTitan, the tool server, the
-# LiveKit worker and its outbound poller. Run from cron at boot and by the watchdog; safe to run at any time.
+# Start either service that isn't running: the mock ServiceTitan and the tool server. The phone
+# side (Retell bridge and socket) runs as systemd units from deploy/retell. Run from cron at boot
+# and by the watchdog; safe to run at any time. The LiveKit worker that answered the first number
+# no longer runs here (DECISIONS.md 112); its code runs the text evals in process.
 set -u
 APP="$HOME/summit-air/app"
 LOGS="$HOME/summit-air/logs"
@@ -19,6 +21,4 @@ if ! running "servicetitan_mock.app.*--port 8101"; then
   launch mock.log uvicorn servicetitan_mock.app:create_app --factory --host 127.0.0.1 --port 8101
 fi
 running "app.main.*--port 8100" || launch tool-server.log uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8100
-running "voice.archive.livekit.worker start" || launch worker.log python -m voice.archive.livekit.worker start
-running "voice.archive.livekit.outbound" || launch outbound.log python -m voice.archive.livekit.outbound
 exit 0

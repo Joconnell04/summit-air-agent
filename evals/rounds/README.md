@@ -21,5 +21,15 @@ One file per round of testing, with its numbers and the results files behind the
 | [lookup-prefetch-01.md](lookup-prefetch-01.md) | Handing the model the lookup result in the same turn: no difference worth turning on; code kept on its branch |
 | [side-by-side-01.md](side-by-side-01.md) | Four agent arms on the real line (as-is, Sonnet, behavioral prompt, server-led): build on the server-led arm behind the custom-LLM socket; no safety errors on any arm |
 | [sonnet-buildout-01.md](sonnet-buildout-01.md) | The Sonnet arm against the done bar with varied seeded callers: 35 of 36 journeys, no safety errors, narration never fixed by prompt; `fast` speech-to-text and dynamic responsiveness not worth turning on |
+| [side-model-03.md](side-model-03.md) | A tighter at-risk question and a 0.65 threshold |
+| [failure-grader-01.md](failure-grader-01.md) | The failure grader meets the precision and recall bars on 62 labeled calls |
+| [simplicity-slate-01.md](simplicity-slate-01.md) | Whether the layering made the agent feel bad: simpler builds, one live call each |
+| [retell-live-calls-01.md](retell-live-calls-01.md) | Jackson's live calls to the Retell agent, round 1 |
+| [server-led-01.md](server-led-01.md) | The server runs the steps and the model talks: the arm the live agent is built on |
+| [socket-buildout-01.md](socket-buildout-01.md) | The server-led flow behind Retell's custom-LLM socket, the live path |
+| [knowledge-rag-01.md](knowledge-rag-01.md) | Embedding search for equipment questions; the Sonnet hand-off built and left off |
+| [symptom-questions-ab-01.md](symptom-questions-ab-01.md) | Server-written symptom questions against fixed sentences: 6 real re-asks against 13 in 96 runs |
 
 The ten real phone calls are scripted in [../live-calls.md](../live-calls.md).
+
+Raw data from finished rounds whose folders no longer matter here (`server-led-01-data`, `sonnet-buildout-01-data`, `socket-buildout-01-data`) and the `retell-suite-01` notes are on branch `archive/voice-stacks`.

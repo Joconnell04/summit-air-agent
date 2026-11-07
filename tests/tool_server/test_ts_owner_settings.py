@@ -402,7 +402,7 @@ def test_with_on_call_alerts_off_a_safety_call_is_still_emailed(agent, clock):
 
 
 def test_both_voice_stacks_say_the_notice_before_the_greeting():
-    from voice.archive.livekit.worker import opening
+    from voice.livekit.worker import opening
     from voice.retell.conversation import opening as retell_opening
 
     assert opening({"recording_notice": NOTICE}, "Hi.") == f"{NOTICE} Hi."

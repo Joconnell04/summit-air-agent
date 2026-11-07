@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from voice.archive.livekit.settings import load_profile, load_voice
-from voice.archive.livekit.turns import (
+from voice.livekit.settings import load_profile, load_voice
+from voice.livekit.turns import (
     LlmLog,
     agent_timings,
     asked_for_digits,

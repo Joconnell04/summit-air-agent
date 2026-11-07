@@ -159,3 +159,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Priority levels and visit types | Low, Normal, High, Urgent by the caller's words and the season; visits are Emergency dispatch or Scheduled; a High call asks whether it can wait; two on-call technicians after hours | DECISIONS.md 130 |
 | Safety menu and hazard check | The lines end with a person now, an appointment or someone right away; the side model catches dangers no phrase list names | DECISIONS.md 131 |
 | Equipment library by embeddings | Five pages searched by meaning, keyword fallback, Sonnet hand-off built and left off | DECISIONS.md 132 |
+| Symptom questions kept server-written | An A/B of 96 runs kept the word map: 6 real re-asks against 13 without it; how bad is skipped once answered; no second address check after a confirmed read-back | DECISIONS.md 133 |
+| One stack in the repository's main line | Dropped voice stacks on branch archive/voice-stacks; LiveKit back to voice/livekit for the evals; only the Retell path runs on the server | DECISIONS.md 134 |

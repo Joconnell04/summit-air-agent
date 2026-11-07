@@ -546,3 +546,15 @@ def test_a_high_call_asks_whether_it_can_wait_then_dispatches_a_yes(agent):
     agent.turn(call, "No, I need someone out right away.")
     sent = agent.tool("find_slots", call, job_type="no_heat")
     assert sent["data"].get("dispatched"), sent
+
+
+@pytest.mark.parametrize("job_type", ["no_heat", "no_cooling"])
+@pytest.mark.parametrize("who", ["my 84-year-old mother lives with me", "my grandma is here",
+                                 "we have a newborn baby"])
+def test_an_older_person_or_a_baby_in_season_is_urgent_even_on_a_mild_day(job_type, who):
+    """The assignment's urgent cases: no heat in winter or no AC in summer with an older person or
+    a baby at home. In season the call is never treated as mild, so the household rule raises it to
+    Urgent whatever the weather that day."""
+    mild = {"outside_now_f": 70, "outside_coldest_f": 68}
+    result = prio.decide(prio.Facts(job_type, who, 72, in_season=True, caller_text=who, **mild), CFG)
+    assert result.level == "Urgent", result.reasons

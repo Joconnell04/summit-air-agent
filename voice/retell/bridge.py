@@ -56,7 +56,7 @@ SAY_NOW = (
     "punctuation changed: {text}"
 )
 
-# The server's notes, as the native agent (voice/archive/retell_native) gets them mid-call: marked as
+# The server's notes, as the native agent (voice/archive/retell_native on branch archive/voice-stacks) gets them mid-call: marked as
 # private, since the bare "[server] ..." text read to its model as something it had said itself
 # ("Sorry, that was just the reference info", Jackson's call 2). Agents listed in
 # RETELL_PRIVATE_NOTE_AGENTS get the marked form; the others are unchanged.

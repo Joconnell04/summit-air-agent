@@ -1,5 +1,7 @@
 # Socket build-out, round 1: the server-led flow behind Retell's custom-LLM socket
 
+Raw run data (`socket-buildout-01-data/`) is on branch `archive/voice-stacks`; the findings below stand on their own.
+
 Issue #176, PR #179. Arm D (the server-led flow, #171) with our own code between the model and Retell's voice: every sentence a tool result carries is spoken as written, and Haiku 5.5 writes only the rest. Numbers are MEASURED from the run folders named below unless they say otherwise.
 
 **In short.** On the done bar's 24 scripted calls (6 per journey, DECISIONS 119 and 126), routine, elderly and gas_real passed 6 of 6 and gas_retracted passed 5 of 6. There were no safety errors under the tiers. The one miss repeated the gas advice after the caller took the report back, which is over-cautious, not unsafe, and is fixed. It ran 6 runs a journey, not 10, to stay inside the $15 cap: $12.96 for 31 two-leg calls, $0.426 a call. The 6 regression personas went worse (judge mean 3.33). They found five more bugs, and four are now fixed: a billing callback put through to the on-call technician at night, a tune-up the server wouldn't book, the model repeating the server's sentence, and the transcript bug behind the gas miss. None of these fixes has been on a phone call yet.
