@@ -5056,6 +5056,16 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
         "campaignId": ctx.tenant.fsm["campaign_id"],
     }
     key = _key(ctx, "lead", args.model_dump(mode="json"))
+    stored_already = ctx.conn.execute(
+        "SELECT id, status, callback_id FROM leads WHERE fsm_key = ?", (key,)
+    ).fetchone()
+    if stored_already:
+        # The same lead again (a repeated tool call): nothing new is stored or said twice.
+        decline = ctx.tenant.line("commercial")
+        said = records.agent_said(ctx.conn, ctx.call["id"], decline)
+        return ok("" if args.kind != "commercial" or said else decline,
+                  lead_id=stored_already["id"], queued=stored_already["status"] == "queued",
+                  callback_id=stored_already["callback_id"])
     with tx(ctx.conn):
         if args.kind == "commercial":
             records.update_call(ctx.conn, ctx.call["id"], commercial=1)
@@ -5079,7 +5089,9 @@ def record_lead(ctx: Ctx, args: LeadIn) -> Result:
         ).lastrowid
     stored = send_lead(ctx.conn, ctx.fsm, lead_id, lead, key, ctx.now)
     if args.kind == "commercial":
-        say = ctx.tenant.line("commercial")
+        # The decline is said once a call: a second commercial lead adds nothing for the caller.
+        decline = ctx.tenant.line("commercial")
+        say = "" if records.agent_said(ctx.conn, ctx.call["id"], decline) else decline
     elif callback_id is None:
         say = ctx.tenant.line("flag_stored_no_callback")
     else:

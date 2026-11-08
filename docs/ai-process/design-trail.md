@@ -171,3 +171,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Word units and one account question | "Downstairs" is said as a word; the account question is asked once a call | DECISIONS.md 145 |
 | Demo eval suite | Three existing scenarios per assignment user story, two samples; the grader is told the server's dispatch line | DECISIONS.md 146 |
 | Dispatch issue length, cut-short house number | A dispatch's issue keeps the reasons that fit, so vulnerable-household dispatches book; the caller's own house number is handed back to the model | DECISIONS.md 147 |
+| Commercial decline once | The model calls record_lead at once and the server's line is the only decline; a repeated lead says nothing | DECISIONS.md 148 |

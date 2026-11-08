@@ -336,3 +336,7 @@ From my call call_55b467b41ae58e725fa142d29b7. I said my name three times; the t
 
 Members are thanked in the greeting now, so the call note tells Brian not to thank them again. The membership line drops "priority scheduling" (members are scheduled by urgency like everyone else) for fifteen percent off repairs, a longer warranty and no after-hours fee. After a routine booking the server asks a non-member once; Brian follows its next step and never brings membership up again. A member asking whether a tune-up is included gets an answer from their job history.
 
+
+### Server note: commercial decline (prompts/assemble.py, not a socket prompt version)
+
+From the demo eval 20261108-021040: 3 of the 6 commercial calls failed because Brian declined in his own words first ("I can't book commercial service through this line, I'll pass your details along so the commercial team can reach out") and then record_lead said the real decline ("we only service homes, but I'll pass your details to our team"). There is no commercial team, and the caller heard two different answers. The server's note on a business caller used to say "decline with the commercial line from the journeys"; now it says to say nothing and call record_lead straight away, so the server's line is the only decline. A second record_lead on the same call says nothing more. Outcome: measured on the three commercial scenarios, two runs each (DECISIONS.md 148).
