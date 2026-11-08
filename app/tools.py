@@ -2853,8 +2853,13 @@ def read_back(ctx: Ctx, args: ReadBackIn) -> Result:
         # Whose account a new address goes on is asked here, as the confirmation's own sentence,
         # not by a refused booking: the reply that books then carries its short line and the
         # confirmation together (eval run 20261104-183233, tune-up-known-caller).
+        # Asked once a call: a second read-back (a caller who mentions a unit later) doesn't ask
+        # again (eval run 20261108-004357, tune-up-known-caller: "I already said that").
         try:
-            choose = _new_address_customer(ctx, address, chosen) is not None
+            choose = (
+                not _account_settled(ctx)
+                and _new_address_customer(ctx, address, chosen) is not None
+            )
         except (FsmUnavailable, FsmRejected):
             choose = False
         if choose:
@@ -3910,6 +3915,24 @@ def _new_address_customer(ctx: Ctx, readback: dict, chosen: int | None = None) -
     return customer_id
 
 
+def _account_settled(ctx: Ctx) -> str | None:
+    """Whose account a new address goes on, if this call already settled it: the choice a booking
+    carried ("caller" or "own"), or "asked" once the read-back has asked it."""
+    row = ctx.conn.execute(
+        "SELECT json_extract(args_json, '$.new_address_account') FROM tool_calls "
+        "WHERE call_id = ? AND tool = 'book_appointment' "
+        "AND json_extract(args_json, '$.new_address_account') IS NOT NULL ORDER BY id DESC LIMIT 1",
+        (ctx.call["id"],),
+    ).fetchone()
+    if row:
+        return row[0]
+    asked = ctx.conn.execute(
+        "SELECT 1 FROM tool_calls WHERE call_id = ? AND tool = 'read_back' AND say = ? LIMIT 1",
+        (ctx.call["id"], ctx.tenant.line("account_choice")),
+    ).fetchone()
+    return "asked" if asked else None
+
+
 def _new_address_account(
     ctx: Ctx, readback: dict, args: BookIn, chosen: int | None = None
 ) -> tuple[str | None, str | None]:
@@ -3925,6 +3948,8 @@ def _new_address_account(
         caller = ctx.fsm.customer(customer_id)
     except (FsmUnavailable, FsmRejected):
         return args.new_address_account, None
+    if args.new_address_account is None and _account_settled(ctx) in ("caller", "own"):
+        args = args.model_copy(update={"new_address_account": _account_settled(ctx)})
     if args.new_address_account is None:
         raise Refused(
             "account_choice",

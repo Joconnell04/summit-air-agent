@@ -121,6 +121,19 @@ def test_the_grader_is_told_when_the_system_marked_the_call_urgent():
     assert "The system marked this call Urgent and said so (top priority)." in found
 
 
+def test_the_grader_is_told_the_dispatch_the_server_said():
+    """Socket eval 20261107-230923: four no-heat dispatches failed on "Expect them within the next
+    hour", an arrival the grader thought the call never set up. The server's read_back or
+    find_slots says the dispatch, and neither tool was in the set-up list."""
+    line = ("We'll get a technician out to you right away at forty-five Forest Avenue. Expect them "
+            "within the next hour, and we'll call the number ending in zero one one eight if "
+            "anything changes.")
+    found = set_up(trace(events=[tool("find_slots", line)]), SAFETY)
+    assert f"The system dispatched a technician and said: {line}" in found
+    offer = set_up(trace(events=[tool("find_slots", "Today I have 7 to 7:30.")]), SAFETY)
+    assert not any("dispatched" in f for f in offer)
+
+
 def test_the_grader_sees_the_company_knowledge_and_the_approved_wordings():
     """Eval round 4: a policy from the knowledge folder and Jackson's own wording were marked down."""
     model = ScriptedModel([grade_reply()])

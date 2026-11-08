@@ -74,6 +74,11 @@ def set_up(trace: dict, safety: dict) -> list[str]:
     for e in trace["events"]:
         if e["type"] == "tool" and e["tool"] in SETS_UP and e["ok"] and e["say"]:
             found.append(f"{e['tool']} returned: {e['say']}")
+        # A no-heat dispatch is said by read_back or find_slots, not book_appointment; every
+        # dispatch line ends "if anything changes" (tenants/summit-air/agent.yaml dispatch_*).
+        dispatch = e["type"] == "tool" and e["tool"] in ("read_back", "find_slots") and e["ok"]
+        if dispatch and "if anything changes" in (e["say"] or ""):
+            found.append(f"The system dispatched a technician and said: {e['say']}")
     for h in trace.get("handoffs", []):
         # The handoff line and any callback line after it were said by the server's code.
         sent = {

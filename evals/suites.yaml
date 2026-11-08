@@ -12,3 +12,27 @@ rigorous:
 full:
   tags: []
   samples: 3
+# The calls the Summit Air demo will likely make, three existing scenarios per user story from the
+# assignment (docs/assignment.md): no heat or cooling booked, a vulnerable household marked
+# priority, a gas or CO call, a tune-up, a member, a commercial caller. Two samples each.
+demo:
+  tags:
+    - id:ac-not-cooling-warm-spell
+    - id:no-cooling-standard
+    - id:no-heat-unknown-caller
+    - id:elderly-no-heat
+    - id:baby-no-heat-standard
+    - id:at-risk-caller-also-pushes
+    - id:co-alarm-clear
+    - id:gas-smell-in-passing
+    - id:gas-worry-no-smell
+    - id:tune-up-known-caller
+    - id:hours-question-then-books
+    - id:after-hours-tune-up
+    - id:member-books-tune-up
+    - id:lapsed-member-stored-active
+    - id:active-member-adult-child
+    - id:commercial-bakery
+    - id:commercial-deli-owner
+    - id:commercial-office-by-church
+  samples: 2
