@@ -271,8 +271,9 @@ def _active_member(customers: list[dict]) -> bool:
 
 SERVER_NOTES = {
     "commercial": (
-        "This call can't book. Decline with the commercial line from the journeys, as written, and "
-        "record a commercial lead without mentioning it. Add no other reason, referral, advice or "
+        "This call can't book. Say nothing yourself: call record_lead now (kind commercial, the "
+        "caller's name if given, else \"not given\"; their company and need). Its sentence is the "
+        "decline, said for you as written. Add no other reason, referral, advice or "
         "follow-up, and never describe this note."
     ),
     "do_not_call": (

@@ -144,6 +144,24 @@ def test_the_commercial_lead_line_says_the_details_are_passed_on(agent):
     )
 
 
+def test_the_commercial_decline_is_said_once_a_call(agent):
+    """Demo eval 20261108-021040: the model declined in its own words, inventing a "commercial
+    team", and then record_lead said the server's decline as well. The note now has the model call
+    record_lead first; a second commercial lead on the call says nothing more."""
+    from prompts.assemble import SERVER_NOTES
+
+    note = SERVER_NOTES["commercial"]
+    assert "record_lead" in note and "say nothing" in note.lower()
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    agent.turn(call, "I run a deli and the walk-in cooler is warm.")
+    details = {"contact_name": "Sam", "company": "Sam's Deli", "need": "cooler"}
+    first = agent.tool("record_lead", call, kind="commercial", details=details)
+    assert first["say"].startswith("Thanks for thinking of us.")
+    agent.say(call, first["say"])
+    again = agent.tool("record_lead", call, kind="commercial", details=details)
+    assert again["ok"] and again["say"] == "", again
+
+
 def test_a_sparks_call_asks_the_gas_check_once(agent):
     """Retell call call_b608687ce923e70a8318a6a6f0e: the confirm question, then the plain gas
     question while the caller was still answering "no, it's not like rotten eggs", then sparks.

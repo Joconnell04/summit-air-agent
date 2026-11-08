@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 148. A business caller hears the server's decline only
+
+Decided: the server's note on a caller line that sounds like a business tells the model to say nothing and call record_lead (kind commercial) at once; record_lead's sentence ("Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to our team.") is the decline. A second commercial lead on the call, or the same lead again, says nothing more and stores nothing new.
+Why: on the demo eval 20261108-021040, 3 of 6 commercial calls failed the grader: the model declined first in its own words and promised a "commercial team" that doesn't exist, then record_lead's line said something different. The same lead sent twice also raised a database error, which the caller would hear as "Sorry, give me just a moment."
+Considered: the socket speaking the decline itself on the commercial hint (the lead still needs the company and need from the model); rewording the journeys line (prompt voice changes go through /round).
+Would change if: a caller who is residential is heard as a business (they would hear the decline at once; book_appointment already refuses them).
+Discussion: this session; tests/tool_server/test_ts_one_number.py; retell/PROMPT-LOG.md v16
+Issue: #208
+
 ## 147. A dispatch's issue keeps the priority reasons that fit; a house number the model cut short is handed back
 
 Decided: the issue the server writes for a dispatch is the job's name and the priority reasons that fit in the issue's 300 characters (`ISSUE_MAX`); the full reasons stay on the call's priority. When find_address is given a house number the caller didn't say, and the caller did say another number right before that street, the refusal says nothing to the caller and tells the model that number; the same check then passes or refuses it.
