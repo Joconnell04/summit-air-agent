@@ -395,10 +395,10 @@ def test_getting_in_is_one_question(agent):
     assert question in assemble.instructions(start)
 
 
-def test_today_and_tomorrow_are_said_without_the_weekday_or_date(agent, mock):
-    """Jackson's call call_549de89ecc2428e409b64072e34: today and tomorrow are "today" and
-    "tomorrow", in find_slots, book_appointment and reschedule_appointment alike. The clock is
-    Monday, November 2, 9 AM."""
+def test_today_and_tomorrow_are_offered_without_the_date_and_booked_with_it(agent, mock):
+    """Jackson's call call_549de89ecc2428e409b64072e34: offers say "today" and "tomorrow" alone.
+    The booking sentence adds the weekday and date ("today, Monday, November 2"), which the caller
+    can write down (spec S-30; Jackson, 7 November). The clock is Monday, November 2, 9 AM."""
     call = ready_to_book(agent)
     found = agent.tool("find_slots", call, job_type="tune_up")
     assert found["data"]["offer"]["day"] in ("today", "tomorrow")
@@ -409,7 +409,7 @@ def test_today_and_tomorrow_are_said_without_the_weekday_or_date(agent, mock):
     slot = {"date": today["data"]["windows"][0]["date"], "window": today["data"]["windows"][0]["window"]}
     booked = book(agent, call, slot, name="Pat Rivera")
     assert booked["ok"], booked
-    assert "arrive today between" in booked["say"] and "Monday" not in booked["say"]
+    assert "arrive today, Monday, November 2, between" in booked["say"]
     agent.say(call, booked["say"])
     agent.turn(call, "Actually, can we move it to tomorrow?")
     tomorrow = agent.tool("find_slots", call, job_type="tune_up", day="tomorrow")

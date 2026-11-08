@@ -3537,9 +3537,10 @@ def book_appointment(ctx: Ctx, args: BookIn) -> Result:
             "start": request["window_start"],
         },
     )
-    # "Okay, I've booked it" opens it, so the agent needs no "let me book that" first (Jackson). Today
-    # and tomorrow are said as such; a later day keeps its date, so a wrong day is caught.
-    day = when["day"] if when["day"] in ("today", "tomorrow") else f"{when['day_and_date']},"
+    # "Okay, I've booked it" opens it, so the agent needs no "let me book that" first (Jackson). The
+    # day and date are always said ("tomorrow, Sunday, November 8"), so a wrong day is caught and
+    # the caller hears the date they can write down (spec S-30; Jackson, 7 November).
+    day = f"{when['day_and_date']},"
     say = (
         f"Okay, I've booked it: the technician will arrive {day} between "
         f"{when['label'].replace(' to ', ' and ')}."

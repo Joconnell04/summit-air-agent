@@ -174,3 +174,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Commercial decline once | The model calls record_lead at once and the server's line is the only decline; a repeated lead says nothing | DECISIONS.md 148 |
 | Eval floor 80% | The pass-rate floor is set for the socket stack, where the misses between 80% and 90% were wording, not outcomes; must-pass cases still block | DECISIONS.md 149 |
 | After-hours window and doorbell | The model gets no placeholder window after hours; a doorbell answers the gate question | DECISIONS.md 150 |
+| Booking date | The booking sentence names the day and date, today and tomorrow included | DECISIONS.md 151 |
