@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 147. A dispatch's issue keeps the priority reasons that fit; a house number the model cut short is handed back
+
+Decided: the issue the server writes for a dispatch is the job's name and the priority reasons that fit in the issue's 300 characters (`ISSUE_MAX`); the full reasons stay on the call's priority. When find_address is given a house number the caller didn't say, and the caller did say another number right before that street, the refusal says nothing to the caller and tells the model that number; the same check then passes or refuses it.
+Why: on the demo eval 20261108-011049 all six vulnerable-household calls failed (MEASURED: test box tool log): the side model's reasons took the issue past 300 characters, every dispatch raised a validation error, and the caller heard "our scheduling system isn't responding". The live tool server hit the same error once, on 7 November. On no-cooling-standard the caller said "two two nine oh Hylan Boulevard", the model looked up 229 four times, and each refusal asked "What's the street address there?" again.
+Considered: raising the issue limit (the field service system's own field has a limit, and the reasons would grow again); the model rewriting the number from a generic refusal (it repeated 229 four times).
+Would change if: the technician needs the full reasons on the job (add them as a note).
+Discussion: this session; tests/tool_server/test_ts_dispatch.py, tests/tool_server/test_ts_address_lookup.py
+Issue: #205
+
 ## 146. A demo eval suite, and the grader is told the dispatch the server said
 
 Decided: `evals/suites.yaml` has a `demo` suite: three existing scenarios for each user story in the assignment (no heat or cooling booked, a vulnerable household marked priority, a gas or CO call, a tune-up, a member, a commercial caller), two samples each, 36 calls. The grader's list of what the server set up now includes the dispatch sentence read_back or find_slots says ("Expect them within the next hour"), so it is no longer judged an arrival the call never set up.
