@@ -60,5 +60,14 @@ def test_parse_tags_and_bare_tags():
     assert not matches({"flow:x"}, ["smoke"])
 
 
-def test_suites_file_has_the_four_suites():
-    assert set(load_suites()) == {"smoke", "standard", "rigorous", "full"}
+def test_suites_file_has_the_five_suites():
+    assert set(load_suites()) == {"smoke", "standard", "rigorous", "full", "demo"}
+
+
+def test_the_demo_suite_has_three_scenarios_for_each_user_story():
+    """DECISIONS.md 145: each user story in the assignment, three existing scenarios, two samples."""
+    from evals.scenario import load_all
+    from evals.suites import select
+
+    chosen, samples = select(load_all(), "demo")
+    assert len(chosen) == 18 and samples == 2
