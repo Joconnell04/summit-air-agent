@@ -1,0 +1,735 @@
+{
+  "run_id": "20261108-024338-retell_llm-fast-custom",
+  "created": "2026-11-08T02:43:38.503706Z",
+  "suite": "custom",
+  "tags": [
+    "id:commercial-bakery",
+    "id:commercial-deli-owner",
+    "id:commercial-office-by-church"
+  ],
+  "stack": "retell_llm",
+  "profile": "fast",
+  "hash": "0dc8cb43c9fc7543",
+  "prompt_hash": "d8d491fb7df2a864",
+  "model": "claude-haiku-5-5",
+  "transport": "text",
+  "overlay": null,
+  "scenarios": [
+    {
+      "scenario_id": "commercial-bakery",
+      "sample": 1,
+      "persona": "Lucia Ferrante, operations manager at Harbor Bakery Group in Brooklyn. Busy, clear, wants the rooftop unit fixed today.",
+      "flow": [
+        "commercial"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "lead",
+        "outcome",
+        "callback"
+      ],
+      "grader_score": 4,
+      "grader_notes": "The agent declined early and kindly without running an intake, but its second turn hints at options the company doesn't offer: \"we can't book commercial units through this line\" suggests another line exists, and \"they can follow up with you\" edges toward a callback offer. The goodbye also stacks \"good luck with the unit\" onto the sign-off, a minor slip.",
+      "reply_delay_p50_ms": 954.1464590001851,
+      "reply_delay_p90_ms": 1259.03091696091,
+      "cost_usd": 0.055683,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 15723.236416000873,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hi, this is Lucia at Harbor Bakery. The rooftop unit over our kitchen quit and it's way too hot in here.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "One sec. Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to our team. Anything else?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Okay, so you can't help with a business unit at all? I was hoping someone could come out today.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'm sorry, unfortunately we can't book commercial units through this line, and we only service homes. Your details are with our team, so they can follow up with you. Is there anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Alright, I'll find another company then. Thanks for your help.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "You're welcome, good luck with the unit. Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "record_lead",
+          "arguments": {
+            "call_id": "eval-commercial-bakery-1-30565411",
+            "kind": "commercial",
+            "details": {
+              "callback_time": null,
+              "callback_in_minutes": null,
+              "callback_after": null,
+              "callback_before": null,
+              "callback_day": "today",
+              "contact_name": "Lucia",
+              "company": "Harbor Bakery Group",
+              "need": "Rooftop unit over the kitchen has stopped working; area is too hot."
+            }
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-commercial-bakery-1-30565411",
+            "reason": "declined"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1259.03091696091,
+          "model_first_token_ms": 1259.03091696091,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 709.4940830138512,
+          "model_first_token_ms": 709.4940830138512,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 954.1464590001851,
+          "model_first_token_ms": 954.1464590001851,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-commercial-bakery-1-30565411",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "commercial-bakery",
+      "sample": 2,
+      "persona": "Lucia Ferrante, operations manager at Harbor Bakery Group in Brooklyn. Busy, clear, wants the rooftop unit fixed today.",
+      "flow": [
+        "commercial"
+      ],
+      "difficulty": "easy",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "lead",
+        "outcome",
+        "callback"
+      ],
+      "grader_score": 5,
+      "grader_notes": "The agent declined the commercial job kindly in its first reply, offered no callback and did no service intake. The caller's 'you don't do commercial jobs at all?' went unanswered, but she was already hanging up, so the short, generic goodbye was right.",
+      "reply_delay_p50_ms": 1081.9338340079412,
+      "reply_delay_p90_ms": 1213.6262920103036,
+      "cost_usd": 0.052795,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 12540.203499956988,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Hi, this is Lucia at Harbor Bakery. The rooftop unit over our kitchen quit and it's way too hot in here.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to our team. Anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "Okay, so you don't do commercial jobs at all? I was hoping someone could come out today. Fine, I'll find another company. Thanks anyway, bye.",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "record_lead",
+          "arguments": {
+            "call_id": "eval-commercial-bakery-2-dcb7e2dd",
+            "kind": "commercial",
+            "details": {
+              "callback_time": null,
+              "callback_in_minutes": null,
+              "callback_after": null,
+              "callback_before": null,
+              "callback_day": "today",
+              "contact_name": "Lucia",
+              "company": "Harbor Bakery Group",
+              "need": "Rooftop unit over the kitchen stopped working; kitchen is very hot."
+            }
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-commercial-bakery-2-dcb7e2dd",
+            "reason": "declined"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1081.9338340079412,
+          "model_first_token_ms": 1081.9338340079412,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1213.6262920103036,
+          "model_first_token_ms": 1213.6262920103036,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-commercial-bakery-2-dcb7e2dd",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "commercial-deli-owner",
+      "sample": 1,
+      "persona": "Teresa Ruiz, who owns a deli in Sunset Park, Brooklyn. Busy, talks fast, mentions the deli only once.",
+      "flow": [
+        "commercial"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "lead",
+        "outcome"
+      ],
+      "grader_score": 5,
+      "grader_notes": "The agent declined the commercial deli job kindly in one line using the system's own wording, then asked if there was anything else and closed with a single generic goodbye. Nothing to fix.",
+      "reply_delay_p50_ms": 996.1224580183625,
+      "reply_delay_p90_ms": 1208.274042000994,
+      "cost_usd": 0.050393,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 10956.291665963363,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi the ac's blowing warm air i own the place it's a deli near the park",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to our team. Anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no problem thanks for letting me know that's all i need have a good one",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "record_lead",
+          "arguments": {
+            "call_id": "eval-commercial-deli-owner-1-d3bb8ff2",
+            "kind": "commercial",
+            "details": {
+              "callback_time": null,
+              "callback_in_minutes": null,
+              "callback_after": null,
+              "callback_before": null,
+              "callback_day": "today",
+              "contact_name": "not given",
+              "company": "Deli (business owner)",
+              "need": "Air conditioning blowing warm air at a deli near the park; caller owns the business"
+            }
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-commercial-deli-owner-1-d3bb8ff2",
+            "reason": "declined"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1208.274042000994,
+          "model_first_token_ms": 1208.274042000994,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 996.1224580183625,
+          "model_first_token_ms": 996.1224580183625,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-commercial-deli-owner-1-d3bb8ff2",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "commercial-deli-owner",
+      "sample": 2,
+      "persona": "Teresa Ruiz, who owns a deli in Sunset Park, Brooklyn. Busy, talks fast, mentions the deli only once.",
+      "flow": [
+        "commercial"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "lead",
+        "outcome"
+      ],
+      "grader_score": 5,
+      "grader_notes": "The agent declined the commercial deli job kindly in one line, using the system's approved wording, and asked if there was anything else before ending. The goodbye was a single generic sign-off with nothing invented or pressed.",
+      "reply_delay_p50_ms": 830.008374992758,
+      "reply_delay_p90_ms": 1101.042750000488,
+      "cost_usd": 0.048089,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 8984.207417001016,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi the ac's blowing warm air i own the place it's a deli near the park",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to our team. Anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "no problem thanks for letting me know have a good one bye",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "record_lead",
+          "arguments": {
+            "call_id": "eval-commercial-deli-owner-2-d745af7f",
+            "kind": "commercial",
+            "details": {
+              "callback_time": null,
+              "callback_in_minutes": null,
+              "callback_after": null,
+              "callback_before": null,
+              "callback_day": "today",
+              "contact_name": "not given",
+              "company": "Deli near the park",
+              "need": "Air conditioning blowing warm air at a deli near the park; caller owns the business"
+            }
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-commercial-deli-owner-2-d745af7f",
+            "reason": "declined"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1101.042750000488,
+          "model_first_token_ms": 1101.042750000488,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 830.008374992758,
+          "model_first_token_ms": 830.008374992758,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-commercial-deli-owner-2-d745af7f",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "commercial-office-by-church",
+      "sample": 1,
+      "persona": "Carl Benedetto, who runs a small accounting office in Bensonhurst, Brooklyn. Friendly and chatty, never says the word business.",
+      "flow": [
+        "commercial"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "lead",
+        "outcome"
+      ],
+      "grader_score": 4,
+      "grader_notes": "The agent declined kindly and early with no intake and closed with a generic goodbye. The second agent turn's \"they can point you to another option\" is a small promise of a referral that nothing on the call set up.",
+      "reply_delay_p50_ms": 905.7117910124362,
+      "reply_delay_p90_ms": 1078.9983329595998,
+      "cost_usd": 0.053874,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 14203.121124999598,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi the heat stopped working at my office this morning my office is by the church on 86th",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to our team. Anything else I can help you with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "oh okay i didn't realize you only do homes it's not a house it's my accounting office the ground floor of the building at two oh three one 86th street is there anybody else who could help with that",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'm sorry, we only service homes, so I can't book that office visit. I've passed your details to our team, and they can point you to another option. Is there anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay thanks anyway i appreciate you passing that along that's all i needed have a good one",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "record_lead",
+          "arguments": {
+            "call_id": "eval-commercial-office-by-church-1-28522471",
+            "kind": "commercial",
+            "details": {
+              "callback_time": null,
+              "callback_in_minutes": null,
+              "callback_after": null,
+              "callback_before": null,
+              "callback_day": "today",
+              "contact_name": "not given",
+              "company": "",
+              "need": "Office heating not working since this morning, office by the church on 86th Street"
+            }
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-commercial-office-by-church-1-28522471",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1078.9983329595998,
+          "model_first_token_ms": 1078.9983329595998,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 665.0090830517001,
+          "model_first_token_ms": 665.0090830517001,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 905.7117910124362,
+          "model_first_token_ms": 905.7117910124362,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-commercial-office-by-church-1-28522471",
+      "silent_turns": 0,
+      "cost_parts": {}
+    },
+    {
+      "scenario_id": "commercial-office-by-church",
+      "sample": 2,
+      "persona": "Carl Benedetto, who runs a small accounting office in Bensonhurst, Brooklyn. Friendly and chatty, never says the word business.",
+      "flow": [
+        "commercial"
+      ],
+      "difficulty": "standard",
+      "traits": [],
+      "outcome": "pass",
+      "must_pass_failures": [],
+      "check_failures": [],
+      "error": "",
+      "checks": [
+        "booking",
+        "lead",
+        "outcome"
+      ],
+      "grader_score": 4,
+      "grader_notes": "The agent declined kindly and early with no full intake, and the goodbye was generic and warm. Its second turn's \"The team has your details and can follow up about other options\" slightly overpromises a referral follow-up that was never set up, and it was said without collecting a name or number.",
+      "reply_delay_p50_ms": 1103.5403329879045,
+      "reply_delay_p90_ms": 1133.1725409836508,
+      "cost_usd": 0.053666,
+      "agent_cost_usd": 0.0,
+      "duration_ms": 16610.745000012685,
+      "transcript": [
+        {
+          "role": "agent",
+          "text": "Hi there, thanks for calling Summit Air, this is Brian, the virtual assistant. How can I help?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "hi the heat stopped working at my office this morning my office is by the church on 86th",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to our team. Anything else I can help with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "oh okay i didn't realize you only do homes it's actually my accounting office though ground floor two oh three one 86th street is there anyone else who could take a look",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "I'm sorry, unfortunately I can't book a visit for an office, since we only service homes. The team has your details and can follow up about other options. Is there anything else I can help you with?",
+          "said": null
+        },
+        {
+          "role": "caller",
+          "text": "okay thanks anyway i appreciate you passing it along that's all i needed have a good one",
+          "said": null
+        },
+        {
+          "role": "agent",
+          "text": "Thanks for calling Summit Air today. Have a great day!",
+          "said": null
+        }
+      ],
+      "tool_calls": [
+        {
+          "name": "record_lead",
+          "arguments": {
+            "call_id": "eval-commercial-office-by-church-2-0273deb4",
+            "kind": "commercial",
+            "details": {
+              "callback_time": null,
+              "callback_in_minutes": null,
+              "callback_after": null,
+              "callback_before": null,
+              "callback_day": "today",
+              "contact_name": "not given",
+              "company": "",
+              "need": "No heat at office by the church on 86th Street, heat stopped working this morning"
+            }
+          }
+        },
+        {
+          "name": "end_call",
+          "arguments": {
+            "call_id": "eval-commercial-office-by-church-2-0273deb4",
+            "reason": "resolved"
+          }
+        }
+      ],
+      "turn_timings": [
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1133.1725409836508,
+          "model_first_token_ms": 1133.1725409836508,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 953.0161659931764,
+          "model_first_token_ms": 953.0161659931764,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        },
+        {
+          "kind": "plain",
+          "reply_delay_ms": 1103.5403329879045,
+          "model_first_token_ms": 1103.5403329879045,
+          "tool_ms": 0.0,
+          "second_hop_ms": null,
+          "caller_speech_ms": null,
+          "agent_speech_ms": null,
+          "platform_reply_ms": null,
+          "over_caller_ms": null,
+          "platform_stages": {}
+        }
+      ],
+      "call_id": "eval-commercial-office-by-church-2-0273deb4",
+      "silent_turns": 0,
+      "cost_parts": {}
+    }
+  ]
+}

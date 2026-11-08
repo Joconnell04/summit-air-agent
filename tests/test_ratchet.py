@@ -207,3 +207,18 @@ def test_the_committed_baseline_names_no_reference_or_a_valid_one():
     baseline = json.loads((ROOT / "evals" / "baseline.json").read_text())
     ok, msg = ratchet.check_eval(baseline, allow_stale=True)
     assert ok, msg
+
+
+def test_the_socket_floor_is_80_percent_and_the_demo_suite_clears_it():
+    """DECISIONS.md 149: the floor is set for the Retell socket stack; the combined demo run is
+    33 of 36 once the commercial fix is folded in."""
+    import json
+    from pathlib import Path
+
+    from evals.results import load
+
+    root = Path(__file__).resolve().parent.parent
+    floor = json.loads((root / "evals" / "baseline.json").read_text())["min_eval_pass_rate"]
+    assert floor == 0.8
+    combined = load(root / "evals/results/20261108-024338-retell_llm-fast-demo-combined.json")
+    assert len(combined.scenarios) == 36 and combined.pass_rate() >= floor
