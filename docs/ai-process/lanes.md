@@ -14,6 +14,9 @@ issue backfilled (the issue body says so).
 
 | Issue | Lane | Pull requests | Decisions |
 |---|---|---|---|
+| [#196](https://github.com/Joconnell04/summit-air-agent/issues/196) | Owner view polish: roster, slot headers, check-off, booked callbacks, call IDs, commercial leads | see issue |  |
+| [#195](https://github.com/Joconnell04/summit-air-agent/issues/195) | Socket eval findings: hyphenated numbers, early visit answers, test world, bench polish | see issue |  |
+| [#193](https://github.com/Joconnell04/summit-air-agent/issues/193) | Lane: bench Steps tab, joined rows, proof points, struck cuts, rule proof check | see issue |  |
 | [#191](https://github.com/Joconnell04/summit-air-agent/issues/191) | Lane: debug bench round 2 (schedule edits, System cleanup, Summary and Why, Questions, evals, cost chart) | see issue |  |
 | [#188](https://github.com/Joconnell04/summit-air-agent/issues/188) | Lane: debug bench for the interview walkthrough | see issue |  |
 | [#184](https://github.com/Joconnell04/summit-air-agent/issues/184) | Lane: warm transfer scaffold (hold line placeholder for a human) | see issue |  |
