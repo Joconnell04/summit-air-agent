@@ -170,3 +170,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Clock times after the read-back | "6:30 doesn't work" no longer reads as house 30 and clears the confirmed address; the booking check knows today's confirmation | DECISIONS.md 144 |
 | Word units and one account question | "Downstairs" is said as a word; the account question is asked once a call | DECISIONS.md 145 |
 | Demo eval suite | Three existing scenarios per assignment user story, two samples; the grader is told the server's dispatch line | DECISIONS.md 146 |
+| Dispatch issue length, cut-short house number | A dispatch's issue keeps the reasons that fit, so vulnerable-household dispatches book; the caller's own house number is handed back to the model | DECISIONS.md 147 |
