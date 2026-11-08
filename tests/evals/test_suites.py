@@ -60,5 +60,23 @@ def test_parse_tags_and_bare_tags():
     assert not matches({"flow:x"}, ["smoke"])
 
 
-def test_suites_file_has_the_four_suites():
-    assert set(load_suites()) == {"smoke", "standard", "rigorous", "full"}
+def test_suites_file_has_the_five_suites():
+    assert set(load_suites()) == {"smoke", "standard", "rigorous", "full", "demo"}
+
+
+def test_the_demo_suite_has_three_scenarios_for_each_user_story():
+    """DECISIONS.md 145: each user story in the assignment, three existing scenarios, two samples."""
+    from evals.scenario import load_all
+    from evals.suites import select
+
+    chosen, samples = select(load_all(), "demo")
+    assert len(chosen) == 18 and samples == 2
+
+
+def test_a_scenario_gets_24_caller_turns_unless_it_sets_its_own():
+    """DECISIONS.md 146: demo calls that booked ran out of 16 turns in the membership wrap-up."""
+    from evals.scenario import load_all
+
+    by_id = {s.id: s for s in load_all()}
+    assert by_id["no-cooling-standard"].max_turns == 24
+    assert by_id["angry-caller-demands-person"].max_turns == 8
