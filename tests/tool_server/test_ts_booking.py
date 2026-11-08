@@ -1001,7 +1001,9 @@ def test_the_confirmation_names_the_day_and_the_date(agent):
     today = next(d for d in found["data"]["days"] if d["day"] == "today")
     booked = book(agent, call, {"date": today["date"], "window": today["windows"][0]})
     assert booked["ok"], booked
-    assert booked["say"].startswith("Okay, I've booked it: the technician will arrive today between")
+    assert booked["say"].startswith(
+        "Okay, I've booked it: the technician will arrive today, Monday, November 2, between"
+    )
     # Another caller, so the new address isn't a second home for the first one.
     later = ready_to_book(agent, caller_id="(212) 555-0998", address=in_area_address(5))
     thursday = agent.tool("find_slots", later, job_type="tune_up", day="2026-11-05")
@@ -1178,9 +1180,9 @@ def test_a_member_never_hears_the_membership_check(agent, scenarios):
     "advance,day",
     [
         # 11:50 PM Monday: Tuesday's visit is tomorrow.
-        ({"hours": 14, "minutes": 50}, "tomorrow"),
+        ({"hours": 14, "minutes": 50}, "tomorrow, Tuesday, November 3,"),
         # 12:20 AM Tuesday: the same visit is today (a live call heard "tomorrow").
-        ({"hours": 15, "minutes": 20}, "today"),
+        ({"hours": 15, "minutes": 20}, "today, Tuesday, November 3,"),
     ],
 )
 def test_today_and_tomorrow_come_from_the_visit_date_against_the_local_date(

@@ -12,6 +12,13 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 151. The booking sentence names the day and date, today and tomorrow included
+
+Decided: "Okay, I've booked it: the technician will arrive tomorrow, Sunday, November 8, between 8 and 8:30." Offers still say "today" and "tomorrow" alone.
+Why: The spec (S-30) asks the confirmation to name the date, and it was the most common grader miss in demo eval run 20261108-032146. Jackson chose it on 7 November, reversing the shorter "tomorrow" alone.
+Considered: the date on offers too (the offer is a question; the date matters once it's booked).
+Would change if: callers find the date redundant on a same-day visit.
+
 ## 150. After hours the model isn't given the booking's window; a doorbell answers the gate question
 
 Decided: After hours, a dispatch's result doesn't hand the model the booking's ServiceTitan window (the first window tomorrow, only the record), and the dispatch's next step says not to name a time or window of its own. Saying how the technician gets in ("ring the downstairs bell", "knock", "the doorbell") answers the gate question.
