@@ -283,10 +283,13 @@ class Slot(Body):
     )
 
 
+ISSUE_MAX = 300
+
+
 class JobDetails(Body):
     """The intake every booking carries (spec S-13). Address and phone come from the read-back."""
 
-    issue: str = Field(min_length=1, max_length=300)
+    issue: str = Field(min_length=1, max_length=ISSUE_MAX)
     # Needed for a repair; an estimate visit for a new system needs only the issue (Jackson's call
     # call_2fb4e053ba8b76b57c348845990). book_appointment checks them by job type.
     since: str = Field("", max_length=100)

@@ -43,6 +43,7 @@ from .lifecycle import approval_unclear
 from .readback import change as readback_change
 from .readback import units_said
 from .schemas import (
+    ISSUE_MAX,
     BookIn,
     CallbackTime,
     CancelIn,
@@ -329,6 +330,19 @@ def _address_said(ctx: Ctx, house: str, street: str, rows: list | None = None) -
     return any(
         _address_said_as(ctx, want, names, rows, merge) for merge in (True, False)
     )
+
+
+def _house_heard_before(ctx: Ctx, street: str) -> str:
+    """The number the caller said right before this street's name, latest line first, or ""."""
+    names = _street_names(street)
+    if not names:
+        return ""
+    for row in reversed(_without_partials(_caller_lines(ctx))):
+        tokens = _address_tokens(row["text"], True)
+        for k in range(1, len(tokens)):
+            if tokens[k] == names[0] and tokens[k - 1].isdigit() and len(tokens[k - 1]) <= 6:
+                return tokens[k - 1]
+    return ""
 
 
 def _address_said_as(ctx: Ctx, want: str, names: list[str], rows: list, merge: bool) -> bool:
@@ -1836,6 +1850,17 @@ def find_address(ctx: Ctx, args: FindAddressIn) -> Result:
         )
     house, street = split
     if not _address_said(ctx, house, street):
+        heard = _house_heard_before(ctx, street)
+        if heard and heard != house and _address_said(ctx, heard, street):
+            # The model cut the caller's number short ("two two nine oh" looked up as 229, four
+            # times, in the demo eval of 8 November): hand back the number the caller said.
+            raise Refused(
+                "address_not_heard",
+                "",
+                need="look up only a house number and street the caller said",
+            ).with_next(
+                f"Say nothing. The caller said {heard} {street}: call find_address again with that."
+            )
         raise Refused(
             "address_not_heard",
             "What's the street address there?",
@@ -3056,7 +3081,7 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
         # No name given yet: the office has the number, and asking now would hold up the visit.
         name = f"{PLACEHOLDER_NAME} {current['phone'][-4:]}"
     job_name = ctx.tenant.job_types[job_type]["name"]
-    issue = job_name + (f" ({'; '.join(decided.reasons)})" if decided.reasons else "")
+    issue = _dispatch_issue(job_name, decided.reasons)
     with tx(ctx.conn):
         records.update_call(ctx.conn, ctx.call["id"], readback_confirmed_at=iso(ctx.now))
     ctx.reload()
@@ -3116,6 +3141,20 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
         on_call=on_call,
         next=_after_dispatch(ctx, checking=not heard_back),
     )
+
+
+def _dispatch_issue(job_name: str, reasons: list[str]) -> str:
+    """The job's issue for a dispatch: its name and the priority reasons that fit in the issue's
+    300 characters. Four side-model reasons took one past it, and the dispatch failed validation
+    (demo eval 20261108-011049, elderly-no-heat). The full reasons stay on the call's priority."""
+    limit = ISSUE_MAX
+    kept: list[str] = []
+    for reason in reasons:
+        if len(f"{job_name} ({'; '.join([*kept, reason])})") > limit:
+            break
+        kept.append(reason)
+    issue = job_name + (f" ({'; '.join(kept)})" if kept else "")
+    return issue[:limit]
 
 
 def _alert_on_call(ctx: Ctx, found: Decided, job_name: str) -> None:

@@ -194,6 +194,35 @@ def test_facts_that_raise_the_priority_dispatch_at_find_slots(agent, monkeypatch
     assert "Wait for the answer" in found["data"]["next"]
 
 
+def test_a_dispatch_with_long_priority_reasons_still_books(agent, monkeypatch):
+    """Demo eval 20261108-011049, elderly-no-heat: the reasons the side model added took the job's
+    issue past its 300 characters, so every dispatch failed validation and the caller heard the
+    scheduling system was down. The issue keeps what fits; the visit is booked."""
+    from dataclasses import replace
+
+    from app import tools
+
+    real = tools._priority
+
+    def priority(ctx, job_type, inside, wait=True):
+        found = real(ctx, job_type, inside, wait)
+        long = [f"caller is 84, lives alone and is slow to the door ({i}), from the side model "
+                "with some more words to make it long" for i in range(4)]
+        return replace(found, priority=replace(found.priority, reasons=found.priority.reasons + long))
+
+    monkeypatch.setattr(tools, "_priority", priority)
+    call = _start_no_heat(agent)
+    sent = _dispatch(agent, call)
+    assert sent["ok"] and sent["data"]["dispatched"], sent
+    job = _fsm(agent).job(sent["data"]["booking_id"])
+    with agent.db() as db:
+        row = db.execute(
+            "SELECT status FROM bookings WHERE call_id = ? AND kind = 'book'", (call,)
+        ).fetchone()
+    assert row["status"] == "booked"
+    assert job is not None
+
+
 def test_a_dispatched_job_is_tagged_urgent_in_the_crm(agent):
     call = _start_no_heat(agent)
     sent = _dispatch(agent, call)

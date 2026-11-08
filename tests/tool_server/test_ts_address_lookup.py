@@ -482,6 +482,23 @@ def test_a_zip_out_of_the_area_said_with_the_street_is_left_to_the_area_check(tm
 # ---- review of #125 -------------------------------------------------------------------------
 
 
+def test_a_house_number_the_model_cut_short_is_handed_back_as_the_caller_said_it(located):
+    """Demo eval 20261108-011049, no-cooling-standard: the caller said "two two nine oh Hylan
+    Boulevard" (2290), the model looked up 229 four times, and each refusal only asked for the
+    street address again. The refusal now names the number the caller said before that street."""
+    call = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(call, "it's two two nine oh hylan boulevard staten island one oh three oh six")
+    result = located.tool("find_address", call, street="229 Hylan Boulevard")
+    assert result["refused"] == "address_not_heard"
+    assert result["say"] == ""
+    assert "2290 Hylan Boulevard" in result["next"]
+    # A street the caller never put a number before still asks for the address.
+    other = located.start(UNKNOWN)["data"]["call_id"]
+    located.turn(other, "My heat's out, I'm in Brooklyn.")
+    plain = located.tool("find_address", other, street="248 Duffield St")
+    assert plain["say"] == "What's the street address there?"
+
+
 AVENUE_U = Place("5", "AVENUE U", "11223", "Brooklyn", "Gravesend")
 
 
