@@ -12,6 +12,12 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 150. After hours the model isn't given the booking's window; a doorbell answers the gate question
+
+Decided: After hours, a dispatch's result doesn't hand the model the booking's ServiceTitan window (the first window tomorrow, only the record), and the dispatch's next step says not to name a time or window of its own. Saying how the technician gets in ("ring the downstairs bell", "knock", "the doorbell") answers the gate question.
+Why: In demo eval run 20261108-021040, a caller with a baby heard "about two hours" and then "8 AM tomorrow", and "ring the downstairs bell" was followed by "is there a gate code or buzzer".
+Considered: booking the after-hours visit tonight in ServiceTitan (the on-call technician's time isn't a ServiceTitan window).
+Would change if: on-call visits get their own ServiceTitan window.
 ## 149. The eval pass-rate floor is 80% on the socket stack
 
 Decided: `min_eval_pass_rate` in evals/baseline.json is 0.8, down from 0.9. The bench's eval chart and the ratchet both read it. Must-pass cases still fail the check at any pass rate.

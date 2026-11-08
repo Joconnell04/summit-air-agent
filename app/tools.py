@@ -3141,7 +3141,11 @@ def _dispatch(ctx: Ctx, job_type: str, current: dict) -> Result | None:
         sentence=sentence,
         booking_id=booked.data["booking_id"],
         appointment_id=booked.data["appointment_id"],
-        window=booked.data["window"],
+        # After hours the booked window is only ServiceTitan's record (the first window tomorrow);
+        # the sentence says when the on-call technician comes. Given the window, the model told a
+        # caller with a baby "8 AM tomorrow" after "about two hours" (demo eval run
+        # 20261108-021040, baby-no-heat-standard).
+        window=None if on_call else booked.data["window"],
         priority=booked.data["priority"],
         on_call=on_call,
         next=_after_dispatch(ctx, checking=not heard_back),
@@ -3267,7 +3271,8 @@ def _after_dispatch(ctx: Ctx, checking: bool = True) -> str:
             "Wait for the answer. A plain yes means someone is home and there is no code; if no "
             "one will be home, ask how the technician can get in. Save what they say with "
             "add_note (attach_to job), then say \"Okay, you're all set. Anything else I can help "
-            "with?\". Don't offer times, read back again or ask who approves the work."
+            "with?\". Don't offer times, name a time or window of your own, read back again or "
+            "ask who approves the work."
         )
     if missing:
         # A caller who asks what the technician needs ("is there a gate code I need to give?")
@@ -3288,7 +3293,8 @@ def _after_dispatch(ctx: Ctx, checking: bool = True) -> str:
         '"Okay, you\'re all set. Anything else I can help with?". '
         "If they correct the unit or the number, call read_back with the "
         "corrected details and the job type: the visit moves with them and its sentence is said "
-        "for you. Don't offer times, read back again or ask who approves the work."
+        "for you. Don't offer times, name a time or window of your own, read back again or ask "
+        "who approves the work."
     )
 
 

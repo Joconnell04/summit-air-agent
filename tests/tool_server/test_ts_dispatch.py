@@ -298,3 +298,21 @@ def test_after_hours_with_both_on_call_technicians_out_the_wait_is_said(agent, c
     assert "on-call technician will call you" in sent[1]["say"]
     assert "both out on jobs right now" in sent[2]["say"]
     assert "in about an hour and forty-five minutes" in sent[2]["say"]
+
+
+def test_after_hours_the_model_gets_no_window_to_read_out(agent, clock):
+    """Demo eval run 20261108-021040, baby-no-heat-standard: after "the first one free will call
+    you ... in about two hours", the model read out the booking's ServiceTitan window ("8 AM
+    tomorrow"). After hours that window is only the record; the model isn't given it."""
+    from test_ts_transfer import EVENING
+    from toolkit import in_area_address
+
+    clock.now = EVENING
+    call = agent.start("+12125550001")["data"]["call_id"]
+    agent.turn(call, "My heat's out and there's a five month old baby here.")
+    address = in_area_address(1)
+    agent.turn(call, f"It's {address['street']}, {address['zip']}.")
+    sent = agent.tool("read_back", call, address=address, phone="caller_id", job_type="no_heat")
+    assert sent["data"]["dispatched"] is True and sent["data"]["on_call"] is True
+    assert sent["data"]["window"] is None
+    assert "name a time or window of your own" in sent["data"]["next"]
