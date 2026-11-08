@@ -111,3 +111,17 @@ def test_a_street_the_caller_said_is_kept_as_the_model_wrote_it(agent):
     address = {"street": "101 Union Street", "unit": "", "city": "", "zip": "11231"}
     asked = agent.tool("read_back", call, address=address, phone="caller_id")
     assert asked["data"]["sentence"].startswith("So that's one oh one Union Street")
+
+
+@pytest.mark.parametrize("unit, said", [
+    ("downstairs", "eight oh one Fenimore Street, downstairs"),
+    ("Upstairs", "eight oh one Fenimore Street, upstairs"),
+    ("top floor", "eight oh one Fenimore Street, top floor"),
+    ("rear", "eight oh one Fenimore Street, rear"),
+    ("PH", "eight oh one Fenimore Street, unit P H"),
+    ("4B", "eight oh one Fenimore Street, unit four B"),
+])
+def test_a_unit_that_is_a_word_is_said_as_the_word(unit, said):
+    """Eval run 20261108-004357, tune-up-known-caller: "the downstairs unit" was read back as
+    "unit D O W N S T A I R S"."""
+    assert address_said("801 Fenimore Street", unit) == said
