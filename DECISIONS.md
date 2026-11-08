@@ -12,7 +12,7 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
-## 142. A question the caller already heard in the same reply is cut
+## 143. A question the caller already heard in the same reply is cut
 
 Decided: the socket's filter cuts a sentence of the model's that repeats one already said in the same reply, questions included. Before, a question was never cut, so the model's copy of the server's question got through.
 Why: on the socket run 20261107-230923, all four no-heat dispatch calls heard "Will someone be home to let the technician in?" twice in one turn. The dispatch sentence ends on "just let me know.", not a question, so the model carries on, and it asked the arrival question again. The rule that a question is never cut (DECISIONS.md 112) is there so the filter can't remove the only question; a repeat in the same reply leaves the first one in place.
@@ -21,16 +21,16 @@ Would change if: a call shows a needed question cut as a repeat (the drop is log
 Discussion: this session; tests/voice_retell/test_rt_llm_socket.py
 Issue: #195
 
-## 141. A remote eval runs on a world opened like the live one, and a check it can't run isn't a failure
+## 142. A remote eval runs on a world opened like the live one, and a check it can't run isn't a failure
 
-Decided: the eval and server-led test mocks open the schedule after each reset the way the live world is opened (`ST_MOCK_RESET_OPEN=1`, scripts/open_live_schedule.py: shifts on the seed's rota of about 20 technicians a day, weekends included, and five in six filler visits cancelled). A check that reads the scratch ServiceTitan file, which only the in-process stack has, is reported as not run on a remote stack instead of failing the call. The booking check counts a visit the server booked at the read-back (a High no-heat dispatch, DECISIONS.md 123) for its job type.
+Decided: the eval and server-led test mocks open the schedule after each reset the way the live world is opened (`ST_MOCK_RESET_OPEN=1`, scripts/open_live_schedule.py: shifts on the seed's rota, about 20 people a day, weekends included, and five in six filler visits cancelled). A check that reads the scratch ServiceTitan file, which only the in-process stack has, is reported as not run on a remote stack instead of failing the call. The booking check counts a visit the server booked at the read-back (a High no-heat dispatch, DECISIONS.md 123) for its job type.
 Why: on the socket run 20261107-214125 (56%), the test world was booked solid for its first days (77 visits on Monday, none cancelled, against 13 left on the live world), so ac-not-cooling-warm-spell heard "nothing's open" three days running; five fails were checks that couldn't read ServiceTitan or a dispatch with no book_appointment call, while the server's records showed the bookings and dispatches made.
 Considered: freezing the remote world's clock (the socket reads real time); leaving the seed as it is (a test world unlike the live one hides real behavior and invents fails).
 Would change if: a scenario needs the full calendar (give it its own world).
 Discussion: this session; tests/servicetitan_mock/test_st_reset.py, tests/evals/test_checks.py
 Issue: #195
 
-## 140. Who approves, the gate or buzzer and being home as a habit count from anywhere in the call
+## 141. Who approves, the gate or buzzer and being home as a habit count from anywhere in the call
 
 Decided: before the opening is offered, a caller line that says who approves the work ("I own the place", "my landlord has to approve"), names a gate, buzzer or doorman, or says being home is a habit ("I work from home", "home most of the day") settles that visit question. Being home said before a day is picked ("I'm home", "we're home right now") still doesn't count, and is asked after the offer as before. The membership next step no longer says "once that's settled".
 Why: on the socket run 20261107-214125, card-pay-by-card-ask and tenant-landlord-approves were asked approval and access again after answering them before the offer; the grader failed both for asking twice. The model spoke the next step's "once that's settled" as "The membership offer is settled, so I'll move on."
@@ -39,7 +39,7 @@ Would change if: a caller who said they own the place turns out not to approve r
 Discussion: this session; tests/tool_server/test_ts_server_led.py
 Issue: #195
 
-## 139. A hyphenated spoken number is one number
+## 140. A hyphenated spoken number is one number
 
 Decided: the number reader takes "twenty-five" as 25 wherever a transcript writes it with a hyphen, alone or before "hundred" ("twenty-five hundred" is 2500), and after "hundred" ("two hundred forty-eight" is 248). "Twenty-oh-five" stays 2005, and a Queens house number written with a hyphen between digits ("41-12") is unchanged.
 Why: on the socket run 20261107-214125, retell-call-bronx-zip said "Yes, that's correct. Twenty-five hundred Grand Concourse" three times; the reader made it 20500, took it for a new house number, refused every yes to the read-back of 2500 and flagged a person instead of booking. Every hyphenated number was split the same way: "ninety-nine" was 909 and "forty-one twelve" 40112.
@@ -47,11 +47,18 @@ Considered: matching the read-back's house number in words (only that check, whi
 Would change if: a transcript writes a hyphen between two numbers that are meant apart ("twenty-five" as 20 and 5), which no call has shown.
 Discussion: this session; tests/tool_server/test_ts_booking_flow.py
 Issue: #195
+## 139. Owner view tests run on the world the live reset leaves, not the seed alone
+
+Decided: `scripts/reset_live_world.py` runs as one function, `reset()`, and `tests/tool_server/test_ts_live_world.py` drives it on a world that already has calls, then checks what the owner and the agent see: about 20 technicians every day for two weeks, no Paul or Jackson, the schedule page's rows and columns, most daytime windows open, and a new call that books and reaches Today with the old calls kept.
+Why: the live reset's schedule opener put all 40 technicians on every weekday and every test stayed green, because they read the seed. Run on the opener from before PR #198, two of the new tests fail.
+Considered: checking the live server after each deploy (it would catch it later, after the owner sees it).
+Would change if: the live world is built some other way than reset_live_world.py.
+
 ## 138. About 20 technicians work a day out of 40; the owner checks rows off Needs attention; Callbacks lists only booked callbacks
 
-Decided: The seeded shop keeps 40 technicians, each with a first name of their own, and half the service technicians work any one weekday by turns, so a day's schedule is 20 rows with the comfort advisors. No customer or technician is named Paul or Jackson. The schedule's columns read as clock times over the part of the day ("8 to 10 AM", "Morning"). Each Needs attention row has a button that closes the flag with who did it, and the callback it stands for. The Today tray drops Turned away (still a filter on Calls), and its Callbacks tab shows only callbacks the caller booked for a time. Every call shows its ID on the Calls list and its page.
+Decided: Of the 40-person shop, the 32 who take jobs are in the seeded world (28 service technicians and 4 comfort advisors; the other 8 are the office and leadership), each with a first name of their own. 18 service technicians and 2 advisors work any one weekday by turns, and the schedule lists all 32, showing who is off. No customer or technician is named Paul or Jackson. The schedule's columns read as clock times over the part of the day ("8 to 10 AM", "Morning"). Each Needs attention row has a button that closes the flag with who did it, and the callback it stands for. The Today tray drops Turned away (still a filter on Calls), and its Callbacks tab shows only callbacks the caller booked for a time. Every call shows its ID on the Calls list and its page.
 Why: Jackson's review of the owner view (7 November): 40 rows with repeated first names was hard to read, "0800-1000" read as a code, and a person ask showing as a late callback mixed two different things. The demo has Paul playing the owner and Jackson calling, so either name in the CRM would find a stranger.
-Considered: cutting the roster to 20 (the brief says a 40-tech shop, so the roster stays and the shifts thin out); a separate kind column on callbacks (the link to a transfer, a handoff or a person flag with the same words already tells them apart).
+Considered: cutting the roster to 20, or listing only who works the day (Jackson asked for all 32 listed, since 40 people includes the office); a separate kind column on callbacks (the link to a transfer, a handoff or a person flag with the same words already tells them apart).
 Would change if: a real ServiceTitan roster replaces the seed, or the owner wants person asks back in the Callbacks tab.
 
 ## 137. Background noise is an owner switch on the live Retell agent; asking to be routed or patched through to a person counts as an ask

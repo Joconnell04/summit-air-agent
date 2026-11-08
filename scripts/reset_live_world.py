@@ -35,7 +35,7 @@ from pathlib import Path
 
 from app import db
 from scripts.open_live_schedule import open_schedule
-from servicetitan_mock.config import DEFAULT_TENANT_DIR
+from servicetitan_mock.config import DEFAULT_TENANT_DIR, TenantConfig
 from servicetitan_mock.seed import reseed
 
 WHY = "world reset"
@@ -102,6 +102,18 @@ def clear_tool_server(tool_db: Path, now: datetime) -> dict[str, int]:
         conn.close()
 
 
+def reset(tool_db: Path, mock_db: Path, tenant_dir: Path, now: datetime, force: bool = False) -> dict:
+    """The whole reset, as the server runs it: the same steps a test drives."""
+    live = live_calls(tool_db, now)
+    if live and not force:
+        raise SystemExit(f"not reset: {len(live)} call(s) live ({', '.join(live)}); --force to")
+    today = now.astimezone(TenantConfig.load(tenant_dir).tz).date()
+    scenarios = reseed(mock_db, tenant_dir, today)
+    cleared = clear_tool_server(tool_db, now)
+    opened = open_schedule(mock_db, tenant_dir, today, 14, 6)
+    return {"reseeded": len(scenarios), "cleared": cleared, "schedule": opened}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--tool-db", default="data/tool_server.db")
@@ -109,14 +121,10 @@ def main() -> None:
     parser.add_argument("--tenant", default=DEFAULT_TENANT_DIR)
     parser.add_argument("--force", action="store_true", help="reset even while a call is live")
     args = parser.parse_args()
-    now = datetime.now(UTC)
-    live = live_calls(Path(args.tool_db), now)
-    if live and not args.force:
-        raise SystemExit(f"not reset: {len(live)} call(s) live ({', '.join(live)}); --force to")
-    scenarios = reseed(Path(args.mock_db), Path(args.tenant))
-    cleared = clear_tool_server(Path(args.tool_db), now)
-    opened = open_schedule(Path(args.mock_db), Path(args.tenant), None, 14, 6)
-    print(json.dumps({"reseeded": len(scenarios), "cleared": cleared, "schedule": opened}))
+    found = reset(
+        Path(args.tool_db), Path(args.mock_db), Path(args.tenant), datetime.now(UTC), args.force
+    )
+    print(json.dumps(found))
 
 
 if __name__ == "__main__":
