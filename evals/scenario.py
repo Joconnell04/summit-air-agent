@@ -85,7 +85,7 @@ class Scenario(BaseModel):
     hidden_facts: dict[str, Any] = Field(default_factory=dict)
     opening: str = Field(min_length=1)
     script: list[str] = Field(default_factory=list)
-    max_turns: int = Field(16, ge=2, le=40)
+    max_turns: int = Field(24, ge=2, le=40)
     earlier_call: EarlierCall | None = None
     # The scheduling system failing: "booking" fails the writes that book (new jobs, customers,
     # locations, leads) while lookups and availability still work, as when it goes down mid-booking

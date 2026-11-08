@@ -168,4 +168,5 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Remote evals on a live-like world | The test mocks open the schedule after a reset; checks that need the scratch ServiceTitan are not run on a remote stack | DECISIONS.md 142 |
 | Repeated question in one reply | The socket cuts the model's copy of a question the server already asked in the same reply | DECISIONS.md 143 |
 | Clock times after the read-back | "6:30 doesn't work" no longer reads as house 30 and clears the confirmed address; the booking check knows today's confirmation | DECISIONS.md 144 |
-| Demo eval suite | Three existing scenarios per assignment user story, two samples; the grader is told the server's dispatch line | DECISIONS.md 145 |
+| Word units and one account question | "Downstairs" is said as a word; the account question is asked once a call | DECISIONS.md 145 |
+| Demo eval suite | Three existing scenarios per assignment user story, two samples; the grader is told the server's dispatch line | DECISIONS.md 146 |

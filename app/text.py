@@ -459,17 +459,26 @@ def unit_clean(unit: str) -> str:
 FLOOR = re.compile(r"^(\d+)\s*(?:st|nd|rd|th)?\s*(?:fl|floor)\.?$|^(?:fl|floor)\.?\s*(\d+)$",
                    re.IGNORECASE)
 GROUND_FLOORS = {"ground floor", "basement", "garden", "garden level", "ground"}
+# A unit that is a word ("downstairs", "rear", "top floor"), said as the word. A short code with no
+# vowel ("PH", "PHB") is still read letter by letter.
+WORD_UNIT = re.compile(r"^(?=.*[aeiouy])[a-z]{3,}(?: [a-z]+)*$", re.IGNORECASE)
+
+
+def word_unit(unit: str) -> bool:
+    unit = unit_clean(unit)
+    return unit.lower() in GROUND_FLOORS or bool(WORD_UNIT.match(unit))
 
 
 def unit_said(unit: str) -> str:
     """Digits one at a time and letters as letters: 2 "two", 4B "four B", 12C "one two C". A floor
     is said as one: "2nd floor" is "second floor", not "two n d f l o o r" (Retell call
-    call_bbfbed1552e4f96e41400b1897f); words like "basement" stay words."""
+    call_bbfbed1552e4f96e41400b1897f); words like "basement" or "downstairs" stay words, not
+    "D O W N S T A I R S" (eval run 20261108-004357, tune-up-known-caller)."""
     unit = unit_clean(unit)
     floor = FLOOR.match(unit)
     if floor:
         return f"{ordinal_said(int(floor[1] or floor[2])).lower()} floor"
-    if unit.lower() in GROUND_FLOORS:
+    if word_unit(unit):
         return unit.lower()
     return " ".join(
         NUMBER_ONES[int(c)] if c.isdigit() else c.upper()
@@ -493,7 +502,7 @@ def address_said(street: str, unit: str = "") -> str:
     if not unit:
         return street_said(street)
     # A floor is said as a floor: "second floor", not "unit second floor".
-    floor = bool(FLOOR.match(unit)) or unit.lower() in GROUND_FLOORS
+    floor = bool(FLOOR.match(unit)) or word_unit(unit)
     return f"{street_said(street)}, {'' if floor else 'unit '}{unit_said(unit)}"
 
 

@@ -71,3 +71,12 @@ def test_the_demo_suite_has_three_scenarios_for_each_user_story():
 
     chosen, samples = select(load_all(), "demo")
     assert len(chosen) == 18 and samples == 2
+
+
+def test_a_scenario_gets_24_caller_turns_unless_it_sets_its_own():
+    """DECISIONS.md 146: demo calls that booked ran out of 16 turns in the membership wrap-up."""
+    from evals.scenario import load_all
+
+    by_id = {s.id: s for s in load_all()}
+    assert by_id["no-cooling-standard"].max_turns == 24
+    assert by_id["angry-caller-demands-person"].max_turns == 8

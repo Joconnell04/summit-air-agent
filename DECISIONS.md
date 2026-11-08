@@ -12,15 +12,22 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
-## 145. A demo eval suite, and the grader is told the dispatch the server said
+## 146. A demo eval suite, and the grader is told the dispatch the server said
 
 Decided: `evals/suites.yaml` has a `demo` suite: three existing scenarios for each user story in the assignment (no heat or cooling booked, a vulnerable household marked priority, a gas or CO call, a tune-up, a member, a commercial caller), two samples each, 36 calls. The grader's list of what the server set up now includes the dispatch sentence read_back or find_slots says ("Expect them within the next hour"), so it is no longer judged an arrival the call never set up.
 Why: Jackson asked for a run that proves each user story the demo will likely test, graded on what a business owner would accept. On the socket run 20261107-230923 all four no-heat dispatches failed the grader on the dispatch line alone, which is the server's fixed wording (tenants/summit-air/agent.yaml dispatch_now). The cost is about $2 a run (MEASURED: $0.054 a call on that run).
+A scenario's caller turns default to 24, not 16 (evals/scenario.py): three demo calls booked and then ran out of turns in the membership wrap-up, which the harness scored as an error; a call that loops still stops.
 older-caller-gets-slower-pace was left out: it checks that every line is spoken slower, and the Retell socket has no per-line speed and applies no pace (voice/retell_llm/call.py), so it measures a feature only the earlier LiveKit stack has; at-risk-caller-also-pushes stands for the vulnerable household instead.
 Considered: new scenarios written for the demo (the existing ones already cover each story and have checks tuned over earlier rounds); loosening the grader prompt (its fail list is already limited to what an owner would not accept).
 Would change if: the demo calls cover a story the suite doesn't (renter, after hours, a repeat caller).
 Discussion: this session; tests/evals/test_grader.py
 Issue: #201
+## 145. A unit that is a word is said as the word; whose account a new address goes on is asked once a call
+
+Decided: The read-back says a unit that is a word as the word ("801 Fenimore Street, downstairs"), the way "basement" already was; codes such as "4B" or "PH" are still read letter by letter. The read-back asks "Should I put this under your account?" once a call: a second read-back skips it, and a booking that leaves the choice off uses the one given earlier.
+Why: In eval run 20261108-004357 (tune-up-known-caller), "the downstairs unit" was read back as "unit D O W N S T A I R S", and when the caller later named a unit, the read-back ran again and asked the account question a second time ("I already said that"). The model had passed the choice on every booking, so the repeat came from the server.
+Considered: stopping the second read-back (a caller who corrects the unit should hear it confirmed).
+Would change if: a caller's unit word is a code we should spell, such as a building's lettered wing.
 
 ## 144. The minutes of a clock time are never a house number
 
