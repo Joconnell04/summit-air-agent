@@ -180,15 +180,49 @@ def test_a_question_asked_without_an_answer_is_not_settled(led):
     slot = slot_of(offer(led, call))
     led.turn(call, "That works.")
     led.say(call, f"{APPROVAL} {HOME} {ACCESS}")
-    assert book(led, call, slot)["say"] == f"Got it. {APPROVAL}"
+    assert book(led, call, slot)["say"].endswith(APPROVAL)
 
 
-def test_questions_asked_before_the_offer_do_not_count(led):
+def test_questions_asked_before_the_offer_do_not_count_except_ownership(led):
+    """A yes to "someone home?" before a day is picked may mean right now, so it is asked again;
+    owning the place doesn't change with the day (eval run 20261107-214125)."""
     call = ready_to_book(led)
     answer_visit_questions(led, call)
     slot = slot_of(offer(led, call))
     led.turn(call, "That works.")
-    assert book(led, call, slot)["refused"] == "visit_questions_first"
+    refused = book(led, call, slot)
+    assert refused["refused"] == "visit_questions_first"
+    assert refused["say"].endswith(ARRIVAL) and APPROVAL not in refused["say"]
+
+
+@pytest.mark.parametrize(
+    "early, asked",
+    [
+        # card-pay-by-card-ask: approval and a habit of being home said before the offer.
+        (("I own the place, so I'm the one who'll be approving the work. My partner and I are "
+          "both home most of the day."), GATE),
+        # tenant-landlord-approves: the landlord approves, the buzzer is broken.
+        (("I rent it, so my landlord has to approve the repair. The buzzer for unit 2 is broken, "
+          "so the technician should knock."), HOME),
+    ],
+)
+def test_answers_that_dont_change_with_the_day_count_from_before_the_offer(led, early, asked):
+    call = ready_to_book(led)
+    led.turn(call, early)
+    slot = slot_of(offer(led, call))
+    led.turn(call, "That works.")
+    said = book(led, call, slot)["say"]
+    assert said.endswith(asked) and APPROVAL not in said
+
+
+@pytest.mark.parametrize("early", ["I'm home and it's freezing.", "It's for my home.",
+                                   "We're home right now."])
+def test_being_home_now_or_a_home_address_settles_nothing_before_the_offer(led, early):
+    call = ready_to_book(led)
+    led.turn(call, early)
+    slot = slot_of(offer(led, call))
+    led.turn(call, "That works.")
+    assert book(led, call, slot)["say"].endswith(APPROVAL)
 
 
 @pytest.mark.parametrize("line", ["Someone is home all day.", "We're home.", "I'm home all day."])

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from evals.checks import CHECKS, Evidence, check_names, run_checks, safety_config
+from evals.checks import CHECKS, NO_ST, Evidence, check_names, run_checks, safety_config, unchecked
 
 SAFETY = safety_config()
 GAS = SAFETY["kinds"]["gas"]["lines"]
@@ -333,6 +333,18 @@ def test_the_booking_confirmation_needs_a_short_line_before_it():
     ]
 
 
+
+def test_the_current_booking_confirmation_carries_its_own_lead_in():
+    """Socket eval 20261107-230923, tune-up-known-caller: the booking went through and was said, but
+    the check only knew the older "You're all set for" wording."""
+    booked = ("Okay, I've booked it: the technician will arrive Monday, November 9, "
+              "between 8 and 8:30. Anything else?")
+    said = trace([("agent", booked, None)])
+    assert failures("booking_lead_in", True, said) == []
+    nothing = trace([("agent", "Let me look at the schedule.", None)])
+    assert failures("booking_lead_in", True, nothing) == ["no booking confirmation was said"]
+
+
 TAKEN = {
     "type": "tool",
     "tool": "book_appointment",
@@ -531,3 +543,21 @@ def test_jobs_reads_a_queens_house_number_with_or_without_its_hyphen():
     t = trace(bookings=[_job(street="19611 Hillside Avenue")])
     assert failures("jobs", [{"street": "196-11 Hillside"}], t) == []
     assert failures("jobs", [{"street": "196-12 Hillside"}], t) != []
+
+
+def test_a_dispatch_booked_at_the_read_back_counts_for_the_job_type():
+    """A High no-heat call is booked by the server at the read-back, with no book_appointment
+    call (eval run 20261107-214125: no-heat-unknown-caller read "job type []")."""
+    dispatched = {**booked("Urgent"), "job_type": "no_heat"}
+    assert failures("booking", {"job_type": "no_heat"}, trace(bookings=[dispatched])) == []
+    assert failures("booking", {"job_type": "tune_up"}, trace(bookings=[dispatched]))
+
+
+def test_a_check_that_needs_the_scratch_servicetitan_is_not_run_without_one():
+    """On a remote stack there is no ServiceTitan file to read: not a failure, and not a pass."""
+    t = trace(bookings=[{**booked(), "fsm_job_id": 7}])
+    must = [{"booked_under": "Pat Rivera"}, {"booking": "one"}]
+    ev = Evidence(t, SAFETY)
+    assert CHECKS["booked_under"].run("Pat Rivera", ev) == [NO_ST]
+    assert run_checks(must, ev) == []
+    assert unchecked(must, ev) == ["booked_under"]

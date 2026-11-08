@@ -7,7 +7,7 @@ import json
 import pytest
 from toolkit import TENANT_DIR, UNKNOWN, book, first_open, in_area_address, ready_to_book
 
-from app import asks, readback
+from app import asks, readback, text
 from app.jobs import retry_queue
 from app.lifecycle import sounds_commercial
 from app.tenant import load_agent
@@ -58,6 +58,47 @@ def test_a_queens_house_number_and_its_numbered_street_are_not_read_as_changes()
     assert readback.change("Yes, 188-10 64th Avenue, 2A.", queens) is None
     assert readback.change("Yes, but it's 65th Avenue.", queens) == "street"
     assert readback.change("Yes, but it's 188-12.", queens) == "house number"
+
+
+@pytest.mark.parametrize(
+    "said, tokens",
+    [
+        ("twenty-five hundred Grand Concourse", ["2500", "grand", "concourse"]),
+        ("twenty five hundred", ["2500"]),
+        ("unit twenty-five", ["unit", "25"]),
+        ("ninety-nine", ["99"]),
+        ("one twenty-five Union", ["125", "union"]),
+        ("two hundred forty-eight", ["248"]),
+        ("forty-one twelve Bell", ["4112", "bell"]),
+        ("41-12 Bell", ["4112", "bell"]),
+        ("twenty-oh-five", ["2005"]),
+        ("forty two forty one", ["4241"]),
+    ],
+)
+def test_a_hyphenated_spoken_number_is_one_number(said, tokens):
+    """Eval run 20261107-214125 (retell-call-bronx-zip): "twenty-five hundred" was read as 20500,
+    so every yes to the read-back of 2500 Grand Concourse was taken as a new house number."""
+    assert text.number_tokens(said) == tokens
+
+
+def test_a_yes_that_says_the_house_number_in_hyphenated_words_is_no_change():
+    bronx = {**READ_BACK, "street": "2500 Grand Concourse", "zip": "10458"}
+    line = ("Yes, that's correct. Twenty-five hundred Grand Concourse, Bronx, 10458. When can "
+            "someone come out today or tomorrow?")
+    assert readback.change(line, bronx) is None
+    assert readback.change("Yes, but it's twenty-six hundred.", bronx) == "house number"
+
+
+def test_a_yes_with_the_house_number_in_hyphenated_words_confirms_and_books(agent):
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    address = {**in_area_address(), "street": "125 Union St"}
+    agent.turn(call, "It's 125 Union St, 11231.")
+    asked = agent.tool("read_back", call, address=address, phone="caller_id")
+    agent.say(call, asked["say"])
+    agent.turn(call, "Yes, that's right, one twenty-five Union Street. When can someone come?")
+    confirmed = agent.tool("read_back", call, address=address, phone="caller_id", confirmed=True)
+    assert confirmed["ok"], confirmed
+    assert book(agent, call, first_open(agent, call))["ok"]
 
 
 def test_a_unit_given_after_the_confirmation_resets_it_and_the_booking_waits(agent):
@@ -678,6 +719,24 @@ def test_a_time_said_with_the_yes_is_not_a_house_number(line):
     """Eval run 20261104-210139, gas-downplayed-wants-booking: "8 to 12 book it" refused every yes."""
     austin = {**READ_BACK, "street": "71-20 Austin Street", "zip": "11375"}
     assert readback.change(line, austin) is None
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Today at 6:30 doesn't work for me, I'd need something next week.",
+        "6:30 doesn't work, do you have anything Monday?",
+        "The 8:30 one works better for me.",
+    ],
+)
+def test_the_minutes_of_a_clock_time_are_not_a_house_number(line):
+    """Socket eval 20261107-230923, tune-up-known-caller: "6:30 doesn't work" read as house 30, so
+    the confirmed read-back was cleared and the caller was asked for the address again."""
+    assert readback.change(line, READ_BACK) is None
+
+
+def test_a_house_number_said_after_a_clock_time_still_changes_the_read_back():
+    assert readback.change("6:30 works, but it's actually 150 Union Street.", READ_BACK) == "house number"
 
 
 # ---- PR #135 re-check ----------------------------------------------------------------------

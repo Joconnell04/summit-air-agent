@@ -166,6 +166,10 @@ def _houses_said(text: str, street: str = "") -> list[str]:
         nxt = tokens[i + 1] if i + 1 < len(tokens) else ""
         after = tokens[i + 2] if i + 2 < len(tokens) else ""
         prev = tokens[i - 1] if i else ""
+        if prev == ":":
+            # The minutes of a clock time: "6:30 doesn't work" named no house 30 (socket eval
+            # 20261107-230923, tune-up-known-caller).
+            continue
         suffix = nxt in SUFFIXES or after in SUFFIXES
         named = nxt.isalpha() and len(nxt) > 1 and nxt not in NOT_STREET and nxt not in UNIT_WORDS
         # A time or a date is not an address: "8 to 12 book it", "November 5", "at 4 works".

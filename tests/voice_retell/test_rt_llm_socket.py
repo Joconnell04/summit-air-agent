@@ -972,6 +972,24 @@ def test_server_led_a_server_sentence_the_model_already_said_is_not_said_again(s
     assert said(events).count("someone will do their best to call you back") == 1, said(events)
 
 
+def test_server_led_a_question_the_server_already_asked_is_not_asked_again(server_led):
+    """Socket evals, 7 November: the dispatch sentence ends on "just let me know.", so the model
+    carries on, and its copy of the server's question got through because a question is never cut.
+    A question said already in the same reply is a repeat, not the only question."""
+    server, make = server_led
+    find = {"id": "t1", "name": "find_slots", "input": {"job_type": "no_heat"}}
+    dispatch = ("We'll get a technician out to you right away at forty-five Forest Avenue. "
+                "Will someone be home to let the technician in? If there's a gate code or buzzer "
+                "they'll need, just let me know.")
+    server.tools["find_slots"] = envelope(say=dispatch, data={"dispatched": True})
+    client, _brain = make([([], [find]), (["Will someone be home to let the technician in? "], [])])
+    with client.websocket_connect(path()) as ws:
+        open_call(ws)
+        text = said(ask(ws, 1, ["Hi.", "It's 55 degrees in here."]))
+    assert text.count("Will someone be home") == 1, text
+    assert text.endswith("just let me know."), text
+
+
 def test_the_greeting_cannot_be_cut_off_by_a_stray_word(socket):
     """Call retell_call_44f21506eca3346bd3547be9de8: "there." three seconds in stopped the greeting at
     "Hi there, thanks for". The greeting is sent as one that can't be talked over."""

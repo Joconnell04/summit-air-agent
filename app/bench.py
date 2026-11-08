@@ -11,10 +11,13 @@ meant to be committed to the suite, is redacted (app/redact.py).
 import json
 import os
 import re
+import subprocess
+import sys
 import time
 from pathlib import Path
+from urllib.parse import quote
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Form, Request
 from fastapi.responses import (
     HTMLResponse,
     PlainTextResponse,
@@ -545,10 +548,33 @@ def add_routes(app: FastAPI) -> None:
                 "live_rules": rules.live(conn, tenant.slug),
                 "number": bench_data.live_number(),
                 "after_hours": bench_pages.after_hours(tenant),
+                "world": request.query_params.get("world", ""),
             }
         finally:
             conn.close()
         return _render(request, "bench_settings.html", context)
+
+    @app.post("/bench/world/reset")
+    def bench_world_reset(request: Request, force: str = Form("")):
+        """Reset the demo world from the bench: the same script as the command line, so the mock and
+        the tool server's ids move together (it refuses while a call is live unless forced)."""
+        denied = require_admin(request)
+        if denied:
+            return denied
+        settings = request.app.state.services.settings
+        command = [sys.executable, "-m", "scripts.reset_live_world",
+                   "--tool-db", str(settings.db_path), "--mock-db", str(settings.mock_db_path)]
+        if force == "1":
+            command.append("--force")
+        done = subprocess.run(command, check=False, capture_output=True, text=True, timeout=120)
+        if done.returncode == 0:
+            note = "World reset at " + time.strftime("%-I:%M %p")
+        else:
+            lines = (done.stderr or done.stdout).strip().splitlines()
+            note = lines[-1] if lines else "Reset failed"
+            if note.startswith("not reset"):
+                note = "Not reset" + note.removeprefix("not reset").split(";")[0]
+        return RedirectResponse(f"/bench/settings?world={quote(note)}#world", 303)
 
     @app.get("/bench/questions", response_class=HTMLResponse)
     def bench_questions(request: Request):

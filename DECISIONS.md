@@ -12,6 +12,50 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 144. The minutes of a clock time are never a house number
+
+Decided: in a caller line after a confirmed read-back, a number right after a colon ("6:30") is read as a clock time's minutes, not a house number, so it no longer clears the confirmation. The booking lead-in check also accepts today's confirmation, which opens with "Okay, I've booked it" itself.
+Why: on the socket run 20261107-230923, tune-up-known-caller's "Today at 6:30 doesn't work for me" was read as house 30 on a street called "doesn't". The server cleared the confirmed read-back, the next find_slots was refused, and the caller was asked for the house number and heard the read-back again (MEASURED: the test box's tool log for the call). The call still booked; the eval failed it only because the check looked for "You're all set for", the older wording.
+Considered: adding ":" to the time leads (the number would still count before a street word); leaving it (any caller who turns down a time with minutes repeats the address).
+Would change if: a caller gives a house number with a colon in it.
+Discussion: this session; tests/tool_server/test_ts_booking_flow.py, tests/evals/test_checks.py
+Issue: #195
+
+## 143. A question the caller already heard in the same reply is cut
+
+Decided: the socket's filter cuts a sentence of the model's that repeats one already said in the same reply, questions included. Before, a question was never cut, so the model's copy of the server's question got through.
+Why: on the socket run 20261107-230923, all four no-heat dispatch calls heard "Will someone be home to let the technician in?" twice in one turn. The dispatch sentence ends on "just let me know.", not a question, so the model carries on, and it asked the arrival question again. The rule that a question is never cut (DECISIONS.md 112) is there so the filter can't remove the only question; a repeat in the same reply leaves the first one in place.
+Considered: ending the turn on any server sentence that contains a question (changes every flow whose sentence asks and then adds a line); rewording the arrival question to end on the question (the wording is Jackson's, change set 19).
+Would change if: a call shows a needed question cut as a repeat (the drop is logged as repeats_said).
+Discussion: this session; tests/voice_retell/test_rt_llm_socket.py
+Issue: #195
+
+## 142. A remote eval runs on a world opened like the live one, and a check it can't run isn't a failure
+
+Decided: the eval and server-led test mocks open the schedule after each reset the way the live world is opened (`ST_MOCK_RESET_OPEN=1`, scripts/open_live_schedule.py: shifts on the seed's rota, about 20 people a day, weekends included, and five in six filler visits cancelled). A check that reads the scratch ServiceTitan file, which only the in-process stack has, is reported as not run on a remote stack instead of failing the call. The booking check counts a visit the server booked at the read-back (a High no-heat dispatch, DECISIONS.md 123) for its job type.
+Why: on the socket run 20261107-214125 (56%), the test world was booked solid for its first days (77 visits on Monday, none cancelled, against 13 left on the live world), so ac-not-cooling-warm-spell heard "nothing's open" three days running; five fails were checks that couldn't read ServiceTitan or a dispatch with no book_appointment call, while the server's records showed the bookings and dispatches made.
+Considered: freezing the remote world's clock (the socket reads real time); leaving the seed as it is (a test world unlike the live one hides real behavior and invents fails).
+Would change if: a scenario needs the full calendar (give it its own world).
+Discussion: this session; tests/servicetitan_mock/test_st_reset.py, tests/evals/test_checks.py
+Issue: #195
+
+## 141. Who approves, the gate or buzzer and being home as a habit count from anywhere in the call
+
+Decided: before the opening is offered, a caller line that says who approves the work ("I own the place", "my landlord has to approve"), names a gate, buzzer or doorman, or says being home is a habit ("I work from home", "home most of the day") settles that visit question. Being home said before a day is picked ("I'm home", "we're home right now") still doesn't count, and is asked after the offer as before. The membership next step no longer says "once that's settled".
+Why: on the socket run 20261107-214125, card-pay-by-card-ask and tenant-landlord-approves were asked approval and access again after answering them before the offer; the grader failed both for asking twice. The model spoke the next step's "once that's settled" as "The membership offer is settled, so I'll move on."
+Considered: counting every answer from the whole call (a caller home now may not be home on the visit day); leaving the rule (one repeated question per call that volunteers early, which callers often do).
+Would change if: a caller who said they own the place turns out not to approve repairs (narrow the approval phrases), or a habitual "home all day" turns out not to hold for the visit day.
+Discussion: this session; tests/tool_server/test_ts_server_led.py
+Issue: #195
+
+## 140. A hyphenated spoken number is one number
+
+Decided: the number reader takes "twenty-five" as 25 wherever a transcript writes it with a hyphen, alone or before "hundred" ("twenty-five hundred" is 2500), and after "hundred" ("two hundred forty-eight" is 248). "Twenty-oh-five" stays 2005, and a Queens house number written with a hyphen between digits ("41-12") is unchanged.
+Why: on the socket run 20261107-214125, retell-call-bronx-zip said "Yes, that's correct. Twenty-five hundred Grand Concourse" three times; the reader made it 20500, took it for a new house number, refused every yes to the read-back of 2500 and flagged a person instead of booking. Every hyphenated number was split the same way: "ninety-nine" was 909 and "forty-one twelve" 40112.
+Considered: matching the read-back's house number in words (only that check, while units, ZIPs and phone numbers share the reader).
+Would change if: a transcript writes a hyphen between two numbers that are meant apart ("twenty-five" as 20 and 5), which no call has shown.
+Discussion: this session; tests/tool_server/test_ts_booking_flow.py
+Issue: #195
 ## 139. Owner view tests run on the world the live reset leaves, not the seed alone
 
 Decided: `scripts/reset_live_world.py` runs as one function, `reset()`, and `tests/tool_server/test_ts_live_world.py` drives it on a world that already has calls, then checks what the owner and the agent see: about 20 technicians every day for two weeks, no Paul or Jackson, the schedule page's rows and columns, most daytime windows open, and a new call that books and reaches Today with the old calls kept.

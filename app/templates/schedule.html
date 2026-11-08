@@ -18,7 +18,7 @@
   <section class="panel">
     <div class="panel-head">
       <h2>Technicians</h2>
-      <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">live</span>
+      <span class="end source"><img src="/owner/static/servicetitan-logo.svg" alt="ServiceTitan" width="93" height="16">Demo</span>
     </div>
     {% if sched %}{% if sched.rows %}{{ grid(sched, here, job_types) }}{% else %}{{ empty("Nobody is working this day.") }}{% endif %}
     {% else %}{{ empty(problem) }}{% endif %}

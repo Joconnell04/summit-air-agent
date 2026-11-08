@@ -620,12 +620,15 @@ class LlmCall:
     def _clean(self, sentence: str, out: Response) -> tuple[str, str]:
         """Server-led: a sentence of the model's as the caller will hear it, and why it was cut,
         if it was. A question is never cut, only tidied, so the filter can't take the actual
-        question away (DECISIONS 112: the custom stack's filter left half replies)."""
+        question away (DECISIONS 112: the custom stack's filter left half replies). The exception
+        is a question already said in this reply: the caller heard it, so cutting the copy leaves
+        the question in place (socket evals, 7 November: the dispatch turn asked "Will someone be
+        home" twice)."""
         tidy = plain_day(without_vocative(unnarrated(sentence), self._known_names()))
-        if tidy.rstrip().endswith("?"):
-            return tidy, ""
         if out.repeats(tidy):
             return "", "repeats_said"
+        if tidy.rstrip().endswith("?"):
+            return tidy, ""
         if NARRATES.match(tidy):
             return "", "narrates"
         if GATE_TALK.match(tidy):

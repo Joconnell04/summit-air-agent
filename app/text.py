@@ -273,9 +273,16 @@ def number_tokens(text: str) -> list[str]:
             chunks.append(str(TEENS[token]))
         elif token in TENS:
             value = TENS[token]
+            # "twenty-five" as a transcript writes it: the hyphen joins one number, so it is 25,
+            # not 20 then 5 (eval run 20261107-214125, retell-call-bronx-zip: "twenty-five hundred
+            # Grand Concourse" read as 20500 refused every yes to the read-back of 2500).
+            after = raw[i + 2] if nxt == "-" and i + 2 < len(raw) else ""
             if nxt in DIGIT_WORDS and nxt not in ("oh", "o", "zero"):
                 value += int(DIGIT_WORDS[nxt])
                 i += 1
+            elif after in DIGIT_WORDS and after not in ("oh", "o", "zero"):
+                value += int(DIGIT_WORDS[after])
+                i += 2
             chunks.append(str(value))
         elif token in ("hundred", "thousand") and chunks and chunks[-1].isdigit():
             scale = 100 if token == "hundred" else 1000
@@ -290,6 +297,11 @@ def number_tokens(text: str) -> list[str]:
                 if j + 1 < len(raw) and raw[j + 1] in DIGIT_WORDS and raw[j + 1] not in ("oh", "o", "zero"):
                     rest += int(DIGIT_WORDS[raw[j + 1]])
                     j += 1
+                elif (j + 2 < len(raw) and raw[j + 1] == "-" and raw[j + 2] in DIGIT_WORDS
+                      and raw[j + 2] not in ("oh", "o", "zero")):
+                    # "two hundred forty-eight"
+                    rest += int(DIGIT_WORDS[raw[j + 2]])
+                    j += 2
                 i = j
             elif j < len(raw) and raw[j] in TEENS:
                 rest, i = TEENS[raw[j]], j

@@ -118,3 +118,24 @@ def test_if_stale_rebuilds_only_a_missing_or_older_database(tmp_path, monkeypatc
     assert not schema_is_current(db)
     seed.main()
     assert first_name() == original and schema_is_current(db)
+
+
+def open_visits(api: Api) -> int:
+    conn = sqlite3.connect(api.app.state.db_path)
+    try:
+        return conn.execute("SELECT COUNT(*) FROM appointments WHERE status = 'Scheduled'").fetchone()[0]
+    finally:
+        conn.close()
+
+
+def test_a_reset_can_open_the_schedule_the_way_the_live_world_is_opened(resettable):
+    """The reseeded world is booked solid for its first days; ST_MOCK_RESET_OPEN=1 opens it as
+    scripts/open_live_schedule.py opens the live one (eval run 20261107-214125)."""
+    plain, _ = resettable(allow_reset=True)
+    body = plain.client.post("/debug/reset").json()
+    assert "opened" not in body
+    booked = open_visits(plain)
+    opened, _ = resettable(allow_reset=True, open_after_reset=True)
+    body = opened.client.post("/debug/reset").json()
+    assert body["opened"]["fillers_cancelled"] > 0
+    assert open_visits(opened) < booked

@@ -24,7 +24,7 @@ from pathlib import Path
 from app.tools import TOOLS
 from evals import compare, langsmith_sync, pairs, results, suites
 from evals.caller import SimulatedCaller
-from evals.checks import Evidence, check_names, run_checks, safety_config
+from evals.checks import Evidence, check_names, run_checks, safety_config, unchecked
 from evals.compare import percentile
 from evals.fingerprint import prompt_hash, run_hash
 from evals.grader import grade, set_up
@@ -250,7 +250,8 @@ def score(
             if not error.startswith("harness"):
                 failures = run_checks(scenario.must, evidence)
                 violations = run_checks(scenario.must, evidence, prohibitions_only=True)
-                ran = check_names(scenario.must)
+                skipped = set(unchecked(scenario.must, evidence))
+                ran = [n for n in check_names(scenario.must) if n not in skipped]
         except Exception as err:  # noqa: BLE001
             error = error or f"harness: could not read the call record: {err}"
     elif not error:

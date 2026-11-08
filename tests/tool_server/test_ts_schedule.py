@@ -485,3 +485,9 @@ def test_window_columns_read_as_clock_times_and_part_of_day(agent):
                  '<span class="w-time">8 PM to 8 AM</span>'):
         assert text in html, text
     assert '<span class="w-name">0800-1000</span>' not in html
+
+
+def test_the_schedule_marks_servicetitan_as_the_demo(agent):
+    sign_in(agent, "staff")
+    page = agent.client.get("/owner/schedule").text
+    assert 'alt="ServiceTitan" width="93" height="16">Demo</span>' in page
