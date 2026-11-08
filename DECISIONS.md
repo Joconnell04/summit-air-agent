@@ -12,6 +12,15 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 144. The minutes of a clock time are never a house number
+
+Decided: in a caller line after a confirmed read-back, a number right after a colon ("6:30") is read as a clock time's minutes, not a house number, so it no longer clears the confirmation. The booking lead-in check also accepts today's confirmation, which opens with "Okay, I've booked it" itself.
+Why: on the socket run 20261107-230923, tune-up-known-caller's "Today at 6:30 doesn't work for me" was read as house 30 on a street called "doesn't". The server cleared the confirmed read-back, the next find_slots was refused, and the caller was asked for the house number and heard the read-back again (MEASURED: the test box's tool log for the call). The call still booked; the eval failed it only because the check looked for "You're all set for", the older wording.
+Considered: adding ":" to the time leads (the number would still count before a street word); leaving it (any caller who turns down a time with minutes repeats the address).
+Would change if: a caller gives a house number with a colon in it.
+Discussion: this session; tests/tool_server/test_ts_booking_flow.py, tests/evals/test_checks.py
+Issue: #195
+
 ## 143. A question the caller already heard in the same reply is cut
 
 Decided: the socket's filter cuts a sentence of the model's that repeats one already said in the same reply, questions included. Before, a question was never cut, so the model's copy of the server's question got through.

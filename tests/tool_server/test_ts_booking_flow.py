@@ -721,6 +721,24 @@ def test_a_time_said_with_the_yes_is_not_a_house_number(line):
     assert readback.change(line, austin) is None
 
 
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Today at 6:30 doesn't work for me, I'd need something next week.",
+        "6:30 doesn't work, do you have anything Monday?",
+        "The 8:30 one works better for me.",
+    ],
+)
+def test_the_minutes_of_a_clock_time_are_not_a_house_number(line):
+    """Socket eval 20261107-230923, tune-up-known-caller: "6:30 doesn't work" read as house 30, so
+    the confirmed read-back was cleared and the caller was asked for the address again."""
+    assert readback.change(line, READ_BACK) is None
+
+
+def test_a_house_number_said_after_a_clock_time_still_changes_the_read_back():
+    assert readback.change("6:30 works, but it's actually 150 Union Street.", READ_BACK) == "house number"
+
+
 # ---- PR #135 re-check ----------------------------------------------------------------------
 
 

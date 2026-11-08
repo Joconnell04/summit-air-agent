@@ -333,6 +333,18 @@ def test_the_booking_confirmation_needs_a_short_line_before_it():
     ]
 
 
+
+def test_the_current_booking_confirmation_carries_its_own_lead_in():
+    """Socket eval 20261107-230923, tune-up-known-caller: the booking went through and was said, but
+    the check only knew the older "You're all set for" wording."""
+    booked = ("Okay, I've booked it: the technician will arrive Monday, November 9, "
+              "between 8 and 8:30. Anything else?")
+    said = trace([("agent", booked, None)])
+    assert failures("booking_lead_in", True, said) == []
+    nothing = trace([("agent", "Let me look at the schedule.", None)])
+    assert failures("booking_lead_in", True, nothing) == ["no booking confirmation was said"]
+
+
 TAKEN = {
     "type": "tool",
     "tool": "book_appointment",

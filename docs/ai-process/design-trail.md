@@ -167,3 +167,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Visit answers given early | Who approves, the gate or buzzer and being home as a habit count from anywhere in the call; being home now still waits for the offer | DECISIONS.md 141 |
 | Remote evals on a live-like world | The test mocks open the schedule after a reset; checks that need the scratch ServiceTitan are not run on a remote stack | DECISIONS.md 142 |
 | Repeated question in one reply | The socket cuts the model's copy of a question the server already asked in the same reply | DECISIONS.md 143 |
+| Clock times after the read-back | "6:30 doesn't work" no longer reads as house 30 and clears the confirmed address; the booking check knows today's confirmation | DECISIONS.md 144 |
