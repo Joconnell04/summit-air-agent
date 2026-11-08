@@ -768,11 +768,25 @@ def test_the_commercial_note_and_refusal_give_the_model_nothing_to_parrot():
 
     note = SERVER_NOTES["commercial"]
     assert "caller describ" not in note.lower() and "building you manage" not in note
-    assert "as written" in note
+    # The live socket prompt has no journeys file: a note that points at one left the model to
+    # invent "the commercial team can follow up" (demo eval run 20261108-021040).
+    assert "journeys" not in note and "record_lead now" in note
     line = " ".join(AGENT["lines"]["commercial"].split())
     assert line.startswith("Thanks for thinking of us.")
     for internal in ("caller", "system", "describ", "treat", "manage", "flag"):
         assert internal not in line.lower(), internal
+
+
+def test_a_commercial_lead_with_no_name_yet_saves_and_says_the_decline(agent):
+    """The note has the model call record_lead before asking anything, with "Caller" for a name
+    it doesn't have, so the first thing the caller hears is the server's line."""
+    call = agent.start(UNKNOWN)["data"]["call_id"]
+    hints = agent.turn(call, "hi the ac's blowing warm air i own the place it's a deli near the park")
+    assert "commercial" in hints["data"]["hints"]
+    lead = agent.tool("record_lead", call, kind="commercial", details={
+        "contact_name": "Caller", "company": "Deli near the park", "need": "AC blowing warm air"})
+    assert lead["ok"], lead
+    assert " ".join(AGENT["lines"]["commercial"].split()) in lead["say"]
 
 
 def test_the_server_refusal_for_a_commercial_call_is_the_journey_line(agent):

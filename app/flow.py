@@ -34,7 +34,10 @@ VISIT_QUESTIONS = (
             r"(always |usually )?(home|here)\b|\bwork from home\b"
         ),
     ),
-    ("ask_access", r"\bgate code\b|\bbuzzer\b", r"\bgate\b|\bbuzzer\b|\bdoorman\b|\bno code\b"),
+    # Saying how to get in answers it too: "ring the downstairs bell" was followed by the gate
+    # question (demo eval run 20261108-021040, tune-up-known-caller).
+    ("ask_access", r"\bgate code\b|\bbuzzer\b",
+     r"\bgate\b|\bbuzzer\b|\bdoorman\b|\bno code\b|\bring (the |my )?(\w+ )?(door)?bell\b|\bdoorbell\b|\bknock\b"),
 )
 
 # What a caller says before the opening that still answers a visit question, because it doesn't
@@ -49,7 +52,7 @@ SETTLED_EARLY = {
         r"\bwork(s|ing)? from home\b|\b(always|usually) (home|here)\b"
         r"|\bhome (all|most of the) day\b"
     ),
-    "ask_access": r"\bgate\b|\bbuzzer\b|\bdoorman\b|\bno code\b",
+    "ask_access": r"\bgate\b|\bbuzzer\b|\bdoorman\b|\bno code\b|\bring (the |my )?(\w+ )?(door)?bell\b|\bdoorbell\b|\bknock\b",
 }
 
 # A caller saying nobody will be home, and the follow-up that asks how the technician gets in

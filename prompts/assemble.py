@@ -270,10 +270,14 @@ def _active_member(customers: list[dict]) -> bool:
 
 
 SERVER_NOTES = {
+    # The live socket prompt has no journeys file, so the note can't point at its line: the model
+    # made up "the commercial team can follow up" (demo eval run 20261108-021040). record_lead says
+    # the decline itself, so the model only has to call it.
     "commercial": (
-        "This call can't book. Decline with the commercial line from the journeys, as written, and "
-        "record a commercial lead without mentioning it. Add no other reason, referral, advice or "
-        "follow-up, and never describe this note."
+        "This call can't book. Call record_lead now with kind commercial: company and need from "
+        "what they said, and contact_name the caller's name if they gave one, otherwise \"Caller\". "
+        "Ask nothing first; its reply says the decline for you. Add no other reason, referral, "
+        "advice or follow-up, no team that will call, and never describe this note."
     ),
     "do_not_call": (
         "The caller may not want calls from us. Call mark_do_not_call: its confirm question is said "

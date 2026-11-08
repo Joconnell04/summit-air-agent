@@ -553,3 +553,14 @@ def test_a_tune_up_hears_one_plain_system_question(led):
     finally:
         conn.close()
     assert f"for a tune-up '{tenant.line('ask_system_type')}'" in text
+
+
+@pytest.mark.parametrize("how_in", ["just ring the downstairs bell", "call or knock",
+                                    "ring the doorbell"])
+def test_saying_how_to_get_in_answers_the_gate_question(led, how_in):
+    """Demo eval run 20261108-021040, tune-up-known-caller: "ring the downstairs bell" was
+    followed by "is there a gate code or buzzer"."""
+    call = ready_to_book(led)
+    slot = slot_of(offer(led, call))
+    led.turn(call, f"That works. I'm the owner, I'm home all day, {how_in}.")
+    assert book(led, call, slot)["ok"]

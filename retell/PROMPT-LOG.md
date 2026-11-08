@@ -336,3 +336,7 @@ From my call call_55b467b41ae58e725fa142d29b7. I said my name three times; the t
 
 Members are thanked in the greeting now, so the call note tells Brian not to thank them again. The membership line drops "priority scheduling" (members are scheduled by urgency like everyone else) for fifteen percent off repairs, a longer warranty and no after-hours fee. After a routine booking the server asks a non-member once; Brian follows its next step and never brings membership up again. A member asking whether a tune-up is included gets an answer from their job history.
 
+
+### The server note for a business call (no prompt change)
+
+In the demo eval run 20261108-021040, all three commercial callers heard Brian make up a "commercial team" that would follow up, before the server's decline line ever came. The server's note for a business call said to use "the commercial line from the journeys", and this prompt has no journeys file, so there was no line to use. The note now tells Brian to call `record_lead` right away (with "Caller" for a name he doesn't have yet) and ask nothing first, since the tool's reply says the decline word for word. The prompt itself didn't change; only the server's note did. Outcome: rerun of the demo suite below.

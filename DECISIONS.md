@@ -12,6 +12,17 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 148. A business call saves its lead before anything else is asked, so the server's decline is the first answer
+
+Decided: The server's note for a call it marks commercial tells the model to call record_lead at once, with "Caller" as the name if none was given, instead of pointing it at the journeys' line. record_lead's reply is the decline, word for word.
+Why: The live socket prompt has no journeys file, so the note pointed at nothing; in demo eval run 20261108-021040 all three commercial callers heard a made-up "commercial team" that would follow up.
+Considered: adding the line to the socket prompt (two copies of one line to keep in step); having the server speak the line on the turn it marks the call (the lead still needs the model's company and need).
+Would change if: the office needs the caller's name on every commercial lead.
+
+Also decided with it: after hours, a dispatch's result doesn't hand the model the booking's ServiceTitan window (the first window tomorrow, only the record), and the dispatch's next step says not to name a time or window of its own. In the same run, a caller with a baby heard "about two hours" and then "8 AM tomorrow".
+
+And: saying how the technician gets in ("ring the downstairs bell", "knock") answers the gate question, so it isn't asked next.
+
 ## 147. A dispatch's issue keeps the priority reasons that fit; a house number the model cut short is handed back
 
 Decided: the issue the server writes for a dispatch is the job's name and the priority reasons that fit in the issue's 300 characters (`ISSUE_MAX`); the full reasons stay on the call's priority. When find_address is given a house number the caller didn't say, and the caller did say another number right before that street, the refusal says nothing to the caller and tells the model that number; the same check then passes or refuses it.
