@@ -172,3 +172,4 @@ How the design was reached, in order, so a reader can follow each choice back to
 | Demo eval suite | Three existing scenarios per assignment user story, two samples; the grader is told the server's dispatch line | DECISIONS.md 146 |
 | Dispatch issue length, cut-short house number | A dispatch's issue keeps the reasons that fit, so vulnerable-household dispatches book; the caller's own house number is handed back to the model | DECISIONS.md 147 |
 | Commercial decline once | The model calls record_lead at once and the server's line is the only decline; a repeated lead says nothing | DECISIONS.md 148 |
+| Eval floor 80% | The pass-rate floor is set for the socket stack, where the misses between 80% and 90% were wording, not outcomes; must-pass cases still block | DECISIONS.md 149 |

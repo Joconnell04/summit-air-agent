@@ -12,6 +12,19 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 149. The eval pass-rate floor is 80% on the socket stack
+
+Decided: `min_eval_pass_rate` in evals/baseline.json is 0.8, down from 0.9. The bench's eval chart and the ratchet both read it. Must-pass cases still fail the check at any pass rate.
+Why:
+- The 90% floor came from a LiveKit run (DECISIONS.md 066: `20261104-154616-livekit-fast-standard`, 93% over 104 calls). Only the Retell socket path runs now (DECISIONS.md 134), so that floor measures a different agent. Decision 011 sets a floor from a run of the real agent for exactly this reason.
+- On the socket stack the score moves with the sample, not the code. In the demo run 20261108-021040, 2 of 18 scenarios passed one sample and failed the other on the same code (MEASURED). On a 36-call suite each call is about 2.8 points, so 90% allows 3 misses and 80% allows 7.
+- What falls between 80% and 90% is wording, not outcomes. In that run every one of the 36 calls passed the code checks (bookings, dispatches, priority flags, safety lines, commercial declines); all 6 misses were the grader's notes on wording (MEASURED). Safety doesn't rest on the rate: must-pass cases fail the ratchet on their own (DECISIONS.md 011).
+- The current demo suite clears 90% anyway: 33 of 36, 91.7%, once the commercial fix (DECISIONS.md 148) is folded in (`20261108-024338-retell_llm-fast-demo-combined`: the demo run with its six commercial calls replaced by the rerun on the fixed code, MEASURED). 80% leaves room for an unlucky sample without blocking a merge.
+Considered: keeping 90% (one flaky grader call in a 36-call suite blocks a merge, the problem decision 011 named); a separate floor for the code checks (the ratchet has one rate; the must-pass list already covers the outcomes that can't slip).
+Would change if: an adopted socket-stack reference run sets a higher floor (`ratchet.py --adopt` only raises it), or a run between 80% and 90% fails on outcomes rather than wording.
+Discussion: this session; evals/results/20261108-021040-retell_llm-fast-demo.json, evals/results/20261108-024338-retell_llm-fast-custom.json, evals/results/20261108-024338-retell_llm-fast-demo-combined.json
+Issue: #211
+
 ## 148. A business caller hears the server's decline only
 
 Decided: the server's note on a caller line that sounds like a business tells the model to say nothing and call record_lead (kind commercial) at once; record_lead's sentence ("Thanks for thinking of us. Unfortunately, we only service homes, but I'll pass your details to our team.") is the decline. A second commercial lead on the call, or the same lead again, says nothing more and stores nothing new.

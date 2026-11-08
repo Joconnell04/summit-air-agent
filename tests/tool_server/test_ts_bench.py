@@ -569,7 +569,7 @@ def test_the_evals_page_shows_each_run_against_the_floor(agent):
     small = next(r for r in bench_data.runs() if len(r.scenarios) < bench_data.SUITE_MIN)
     assert f"/bench/evals/{small.run_id}" not in page, "a rerun of a scenario or two waits for All"
     assert f"/bench/evals/{small.run_id}" in agent.client.get("/bench/evals?runs=all").text
-    assert 'class="floor"' in page and "Floor 90%" in page
+    assert 'class="floor"' in page and "Floor 80%" in page
     assert "Reference" in page
     commercial = agent.client.get("/bench/evals?tested=commercial").text
     assert "Pass rate, commercial calls" in commercial
