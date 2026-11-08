@@ -1220,6 +1220,42 @@ def test_whose_account_is_asked_with_the_confirmed_read_back_not_by_a_refused_bo
     assert booked["ok"], booked
 
 
+def test_whose_account_is_asked_once_even_when_the_read_back_runs_again(agent, scenarios):
+    """Eval run 20261108-004357, tune-up-known-caller: the caller named a unit after the account
+    question, the read-back ran again, and its confirmation asked "Should I put this under your
+    account?" a second time ("I already said that")."""
+    call = agent.start(scenarios["repeatCallerOpenJob"]["phone"])["data"]["call_id"]
+    agent.turn(call, "Hi, I need a tune-up at my other place.")
+    address = in_area_address(41)
+    first = agent.confirm_read_back(call, address)
+    assert first["say"] == "Should I put this under your account?"
+    agent.say(call, first["say"])
+    agent.turn(call, "Yes, put it under my account.")
+    agent.turn(call, "Oh, and it's the downstairs unit.")
+    again = agent.confirm_read_back(call, {**address, "unit": "downstairs"})
+    assert again["say"] != "Should I put this under your account?"
+    assert "account_choice" not in again["data"]
+    booked = agent.tool(
+        "book_appointment", call, job_type="tune_up", slot=first_open(agent, call),
+        details=DETAILS, new_address_account="caller",
+    )
+    assert booked["ok"], booked
+
+
+def test_a_choice_given_on_one_booking_carries_to_the_next(agent, scenarios):
+    """A booking refused for another reason after the caller chose the account doesn't ask
+    again when the model leaves the choice off its retry."""
+    call = agent.start(scenarios["repeatCallerOpenJob"]["phone"])["data"]["call_id"]
+    agent.turn(call, "Hi, I need a tune-up at my other place.")
+    agent.say(call, agent.confirm_read_back(call, in_area_address(41))["say"])
+    agent.turn(call, "Yes, my account.")
+    slot = first_open(agent, call)
+    agent.tool("book_appointment", call, job_type="tune_up", slot=slot,
+               details={**DETAILS, "issue": ""}, new_address_account="caller")
+    retry = agent.tool("book_appointment", call, job_type="tune_up", slot=slot, details=DETAILS)
+    assert retry["refused"] != "account_choice", retry
+
+
 def test_an_address_already_on_file_confirms_with_no_account_question(agent, scenarios):
     maria = scenarios["repeatCallerOpenJob"]
     call = agent.start(maria["phone"])["data"]["call_id"]

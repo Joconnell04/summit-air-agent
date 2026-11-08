@@ -12,6 +12,13 @@ Discussion: docs/ai-process/transcripts/... or docs/explorations/...
 Issue: #N
 -->
 
+## 145. A unit that is a word is said as the word; whose account a new address goes on is asked once a call
+
+Decided: The read-back says a unit that is a word as the word ("801 Fenimore Street, downstairs"), the way "basement" already was; codes such as "4B" or "PH" are still read letter by letter. The read-back asks "Should I put this under your account?" once a call: a second read-back skips it, and a booking that leaves the choice off uses the one given earlier.
+Why: In eval run 20261108-004357 (tune-up-known-caller), "the downstairs unit" was read back as "unit D O W N S T A I R S", and when the caller later named a unit, the read-back ran again and asked the account question a second time ("I already said that"). The model had passed the choice on every booking, so the repeat came from the server.
+Considered: stopping the second read-back (a caller who corrects the unit should hear it confirmed).
+Would change if: a caller's unit word is a code we should spell, such as a building's lettered wing.
+
 ## 144. The minutes of a clock time are never a house number
 
 Decided: in a caller line after a confirmed read-back, a number right after a colon ("6:30") is read as a clock time's minutes, not a house number, so it no longer clears the confirmation. The booking lead-in check also accepts today's confirmation, which opens with "Okay, I've booked it" itself.
