@@ -16,6 +16,7 @@ Issue: #N
 
 Decided: `evals/suites.yaml` has a `demo` suite: three existing scenarios for each user story in the assignment (no heat or cooling booked, a vulnerable household marked priority, a gas or CO call, a tune-up, a member, a commercial caller), two samples each, 36 calls. The grader's list of what the server set up now includes the dispatch sentence read_back or find_slots says ("Expect them within the next hour"), so it is no longer judged an arrival the call never set up.
 Why: Jackson asked for a run that proves each user story the demo will likely test, graded on what a business owner would accept. On the socket run 20261107-230923 all four no-heat dispatches failed the grader on the dispatch line alone, which is the server's fixed wording (tenants/summit-air/agent.yaml dispatch_now). The cost is about $2 a run (MEASURED: $0.054 a call on that run).
+older-caller-gets-slower-pace was left out: it checks that every line is spoken slower, and the Retell socket has no per-line speed and applies no pace (voice/retell_llm/call.py), so it measures a feature only the earlier LiveKit stack has; at-risk-caller-also-pushes stands for the vulnerable household instead.
 Considered: new scenarios written for the demo (the existing ones already cover each story and have checks tuned over earlier rounds); loosening the grader prompt (its fail list is already limited to what an owner would not accept).
 Would change if: the demo calls cover a story the suite doesn't (renter, after hours, a repeat caller).
 Discussion: this session; tests/evals/test_grader.py
